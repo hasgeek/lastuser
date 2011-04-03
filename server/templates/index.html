@@ -1,0 +1,9 @@
+{% extends "inc/layout.html" %}
+{% block titletags -%}
+  <title>{{ config['SITE_TITLE'] }}</title>
+  <meta name="DC.title" content="{{ config['SITE_TITLE'] }}"/>
+{%- endblock %}
+
+{% block content %}
+This is lastuser. <a href="{{ url_for('login') }}">Login</a> or <a href="{{ url_for('register') }}">Register</a>?
+{% endblock %}

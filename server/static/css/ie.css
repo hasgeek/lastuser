@@ -1,0 +1,5 @@
+.stickie {
+  zoom: 1;
+  *display: inline;
+  _height: 100px;
+}

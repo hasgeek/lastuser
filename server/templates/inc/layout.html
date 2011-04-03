@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<!--[if lt IE 7 ]> <html lang="en" class="no-js ie6"> <![endif]-->
+<!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
+<!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
+<!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  {% block titletags -%}
+  <title>{% block title %}{% endblock %} — {{ config['SITE_TITLE'] }}</title>
+  <meta name="DC.title" content="{{ self.title()|e }}"/>
+  {%- endblock %}
+  <meta name="description" content="{% block description %}{% endblock %}">
+  <meta name="author" content="{% block author %}{% endblock %}">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}"/>
+  <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}"/>
+
+  <!-- Stylesheets -->
+  <link href="{{ url_for('static', filename='css/screen.css') }}?v=1" media="screen, projection" rel="stylesheet" type="text/css" />
+  <link href="{{ url_for('static', filename='css/print.css') }}?v=1" media="print" rel="stylesheet" type="text/css" />
+  <!--[if IE]>
+      <link href="{{ url_for('static', filename='css/ie.css') }}?v=1" media="screen, projection" rel="stylesheet" type="text/css" />
+  <![endif]-->
+  <script src="{{ url_for('static', filename='js/libs/modernizr-1.6.min.js') }}"></script>
+
+  {%- if config['TYPEKIT_CODE'] %}
+    <script type="text/javascript" src="//use.typekit.com/{{ config['TYPEKIT_CODE'] }}.js"></script>
+    <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+  {% endif -%}
+  {% block pageheaders %}{% endblock %}
+</head>
+<body>
+  <div id="container" class="container">
+    <header>
+      {% block header %}<h1>{{ self.title()|e }}</h1>{% endblock %}
+    </header>
+    <div id="main">
+      <div id="flash-messages">
+        {%- for category, msg in get_flashed_messages(with_categories=true) %}
+          <div class="flash flash-{{ category }}"><div class="flashmessage">{{ msg }}</div></div>
+        {%- endfor %}
+      </div>
+      {% block content %}{% endblock %}
+    </div>
+    <div id="main_footer"></div>
+  </div> <!-- end of #container -->
+  <footer>
+    {% block footer %}
+    {% endblock %}
+  </footer>
+
+  {% assets "js_all" -%}
+    <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+  {% endassets -%}
+
+  <!--[if lt IE 7 ]>
+    <script src="{{ url_for('static', filename='js/libs/dd_belatedpng.js') }}"></script>
+    <script> DD_belatedPNG.fix('img, .png_bg'); </script>
+  <![endif]-->
+
+  {% if config['DEBUG'] %}
+    <!-- yui profiler and profileviewer - remove for production -->
+    <script src="{{ url_for('static', filename='js/profiling/yahoo-profiling.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/profiling/config.js') }}"></script>
+    <!-- end profiling code -->
+  {% endif %}
+
+  {% if config['GA_CODE'] and not config['DEBUG'] %}
+    <script type="text/javascript">
+     var _gaq = [['_setAccount', '{{ config['GA_CODE'] }}'], ['_trackPageview']];
+     (function(d, t) {
+      var g = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      g.async = true;
+      g.src = ('https:' == location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      s.parentNode.insertBefore(g, s);
+     })(document, 'script');
+    </script>
+  {% endif -%}
+
+  {% block footerscripts %}{% endblock %}
+
+</body>
+</html>

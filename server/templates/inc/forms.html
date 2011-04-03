@@ -1,0 +1,25 @@
+{% macro renderfield(field, css_class="", widget_css_class=None, autofocus=False, nolabeldesc=False) -%}
+{% if field.errors -%}
+  {% for error in field.errors %}<div class="error">{{ error }}</div>{% endfor %}
+{% endif %}
+<div class="field{% if css_class %} {{ css_class}}{% endif %}" id="field-{{ field.id }}">
+  {% if field.widget.input_type == 'checkbox' %}
+    <div class="label">&nbsp;</div><div class="control checkbox">{% if widget_css_class %}{{ field(class=widget_css_class) }}{% else %}{{ field }}{% endif %} {{ field.label }}</div>
+  {% else %}
+    {% if not nolabeldesc %}<div class="label">{{ field.label }}</div>{% endif %}
+    <div class="control">{% if autofocus %}{% if widget_css_class %}{{ field(autofocus="autofocus", class=widget_css_class) }}{% else %}{{ field(autofocus="autofocus") }}{% endif %}{% else %}{% if widget_css_class %}{{ field(class=widget_css_class) }}{% else %}{{ field }}{% endif %}{% endif %}{% if not nolabeldesc %}<br/>
+      <span class="description">{{ field.description }}</span>{% endif %}</div>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% macro ajaxform(formid) -%}
+<script type="text/javascript">
+  $(function() {
+    $("#{{ formid }}").ajaxForm({
+      target: '#{{ formid }}',
+      replaceTarget: true,
+    });
+  });
+</script>
+{%- endmacro %}

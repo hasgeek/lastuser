@@ -1,0 +1,20 @@
+{% extends "inc/layout.html" %}
+{% from "inc/forms.html" import renderfield %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<form id="login" method="POST">
+  <input type="hidden" name="_charset_"/>
+  <input type="hidden" name="form.id" value="login"/>
+  {{ form.csrf() }}
+  {% if form.csrf.errors %}
+    {% for error in form.csrf.errors %}<div class="error">{{ error }}</div>{% endfor %}
+  {% endif %}
+  {{ renderfield(form.fullname, "small", autofocus=True) }}
+  {{ renderfield(form.email, "small") }}
+  {{ renderfield(form.password, "small") }}
+  {{ renderfield(form.confirm_password, "small") }}
+  {{ renderfield(form.accept_rules, "check") }}
+  <input type="submit" value="Register"/>
+</form>
+{% endblock %}

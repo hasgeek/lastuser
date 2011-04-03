@@ -1,0 +1,9 @@
+body {
+    font-family: $font-default;
+}
+header, #main, footer {
+    padding: 1em;
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+}
