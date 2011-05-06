@@ -1,0 +1,22 @@
+{% extends "inc/layout.html" %}
+{% block title %}Client application list{% endblock %}
+{% block content %}
+<table class="listing">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Owner</th>
+      <th>Website</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for client in clients %}
+      <tr>
+        <td><a href="{{ url_for('clientinfo', key=client.key)|e }}">{{ client.title|e }}</a></td>
+        <td>{{ client.owner|e }}</td>
+        <td>{{ client.website|e }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -5,5 +5,12 @@
 {%- endblock %}
 
 {% block content %}
-This is lastuser. <a href="{{ url_for('login') }}">Login</a> or <a href="{{ url_for('register') }}">Register</a>?
+<p>
+  This is lastuser.
+  {% if g.user -%}
+    Hello, {{ g.user.fullname }}! <a href="{{ url_for('logout') }}">Logout</a>?
+  {%- else -%}
+    <a href="{{ url_for('login') }}">Login</a> or <a href="{{ url_for('register') }}">Register</a>?
+  {%- endif %}
+</p>
 {% endblock %}

@@ -1,0 +1,28 @@
+{% extends "inc/layout.html" %}
+{% block title %}Client application information{% endblock %}
+{% block content %}
+<dl>
+  <dt>Title:</dt>
+  <dd>{{ client.title|e }}</dd>
+  <dt>Description:</dt>
+  <dd>{{ client.description|e }}</dd>
+  <dt>Owner:</dt>
+  <dd>{{ client.owner|e }}</dd>
+  <dt>Website:</dt>
+  <dd>{{ client.website|e }}</dd>
+  <dt>Callback URI:</dt>
+  <dd>{{ client.callback_uri|e }}</dd>
+  <dt>Active?</dt>
+  <dd>{{ client.active|e }}</dd>
+  <dt>Read-only?</dt>
+  <dd>{{ client.readonly|e }}</dd>
+  {% if g.user == client.user %}
+  <dt>Client id (key):</dt>
+  <dd>{{ client.key|e }}</dd>
+  <dt>Client secret:</dt>
+  <dd>{{ client.secret|e }}</dd>
+  {% endif %}
+  <dt>Registered date:</dt>
+  <dd>{{ client.registered_date|e }}</dd>
+</dl>
+{% endblock %}

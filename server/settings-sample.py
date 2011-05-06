@@ -28,3 +28,6 @@ ADMINS=[]
 LOGFILE='error.log'
 #: Use SSL for some URLs
 USE_SSL=False
+#: Twitter integration
+OAUTH_TWITTER_KEY=''
+OAUTH_TWITTER_SECRET=''

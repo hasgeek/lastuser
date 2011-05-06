@@ -1,0 +1,7 @@
+{% extends "inc/layout.html" %}
+{% block title %}403 Forbidden{% endblock %}
+
+{% block content %}
+<p>There was an error in the authorization request:</p>
+<p>{{ reason|e }}</p>
+{% endblock %}

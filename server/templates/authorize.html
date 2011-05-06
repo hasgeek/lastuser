@@ -1,0 +1,35 @@
+{% extends "inc/layout.html" %}
+{% block title %}Authorization Required{% endblock %}
+
+{% block content %}
+<p>
+  An application is requesting access to your data.
+</p>
+<dl>
+  <dt>Scope:</dt>
+  <dd>{{ " ".join(scope) }}</dd>
+  <dt>Name:</dt>
+  <dd>{{ client.title|e }}</dd>
+  <dt>Description:</dt>
+  <dd>{{ client.description|e }}</dd>
+  <dt>Owner:</dt>
+  <dd>{{ client.owner|e }}</dd>
+  <dt>Website:</dt>
+  <dd><a href="{{ client.website|e }}">{{ client.website|e }}</a></dd>
+</dl>
+<p>
+  You should authorize this only if you initiated the request
+  and trust the application with your data.
+</p>
+<form id="authorize" method="POST">
+  <input type="hidden" name="_charset_"/>
+  <input type="hidden" name="form.id" value="authorize"/>
+  {{ form.csrf() }}
+  {% if form.csrf.errors %}
+    {% for error in form.csrf.errors %}<div class="error">{{ error }}</div>{% endfor %}
+  {% endif %}
+  <input class="auth-accept" type="submit" name="accept" value="Authorize"/>
+  <input class="auth-deny" type="submit" name="deny" value="Deny"/>
+</form>
+  
+{% endblock %}

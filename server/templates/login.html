@@ -12,6 +12,7 @@
   {% endif %}
   {{ renderfield(form.username, "small", autofocus=True) }}
   {{ renderfield(form.password, "small") }}
+  {{ renderfield(form.remember, "check") }}
   <input type="submit" value="Login"/>
 </form>
 {% endblock %}
