@@ -1,5 +1,7 @@
 #: The title of this site
 SITE_TITLE='LastUser'
+#: Support contact email
+SITE_SUPPORT_EMAIL = 'test@example.com'
 #: TypeKit code for fonts
 TYPEKIT_CODE=''
 #: Google Analytics code UA-XXXXXX-X

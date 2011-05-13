@@ -1,0 +1,16 @@
+{% extends "inc/layout.html" %}
+{% from "inc/forms.html" import renderfield %}
+{% block title %}Reset password{% endblock %}
+
+{% block content %}
+<form id="resetcode" method="POST">
+  <input type="hidden" name="_charset_"/>
+  <input type="hidden" name="form.id" value="resetcode"/>
+  {{ form.csrf() }}
+  {% if form.csrf.errors %}
+    {% for error in form.csrf.errors %}<div class="error">{{ error }}</div>{% endfor %}
+  {% endif %}
+  {{ renderfield(form.username, "small", autofocus=True) }}
+  <input type="submit" value="Send reset code"/>
+</form>
+{% endblock %}

@@ -11,11 +11,12 @@
     {% for error in form.csrf.errors %}<div class="error">{{ error }}</div>{% endfor %}
   {% endif %}
   {{ renderfield(form.title, "small", autofocus=True) }}
-  {{ renderfield(form.description, "wide") }}
+  {{ renderfield(form.description, "small") }}
   {{ renderfield(form.owner, "small") }}
   {{ renderfield(form.website, "small") }}
-  {{ renderfield(form.callback_uri, "small") }}
-  {{ renderfield(form.readonly, "check") }}
-  <input type="submit" value="Register"/>
+  {{ renderfield(form.redirect_uri, "small") }}
+  {{ renderfield(form.service_uri, "small") }}
+  {{ renderfield(form.readonly, "small") }}
+  <input type="submit" value="Register client application"/>
 </form>
 {% endblock %}

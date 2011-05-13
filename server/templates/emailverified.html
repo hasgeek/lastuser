@@ -1,0 +1,8 @@
+{% extends "inc/layout.html" %}
+{% block title %}Email address verified{% endblock %}
+
+{% block content %}
+<p>
+  Hello {{ user.fullname|e }}! Your email address <code>{{ useremail.email|e }}</code> has now been verified.
+</p>
+{% endblock %}

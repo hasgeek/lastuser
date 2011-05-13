@@ -12,6 +12,11 @@
   {% endif %}
   {{ renderfield(form.username, "small", autofocus=True) }}
   {{ renderfield(form.password, "small") }}
+  <div class="field small" id="forgot-password">
+    <div class="label">&nbsp;</div><div class="control">
+    <a href="{{ url_for('reset') }}">Forgot password?</a>
+    </div>
+  </div>
   {{ renderfield(form.remember, "check") }}
   <input type="submit" value="Login"/>
 </form>

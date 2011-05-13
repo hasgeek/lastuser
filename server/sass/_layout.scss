@@ -1,9 +1,285 @@
 body {
     font-family: $font-default;
+    font-size: 100%;
 }
+
 header, #main, footer {
-    padding: 1em;
+    padding: 0 1em;
     max-width: 960px;
     margin-left: auto;
     margin-right: auto;
+}
+
+header, footer {
+    padding-top: 1em;
+}
+
+#logo {
+    @include replace-text-with-dimensions('logo.png', 100, 100);
+    margin-bottom: 1em;
+    a {
+        display: block;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        border: 0;
+    }
+}
+
+p, blockquote, ul, ol, table, dl {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+h1 {
+    font-size: 200%;
+    color: $color-title-h1;
+    margin: 0;
+}
+
+h2 {
+    font-size: 150%;
+    color: $color-title-h2;
+    margin: 1em 0 0;
+}
+
+a {
+    text-decoration: none;
+    border-bottom: 1px solid $color-link;
+}
+
+dl dt {
+    font-weight: bold;
+    margin-top: 1em;
+}
+
+dl dd {
+    text-indent: 1em;
+    margin-bottom: 1em;
+}
+
+/* Flash messages */
+
+.flash, #guide {
+    background: $color-flash;
+    position: relative;
+    margin: {
+        left: auto;
+        right: auto;
+        top: 1em;
+        bottom: 1em;
+    }
+    border: 1px solid $color-sheet-border;
+    @include border-radius(4px);
+    div.flashmessage, div.guidecontent {
+        margin: 0.5em 1em 0.6em;
+    }
+    p, blockquote, ul, ol {
+        margin-top: 1em;
+        margin-bottom: 1em;
+    }
+    form {
+        margin-bottom: 2em;
+    }
+    @include box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
+}
+
+.flash:before, #guide:before {
+    content: "";
+    display: block; /* reduce the damage in FF3.0 */
+    position: absolute;
+    bottom: -21px; /* value = - border-top-width - border-bottom-width */
+    left: 1.5em; /* controls horizontal position */
+    width: 0;
+    height: 0;
+    border: 10px solid transparent;
+    border-top-color: $color-sheet-border;
+}
+
+/* creates the smaller  triangle */
+.flash:after, #guide:after {
+    content: "";
+    display: block; /* reduce the damage in FF3.0 */
+    position: absolute;
+    bottom: -20px; /* value = - border-top-width - border-bottom-width */
+    left: 1.5em; /* value = (:before left) + (:before border-left) - (:after border-left) */
+    width: 0;
+    height: 0;
+    border: 10px solid transparent;
+    border-top-color: $color-flash;
+}
+
+
+/* Form elements */
+div.field {
+    @include pie-clearfix;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    .checkbox label {
+        padding-left: 0.5em;
+    }
+    &.small div.label {
+        float: left;
+        clear: left;
+        width: 11em;
+        padding-top: 6px; // Make label align with text in fields
+        label {
+            font-weight: bold;
+        }
+    }
+    &.small div.control {
+        float: left;
+        width: 35em;
+        ul {
+            -moz-column-count: 2;
+            list-style: none;
+            margin: 0;
+            li {
+                padding: 0.5em;
+                @include border-radius(4px);
+                label {
+                    padding-left: 0.5em;
+                }
+            }
+            li.selected {
+                background-color: $color-radio-selected;
+            }
+        }
+    }
+    &.check div.label {
+        display: none;
+    }
+    &.wide div.label {
+        float: none;
+        clear: left;
+        label {
+            font-weight: bold;
+        }
+    }
+    &.wide div.control {
+        margin-top: 0.25em;
+        float: none;
+        clear: left;
+    }
+}
+div.error {
+    position: relative;
+    background-color: $color-title-h1;
+    color: #fff;
+    margin: 1em 0;
+    padding: 0.5em 1em;
+    width: 80%;
+    @include border-radius(3px);
+    &:after {
+        content: "";
+        display: block;
+        position: absolute;
+        bottom: -19px;
+        left: 12em;
+        width: 0;
+        height: 0;
+        border: 10px solid transparent;
+        border-top-color: $color-title-h1;
+    }
+}
+
+span.description {
+    font-size: 90%;
+    color: #666;
+}
+form {
+    margin-bottom: 1em;
+}
+input, textarea {
+    font-family: $font-input;
+}
+fieldset {
+    @include pie-clearfix;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+textarea {
+    width: 90%;
+    height: 10em;
+}
+
+textarea, input[type="text"], input[type="password"], input[type="email"], input[type="url"], select {
+    //display: block;
+    padding: 5px;
+    color: #444;
+    border: 1px solid $color-outline;
+    @include border-radius(3px);
+}
+
+textarea, input[type="text"], input[type="password"], input[type="email"], input[type="url"] {
+    -webkit-box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+       -moz-box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+    }
+
+input[type="text"], input[type="email"], input[type="password"], input[type="url"] {
+    width: 250px;
+    height: 20px;
+    margin-bottom: 5px;
+    background: #fff;
+}
+
+input[type="submit"] {
+    height: 27px;
+    border: 1px solid $color-outline;
+    font-family: $font-button;
+    font-size: 14px;
+    @include border-radius(3px);
+    padding: 0 12px;
+    background: #e6e6e6;
+    @include linear-gradient(color-stops(#e6e6e6, #d6d6d6));
+    font-weight: bold;
+    color: #444;
+    vertical-align: text-bottom;
+    &:hover {
+        //text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+        background: #d6d6d6;
+        @include linear-gradient(color-stops(#d6d6d6, #c6c6c6));
+        //color: #fff;
+    }
+}
+
+/* Tables */
+table.listing {
+    width: 100%;
+    border-top: 1px solid $color-listing-outline;
+    border-bottom: 1px solid $color-listing-outline;
+    border-collapse: collapse;
+    font-size: 85%;
+}
+
+.listing th, .listing td {
+    padding: 0.2em 1em;
+    text-align: left;
+    vertical-align: top;
+    border-left: 1px solid $color-listing-outline;
+    border-right: 1px solid $color-listing-outline;
+}
+
+.listing tr:nth-of-type(even) {
+    background: $color-listing-even;
+}
+
+.listing thead th {
+    background: $color-listing-background;
+    padding: 0.4em 1em 0.2em;
+}
+
+.listing thead th, .listing thead td {
+    border-bottom: 1px solid $color-listing-outline;
+}
+
+.listing tfoot th, .listing tfoot td {
+    border-top: 1px solid $color-listing-outline;
+    background: $color-listing-background;
+}
+
+.listing th.num, .listing td.num {
+    text-align: right;
 }

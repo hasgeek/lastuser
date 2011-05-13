@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Encryption
+from hashlib import md5
 # Datetime
 from datetime import datetime, date, timedelta
 # URL handling for OAuth2
@@ -30,11 +32,6 @@ from markdown import markdown
 
 
 # --- Status codes ------------------------------------------------------------
-
-class EMAIL:
-    UNVERIFIED  = 0 # Not verified
-    PENDING     = 1 # Pending; verification code sent
-    VERIFIED    = 2 # Verified
 
 
 # --- Globals -----------------------------------------------------------------
@@ -108,16 +105,30 @@ def make_redirect_url(url, **params):
     urlparts[3] = make_query_string(queryparts)
     return urlparse.urlunsplit(urlparts)
 
+def getuser(name):
+    if '@' in name:
+        useremail = UserEmail.query.filter_by(email=name).first()
+        if useremail:
+            return useremail.user
+        # No verified email id. Look for an unverified id; return first found
+        useremail = UserEmailClaim.query.filter_by(email=name).first()
+        if useremail:
+            return useremail.user
+        return None
+    else:
+        return User.query.filter_by(username=name).first()
+
 
 # --- Models ------------------------------------------------------------------
 
 class User(db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    userid = db.Column(db.String(22), nullable=False, default=newid)
-    fullname = db.Column(db.Unicode(80))
+    userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
+    fullname = db.Column(db.Unicode(80), default='', nullable=False)
     username = db.Column(db.Unicode(80), unique=True, nullable=True)
-    pw_hash = db.Column(db.String(80))
+    pw_hash = db.Column(db.String(80), nullable=True)
+    registered_date = db.Column(db.DateTime, default=db.func.now(), nullable=False)
 
     def __init__(self, password=None, **kwargs):
         self.password = password
@@ -132,51 +143,122 @@ class User(db.Model):
     password = property(fset=_set_password)
 
     def check_password(self, password):
+        if self.pw_hash is None:
+            return False
         return check_password_hash(self.pw_hash, password)
 
     def __repr__(self):
         return '<User %s "%s">' % (self.username or self.userid, self.fullname)
 
     def add_email(self, email, primary=False):
+        # TODO: Need better handling for primary email id
         useremail = UserEmail(user=self, email=email, primary=primary)
         db.session.add(useremail)
+        return useremail
 
     def del_email(self, email):
         setprimary=False
-        useremail = UserEmail.query.filter_by(user_id=self.id, email=email).first()
+        useremail = UserEmail.query.filter_by(user=self, email=email).first()
         if useremail:
             if useremail.primary:
                 setprimary=True
-            db.session.delete(useremail) # FIXME: Make this call work
+            db.session.delete(useremail)
         if setprimary:
             for emailob in UserEmail.query.filter_by(user_id=self.id).all():
                 if emailob is not useremail:
                     emailob.primary=True
                     break
 
+    @property
+    def email(self):
+        """
+        Returns primary email address for user.
+        """
+        # Look for a primary address
+        useremail = UserEmail.query.filter_by(user_id=self.id, primary=True).first()
+        if useremail:
+            return useremail.email
+        # No primary? Maybe there's one that's not set as primary?
+        useremail = UserEmail.query.filter_by(user_id=self.id).first()
+        if useremail:
+            # XXX: Mark at primary. This may or may not be saved depending on
+            # whether the request required a database commit.
+            useremail.primary=True
+            return useremail.email
+        # This user has no email address.
+        return None
+
 
 class UserEmail(db.Model):
     __tablename__ = 'useremail'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relation(User, primaryjoin=user_id == User.id)
-    email = db.Column(db.Unicode(80), unique=True, nullable=True)
+    user = db.relationship(User, primaryjoin=user_id == User.id)
+    _email = db.Column('email', db.Unicode(80), unique=True, nullable=False)
+    md5sum = db.Column(db.String(32), unique=True, nullable=False)
     primary = db.Column(db.Boolean, nullable=False, default=False)
-    status = db.Column(db.Integer, nullable=False, default=EMAIL.UNVERIFIED)
+    registered_date = db.Column(db.DateTime, default=db.func.now(), nullable=False)
+
+    def __init__(self, email, **kwargs):
+        super(UserEmail, self).__init__(**kwargs)
+        self._email = email
+        self.md5sum = md5(self._email).hexdigest()
+
+    @property
+    def email(self):
+        return self._email
+
+    email = db.synonym('_email', descriptor=email)
+
+
+class UserEmailClaim(db.Model):
+    __tablename__ = 'useremailclaim'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship(User, primaryjoin=user_id == User.id)
+    _email = db.Column('email', db.Unicode(80), nullable=True)
     verification_code = db.Column(db.String(44), nullable=False, default=newsecret)
+    registered_date = db.Column(db.DateTime, default=db.func.now(), nullable=False)
+    md5sum = db.Column(db.String(32), unique=True, nullable=False)
+
+    def __init__(self, email, **kwargs):
+        super(UserEmailClaim, self).__init__(**kwargs)
+        self.verification_code = newsecret()
+        self._email = email
+        self.md5sum = md5(self._email).hexdigest()
+
+    @property
+    def email(self):
+        return self._email
+
+    email = db.synonym('_email', descriptor=email)
+
+
+class PasswordResetRequest(db.Model):
+    __tablename__ = 'passwordresetrequest'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship(User, primaryjoin=user_id == User.id)
+    reset_code = db.Column(db.String(44), nullable=False, default=newsecret)
+    reset_date = db.Column(db.DateTime, default=db.func.now(), nullable=False)
+
+    def __init__(self, **kwargs):
+        super(PasswordResetRequest, self).__init__(**kwargs)
+        self.reset_code = newsecret()
 
 
 class UserExternalId(db.Model):
     __tablename__ = 'userexternalid'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relation(User, primaryjoin=user_id == User.id)
+    user = db.relationship(User, primaryjoin=user_id == User.id)
     service = db.Column(db.String(20), nullable=False)
     username = db.Column(db.Unicode(80), nullable=False)
     oauth_token = db.Column(db.String(250), nullable=True)
     oauth_token_secret = db.Column(db.String(250), nullable=True)
+    registered_date = db.Column(db.DateTime, default=db.func.now(), nullable=False)
 
-    __table_args__  = ( db.UniqueConstraint("service", "username"), {} )
+    __table_args__ = ( db.UniqueConstraint("service", "username"), {} )
 
 
 class Client(db.Model):
@@ -185,7 +267,7 @@ class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     #: User who owns this client
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relation(User, primaryjoin=user_id == User.id)
+    user = db.relationship(User, primaryjoin=user_id == User.id)
     #: Human-readable title
     title = db.Column(db.Unicode(250), nullable=False)
     #: Long description
@@ -194,8 +276,10 @@ class Client(db.Model):
     owner = db.Column(db.Unicode(250), nullable=False)
     #: Website
     website = db.Column(db.Unicode(250), nullable=False)
-    #: Callback URI
+    #: Redirect URI
     redirect_uri = db.Column(db.Unicode(250), nullable=False)
+    #: Service URI
+    service_uri = db.Column(db.Unicode(250), nullable=True)
     #: Active flag
     active = db.Column(db.Boolean, nullable=False, default=True)
     #: Read-only flag
@@ -205,10 +289,10 @@ class Client(db.Model):
     #: OAuth client secret
     secret = db.Column(db.String(44), nullable=False, default=newsecret)
     #: Audit fields - registered date
-    registered_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    registered_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
     #: Audit fields - updated date
     updated_date = db.Column(db.DateTime, nullable=False,
-        default=datetime.utcnow, onupdate=datetime.utcnow)
+        default=db.func.now(), onupdate=db.func.now())
     #: Trusted flag: trusted clients are authorized to access user data
     #: without user consent, but the user must still login and identify themself.
     #: When a single provider provides multiple services, each can be declared
@@ -216,18 +300,47 @@ class Client(db.Model):
     trusted = db.Column(db.Boolean, nullable=False, default=False)
 
 
+class Resource(db.Model):
+    """
+    Resources are provided by client applications. Other client applications
+    can request access to user data at resource servers by providing the
+    `name` as part of the requested `scope`.
+    """
+    __tablename__ = 'resource'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Unicode(20), unique=True, nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    client = db.relationship(Client, primaryjoin=client_id == Client.id)
+    title = db.Column(db.Unicode(250), nullable=False)
+    description = db.Column(db.Text, default='', nullable=False)
+
+
+class ResourceAction(db.Model):
+    """
+    Actions that can be performed on resources. There should always be at minimum
+    a 'read' action.
+    """
+    __tablename__ = 'resourceaction'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Unicode(20), unique=True, nullable=False)
+    resource_id = db.Column(db.Integer, db.ForeignKey('resource.id'), nullable=False)
+    resource = db.relationship(Resource, primaryjoin=resource_id == Resource.id)
+    title = db.Column(db.Unicode(250), nullable=False)
+    description = db.Column(db.Text, default='', nullable=False)
+
+
 class AuthCode(db.Model):
     """Short-lived authorization tokens."""
     __tablename__ = 'authcode'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relation(User, primaryjoin=user_id == User.id)
+    user = db.relationship(User, primaryjoin=user_id == User.id)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    client = db.relation(Client, primaryjoin=client_id == Client.id)
+    client = db.relationship(Client, primaryjoin=client_id == Client.id)
     code = db.Column(db.String(44), default=newsecret, nullable=False)
     _scope = db.Column('scope', db.Unicode(250), nullable=False)
     redirect_uri = db.Column(db.Unicode(250), nullable=False)
-    datetime = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    datetime = db.Column(db.DateTime, default=db.func.now(), nullable=False)
     used = db.Column(db.Boolean, default=False, nullable=False)
 
     @property
@@ -238,24 +351,26 @@ class AuthCode(db.Model):
     def scope(self, value):
         self._scope = u' '.join(value)
 
+    scope = db.synonym('_scope', descriptor=scope)
+
 
 class AuthToken(db.Model):
     """Access tokens for access to data."""
     __tablename__ = 'authtoken'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # For client-only
-    user = db.relation(User, primaryjoin=user_id == User.id)
+    user = db.relationship(User, primaryjoin=user_id == User.id)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    client = db.relation(Client, primaryjoin=client_id == Client.id)
+    client = db.relationship(Client, primaryjoin=client_id == Client.id)
     token = db.Column(db.String(22), default=newid, nullable=False, unique=True)
     token_type = db.Column(db.String(250), default='bearer', nullable=False) # 'bearer', 'mac' or a URL
     secret = db.Column(db.String(44), nullable=True)
     _algorithm = db.Column('algorithm', db.String(20), nullable=True)
     _scope = db.Column('scope', db.Unicode(250), nullable=False)
-    created_datetime = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_datetime = db.Column(db.DateTime, default=db.func.now(), nullable=False)
     validity = db.Column(db.Integer, nullable=False, default=0) # Validity period in seconds
     refresh_token = db.Column(db.String(22), default=newid, nullable=False)
-    updated_datetime = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_datetime = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now(), nullable=False)
 
     @property
     def scope(self):
@@ -264,6 +379,8 @@ class AuthToken(db.Model):
     @scope.setter
     def scope(self, value):
         self._scope = u' '.join(value)
+
+    scope = db.synonym('_scope', descriptor=scope)
 
     @property
     def algorithm(self):
@@ -279,6 +396,8 @@ class AuthToken(db.Model):
         else:
             raise ValueError, "Unrecognized algorithm '%s'" % value
 
+    algorithm = db.synonym('_algorithm', descriptor=algorithm)
+
 
 # --- Forms -------------------------------------------------------------------
 
@@ -287,19 +406,13 @@ class LoginForm(wtf.Form):
     password = wtf.PasswordField('Password', validators=[wtf.Required()])
     remember = wtf.BooleanField('Remember me')
 
-    def getuser(self, name):
-        if '@' in name:
-            return UserEmail.query.filter_by(email=name).first().user
-        else:
-            return User.query.filter_by(username=name).first()
-
     def validate_username(self, field):
-        existing = self.getuser(field.data)
+        existing = getuser(field.data)
         if existing is None:
             raise wtf.ValidationError, "User does not exist"
 
     def validate_password(self, field):
-        user = self.getuser(self.username.data)
+        user = getuser(self.username.data)
         if user is None or not user.check_password(field.data):
             raise wtf.ValidationError, "Invalid password"
         self.user = user
@@ -307,10 +420,10 @@ class LoginForm(wtf.Form):
 
 class RegisterForm(wtf.Form):
     fullname = wtf.TextField('Full name', validators=[wtf.Required()])
-    email = wtf.html5.EmailField('Email Address', validators=[wtf.Required(), wtf.Email()])
+    email = wtf.html5.EmailField('Email address', validators=[wtf.Required(), wtf.Email()])
     username = wtf.TextField('Username (optional)', validators=[wtf.Optional()])
     password = wtf.PasswordField('Password', validators=[wtf.Required()])
-    confirm_password = wtf.PasswordField('Confirm Password',
+    confirm_password = wtf.PasswordField('Confirm password',
                           validators=[wtf.Required(), wtf.EqualTo('password')])
     accept_rules = wtf.BooleanField('I accept the terms of service', validators=[wtf.Required()])
 
@@ -322,7 +435,23 @@ class RegisterForm(wtf.Form):
     def validate_email(self, field):
         existing = UserEmail.query.filter_by(email=field.data).first()
         if existing is not None:
-            raise wtf.ValidationError, "That email is already registered. Do you want to login?"
+            raise wtf.ValidationError, "That email address is already registered. Do you want to login instead?"
+
+
+class PasswordResetRequestForm(wtf.Form):
+    username = wtf.TextField('Username or Email', validators=[wtf.Required()])
+
+    def validate_username(self, field):
+        user = getuser(field.data)
+        if user is None:
+            raise wtf.ValidationError, "Could not find a user with that id"
+        self.user = user
+
+
+class PasswordResetForm(wtf.Form):
+    password = wtf.PasswordField('Password', validators=[wtf.Required()])
+    confirm_password = wtf.PasswordField('Confirm Password',
+                          validators=[wtf.Required(), wtf.EqualTo('password')])
 
 
 class AuthorizeForm(wtf.Form):
@@ -331,29 +460,48 @@ class AuthorizeForm(wtf.Form):
     """
     pass
 
+
 class RegisterClientForm(wtf.Form):
     """
     Register a new OAuth client application
     """
-    title = wtf.TextField('Application title', validators=[wtf.Required()])
-    description = wtf.TextAreaField('Description', validators=[wtf.Required()])
-    owner = wtf.TextField('Organization name', validators=[wtf.Required()])
-    website = wtf.html5.URLField('Application website', validators=[wtf.Required(), wtf.URL()])
-    redirect_uri = wtf.html5.URLField('Callback URI', validators=[wtf.Required(), wtf.URL()])
+    title = wtf.TextField('Application title', validators=[wtf.Required()],
+        description="The name of your application")
+    description = wtf.TextAreaField('Description', validators=[wtf.Required()],
+        description="A description to help users recognize your application")
+    owner = wtf.TextField('Organization name', validators=[wtf.Required()],
+        description="Name of the organization or individual who owns this application")
+    website = wtf.html5.URLField('Application website', validators=[wtf.Required(), wtf.URL()],
+        description="Website where users may access this application")
+    redirect_uri = wtf.html5.URLField('Redirect URI', validators=[wtf.Required(), wtf.URL()],
+        description="OAuth2 Redirect URI")
+    service_uri = wtf.html5.URLField('Service URI (optional)', validators=[wtf.Optional(), wtf.URL()],
+        description="LastUser resource provider Service URI")
     readonly = wtf.BooleanField('Read-only access', validators=[wtf.Required()])
 
-
-# --- OAuth server ------------------------------------------------------------
-
-# TODO: Define the server class here
 
 # --- Routes ------------------------------------------------------------------
 
 @app.before_request
 def lookup_current_user():
+    """
+    If there's a userid in the session, retrieve the user object and add
+    to the request namespace object g.
+    """
     g.user = None
     if 'userid' in session:
         g.user = User.query.filter_by(userid=session['userid']).first()
+
+
+def send_email_verify_link(useremail):
+    """
+    Mail a verification link to the user.
+    """
+    msg = Message(subject="Confirm your email address",
+        recipients=[useremail.email])
+    msg.body = render_template("emailverify.md", useremail=useremail)
+    msg.html = markdown(msg.body)
+    mail.send(msg)
 
 
 @app.route('/')
@@ -385,11 +533,16 @@ def login():
     return render_template('login.html', form=form)
 
 
+def logout_internal():
+    g.user = None
+    if 'userid' in session:
+        del session['userid']
+    session.permanent = False
+
+
 @app.route('/logout')
 def logout():
-    g.user = None
-    del session['userid']
-    session.permanent = False
+    logout_internal()
     flash('You are now logged out', category='info')
     if 'next' in request.args:
         return redirect(request.args['next'], code=303)
@@ -402,18 +555,107 @@ def register():
     form = RegisterForm()
     if form.validate_on_submit():
         user = User()
-        form.populate_obj(user)
-        user.add_email(form.email.data, primary=True)
+        user.fullname = form.fullname.data
+        if form.username.data:
+            user.username = form.username.data
+        user.password = form.password.data
+        useremail = UserEmailClaim(user=user, email=form.email.data)
         db.session.add(user)
+        db.session.add(useremail)
+        send_email_verify_link(useremail)
         db.session.commit()
         g.user = user # Not really required since we're not rendering a page
         session['userid'] = user.userid
-        flash('Yay! You are now one of us. Welcome aboard!', category='info')
+        flash("You are now one of us. Welcome aboard!", category='info')
         if 'next' in request.args:
             return redirect(request.args['next'], code=303)
         else:
             return redirect(url_for('index'), code=303)
     return render_template('register.html', form=form)
+
+
+@app.route('/confirm/<md5sum>/<secret>')
+def confirm_email(md5sum, secret):
+    emailclaim = UserEmailClaim.query.filter_by(md5sum=md5sum).first()
+    if emailclaim is not None:
+        # Claim exists
+        if emailclaim.verification_code == secret:
+            # Verification code matches
+            if g.user is None or g.user == emailclaim.user:
+                # Not logged in as someone else.
+                # Claim verified!
+                useremail = emailclaim.user.add_email(emailclaim.email)
+                db.session.delete(emailclaim)
+                db.session.commit()
+                return render_template('emailverified.html', user=emailclaim.user, useremail=useremail)
+            else:
+                # Logged in as someone else. Logout and ask them to login again
+                # Note that we don't need them to be logged in to verify a claim.
+                # Just that they shouldn't be logged in as someone else.
+                # FIXME: Why ask them to login again then?
+                logout_internal()
+                return redirect(url_for('login', next=request.url))
+        else:
+            # Verification code doesn't match
+            abort(401)
+    else:
+        # No such email claim
+        abort(404)
+
+
+@app.route('/reset', methods=['GET', 'POST'])
+def reset():
+    # User wants to reset password
+    # Ask for username or email, verify it, and send a reset code
+    form = PasswordResetRequestForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        user = form.user
+        if '@' in username:
+            # They provided an email address. Send reset email to that address
+            email = username
+        else:
+            # Send to their existing address
+            email = user.email
+        if not email:
+            # They don't have an email address. Now what?
+            # How does someone end up here?
+            return render_template('reset_noemail.html')
+        resetreq = PasswordResetRequest(user=user)
+        db.session.add(resetreq)
+        msg = Message(subject="Reset your password",
+            recipients=[email])
+        msg.body = render_template("emailreset.md", user=user, secret=resetreq.reset_code)
+        msg.html = markdown(msg.body)
+        mail.send(msg)
+        db.session.commit()
+        return render_template('reset_emailsent.html', email=email)
+
+    return render_template('reset.html', form=form)
+
+
+@app.route('/reset/<userid>/<secret>', methods=['GET', 'POST'])
+def reset_email(userid, secret):
+    logout_internal()
+    user = User.query.filter_by(userid=userid).first()
+    if not user:
+        abort(404)
+    resetreq = PasswordResetRequest.query.filter_by(user=user, reset_code=secret).first()
+    if not resetreq:
+        return Response(render_template('reset_invalid.html'), status=404)
+    if resetreq.reset_date < datetime.utcnow() - timedelta(days=1):
+        # Reset code has expired (> 24 hours). Delete it
+        db.session.delete(resetreq)
+        db.session.commit()
+        return render_template('reset_invalid.html')
+
+    # Reset code is valid. Now ask user to choose a new password
+    form = PasswordResetForm()
+    if form.validate_on_submit():
+        user.password = form.password.data
+        db.session.commit()
+        return render_template('reset_complete.html', user=user)
+    return render_template('reset_choosepassword.html', user=user, form=form)
 
 
 @app.route('/clients')
@@ -620,10 +862,10 @@ def oauth_make_token(user, client, scope):
     return token
 
 
-def oauth_token_success(token):
-    params = dict(access_token = token.token,
-                  token_type = token.token_type,
-                  scope = u' '.join(token.scope))
+def oauth_token_success(token, **params):
+    params['access_token'] = token.token
+    params['token_type'] = token.token_type
+    params['scope'] = u' '.join(token.scope)
     if token.validity:
         params['expires_in'] = token.validity
         params['refresh_token'] = token.refresh_token
@@ -699,10 +941,7 @@ def oauth_token():
         # Validations 4.2: Are username and password provided and correct?
         if not username or not password:
             return oauth_token_error('invalid_request', "Username or password not provided")
-        if '@' in username:
-            user = UserEmail.query.filter_by(email=username).first().user
-        else:
-            user = User.query.filter_by(username=username).first()
+        user = getuser(username)
         if not user:
             return oauth_token_error('invalid_client', "No such user") # XXX: invalid_client doesn't seem right
         if not user.check_password(password):
@@ -737,7 +976,7 @@ if app.config['ADMINS']:
     mail_handler = logging.handlers.SMTPHandler(app.config['MAIL_SERVER'],
         app.config['DEFAULT_MAIL_SENDER'][1],
         app.config['ADMINS'],
-        'hasgeek-jobs failure',
+        'lastuser failure',
         credentials = (app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD']))
     mail_handler.setLevel(logging.ERROR)
     app.logger.addHandler(mail_handler)

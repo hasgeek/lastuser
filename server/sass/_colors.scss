@@ -5,5 +5,19 @@ $color-sheet: #fff;
 $color-sheet-border: #afafaf;
 $color-post-date: gray;
 
+$color-title-h1: #df5e0e;
+$color-title-h2: #816894;
+$color-title-h3: #f0a40c;
+
+$color-flash: #ffffa2;
+
+$color-highlight: #f0a40c;
+
+$color-link: $color-highlight;
+$color-radio-selected: $color-highlight;
 $color-outline: #b7b7b7;
 $color-outline-thin: #e8e8e8;
+
+$color-listing-background: $color-outline-thin;
+$color-listing-outline: $color-outline;
+$color-listing-even: rgba(232, 232, 232, 0.5);
