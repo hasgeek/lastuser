@@ -276,14 +276,45 @@ body {
 }
 
 header, #main, footer {
-  padding: 0 1em;
   max-width: 960px;
   margin-left: auto;
   margin-right: auto;
 }
 
-header, footer {
-  padding-top: 1em;
+header, #main {
+  padding: 1em 1em 0;
+  position: relative;
+}
+
+header {
+  border-bottom: 1px solid #b7b7b7;
+}
+
+html, body {
+  height: 100%;
+}
+
+#container {
+  clear: both;
+  min-height: 100%;
+  height: auto !important;
+  height: 100%;
+  margin-bottom: -45px;
+}
+#container #main_footer {
+  height: 45px;
+}
+
+footer {
+  clear: both;
+  position: relative;
+  height: 45px;
+}
+
+footer #footer_content {
+  text-align: center;
+  font-size: 80%;
+  border-top: 1px solid #b7b7b7;
 }
 
 #logo {
@@ -295,7 +326,6 @@ header, footer {
   background-position: 100 100;
   width: 100px;
   height: 100px;
-  margin-bottom: 1em;
 }
 #logo a {
   display: block;
@@ -338,13 +368,52 @@ dl dd {
   margin-bottom: 1em;
 }
 
+img.avatar {
+  padding: 3px;
+  border: 1px solid #b7b7b7;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  -o-border-radius: 3px;
+  -ms-border-radius: 3px;
+  -khtml-border-radius: 3px;
+  border-radius: 3px;
+  -moz-box-shadow: rgba(0, 0, 0, 0.1) 0 1px 2px 0;
+  -webkit-box-shadow: rgba(0, 0, 0, 0.1) 0 1px 2px 0;
+  -o-box-shadow: rgba(0, 0, 0, 0.1) 0 1px 2px 0;
+  box-shadow: rgba(0, 0, 0, 0.1) 0 1px 2px 0;
+}
+
+.usertools {
+  list-style: none;
+  position: absolute;
+  right: 1em;
+  bottom: 0;
+  margin: 0;
+  font-size: 80%;
+}
+.usertools li {
+  float: left;
+  padding: 0.25em 0.5em;
+  border-right: 1px solid #e8e8e8;
+}
+.usertools li a {
+  border-bottom: 0;
+}
+.usertools li.profile {
+  font-weight: bold;
+}
+.usertools li:last-child {
+  border-right: 0;
+  padding-right: 0;
+}
+
 /* Flash messages */
 .flash, #guide {
   background: #ffffa2;
   position: relative;
-  margin-left: auto;
-  margin-right: auto;
-  margin-top: 1em;
+  margin-left: -1em;
+  margin-right: -1em;
+  margin-top: 0;
   margin-bottom: 1em;
   border: 1px solid #afafaf;
   -moz-border-radius: 4px;
@@ -450,7 +519,7 @@ div.field.small div.control ul li label {
 div.field.small div.control ul li.selected {
   background-color: #f0a40c;
 }
-div.field.check div.label {
+div.field.check div.label, div.field.wide div.label.submit {
   display: none;
 }
 div.field.wide div.label {
@@ -490,6 +559,10 @@ div.error:after {
   height: 0;
   border: 10px solid transparent;
   border-top-color: #df5e0e;
+}
+
+span.sidetext {
+  padding-left: 0.5em;
 }
 
 span.description {

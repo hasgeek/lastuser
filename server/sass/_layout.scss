@@ -4,19 +4,29 @@ body {
 }
 
 header, #main, footer {
-    padding: 0 1em;
     max-width: 960px;
     margin-left: auto;
     margin-right: auto;
 }
 
-header, footer {
-    padding-top: 1em;
+header, #main {
+    padding: 1em 1em 0;
+    position: relative;
+}
+
+header {
+    border-bottom: 1px solid $color-outline;
+}
+
+@include sticky-footer(45px, "#container", "#main_footer", "footer");
+footer #footer_content {
+    text-align: center;
+    font-size: 80%;
+    border-top: 1px solid $color-outline;
 }
 
 #logo {
     @include replace-text-with-dimensions('logo.png', 100, 100);
-    margin-bottom: 1em;
     a {
         display: block;
         width: 100%;
@@ -59,15 +69,45 @@ dl dd {
     margin-bottom: 1em;
 }
 
-/* Flash messages */
+img.avatar {
+    padding: 3px;
+    border: 1px solid $color-outline;
+    @include border-radius(3px);
+    @include box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
+}
 
+.usertools {
+    list-style: none;
+    position: absolute;
+    right: 1em;
+    bottom: 0;
+    margin: 0;
+    font-size: 80%;
+    li {
+        float: left;
+        padding: 0.25em 0.5em;
+        border-right: 1px solid $color-outline-thin;
+        a {
+            border-bottom: 0;
+        }
+        &.profile {
+            font-weight: bold;
+        }
+        &:last-child {
+            border-right: 0;
+            padding-right: 0;
+        }
+    }
+}
+
+/* Flash messages */
 .flash, #guide {
     background: $color-flash;
     position: relative;
     margin: {
-        left: auto;
-        right: auto;
-        top: 1em;
+        left: -1em;
+        right: -1em;
+        top: 0;
         bottom: 1em;
     }
     border: 1px solid $color-sheet-border;
@@ -147,7 +187,8 @@ div.field {
             }
         }
     }
-    &.check div.label {
+    &.check div.label,
+    &.wide div.label.submit {
         display: none;
     }
     &.wide div.label {
@@ -183,7 +224,9 @@ div.error {
         border-top-color: $color-title-h1;
     }
 }
-
+span.sidetext {
+    padding-left: 0.5em;
+}
 span.description {
     font-size: 90%;
     color: #666;

@@ -1,4 +1,4 @@
-{% macro renderfield(field, css_class="", widget_css_class=None, autofocus=False, nolabeldesc=False) -%}
+{% macro renderfield(field, css_class="", widget_css_class=None, autofocus=False, nolabeldesc=False, sidetext=None) -%}
 {% if field.errors -%}
   {% for error in field.errors %}<div class="error">{{ error }}</div>{% endfor %}
 {% endif %}
@@ -7,9 +7,24 @@
     <div class="label">&nbsp;</div><div class="control checkbox">{% if widget_css_class %}{{ field(class=widget_css_class) }}{% else %}{{ field }}{% endif %} {{ field.label }}</div>
   {% else %}
     {% if not nolabeldesc %}<div class="label">{{ field.label }}</div>{% endif %}
-    <div class="control">{% if autofocus %}{% if widget_css_class %}{{ field(autofocus="autofocus", class=widget_css_class) }}{% else %}{{ field(autofocus="autofocus") }}{% endif %}{% else %}{% if widget_css_class %}{{ field(class=widget_css_class) }}{% else %}{{ field }}{% endif %}{% endif %}{% if not nolabeldesc %}<br/>
+    <div class="control">{% if autofocus %}{% if widget_css_class %}{{ field(autofocus="autofocus", class=widget_css_class) }}{% else %}{{ field(autofocus="autofocus") }}{% endif %}{% else %}{% if widget_css_class %}{{ field(class=widget_css_class) }}{% else %}{{ field }}{% endif %}{% endif %}{% if not nolabeldesc %}{% if sidetext %} <span class="sidetext">{{ sidetext|safe }}</span>{% endif %}<br/>
       <span class="description">{{ field.description }}</span>{% endif %}</div>
   {% endif %}
+</div>
+{% endmacro %}
+
+{% macro rendersubmit(buttons=[], css_class="") %}
+<div class="field{% if css_class %} {{ css_class}}{% endif %}">
+  <div class="label submit">&nbsp;</div>
+  <div class="control submit">
+    {% for name, value, widget_class in buttons %}
+      <input type="submit"
+        {%- if name %} name="{{ name|e }}"{% else %} {% endif -%}
+        value="{{ value|e }}"
+        {% if widget_class %} class="{{ widget_class|e }}" {% else %} {% endif -%}
+        />
+    {% endfor %}
+  </div>
 </div>
 {% endmacro %}
 

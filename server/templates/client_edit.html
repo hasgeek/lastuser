@@ -1,11 +1,11 @@
 {% extends "inc/layout.html" %}
-{% from "inc/forms.html" import renderfield %}
-{% block title %}Edit client application{% endblock %}
+{% from "inc/forms.html" import renderfield, rendersubmit %}
+{% block title %}{% if edit %}Edit{% else %}Register a new{% endif %} application{% endblock %}
 
 {% block content %}
-<form id="newclient" method="POST">
+<form id="client_new" method="POST">
   <input type="hidden" name="_charset_"/>
-  <input type="hidden" name="form.id" value="newclient"/>
+  <input type="hidden" name="form.id" value="client_new"/>
   {{ form.csrf() }}
   {% if form.csrf.errors %}
     {% for error in form.csrf.errors %}<div class="error">{{ error }}</div>{% endfor %}
@@ -17,6 +17,10 @@
   {{ renderfield(form.redirect_uri, "small") }}
   {{ renderfield(form.service_uri, "small") }}
   {{ renderfield(form.readonly, "small") }}
-  <input type="submit" value="Register client application"/>
+  {% if edit %}
+    {{ rendersubmit([(None, "Save changes", None)], "small") }}
+  {% else %}
+    {{ rendersubmit([(None, "Register application", None)], "small") }}
+  {% endif %}
 </form>
 {% endblock %}

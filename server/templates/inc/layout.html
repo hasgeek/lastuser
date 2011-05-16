@@ -37,21 +37,33 @@
   <div id="container" class="container">
     <header>
       <div id="logo"><a href="{{ url_for('index')|e }}">Home</a></div>
+      {% if g.user -%}
+        <ul class="usertools">
+          <li class="profile"><a href="{{ url_for('profile', profileid=g.user.profileid())|e }}">{{ g.user.fullname }}</a></li>
+          <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        </ul>
+      {% endif %}      
+      {% block header %}{% endblock %}
+    </header>
+    <div id="main">
+      {% block flashmessages %}
       <div id="flash-messages">
         {%- for category, msg in get_flashed_messages(with_categories=true) %}
           <div class="flash flash-{{ category }}"><div class="flashmessage">{{ msg }}</div></div>
         {%- endfor %}
       </div>
-      {% block header %}<h1>{{ self.title()|e }}</h1>{% endblock %}
-    </header>
-    <div id="main">
+      {% endblock %}
+      {% block heading %}<h1>{{ self.title()|e }}</h1>{% endblock %}
       {% block content %}{% endblock %}
     </div>
     <div id="main_footer"></div>
   </div> <!-- end of #container -->
   <footer>
-    {% block footer %}
-    {% endblock %}
+    <div id="footer_content">
+      {% block footer %}
+        {{ config['MESSAGE_FOOTER'] }}
+      {% endblock %}
+    </div>
   </footer>
 
   {% assets "js_all" -%}

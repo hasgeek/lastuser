@@ -1,8 +1,12 @@
 {% extends "inc/layout.html" %}
-{% from "inc/forms.html" import renderfield %}
+{% from "inc/forms.html" import renderfield, rendersubmit %}
 {% block title %}Login{% endblock %}
 
 {% block content %}
+<p>
+  <a href="{{ url_for('login_twitter', next=request.args.get('next')) }}"><img src="/static/img/login/twitter.png"/></a>
+</p>
+<h2>Or, use a HasGeek account</h2>
 <form id="login" method="POST">
   <input type="hidden" name="_charset_"/>
   <input type="hidden" name="form.id" value="login"/>
@@ -10,14 +14,9 @@
   {% if form.csrf.errors %}
     {% for error in form.csrf.errors %}<div class="error">{{ error }}</div>{% endfor %}
   {% endif %}
-  {{ renderfield(form.username, "small", autofocus=True) }}
-  {{ renderfield(form.password, "small") }}
-  <div class="field small" id="forgot-password">
-    <div class="label">&nbsp;</div><div class="control">
-    <a href="{{ url_for('reset') }}">Forgot password?</a>
-    </div>
-  </div>
-  {{ renderfield(form.remember, "check") }}
-  <input type="submit" value="Login"/>
+  {{ renderfield(form.username, "small", autofocus=True, sidetext='<a href="' + url_for('register', next=request.args.get('next', request.url)) + '">Register a new account?</a>') }}
+  {{ renderfield(form.password, "small", sidetext='<a href="' + url_for('reset') + '">Forgot password?</a>') }}
+  {{ renderfield(form.remember, "small") }}
+  {{ rendersubmit([(None, "Login", None)], "small") }}
 </form>
 {% endblock %}

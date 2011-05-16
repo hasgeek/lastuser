@@ -33,3 +33,10 @@ USE_SSL=False
 #: Twitter integration
 OAUTH_TWITTER_KEY=''
 OAUTH_TWITTER_SECRET=''
+#: Recaptcha for the registration form
+RECAPTCHA_USE_SSL=USE_SSL
+RECAPTCHA_PUBLIC_KEY=''
+RECAPTCHA_PRIVATE_KEY=''
+RECAPTCHA_OPTIONS=''
+#: Messages (in markdown)
+MESSAGE_FOOTER='Copyright &copy; HasGeek. Powered by LastUser, open source software from HasGeek.'

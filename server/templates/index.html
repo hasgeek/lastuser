@@ -4,7 +4,7 @@
   <meta name="DC.title" content="{{ config['SITE_TITLE'] }}"/>
 {%- endblock %}
 
-{% block header %}
+{% block heading %}
 <h1>{{ config['SITE_TITLE']|e }}</h1>
 {% endblock %}
 
@@ -12,7 +12,7 @@
 <p>
   This is lastuser.
   {% if g.user -%}
-    Hello, {{ g.user.fullname }}! <a href="{{ url_for('logout') }}">Logout</a>?
+    Hello, <a href="{{ url_for('profile', profileid=g.user.profileid())|e }}">{{ g.user.fullname }}</a>! <a href="{{ url_for('logout') }}">Logout</a>?
   {%- else -%}
     <a href="{{ url_for('login') }}">Login</a> or <a href="{{ url_for('register') }}">Register</a>?
   {%- endif %}
@@ -21,6 +21,6 @@
   Other options:
 </p>
 <ol>
-  <li><a href="{{ url_for('clientlist') }}">Client applications</a></li>
+  <li><a href="{{ url_for('client_list') }}">Client applications</a></li>
 </ol>
 {% endblock %}

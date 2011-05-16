@@ -1,0 +1,26 @@
+{% extends "inc/layout.html" %}
+{% block title %}Profile: {{ user.fullname|e }}{% endblock %}
+{% block heading %}
+{% if user.email %}
+  <img class="avatar" align="right" src="http://www.gravatar.com/avatar/{{ user.email.md5sum }}" width="80" height="80" alt="Avatar"/>
+{% endif %}
+<h1>{{ self.title()|e }}</h1>
+{% endblock %}
+{% block content %}
+<dl>
+  {%- if user.username %}
+    <dt>Username</dt>
+    <dd>{{ user.username }}</dd>
+  {%- endif %}
+  <dt>Full name</dt>
+  <dd>{{ user.fullname }}</dd>
+  <dt>Userid</dt>
+  <dd>{{ user.userid }}</dd>
+  {%- if user.email %}
+    <dt>Email MD5</dt>
+    <dd>{{ user.email.md5sum }}</dd>
+  {%- endif %}
+  <dt>Registered date</dt>
+  <dd>{{ user.registered_date }}</dd>
+</dl>
+{% endblock %}

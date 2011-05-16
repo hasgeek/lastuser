@@ -1,5 +1,5 @@
 {% extends "inc/layout.html" %}
-{% from "inc/forms.html" import renderfield %}
+{% from "inc/forms.html" import renderfield, rendersubmit %}
 {% block title %}Register an account{% endblock %}
 
 {% block content %}
@@ -15,7 +15,8 @@
   {{ renderfield(form.email, "small") }}
   {{ renderfield(form.password, "small") }}
   {{ renderfield(form.confirm_password, "small") }}
-  {{ renderfield(form.accept_rules, "check") }}
-  <input type="submit" value="Register"/>
+  {{ renderfield(form.accept_rules, "small") }}
+  {{ renderfield(form.recaptcha, "small") }}
+  {{ rendersubmit([(None, "Register", None)], "small") }}
 </form>
 {% endblock %}

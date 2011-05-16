@@ -17,12 +17,12 @@ import uuid
 from base64 import urlsafe_b64encode
 # Flask and extensions
 from flask import (Flask, render_template, g, flash, request, redirect,
-                   session, url_for, Response, jsonify)
+                   session, url_for, Response, jsonify, abort, Markup)
 from flaskext.sqlalchemy import SQLAlchemy
 import flaskext.wtf as wtf
 from flaskext.mail import Mail, Message
 from flaskext.assets import Environment, Bundle
-from flaskext.oauth import OAuth # OAuth 1.0a
+from flaskext.oauth import OAuth, OAuthException # OAuth 1.0a
 # Werkzeug, Flask's base library
 from werkzeug import generate_password_hash, check_password_hash
 # OAuth 1.0a
@@ -34,22 +34,33 @@ from markdown import markdown
 # --- Status codes ------------------------------------------------------------
 
 
-# --- Globals -----------------------------------------------------------------
+# --- Globals and settings ----------------------------------------------------
 
 app = Flask(__name__)
+app.config.from_object(__name__)
+try:
+    app.config.from_object('settings')
+except ImportError:
+    import sys
+    print >> sys.stderr, "Please create a settings.py with the necessary settings. See settings-sample.py."
+    sys.exit()
+
 db = SQLAlchemy(app)
 assets = Environment(app)
-mail = Mail()
-# OAuth handlers
+mail = Mail(app)
+
+# OAuth 1.0a handlers
 oauth = OAuth()
 twitter = oauth.remote_app('twitter',
     base_url='http://api.twitter.com/1/',
     request_token_url='http://api.twitter.com/oauth/request_token',
     access_token_url='http://api.twitter.com/oauth/access_token',
     authorize_url='http://api.twitter.com/oauth/authenticate',
-    consumer_key='',    # Unknown at this stage
-    consumer_secret='', # Also unknown at this stage
+    consumer_key=app.config.get('OAUTH_TWITTER_KEY'),
+    consumer_secret=app.config.get('OAUTH_TWITTER_SECRET'),
 )
+
+
 
 # --- Assets ------------------------------------------------------------------
 
@@ -70,7 +81,7 @@ def requires_login(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if g.user is None:
-            flash(u'You need to be logged in for this page.')
+            flash(u"You need to be logged in for that page")
             return redirect(url_for('login', next=request.url))
         return f(*args, **kwargs)
     return decorated_function
@@ -150,6 +161,12 @@ class User(db.Model):
     def __repr__(self):
         return '<User %s "%s">' % (self.username or self.userid, self.fullname)
 
+    def profileid(self):
+        if self.username:
+            return self.username
+        else:
+            return self.userid
+
     def add_email(self, email, primary=False):
         # TODO: Need better handling for primary email id
         useremail = UserEmail(user=self, email=email, primary=primary)
@@ -177,14 +194,14 @@ class User(db.Model):
         # Look for a primary address
         useremail = UserEmail.query.filter_by(user_id=self.id, primary=True).first()
         if useremail:
-            return useremail.email
+            return useremail
         # No primary? Maybe there's one that's not set as primary?
         useremail = UserEmail.query.filter_by(user_id=self.id).first()
         if useremail:
             # XXX: Mark at primary. This may or may not be saved depending on
-            # whether the request required a database commit.
+            # whether the request ended in a database commit.
             useremail.primary=True
-            return useremail.email
+            return useremail
         # This user has no email address.
         return None
 
@@ -209,6 +226,15 @@ class UserEmail(db.Model):
         return self._email
 
     email = db.synonym('_email', descriptor=email)
+
+    def __repr__(self):
+        return u'<UserEmail %s of user %s>' % (self.email, repr(self.user))
+
+    def __unicode__(self):
+        return unicode(self.email)
+
+    def __str__(self):
+        return str(self.__unicode__())
 
 
 class UserEmailClaim(db.Model):
@@ -253,12 +279,13 @@ class UserExternalId(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id)
     service = db.Column(db.String(20), nullable=False)
-    username = db.Column(db.Unicode(80), nullable=False)
+    userid = db.Column(db.String(80), nullable=False)
+    username = db.Column(db.Unicode(80), nullable=True)
     oauth_token = db.Column(db.String(250), nullable=True)
     oauth_token_secret = db.Column(db.String(250), nullable=True)
     registered_date = db.Column(db.DateTime, default=db.func.now(), nullable=False)
 
-    __table_args__ = ( db.UniqueConstraint("service", "username"), {} )
+    __table_args__ = ( db.UniqueConstraint("service", "userid"), {} )
 
 
 class Client(db.Model):
@@ -426,6 +453,8 @@ class RegisterForm(wtf.Form):
     confirm_password = wtf.PasswordField('Confirm password',
                           validators=[wtf.Required(), wtf.EqualTo('password')])
     accept_rules = wtf.BooleanField('I accept the terms of service', validators=[wtf.Required()])
+    recaptcha = wtf.RecaptchaField('Are you human?',
+        description="Type both words. Our apologies for the inconvenience")
 
     def validate_username(self, field):
         existing = User.query.filter_by(username=field.data).first()
@@ -435,7 +464,10 @@ class RegisterForm(wtf.Form):
     def validate_email(self, field):
         existing = UserEmail.query.filter_by(email=field.data).first()
         if existing is not None:
-            raise wtf.ValidationError, "That email address is already registered. Do you want to login instead?"
+            raise wtf.ValidationError, Markup(
+                'This email address is already registered. Do you want to <a href="%s">login</a> instead?'
+                % url_for('login')
+                )
 
 
 class PasswordResetRequestForm(wtf.Form):
@@ -449,8 +481,8 @@ class PasswordResetRequestForm(wtf.Form):
 
 
 class PasswordResetForm(wtf.Form):
-    password = wtf.PasswordField('Password', validators=[wtf.Required()])
-    confirm_password = wtf.PasswordField('Confirm Password',
+    password = wtf.PasswordField('New password', validators=[wtf.Required()])
+    confirm_password = wtf.PasswordField('Confirm password',
                           validators=[wtf.Required(), wtf.EqualTo('password')])
 
 
@@ -477,7 +509,7 @@ class RegisterClientForm(wtf.Form):
         description="OAuth2 Redirect URI")
     service_uri = wtf.html5.URLField('Service URI (optional)', validators=[wtf.Optional(), wtf.URL()],
         description="LastUser resource provider Service URI")
-    readonly = wtf.BooleanField('Read-only access', validators=[wtf.Required()])
+    readonly = wtf.BooleanField('Read-only access')
 
 
 # --- Routes ------------------------------------------------------------------
@@ -514,13 +546,17 @@ def favicon():
     return redirect(url_for('static', filename='favicon.ico'), code=301)
 
 
+def login_internal(user):
+    g.user = user
+    session['userid'] = user.userid
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = form.user
-        g.user = user
-        session['userid'] = user.userid
+        login_internal(user)
         if form.remember.data:
             session.permanent = True
         else:
@@ -537,6 +573,8 @@ def logout_internal():
     g.user = None
     if 'userid' in session:
         del session['userid']
+    if 'userid_twitter' in session:
+        del session['userid_twitter']
     session.permanent = False
 
 
@@ -550,22 +588,24 @@ def logout():
         return redirect(url_for('index'), code=303)
 
 
+def register_internal(username, fullname, password):
+    user = User(username=username, fullname=fullname, password=password)
+    db.session.add(user)
+    return user
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
-        user = User()
-        user.fullname = form.fullname.data
+        user = register_internal(None, form.fullname.data, form.password.data)
         if form.username.data:
             user.username = form.username.data
-        user.password = form.password.data
         useremail = UserEmailClaim(user=user, email=form.email.data)
-        db.session.add(user)
         db.session.add(useremail)
         send_email_verify_link(useremail)
         db.session.commit()
-        g.user = user # Not really required since we're not rendering a page
-        session['userid'] = user.userid
+        login_internal(user)
         flash("You are now one of us. Welcome aboard!", category='info')
         if 'next' in request.args:
             return redirect(request.args['next'], code=303)
@@ -597,7 +637,7 @@ def confirm_email(md5sum, secret):
                 return redirect(url_for('login', next=request.url))
         else:
             # Verification code doesn't match
-            abort(401)
+            abort(403)
     else:
         # No such email claim
         abort(404)
@@ -616,7 +656,8 @@ def reset():
             email = username
         else:
             # Send to their existing address
-            email = user.email
+            # User.email is a UserEmail object
+            email = unicode(user.email)
         if not email:
             # They don't have an email address. Now what?
             # How does someone end up here?
@@ -642,7 +683,7 @@ def reset_email(userid, secret):
         abort(404)
     resetreq = PasswordResetRequest.query.filter_by(user=user, reset_code=secret).first()
     if not resetreq:
-        return Response(render_template('reset_invalid.html'), status=404)
+        return render_template('reset_invalid.html'), 404
     if resetreq.reset_date < datetime.utcnow() - timedelta(days=1):
         # Reset code has expired (> 24 hours). Delete it
         db.session.delete(resetreq)
@@ -658,14 +699,14 @@ def reset_email(userid, secret):
     return render_template('reset_choosepassword.html', user=user, form=form)
 
 
-@app.route('/clients')
-def clientlist():
-    return render_template('clientlist.html', clients=Client.query.all())
+@app.route('/apps')
+def client_list():
+    return render_template('client_list.html', clients=Client.query.all())
 
 
-@app.route('/clients/new', methods=['GET', 'POST'])
+@app.route('/apps/new', methods=['GET', 'POST'])
 @requires_login
-def newclient():
+def client_new():
     form = RegisterClientForm()
     if form.validate_on_submit():
         client = Client()
@@ -674,46 +715,99 @@ def newclient():
         client.trusted = False
         db.session.add(client)
         db.session.commit()
-        return redirect(url_for('clientinfo', key=client.key), code=303)
-    return render_template('editclient.html', form=form)
+        return redirect(url_for('client_info', key=client.key), code=303)
+    return render_template('client_edit.html', form=form)
 
 
-@app.route('/clients/<key>')
-def clientinfo(key):
+@app.route('/apps/<key>')
+def client_info(key):
     client = Client.query.filter_by(key=key).first()
     if not client:
         abort(404)
-    return render_template('clientinfo.html', client=client)
+    return render_template('client_info.html', client=client)
+
+@app.route('/apps/<key>/edit', methods=['GET', 'POST'])
+def client_edit(key):
+    client = Client.query.filter_by(key=key).first()
+    if not client:
+        abort(404)
+    if client.user != g.user:
+        abort(403)
+    form = RegisterClientForm()
+    form.title.data = client.title
+    form.description.data = client.description
+    form.owner.data = client.owner
+    form.website.data = client.website
+    form.redirect_uri.data = client.redirect_uri
+    form.service_uri.data = client.service_uri
+    form.readonly.data = client.readonly
+    if form.validate_on_submit():
+        form.populate_obj(client)
+        db.session.commit()
+        return redirect(url_for('client_info', key=client.key), code=303)
+    return render_template('client_edit.html', form=form, edit=True)
 
 
 # --- OAuth client routes -----------------------------------------------------
 
+def get_extid_token(service):
+    userid = session.get('userid_%s' % service)
+    if userid:
+        extid = UserExternalId.query.filter_by(service, userid).first()
+        if extid:
+            return {'oauth_token': extid.oauth_token,
+                    'oauth_token_secret': extid.oauth_token_secret}
+    return None
+
+
 @twitter.tokengetter
 def get_twitter_token():
-    # TODO: Use UserExternalId model instead
-    return session.get('twitter_token')
+    return get_extid_token('twitter')
+
 
 @app.route('/login/twitter')
 def login_twitter():
-    return twitter.authorize(callback=url_for('login_twitter_authorized',
-        next=request.args.get('next') or request.referrer or None))
+    next_url = request.args.get('next') or request.referrer or None
+    try:
+        return twitter.authorize(callback=url_for('login_twitter_authorized',
+            next=next_url))
+    except OAuthException, e:
+        flash("Twitter login failed: %s" % unicode(e), category="error")
+        next_url = next_url or url_for('index')
+        return redirect(next_url)
+
 
 @app.route('/login/twitter/callback')
 @twitter.authorized_handler
 def login_twitter_authorized(resp):
-    # TODO: Use UserExternalId instead of session
     next_url = request.args.get('next') or url_for('index')
     if resp is None:
         flash(u'You denied the request to sign in.')
         return redirect(next_url)
 
-    session['twitter_token'] = (
-        resp['oauth_token'],
-        resp['oauth_token_secret']
-    )
-    session['twitter_user'] = resp['screen_name']
+    extid = UserExternalId.query.filter_by(service='twitter', userid=resp['user_id']).first()
+    if extid is not None:
+        extid.username = resp['screen_name']
+        extid.oauth_token = resp['oauth_token']
+        extid.oauth_token_secret = resp['oauth_token_secret']
+        db.session.commit()
+        login_internal(extid.user)
+        session['userid_twitter'] = resp['user_id']
+        flash('You have logged in as %s' % resp['screen_name'])
+    else:
+        user = register_internal(None, resp['screen_name'], None)
+        extid = UserExternalId(user = user,
+                               service = 'twitter',
+                               userid = resp['user_id'],
+                               username = resp['screen_name'],
+                               oauth_token = resp['oauth_token'],
+                               oauth_token_secret = resp['oauth_token_secret'])
+        db.session.add(extid)
+        db.session.commit()
+        login_internal(user)
+        session['userid_twitter'] = resp['user_id']
+        flash('You have logged in as %s. This is your first time here' % resp['screen_name'])
 
-    flash('You were signed in as %s' % resp['screen_name'])
     return redirect(next_url)
 
 
@@ -723,7 +817,7 @@ def oauth_auth_403(reason):
     """
     Returns 403 errors for /auth
     """
-    return Response(render_template('oauth403.html', reason=reason), 403)
+    return render_template('oauth403.html', reason=reason), 403
 
 
 def oauth_make_auth_code(client, scope, redirect_uri):
@@ -952,20 +1046,60 @@ def oauth_token():
         return oauth_token_success(token)
 
 
-# --- Settings ----------------------------------------------------------------
+# --- Error handlers ----------------------------------------------------------
 
-app.config.from_object(__name__)
-try:
-    app.config.from_object('settings')
-except ImportError:
-    import sys
-    print >> sys.stderr, "Please create a settings.py with the necessary settings. See settings-sample.py."
-    print >> sys.stderr, "You may use the site without these settings, but some features may not work."
+@app.errorhandler(403)
+def error_403(e):
+    return render_template('403.html'), 403
 
-mail.init_app(app)
 
-twitter.consumer_key = app.config.get('OAUTH_TWITTER_KEY')
-twitter.consumer_secret = app.config.get('OAUTH_TWITTER_SECRET')
+@app.errorhandler(404)
+def error_404(e):
+    return render_template('404.html'), 404
+
+
+@app.errorhandler(500)
+def error_500(e):
+    return render_template('500.html'), 500
+
+
+# --- Profile routes ----------------------------------------------------------
+
+@app.route('/profile')
+@requires_login
+def profile_current():
+    pass
+
+
+@app.route('/profile/edit', methods=['GET', 'POST'])
+@requires_login
+def profile_edit():
+    pass
+
+
+# Note: This must always be the last route in the app
+@app.route('/<profileid>')
+def profile(profileid):
+    user = User.query.filter_by(username=profileid).first()
+    if user is None:
+        if len(profileid) == 22:
+            user = User.query.filter_by(userid=profileid).first()
+        elif len(profileid) == 32:
+            useremail = UserEmail.query.filter_by(md5sum=profileid).first()
+            if useremail:
+                user = useremail.user
+    if user is None:
+        abort(404)
+    if user.profileid() != profileid:
+        return redirect(url_for('profile', profileid=user.profileid()), code=301)
+
+    return render_template('profile.html', user=user)
+
+
+# --- UI Messages -------------------------------------------------------------
+
+for msg in ['MESSAGE_FOOTER']:
+    app.config[msg] = Markup(markdown(app.config.get(msg, '')))
 
 # --- Logging -----------------------------------------------------------------
 
