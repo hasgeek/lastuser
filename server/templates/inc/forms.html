@@ -4,7 +4,8 @@
 {% endif %}
 <div class="field{% if css_class %} {{ css_class}}{% endif %}" id="field-{{ field.id }}">
   {% if field.widget.input_type == 'checkbox' %}
-    <div class="label">&nbsp;</div><div class="control checkbox">{% if widget_css_class %}{{ field(class=widget_css_class) }}{% else %}{{ field }}{% endif %} {{ field.label }}</div>
+    <div class="label">&nbsp;</div><div class="control checkbox">{% if widget_css_class %}{{ field(class=widget_css_class) }}{% else %}{{ field }}{% endif %} {{ field.label }}<br/>
+      <span class="description">{{ field.description }}</span></div>
   {% else %}
     {% if not nolabeldesc %}<div class="label">{{ field.label }}</div>{% endif %}
     <div class="control">{% if autofocus %}{% if widget_css_class %}{{ field(autofocus="autofocus", class=widget_css_class) }}{% else %}{{ field(autofocus="autofocus") }}{% endif %}{% else %}{% if widget_css_class %}{{ field(class=widget_css_class) }}{% else %}{{ field }}{% endif %}{% endif %}{% if not nolabeldesc %}{% if sidetext %} <span class="sidetext">{{ sidetext|safe }}</span>{% endif %}<br/>

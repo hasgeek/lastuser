@@ -144,6 +144,7 @@ class User(db.Model):
     fullname = db.Column(db.Unicode(80), default='', nullable=False)
     username = db.Column(db.Unicode(80), unique=True, nullable=True)
     pw_hash = db.Column(db.String(80), nullable=True)
+    description = db.Column(db.Text, default='', nullable=False)
     registered_date = db.Column(db.DateTime, default=db.func.now(), nullable=False)
 
     def __init__(self, password=None, **kwargs):
@@ -215,7 +216,7 @@ class UserEmail(db.Model):
     __tablename__ = 'useremail'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(User, primaryjoin=user_id == User.id)
+    user = db.relationship(User, primaryjoin=user_id == User.id, backref='emails')
     _email = db.Column('email', db.Unicode(80), unique=True, nullable=False)
     md5sum = db.Column(db.String(32), unique=True, nullable=False)
     primary = db.Column(db.Boolean, nullable=False, default=False)
@@ -246,7 +247,7 @@ class UserEmailClaim(db.Model):
     __tablename__ = 'useremailclaim'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(User, primaryjoin=user_id == User.id)
+    user = db.relationship(User, primaryjoin=user_id == User.id, backref='emailclaims')
     _email = db.Column('email', db.Unicode(80), nullable=True)
     verification_code = db.Column(db.String(44), nullable=False, default=newsecret)
     registered_date = db.Column(db.DateTime, default=db.func.now(), nullable=False)
@@ -282,7 +283,7 @@ class UserExternalId(db.Model):
     __tablename__ = 'userexternalid'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(User, primaryjoin=user_id == User.id)
+    user = db.relationship(User, primaryjoin=user_id == User.id, backref='externalids')
     service = db.Column(db.String(20), nullable=False)
     userid = db.Column(db.String(250), nullable=False) # Unique id (or OpenID)
     username = db.Column(db.Unicode(80), nullable=True)
@@ -299,7 +300,7 @@ class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     #: User who owns this client
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(User, primaryjoin=user_id == User.id)
+    user = db.relationship(User, primaryjoin=user_id == User.id, backref='clients')
     #: Human-readable title
     title = db.Column(db.Unicode(250), nullable=False)
     #: Long description
@@ -316,6 +317,8 @@ class Client(db.Model):
     active = db.Column(db.Boolean, nullable=False, default=True)
     #: Read-only flag
     readonly = db.Column(db.Boolean, nullable=False, default=True)
+    #: Allow anyone to login to this app?
+    allow_any_login = db.Column(db.Boolean, nullable=False, default=True)
     #: OAuth client key/id
     key = db.Column(db.String(22), nullable=False, unique=True, default=newid)
     #: OAuth client secret
@@ -342,7 +345,7 @@ class Resource(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Unicode(20), unique=True, nullable=False)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    client = db.relationship(Client, primaryjoin=client_id == Client.id)
+    client = db.relationship(Client, primaryjoin=client_id == Client.id, backref='resources')
     title = db.Column(db.Unicode(250), nullable=False)
     description = db.Column(db.Text, default='', nullable=False)
 
@@ -356,7 +359,7 @@ class ResourceAction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Unicode(20), unique=True, nullable=False)
     resource_id = db.Column(db.Integer, db.ForeignKey('resource.id'), nullable=False)
-    resource = db.relationship(Resource, primaryjoin=resource_id == Resource.id)
+    resource = db.relationship(Resource, primaryjoin=resource_id == Resource.id, backref='actions')
     title = db.Column(db.Unicode(250), nullable=False)
     description = db.Column(db.Text, default='', nullable=False)
 
@@ -451,7 +454,7 @@ class LoginForm(wtf.Form):
     def validate_password(self, field):
         user = getuser(self.username.data)
         if user is None or not user.check_password(field.data):
-            raise wtf.ValidationError, "Invalid password"
+            raise wtf.ValidationError, "Incorrect password"
         self.user = user
 
 
@@ -462,9 +465,8 @@ class RegisterForm(wtf.Form):
     password = wtf.PasswordField('Password', validators=[wtf.Required()])
     confirm_password = wtf.PasswordField('Confirm password',
                           validators=[wtf.Required(), wtf.EqualTo('password')])
-    accept_rules = wtf.BooleanField('I accept the terms of service', validators=[wtf.Required()])
     recaptcha = wtf.RecaptchaField('Are you human?',
-        description="Type both words. Our apologies for the inconvenience")
+        description="Type both words into the text box")
 
     def validate_username(self, field):
         if USERNAME_INVALID_RE.search(field.data) is not None:
@@ -498,6 +500,47 @@ class PasswordResetForm(wtf.Form):
                           validators=[wtf.Required(), wtf.EqualTo('password')])
 
 
+class PasswordChangeForm(wtf.Form):
+    old_password = wtf.PasswordField('Current password', validators=[wtf.Required()])
+    password = wtf.PasswordField('New password', validators=[wtf.Required()])
+    confirm_password = wtf.PasswordField('Confirm password',
+                          validators=[wtf.Required(), wtf.EqualTo('password')])
+
+    def validate_old_password(self, field):
+        if g.user is None:
+            raise wtf.ValidationError, "Not logged in"
+        if not g.user.check_password(field.data):
+            raise wtf.ValidationError, "Incorrect password"
+
+
+class ProfileForm(wtf.Form):
+    fullname = wtf.TextField('Full name', validators=[wtf.Required()])
+    username = wtf.TextField('Username (optional)', validators=[wtf.Optional()])
+    description = wtf.TextAreaField('Bio')
+
+    def validate_username(self, field):
+        if USERNAME_INVALID_RE.search(field.data) is not None:
+            return wtf.ValidationError, "Invalid characters in username"
+        existing = User.query.filter_by(username=field.data).first()
+        if existing is not None:
+            raise wtf.ValidationError, "That username is taken"
+
+
+class NewEmailAddressForm(wtf.Form):
+    email = wtf.html5.EmailField('Email address', validators=[wtf.Required(), wtf.Email()])
+
+    def validate_email(self, field):
+        existing = UserEmail.query.filter_by(email=field.data).first()
+        if existing is not None:
+            if existing.user == g.user:
+                raise wtf.ValidationError, "You have already registered this email address."
+            else:
+                raise wtf.ValidationError, "That email address has already been claimed."
+        existing = UserEmailClaim.query.filter_by(email=field.data, user=g.user).first()
+        if existing is not None:
+            raise wtf.ValidationError, "That email address is pending verification."
+
+
 class AuthorizeForm(wtf.Form):
     """
     OAuth authorization form. Has no fields and is only used for CSRF protection.
@@ -522,6 +565,8 @@ class RegisterClientForm(wtf.Form):
     service_uri = wtf.html5.URLField('Service URI (optional)', validators=[wtf.Optional(), wtf.URL()],
         description="LastUser resource provider Service URI")
     readonly = wtf.BooleanField('Read-only access')
+    allow_any_login = wtf.BooleanField('Allow anyone to login',
+        description="If your application requires access to be restricted to specific users, uncheck this")
 
 
 # --- Routes ------------------------------------------------------------------
@@ -579,6 +624,9 @@ def login():
 
     loginform = LoginForm()
     openidform = OpenIdForm(csrf_session_key='csrf_openid')
+
+    if request.method == 'GET':
+        openidform.openid.data = 'http://'
 
     formid = request.form.get('form.id')
     if request.method == 'POST' and formid == 'openid':
@@ -723,6 +771,45 @@ def reset_email(userid, secret):
     return render_template('reset_choosepassword.html', user=user, form=form)
 
 
+@app.route('/profile')
+@requires_login
+def profile_current():
+    return render_template('profile_current.html')
+
+
+@app.route('/profile/edit', methods=['GET', 'POST'])
+@requires_login
+def profile_edit():
+    form = ProfileForm()
+    if request.method == 'GET':
+        form.fullname.data = g.user.fullname
+        form.username.data = g.user.username
+        form.description.data = g.user.description
+    elif form.validate_on_submit():
+        g.user.fullname = form.fullname.data
+        g.user.username = form.username.data
+        g.user.description = form.description.data
+        db.session.commit()
+        flash("Your profile was successfully edited.", category='info')
+        return redirect(url_for('profile_current'), code=303)
+    return render_template('profile_edit.html', form=form)
+
+
+@app.route('/profile/password', methods=['GET', 'POST'])
+@requires_login
+def change_password():
+    if g.user.pw_hash is None:
+        form = PasswordResetForm()
+    else:
+        form = PasswordChangeForm()
+    if form.validate_on_submit():
+        g.user.password = form.password.data
+        db.session.commit()
+        flash("Your new password has been saved.", category='info')
+        return redirect(url_for('profile_current'), code=303)
+    return render_template('change_password.html', form=form)
+
+
 @app.route('/apps')
 def client_list():
     return render_template('client_list.html', clients=Client.query.all())
@@ -732,6 +819,11 @@ def client_list():
 @requires_login
 def client_new():
     form = RegisterClientForm()
+    if request.method == 'GET':
+        # First load of page. Set defaults.
+        form.readonly.data = True
+        form.allow_any_login.data = True
+
     if form.validate_on_submit():
         client = Client()
         form.populate_obj(client)
@@ -801,6 +893,7 @@ def login_twitter():
         flash("Twitter login failed: %s" % unicode(e), category="error")
         return redirect(next_url)
 
+
 @app.route('/login/google')
 @oid.loginhandler
 def login_google():
@@ -855,6 +948,7 @@ def login_openid_success(resp):
         flash("You are now logged in", category='info')
         return redirect(oid.get_next_url())
     else:
+        firsttime = True
         if resp.email:
             useremail = UserEmail.query.filter_by(email=resp.email).first()
             if openid.startswith('https://profiles.google.com/') or openid.startswith('https://www.google.com/accounts/o8/id?id='):
@@ -863,7 +957,7 @@ def login_openid_success(resp):
                     # User logged in previously using a different Google OpenID endpoint
                     # Add this new endpoint to the existing user account
                     user = useremail.user
-                    # FIXME: This will tell the user that it is their first time here (as below). It shouldn't.
+                    firsttime = False
                 else:
                     # No previous record for email address, so register a new user
                     user = register_internal(None, resp.fullname or resp.nickname or openid, None)
@@ -873,7 +967,10 @@ def login_openid_success(resp):
                 # This must be treated as a claim, not as a confirmed email address.
                 # Step 1. Make a new account
                 user = register_internal(None, resp.fullname or resp.nickname or openid, None)
-                # Step 2 If this email address is not already known, register a claim.
+                # Step 2. If this email address is not already known, register a claim.
+                # If it is an existing registered email address, ignore it. OpenID metadata
+                # cannot be trusted; anyone can setup an OpenID server that will allow the user
+                # to claim any email address.
                 if not useremail:
                     emailclaim = UserEmailClaim(user=user, email=resp.email)
                     db.session.add(emailclaim)
@@ -892,7 +989,10 @@ def login_openid_success(resp):
         db.session.commit()
         login_internal(user)
         session['userid_external'] = {'service': 'openid', 'userid': openid}
-        flash("You are now logged in. This is your first time here", category='info')
+        if firsttime:
+            flash("You are now logged in. This is your first time here", category='info')
+        else:
+            flash("You are now logged in.", category='info')
         return redirect(oid.get_next_url())
 
 
@@ -1148,19 +1248,7 @@ def error_500(e):
     return render_template('500.html'), 500
 
 
-# --- Profile routes ----------------------------------------------------------
-
-@app.route('/profile')
-@requires_login
-def profile_current():
-    pass
-
-
-@app.route('/profile/edit', methods=['GET', 'POST'])
-@requires_login
-def profile_edit():
-    pass
-
+# --- Profile route -----------------------------------------------------------
 
 # Note: This must always be the last route in the app
 @app.route('/<profileid>')
@@ -1185,6 +1273,7 @@ def profile(profileid):
 
 for msg in ['MESSAGE_FOOTER']:
     app.config[msg] = Markup(markdown(app.config.get(msg, '')))
+
 
 # --- Logging -----------------------------------------------------------------
 

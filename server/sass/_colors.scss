@@ -13,11 +13,12 @@ $color-flash: #ffffa2;
 
 $color-highlight: #f0a40c;
 
-$color-link: $color-highlight;
+$color-link: $color-title-h2;
 $color-radio-selected: $color-highlight;
 $color-outline: #b7b7b7;
 $color-outline-thin: #e8e8e8;
 
 $color-listing-background: $color-outline-thin;
 $color-listing-outline: $color-outline;
-$color-listing-even: rgba(232, 232, 232, 0.5);
+$color-listing-even: rgba(232, 232, 232, 0.4);
+$color-listing-hover: rgba(232, 232, 232, 0.8);

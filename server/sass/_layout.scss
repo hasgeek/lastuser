@@ -54,13 +54,35 @@ h2 {
     margin: 1em 0 0;
 }
 
-a {
+a, a:active, a:visited {
     text-decoration: none;
-    border-bottom: 1px solid $color-link;
+    color: $color-link;
+    //border-bottom: 1px solid $color-link;
 }
 
-a.button {
-    border-bottom: none;
+a:hover {
+    color: $color-link;
+    text-decoration: underline;
+}
+
+a.loginbutton {
+    display: inline-block;
+    text-indent: -119988px;
+    overflow: hidden;
+    text-align: left;
+    background-repeat: no-repeat;
+    background-position: 50% 50%;
+    width: 100px;
+    height: 40px;
+    border: 1px solid $color-outline;
+    padding: 5px;
+    //margin: 1em 0;
+    @include border-radius(3px);
+    @include box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
+}
+
+a.loginbutton:hover {
+    @include box-shadow(rgba(0, 0, 0, 0.3), 0, 1px, 5px);
 }
 
 dl dt {
@@ -92,6 +114,7 @@ img.avatar {
         padding: 0.25em 0.5em;
         border-right: 1px solid $color-outline-thin;
         a {
+            text-decoration: none;
             border-bottom: 0;
         }
         &.profile {
@@ -161,7 +184,7 @@ div.field {
     margin-top: 1em;
     margin-bottom: 1em;
     .checkbox label {
-        padding-left: 0.5em;
+        padding-left: 0.25em;
     }
     &.small div.label {
         float: left;
@@ -260,9 +283,9 @@ textarea, input[type="text"], input[type="password"], input[type="email"], input
 }
 
 textarea, input[type="text"], input[type="password"], input[type="email"], input[type="url"] {
-    -webkit-box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
-       -moz-box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
-            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+    -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(255, 255, 255, 0.5) inset;
+       -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(255, 255, 255, 0.5) inset;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(255, 255, 255, 0.5) inset;
     }
 
 input[type="text"], input[type="email"], input[type="password"], input[type="url"] {
@@ -274,7 +297,8 @@ input[type="text"], input[type="email"], input[type="password"], input[type="url
 
 input[name="openid"] {
     background: image-url("openid.png") 4px no-repeat;
-    padding-left: 24px;
+    width: 230px;
+    padding-left: 25px;
 }
 
 input[type="submit"] {
@@ -334,4 +358,17 @@ table.listing {
 
 .listing th.num, .listing td.num {
     text-align: right;
+}
+
+.listing tr.link a {
+    text-decoration: none;
+    border-bottom: 0;
+    display: block;
+    margin: -0.2em -1em;
+    padding: 0.2em 1em;
+    color: inherit;
+}
+
+.listing tr.link:hover {
+    background: $color-listing-hover;
 }

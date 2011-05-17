@@ -12,11 +12,16 @@
   </thead>
   <tbody>
     {% for client in clients %}
+      {%- set link = url_for('client_info', key=client.key)|e %}
+      <tr class="link">
+        <td><a href="{{ link }}">{{ loop.index }}</a></td>
+        <td><a href="{{ link }}">{{ client.title|e }}</a></td>
+        <td><a href="{{ link }}">{{ client.owner|e }}</a></td>
+        <td><a href="{{ link }}">{{ client.website|e }}</a></td>
+      </tr>
+    {% else %}
       <tr>
-        <td>{{ loop.index }}</td>
-        <td><a href="{{ url_for('client_info', key=client.key)|e }}">{{ client.title|e }}</a></td>
-        <td>{{ client.owner|e }}</td>
-        <td>{{ client.website|e }}</td>
+        <td colspan="4">No applications have been registered</td>
       </tr>
     {% endfor %}
   </tbody>

@@ -37,12 +37,14 @@
   <div id="container" class="container">
     <header>
       <div id="logo"><a href="{{ url_for('index')|e }}">Home</a></div>
-      {% if g.user -%}
-        <ul class="usertools">
-          <li class="profile"><a href="{{ url_for('profile', profileid=g.user.profileid())|e }}">{{ g.user.fullname }}</a></li>
+      <ul class="usertools">
+        {% if g.user -%}
+          <li class="profile"><a href="{{ url_for('profile_current')|e }}">{{ g.user.fullname }}</a></li>
           <li><a href="{{ url_for('logout') }}">Logout</a></li>
-        </ul>
-      {% endif %}      
+        {% else %}
+          <li><a href="{{ url_for('login') }}">Login</a></li>
+        {% endif %}      
+      </ul>
       {% block header %}{% endblock %}
     </header>
     <div id="main">
