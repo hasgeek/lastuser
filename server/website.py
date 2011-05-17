@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Regular expressions
+import re
 # Encryption
 from hashlib import md5
 # Datetime
@@ -23,6 +25,7 @@ import flaskext.wtf as wtf
 from flaskext.mail import Mail, Message
 from flaskext.assets import Environment, Bundle
 from flaskext.oauth import OAuth, OAuthException # OAuth 1.0a
+from flaskext.openid import OpenID
 # Werkzeug, Flask's base library
 from werkzeug import generate_password_hash, check_password_hash
 # OAuth 1.0a
@@ -31,7 +34,9 @@ from werkzeug import generate_password_hash, check_password_hash
 from markdown import markdown
 
 
-# --- Status codes ------------------------------------------------------------
+# --- Constants ---------------------------------------------------------------
+
+USERNAME_INVALID_RE = re.compile(r'\W', re.U)
 
 
 # --- Globals and settings ----------------------------------------------------
@@ -48,6 +53,7 @@ except ImportError:
 db = SQLAlchemy(app)
 assets = Environment(app)
 mail = Mail(app)
+oid = OpenID(app)
 
 # OAuth 1.0a handlers
 oauth = OAuth()
@@ -59,7 +65,6 @@ twitter = oauth.remote_app('twitter',
     consumer_key=app.config.get('OAUTH_TWITTER_KEY'),
     consumer_secret=app.config.get('OAUTH_TWITTER_SECRET'),
 )
-
 
 
 # --- Assets ------------------------------------------------------------------
@@ -279,7 +284,7 @@ class UserExternalId(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id)
     service = db.Column(db.String(20), nullable=False)
-    userid = db.Column(db.String(80), nullable=False)
+    userid = db.Column(db.String(250), nullable=False) # Unique id (or OpenID)
     username = db.Column(db.Unicode(80), nullable=True)
     oauth_token = db.Column(db.String(250), nullable=True)
     oauth_token_secret = db.Column(db.String(250), nullable=True)
@@ -428,6 +433,11 @@ class AuthToken(db.Model):
 
 # --- Forms -------------------------------------------------------------------
 
+class OpenIdForm(wtf.Form):
+    openid = wtf.html5.URLField('Login with OpenID', validators=[wtf.Required()],
+        description="Don't forget the http:// or https:// prefix")
+
+
 class LoginForm(wtf.Form):
     username = wtf.TextField('Username or Email', validators=[wtf.Required()])
     password = wtf.PasswordField('Password', validators=[wtf.Required()])
@@ -457,6 +467,8 @@ class RegisterForm(wtf.Form):
         description="Type both words. Our apologies for the inconvenience")
 
     def validate_username(self, field):
+        if USERNAME_INVALID_RE.search(field.data) is not None:
+            return wtf.ValidationError, "Invalid characters in username"
         existing = User.query.filter_by(username=field.data).first()
         if existing is not None:
             raise wtf.ValidationError, "That username is taken"
@@ -551,30 +563,45 @@ def login_internal(user):
     session['userid'] = user.userid
 
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = form.user
-        login_internal(user)
-        if form.remember.data:
-            session.permanent = True
-        else:
-            session.permanent = False
-        flash('You are now logged in', category='info')
-        if 'next' in request.args:
-            return redirect(request.args['next'], code=303)
-        else:
-            return redirect(url_for('index'), code=303)
-    return render_template('login.html', form=form)
+def get_next_url(referrer=False):
+    if referrer:
+        return request.args.get('next') or request.referrer or url_for('index')
+    else:
+        return request.args.get('next') or url_for('index')
 
+
+@app.route('/login', methods=['GET', 'POST'])
+@oid.loginhandler
+def login():
+    # If user is already logged in, send them back
+    if g.user:
+        return redirect(get_next_url(referrer=True), code=303)
+
+    loginform = LoginForm()
+    openidform = OpenIdForm(csrf_session_key='csrf_openid')
+
+    formid = request.form.get('form.id')
+    if request.method == 'POST' and formid == 'openid':
+        if openidform.validate():
+            return oid.try_login(openidform.openid.data,
+                ask_for=['email', 'fullname', 'nickname'])
+    elif request.method == 'POST' and formid == 'login':
+        if loginform.validate():
+            user = loginform.user
+            login_internal(user)
+            if loginform.remember.data:
+                session.permanent = True
+            else:
+                session.permanent = False
+            flash('You are now logged in', category='info')
+            return redirect(get_next_url(), code=303)
+    return render_template('login.html', openidform=openidform, loginform=loginform,
+        oiderror=oid.fetch_error(), oidnext=oid.get_next_url())
 
 def logout_internal():
     g.user = None
-    if 'userid' in session:
-        del session['userid']
-    if 'userid_twitter' in session:
-        del session['userid_twitter']
+    session.pop('userid', None)
+    session.pop('userid_external', None)
     session.permanent = False
 
 
@@ -582,10 +609,7 @@ def logout_internal():
 def logout():
     logout_internal()
     flash('You are now logged out', category='info')
-    if 'next' in request.args:
-        return redirect(request.args['next'], code=303)
-    else:
-        return redirect(url_for('index'), code=303)
+    return redirect(get_next_url(), code=303)
 
 
 def register_internal(username, fullname, password):
@@ -748,12 +772,14 @@ def client_edit(key):
     return render_template('client_edit.html', form=form, edit=True)
 
 
-# --- OAuth client routes -----------------------------------------------------
+# --- OAuth client and OpenID routes ------------------------------------------
 
 def get_extid_token(service):
-    userid = session.get('userid_%s' % service)
-    if userid:
-        extid = UserExternalId.query.filter_by(service, userid).first()
+    useridinfo = session.get('userid_external')
+    if useridinfo:
+        if service != useridinfo.get('service'):
+            return None
+        extid = UserExternalId.query.filter_by(service, useridinfo['userid']).first()
         if extid:
             return {'oauth_token': extid.oauth_token,
                     'oauth_token_secret': extid.oauth_token_secret}
@@ -767,22 +793,27 @@ def get_twitter_token():
 
 @app.route('/login/twitter')
 def login_twitter():
-    next_url = request.args.get('next') or request.referrer or None
+    next_url = get_next_url(referrer=False)
     try:
         return twitter.authorize(callback=url_for('login_twitter_authorized',
             next=next_url))
     except OAuthException, e:
         flash("Twitter login failed: %s" % unicode(e), category="error")
-        next_url = next_url or url_for('index')
         return redirect(next_url)
+
+@app.route('/login/google')
+@oid.loginhandler
+def login_google():
+    return oid.try_login('https://www.google.com/accounts/o8/id',
+        ask_for=['email', 'fullname', 'nickname'])
 
 
 @app.route('/login/twitter/callback')
 @twitter.authorized_handler
 def login_twitter_authorized(resp):
-    next_url = request.args.get('next') or url_for('index')
+    next_url = get_next_url()
     if resp is None:
-        flash(u'You denied the request to sign in.')
+        flash(u'You denied the request to login via Twitter.')
         return redirect(next_url)
 
     extid = UserExternalId.query.filter_by(service='twitter', userid=resp['user_id']).first()
@@ -792,8 +823,8 @@ def login_twitter_authorized(resp):
         extid.oauth_token_secret = resp['oauth_token_secret']
         db.session.commit()
         login_internal(extid.user)
-        session['userid_twitter'] = resp['user_id']
-        flash('You have logged in as %s' % resp['screen_name'])
+        session['userid_external'] = {'service': 'twitter', 'userid': resp['user_id']}
+        flash('You have logged in as %s via Twitter' % resp['screen_name'])
     else:
         user = register_internal(None, resp['screen_name'], None)
         extid = UserExternalId(user = user,
@@ -805,10 +836,64 @@ def login_twitter_authorized(resp):
         db.session.add(extid)
         db.session.commit()
         login_internal(user)
-        session['userid_twitter'] = resp['user_id']
-        flash('You have logged in as %s. This is your first time here' % resp['screen_name'])
+        session['userid_external'] = {'service': 'twitter', 'userid': resp['user_id']}
+        flash('You have logged in as %s via Twitter. This is your first time here' % resp['screen_name'])
 
     return redirect(next_url)
+
+
+@oid.after_login
+def login_openid_success(resp):
+    """
+    Called when OpenID login succeeds
+    """
+    openid = resp.identity_url
+    extid = UserExternalId.query.filter_by(service="openid", userid=openid).first()
+    if extid is not None:
+        login_internal(extid.user)
+        session['userid_external'] = {'service': 'openid', 'userid': openid}
+        flash("You are now logged in", category='info')
+        return redirect(oid.get_next_url())
+    else:
+        if resp.email:
+            useremail = UserEmail.query.filter_by(email=resp.email).first()
+            if openid.startswith('https://profiles.google.com/') or openid.startswith('https://www.google.com/accounts/o8/id?id='):
+                # Google id. Trust the email address.
+                if useremail:
+                    # User logged in previously using a different Google OpenID endpoint
+                    # Add this new endpoint to the existing user account
+                    user = useremail.user
+                    # FIXME: This will tell the user that it is their first time here (as below). It shouldn't.
+                else:
+                    # No previous record for email address, so register a new user
+                    user = register_internal(None, resp.fullname or resp.nickname or openid, None)
+                    user.add_email(resp.email, primary=True)
+            else:
+                # Not a Google id. Do not trust an OpenID-provided email address.
+                # This must be treated as a claim, not as a confirmed email address.
+                # Step 1. Make a new account
+                user = register_internal(None, resp.fullname or resp.nickname or openid, None)
+                # Step 2 If this email address is not already known, register a claim.
+                if not useremail:
+                    emailclaim = UserEmailClaim(user=user, email=resp.email)
+                    db.session.add(emailclaim)
+                    send_email_verify_link(emailclaim)
+        else:
+            # First login and no email address provided. Create a new user account
+            user = register_internal(None, resp.fullname or resp.nickname or openid, None)
+        # Record this OpenID for the user
+        extid = UserExternalId(user = user,
+                               service = 'openid',
+                               userid = openid,
+                               username = None,
+                               oauth_token = None,
+                               oauth_token_secret = None)
+        db.session.add(extid)
+        db.session.commit()
+        login_internal(user)
+        session['userid_external'] = {'service': 'openid', 'userid': openid}
+        flash("You are now logged in. This is your first time here", category='info')
+        return redirect(oid.get_next_url())
 
 
 # --- OAuth server routes -----------------------------------------------------

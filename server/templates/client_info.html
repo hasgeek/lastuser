@@ -1,6 +1,9 @@
 {% extends "inc/layout.html" %}
 {% block title %}Client application information{% endblock %}
 {% block content %}
+{% if client.user == g.user %}
+  <p><a href="{{ url_for('client_edit', key=client.key) }}">Edit this application &rarr;</a></p>
+{% endif %}
 <dl>
   <dt>Title:</dt>
   <dd>{{ client.title|e }}</dd>

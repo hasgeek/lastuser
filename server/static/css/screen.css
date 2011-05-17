@@ -358,6 +358,10 @@ a {
   border-bottom: 1px solid #f0a40c;
 }
 
+a.button {
+  border-bottom: none;
+}
+
 dl dt {
   font-weight: bold;
   margin-top: 1em;
@@ -620,6 +624,11 @@ input[type="text"], input[type="email"], input[type="password"], input[type="url
   height: 20px;
   margin-bottom: 5px;
   background: #fff;
+}
+
+input[name="openid"] {
+  background: url('/static/img/openid.png?1305572482') 4px no-repeat;
+  padding-left: 24px;
 }
 
 input[type="submit"] {

@@ -4,19 +4,32 @@
 
 {% block content %}
 <p>
-  <a href="{{ url_for('login_twitter', next=request.args.get('next')) }}"><img src="/static/img/login/twitter.png"/></a>
+  <a class="button" href="{{ url_for('login_twitter', next=request.args.get('next')) }}"><img src="{{ url_for('static', filename='img/login/twitter.png') }}"/></a>
+  <a class="button" href="{{ url_for('login_google', next=request.args.get('next')) }}">Google</a>
 </p>
-<h2>Or, use a HasGeek account</h2>
+<form id="openid" method="POST">
+  <input type="hidden" name="_charset_"/>
+  <input type="hidden" name="form.id" value="openid"/>
+  <input type="hidden" name="next" value="{{ oidnext }}"/>
+  {{ openidform.csrf() }}
+  {% if openidform.csrf.errors %}
+    {% for error in openidform.csrf.errors %}<div class="error">{{ error }}</div>{% endfor %}
+  {% endif %}
+  {% if oiderror %}<div class=error>{{ oiderror }}</div>{% endif %}
+  {{ renderfield(openidform.openid, "small", autofocus=True) }}
+  {{ rendersubmit([(None, "Login", None)], "small") }}
+</form>
+<h2>Or, Use a HasGeek account</h2>
 <form id="login" method="POST">
   <input type="hidden" name="_charset_"/>
   <input type="hidden" name="form.id" value="login"/>
-  {{ form.csrf() }}
-  {% if form.csrf.errors %}
-    {% for error in form.csrf.errors %}<div class="error">{{ error }}</div>{% endfor %}
+  {{ loginform.csrf() }}
+  {% if loginform.csrf.errors %}
+    {% for error in loginform.csrf.errors %}<div class="error">{{ error }}</div>{% endfor %}
   {% endif %}
-  {{ renderfield(form.username, "small", autofocus=True, sidetext='<a href="' + url_for('register', next=request.args.get('next', request.url)) + '">Register a new account?</a>') }}
-  {{ renderfield(form.password, "small", sidetext='<a href="' + url_for('reset') + '">Forgot password?</a>') }}
-  {{ renderfield(form.remember, "small") }}
+  {{ renderfield(loginform.username, "small", sidetext='<a href="' + url_for('register', next=request.args.get('next', request.url)) + '">Register a new account?</a>') }}
+  {{ renderfield(loginform.password, "small", sidetext='<a href="' + url_for('reset') + '">Forgot password?</a>') }}
+  {{ renderfield(loginform.remember, "small") }}
   {{ rendersubmit([(None, "Login", None)], "small") }}
 </form>
 {% endblock %}
