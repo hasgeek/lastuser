@@ -236,10 +236,9 @@ def oauth_token():
         user = getuser(username)
         if not user:
             return oauth_token_error('invalid_client', "No such user") # XXX: invalid_client doesn't seem right
-        if not user.check_password(password):
+        if not user.password_is(password):
             return oauth_token_error('invalid_client', "Password mismatch")
 
         # All good. Grant access
         token = oauth_make_token(user=user, client=client, scope=scope)
         return oauth_token_success(token)
-

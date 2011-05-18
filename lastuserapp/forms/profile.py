@@ -34,7 +34,7 @@ class PasswordChangeForm(wtf.Form):
     def validate_old_password(self, field):
         if g.user is None:
             raise wtf.ValidationError, "Not logged in"
-        if not g.user.check_password(field.data):
+        if not g.user.password_is(field.data):
             raise wtf.ValidationError, "Incorrect password"
 
 

@@ -26,7 +26,7 @@ class User(db.Model, BaseMixin):
 
     password = property(fset=_set_password)
 
-    def check_password(self, password):
+    def password_is(self, password):
         if self.pw_hash is None:
             return False
         return check_password_hash(self.pw_hash, password)

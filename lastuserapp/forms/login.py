@@ -20,7 +20,7 @@ class LoginForm(wtf.Form):
 
     def validate_password(self, field):
         user = getuser(self.username.data)
-        if user is None or not user.check_password(field.data):
+        if user is None or not user.password_is(field.data):
             raise wtf.ValidationError, "Incorrect password"
         self.user = user
 
