@@ -17,6 +17,7 @@ RESERVED_USERNAMES = set([
     'confirm',
     'login',
     'logout',
+    'new',
     'profile',
     'reset',
     'register',

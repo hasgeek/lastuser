@@ -17,9 +17,6 @@ def client_list():
 @requires_login
 def client_new():
     form = RegisterClientForm()
-    if request.method == 'GET':
-        # First load of page. Set defaults.
-        form.allow_any_login.data = True
 
     if form.validate_on_submit():
         client = Client()

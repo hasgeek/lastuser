@@ -25,5 +25,5 @@ class RegisterClientForm(wtf.Form):
         description="OAuth2 Redirect URI")
     service_uri = wtf.html5.URLField('Service URI (optional)', validators=[wtf.Optional(), wtf.URL()],
         description="LastUser resource provider Service URI")
-    allow_any_login = wtf.BooleanField('Allow anyone to login',
+    allow_any_login = wtf.BooleanField('Allow anyone to login', default=True,
         description="If your application requires access to be restricted to specific users, uncheck this")
