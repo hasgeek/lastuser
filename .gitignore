@@ -8,3 +8,5 @@ test.db
 .settings
 .sass-cache
 error.log
+*.egg-info
+.coverage

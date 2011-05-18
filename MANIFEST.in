@@ -1,0 +1,3 @@
+recursive-include lastuserapp/sass *
+recursive-include lastuserapp/static *
+recursive-include lastuserapp/templates *

@@ -1,4 +1,6 @@
-#: The title of this site
+# -*- coding: utf-8 -*-
+
+# #: The title of this site
 SITE_TITLE='LastUser'
 #: Support contact email
 SITE_SUPPORT_EMAIL = 'test@example.com'
