@@ -8,6 +8,21 @@ from markdown import markdown
 
 __MESSAGES = ['MESSAGE_FOOTER']
 
+# These names are unavailable for use as usernames
+RESERVED_USERNAMES = set([
+    'app',
+    'apps',
+    'auth',
+    'client',
+    'confirm',
+    'login',
+    'logout',
+    'profile',
+    'reset',
+    'register',
+    'token',
+    ])
+
 app = Flask('lastuserapp')
 app.config.from_object('lastuserapp')
 try:

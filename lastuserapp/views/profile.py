@@ -4,7 +4,7 @@ from flask import g, request, abort, flash, redirect, render_template, url_for
 
 from lastuserapp import app
 from lastuserapp.models import db, User
-from lastuserapp.views import requires_login
+from lastuserapp.views import requires_login, render_form, render_redirect
 from lastuserapp.forms import ProfileForm, PasswordResetForm, PasswordChangeForm
 
 
@@ -28,8 +28,8 @@ def profile_edit():
         g.user.description = form.description.data
         db.session.commit()
         flash("Your profile was successfully edited.", category='info')
-        return redirect(url_for('profile_current'), code=303)
-    return render_template('profile_edit.html', form=form)
+        return render_redirect(url_for('profile_current'), code=303)
+    return render_form(form, title="Edit profile", formid="profile_edit", submit="Save changes", ajax=True)
 
 
 @app.route('/profile/password', methods=['GET', 'POST'])
@@ -43,8 +43,8 @@ def change_password():
         g.user.password = form.password.data
         db.session.commit()
         flash("Your new password has been saved.", category='info')
-        return redirect(url_for('profile_current'), code=303)
-    return render_template('change_password.html', form=form)
+        return render_redirect(url_for('profile_current'), code=303)
+    return render_form(form=form, title="Change password", formid="changepassword", submit="Change password", ajax=True)
 
 
 # Note: This must always be the last route in the app

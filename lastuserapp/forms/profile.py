@@ -46,6 +46,8 @@ class ProfileForm(wtf.Form):
     def validate_username(self, field):
         if not valid_username(field.data):
             return wtf.ValidationError, "Invalid characters in username"
+        if field.data == g.user.username:
+            return
         existing = User.query.filter_by(username=field.data).first()
         if existing is not None:
             raise wtf.ValidationError, "That username is taken"

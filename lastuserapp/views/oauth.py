@@ -206,7 +206,7 @@ def oauth_token():
         authcode = AuthCode.query.filter_by(code=code, client=client).first()
         if not authcode:
             return oauth_token_error('invalid_grant', "Unknown auth code")
-        if authcode.datetime < (datetime.utcnow()-timedelta(minutes=1)): # XXX: Time limit: 1 minute
+        if authcode.created_at < (datetime.utcnow()-timedelta(minutes=1)): # XXX: Time limit: 1 minute
             return oauth_token_error('invalid_grant', "Expired auth code")
         # Validations 3.1: scope in authcode
         if not scope:

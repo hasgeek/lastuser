@@ -1,0 +1,10 @@
+{% extends "inc/layout.html" %}
+{% from "inc/forms.html" import renderform, ajaxform %}
+
+{% block content %}
+  {{ renderform(form, formid, submit, message) }}
+{% endblock %}
+
+{% block footerscripts %}
+  {{ ajaxform(formid, request, ajax) }}
+{% endblock %}

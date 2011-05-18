@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
+
+from flask import Markup, url_for
 import flaskext.wtf as wtf
+
+from lastuserapp import RESERVED_USERNAMES
 from lastuserapp.models import User, UserEmail, getuser
 from lastuserapp.utils import valid_username
+
 
 class LoginForm(wtf.Form):
     username = wtf.TextField('Username or Email', validators=[wtf.Required()])
@@ -36,8 +41,10 @@ class RegisterForm(wtf.Form):
         description="Type both words into the text box")
 
     def validate_username(self, field):
+        if field.data in RESERVED_USERNAMES:
+            raise wtf.ValidationError, "That name is reserved"
         if not valid_username(field.data):
-            return wtf.ValidationError, "Invalid characters in username"
+            raise wtf.ValidationError, u"Invalid characters in name. Names must be made of ‘a-z’ ‘0-9’ and ‘-’, without trailing dashes"
         existing = User.query.filter_by(username=field.data).first()
         if existing is not None:
             raise wtf.ValidationError, "That username is taken"

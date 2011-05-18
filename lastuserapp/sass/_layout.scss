@@ -321,6 +321,13 @@ input[type="submit"] {
     }
 }
 
+span.loading {
+    display: none;
+    background: image-url("ajax-loader.gif") center no-repeat;
+    width: 16px;
+    height: 16px;
+}
+
 /* Tables */
 table.listing {
     width: 100%;

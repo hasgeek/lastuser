@@ -1,0 +1,14 @@
+{% from "inc/forms.html" import renderfield, rendersubmit, ajaxform %}
+<form id="login" method="POST">
+  <input type="hidden" name="_charset_"/>
+  <input type="hidden" name="form.id" value="login"/>
+  {{ loginform.csrf() }}
+  {% if loginform.csrf.errors %}
+    {% for error in loginform.csrf.errors %}<div class="error">{{ error }}</div>{% endfor %}
+  {% endif %}
+  {{ renderfield(loginform.username, "small", autofocus=True, sidetext='<a href="' + url_for('register', next=request.args.get('next', request.url)) + '">Register a new account?</a>') }}
+  {{ renderfield(loginform.password, "small", sidetext='<a href="' + url_for('reset') + '">Forgot password?</a>') }}
+  {{ renderfield(loginform.remember, "small") }}
+  {{ rendersubmit([(None, "Login", None)], "small") }}
+</form>
+{{ ajaxform('login', request) }}

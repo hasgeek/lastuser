@@ -2,14 +2,15 @@
 
 from datetime import datetime, timedelta
 
-from flask import g, redirect, request, session, flash, render_template, url_for, abort
+from flask import g, redirect, request, session, flash, render_template, url_for, abort, Markup, escape
 
 from lastuserapp import app
 from lastuserapp.openidclient import oid
 from lastuserapp.mailclient import send_email_verify_link, send_password_reset_link
 from lastuserapp.models import db, User, UserEmailClaim, PasswordResetRequest
 from lastuserapp.forms import LoginForm, OpenIdForm, RegisterForm, PasswordResetForm, PasswordResetRequestForm
-from lastuserapp.views import get_next_url, login_internal, logout_internal, register_internal
+from lastuserapp.views import (get_next_url, login_internal, logout_internal, register_internal,
+    render_form, render_message, render_redirect)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -39,9 +40,13 @@ def login():
             else:
                 session.permanent = False
             flash('You are now logged in', category='info')
-            return redirect(get_next_url(), code=303)
-    return render_template('login.html', openidform=openidform, loginform=loginform,
-        oiderror=oid.fetch_error(), oidnext=oid.get_next_url())
+            return render_redirect(get_next_url(), code=303)
+    if request.is_xhr and formid == 'login':
+        return render_template('forms/loginform.html', loginform=loginform)
+    else:
+        return render_template('login.html', openidform=openidform, loginform=loginform,
+            oiderror=oid.fetch_error(), oidnext=oid.get_next_url())
+
 
 @app.route('/logout')
 def logout():
@@ -59,15 +64,15 @@ def register():
             user.username = form.username.data
         useremail = UserEmailClaim(user=user, email=form.email.data)
         db.session.add(useremail)
-        send_email_verify_link(useremail)
         db.session.commit()
+        send_email_verify_link(useremail)
         login_internal(user)
         flash("You are now one of us. Welcome aboard!", category='info')
         if 'next' in request.args:
             return redirect(request.args['next'], code=303)
         else:
             return redirect(url_for('index'), code=303)
-    return render_template('register.html', form=form)
+    return render_form(form=form, title='Register an account', formid='register', submit='Register')
 
 
 @app.route('/confirm/<md5sum>/<secret>')
@@ -83,7 +88,9 @@ def confirm_email(md5sum, secret):
                 useremail = emailclaim.user.add_email(emailclaim.email)
                 db.session.delete(emailclaim)
                 db.session.commit()
-                return render_template('emailverified.html', user=emailclaim.user, useremail=useremail)
+                return render_message(title="Email address verified",
+                    message=Markup("Hello %s! Your email address <code>%s</code> has now been verified." % (
+                        escape(emailclaim.user.fullname), escape(useremail.email))))
             else:
                 # Logged in as someone else. Logout and ask them to login again
                 # Note that we don't need them to be logged in to verify a claim.
@@ -115,16 +122,27 @@ def reset():
             # User.email is a UserEmail object
             email = unicode(user.email)
         if not email:
-            # They don't have an email address. Now what?
-            # How does someone end up here?
-            return render_template('reset_noemail.html')
+            # They don't have an email address. Maybe they logged in via Twitter
+            # and set a local username and password, but no email. Could happen.
+            return render_message(title="Reset password", message=Markup(
+            """
+            We do not have an email address for your account and therefore cannot
+            email you a reset link. Please contact
+            <a href="mailto:%s">%s</a> for assistance.
+            """ % (escape(app.config['SITE_SUPPORT_EMAIL']), escape(app.config['SITE_SUPPORT_EMAIL']))))
         resetreq = PasswordResetRequest(user=user)
         db.session.add(resetreq)
         send_password_reset_link(email=email, user=user, secret=resetreq.reset_code)
         db.session.commit()
-        return render_template('reset_emailsent.html', email=email)
+        return render_message(title="Reset password", message=Markup(
+            u"""
+            You were sent an email at <code>%s</code> with a link to reset your password.
+            Please check your email. If it doesn’t arrive in a few minutes,
+            it may have landed in your spam or junk folder.
+            The reset link is valid for 24 hours.
+            """ % escape(email)))
 
-    return render_template('reset.html', form=form)
+    return render_form(form=form, title="Reset password", submit="Send reset code", ajax=True)
 
 
 @app.route('/reset/<userid>/<secret>', methods=['GET', 'POST'])
@@ -135,17 +153,23 @@ def reset_email(userid, secret):
         abort(404)
     resetreq = PasswordResetRequest.query.filter_by(user=user, reset_code=secret).first()
     if not resetreq:
-        return render_template('reset_invalid.html'), 404
-    if resetreq.reset_date < datetime.utcnow() - timedelta(days=1):
+        return render_message(title="Invalid reset link",
+            message=Markup("The reset link you clicked on is invalid."))
+    if resetreq.created_at < datetime.utcnow() - timedelta(days=1):
         # Reset code has expired (> 24 hours). Delete it
         db.session.delete(resetreq)
         db.session.commit()
-        return render_template('reset_invalid.html')
+        return render_message(title="Expired reset link",
+            message=Markup("The reset link you clicked on has expired."))
 
     # Reset code is valid. Now ask user to choose a new password
     form = PasswordResetForm()
     if form.validate_on_submit():
         user.password = form.password.data
+        db.session.delete(resetreq)
         db.session.commit()
-        return render_template('reset_complete.html', user=user)
-    return render_template('reset_choosepassword.html', user=user, form=form)
+        return render_message(title="Password reset complete", message=Markup(
+            'Your password has been reset. You may now <a href="%s">login</a> with your new password.' % escape(url_for('login'))))
+    return render_form(form=form, title="Reset password", formid='reset', submit="Reset password",
+        message=Markup('Hello, <strong>%s</strong>. You may now choose a new password.' % user.fullname),
+        ajax=True)

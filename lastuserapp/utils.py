@@ -7,10 +7,9 @@ import re
 import urlparse
 from urllib import urlencode as make_query_string
 
-
 # --- Constants ---------------------------------------------------------------
 
-USERNAME_INVALID_RE = re.compile(r'\W', re.U)
+USERNAME_VALID_RE = re.compile('^[a-z0-9][a-z0-9-]*[a-z0-9]$')
 
 # --- Utilities ---------------------------------------------------------------
 
@@ -45,4 +44,4 @@ def make_redirect_url(url, **params):
 
 
 def valid_username(candidate):
-    return not USERNAME_INVALID_RE.search(candidate) is None
+    return not USERNAME_VALID_RE.search(candidate) is None

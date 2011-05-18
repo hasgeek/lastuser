@@ -691,6 +691,13 @@ input[type="submit"]:hover {
   background-image: linear-gradient(top, #d6d6d6 0%, #c6c6c6 100%);
 }
 
+span.loading {
+  display: none;
+  background: url('/static/img/ajax-loader.gif?1305733694') center no-repeat;
+  width: 16px;
+  height: 16px;
+}
+
 /* Tables */
 table.listing {
   width: 100%;

@@ -3,18 +3,16 @@
 from hashlib import md5
 from werkzeug import generate_password_hash, check_password_hash
 
-from lastuserapp.models import db
+from lastuserapp.models import db, BaseMixin
 from lastuserapp.utils import newid, newsecret
 
-class User(db.Model):
+class User(db.Model, BaseMixin):
     __tablename__ = 'user'
-    id = db.Column(db.Integer, primary_key=True)
     userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
     fullname = db.Column(db.Unicode(80), default='', nullable=False)
     username = db.Column(db.Unicode(80), unique=True, nullable=True)
     pw_hash = db.Column(db.String(80), nullable=True)
     description = db.Column(db.Text, default='', nullable=False)
-    registered_date = db.Column(db.DateTime, default=db.func.now(), nullable=False)
 
     def __init__(self, password=None, **kwargs):
         self.password = password
@@ -81,15 +79,13 @@ class User(db.Model):
         return None
 
 
-class UserEmail(db.Model):
+class UserEmail(db.Model, BaseMixin):
     __tablename__ = 'useremail'
-    id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id, backref='emails')
     _email = db.Column('email', db.Unicode(80), unique=True, nullable=False)
     md5sum = db.Column(db.String(32), unique=True, nullable=False)
     primary = db.Column(db.Boolean, nullable=False, default=False)
-    registered_date = db.Column(db.DateTime, default=db.func.now(), nullable=False)
 
     def __init__(self, email, **kwargs):
         super(UserEmail, self).__init__(**kwargs)
@@ -112,14 +108,12 @@ class UserEmail(db.Model):
         return str(self.__unicode__())
 
 
-class UserEmailClaim(db.Model):
+class UserEmailClaim(db.Model, BaseMixin):
     __tablename__ = 'useremailclaim'
-    id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id, backref='emailclaims')
     _email = db.Column('email', db.Unicode(80), nullable=True)
     verification_code = db.Column(db.String(44), nullable=False, default=newsecret)
-    registered_date = db.Column(db.DateTime, default=db.func.now(), nullable=False)
     md5sum = db.Column(db.String(32), unique=True, nullable=False)
 
     def __init__(self, email, **kwargs):
@@ -134,23 +128,29 @@ class UserEmailClaim(db.Model):
 
     email = db.synonym('_email', descriptor=email)
 
+    def __repr__(self):
+        return u'<UserEmailClaim %s of user %s>' % (self.email, repr(self.user))
 
-class PasswordResetRequest(db.Model):
+    def __unicode__(self):
+        return unicode(self.email)
+
+    def __str__(self):
+        return str(self.__unicode__())
+
+
+class PasswordResetRequest(db.Model, BaseMixin):
     __tablename__ = 'passwordresetrequest'
-    id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id)
     reset_code = db.Column(db.String(44), nullable=False, default=newsecret)
-    reset_date = db.Column(db.DateTime, default=db.func.now(), nullable=False)
 
     def __init__(self, **kwargs):
         super(PasswordResetRequest, self).__init__(**kwargs)
         self.reset_code = newsecret()
 
 
-class UserExternalId(db.Model):
+class UserExternalId(db.Model, BaseMixin):
     __tablename__ = 'userexternalid'
-    id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id, backref='externalids')
     service = db.Column(db.String(20), nullable=False)
@@ -158,7 +158,6 @@ class UserExternalId(db.Model):
     username = db.Column(db.Unicode(80), nullable=True)
     oauth_token = db.Column(db.String(250), nullable=True)
     oauth_token_secret = db.Column(db.String(250), nullable=True)
-    registered_date = db.Column(db.DateTime, default=db.func.now(), nullable=False)
 
     __table_args__ = ( db.UniqueConstraint("service", "userid"), {} )
 
