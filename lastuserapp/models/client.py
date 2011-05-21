@@ -84,6 +84,11 @@ class AuthCode(db.Model, BaseMixin):
 
     scope = db.synonym('_scope', descriptor=scope)
 
+    def add_scope(self, additional):
+        if isinstance(additional, basestring):
+            additional = [additional]
+        self.scope = list(set(self.scope).union(set(additional)))
+
 
 class AuthToken(db.Model, BaseMixin):
     """Access tokens for access to data."""
@@ -100,6 +105,15 @@ class AuthToken(db.Model, BaseMixin):
     validity = db.Column(db.Integer, nullable=False, default=0) # Validity period in seconds
     refresh_token = db.Column(db.String(22), default=newid, nullable=False)
 
+    # Only one authtoken per user and client. Add to scope as needed
+    __table_args__ = ( db.UniqueConstraint("user_id", "client_id"), {} )
+
+    def __init__(self, **kwargs):
+        super(AuthToken, self).__init__(**kwargs)
+        self.token = newid()
+        self.refresh_token = newid()
+        self.secret = newsecret()
+
     @property
     def scope(self):
         return self._scope.split(u' ')
@@ -109,6 +123,11 @@ class AuthToken(db.Model, BaseMixin):
         self._scope = u' '.join(value)
 
     scope = db.synonym('_scope', descriptor=scope)
+
+    def add_scope(self, additional):
+        if isinstance(additional, basestring):
+            additional = [additional]
+        self.scope = list(set(self.scope).union(set(additional)))
 
     @property
     def algorithm(self):

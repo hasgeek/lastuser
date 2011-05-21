@@ -282,12 +282,16 @@ header, #main, footer {
 }
 
 header, #main {
-  padding: 1em 1em 0;
   position: relative;
 }
 
 header {
+  padding: 1em 1em 0;
   border-bottom: 1px solid #b7b7b7;
+}
+
+#main {
+  padding: 1em;
 }
 
 html, body {
@@ -748,6 +752,11 @@ table.listing {
 
 .listing tr.link:hover {
   background: rgba(232, 232, 232, 0.8);
+}
+
+/* Spam protection */
+.z {
+  display: none;
 }
 
 @media all and (orientation:portrait) {}

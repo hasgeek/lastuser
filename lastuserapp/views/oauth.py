@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from datetime import datetime, timedelta
 import urlparse
 
-from flask import g, render_template, redirect, request
+from flask import g, render_template, redirect, request, jsonify
 
 from lastuserapp import app
 from lastuserapp.models import db, Client, AuthCode, AuthToken, getuser
@@ -103,9 +104,10 @@ def oauth_authorize():
     # Validation 3.1: Scope present?
     if not scope:
         return oauth_auth_error(redirect_uri, state, 'invalid_request', "Scope not specified")
-    if scope != [u'id']:
-        # TODO: Implement support for multiple scopes
-        return oauth_auth_error(redirect_uri, state, 'invalid_scope')
+    for item in scope:
+        if item not in [u'id', u'email']:
+            # TODO: Implement support for multiple scopes (using the Resource model)
+            return oauth_auth_error(redirect_uri, state, 'invalid_scope')
 
     # Validations complete. Now ask user for permission
     # If the client is trusted (LastUser feature, not in OAuth2 spec), don't ask user.
@@ -146,11 +148,12 @@ def oauth_token_error(error, error_description=None, error_uri=None):
 
 
 def oauth_make_token(user, client, scope):
-    token = AuthToken(user=user, client=client, scope=scope)
-    token.token = newid()
-    token.refresh_token = newid()
-    token.secret = newsecret()
-    db.session.add(token)
+    token = AuthToken.query.filter_by(user=user, client=client).first()
+    if token:
+        token.add_scope(scope)
+    else:
+        token = AuthToken(user=user, client=client, scope=scope)
+        db.session.add(token)
     return token
 
 
@@ -158,6 +161,7 @@ def oauth_token_success(token, **params):
     params['access_token'] = token.token
     params['token_type'] = token.token_type
     params['scope'] = u' '.join(token.scope)
+    # TODO: Understand how refresh_token works.
     if token.validity:
         params['expires_in'] = token.validity
         params['refresh_token'] = token.refresh_token
@@ -165,6 +169,15 @@ def oauth_token_success(token, **params):
     response.headers['Cache-Control'] = 'no-store'
     db.session.commit()
     return response
+
+
+def get_userinfo(user, scope=[]):
+    userinfo = {'userid': user.userid,
+                'username': user.username,
+                'fullname': user.fullname}
+    if 'email' in scope:
+        userinfo['email'] = unicode(user.email)
+    return userinfo
 
 
 @app.route('/token', methods=['POST'])
@@ -207,12 +220,14 @@ def oauth_token():
         if not authcode:
             return oauth_token_error('invalid_grant', "Unknown auth code")
         if authcode.created_at < (datetime.utcnow()-timedelta(minutes=1)): # XXX: Time limit: 1 minute
+            db.session.delete(authcode)
+            db.session.commit()
             return oauth_token_error('invalid_grant', "Expired auth code")
         # Validations 3.1: scope in authcode
-        if not scope:
+        if not scope or scope[0] == '':
             return oauth_token_error('invalid_scope', "Scope is blank")
         if not set(scope).issubset(set(authcode.scope)):
-            raise oauth_token_error('invalid_scope', "Scope expanded")
+            return oauth_token_error('invalid_scope', "Scope expanded")
         else:
             # Scope not provided. Use whatever the authcode allows
             scope = authcode.scope
@@ -220,7 +235,7 @@ def oauth_token():
             return oauth_token_error('invalid_client', "redirect_uri does not match")
 
         token = oauth_make_token(user=authcode.user, client=client, scope=scope)
-        return oauth_token_success(token)
+        return oauth_token_success(token, userinfo=get_userinfo(user=authcode.user, scope=scope))
 
     elif grant_type == 'client_credentials':
         token = oauth_make_token(user=None, client=client, scope=scope)
@@ -241,4 +256,4 @@ def oauth_token():
 
         # All good. Grant access
         token = oauth_make_token(user=user, client=client, scope=scope)
-        return oauth_token_success(token)
+        return oauth_token_success(token, userinfo=get_userinfo(user=user, scope=scope))

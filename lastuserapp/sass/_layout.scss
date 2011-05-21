@@ -10,12 +10,16 @@ header, #main, footer {
 }
 
 header, #main {
-    padding: 1em 1em 0;
     position: relative;
 }
 
 header {
+    padding: 1em 1em 0;
     border-bottom: 1px solid $color-outline;
+}
+
+#main {
+    padding: 1em;
 }
 
 @include sticky-footer(45px, "#container", "#main_footer", "footer");
@@ -378,4 +382,9 @@ table.listing {
 
 .listing tr.link:hover {
     background: $color-listing-hover;
+}
+
+/* Spam protection */
+.z {
+    display: none;
 }
