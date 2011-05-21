@@ -14,7 +14,7 @@ header, #main {
 }
 
 header {
-    padding: 1em 1em 0;
+    padding: 0 1em 0;
     border-bottom: 1px solid $color-outline;
 }
 
@@ -23,10 +23,16 @@ header {
 }
 
 @include sticky-footer(45px, "#container", "#main_footer", "footer");
+footer {
+    padding: 0 1em;
+}
+
 footer #footer_content {
     text-align: center;
-    font-size: 80%;
     border-top: 1px solid $color-outline;
+    font-size: 80%;
+    margin: 0 -1.25em; // 80% * 1.25 = 100%
+    padding: 0 1.25em;
 }
 
 #logo {

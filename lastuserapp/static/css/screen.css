@@ -286,7 +286,7 @@ header, #main {
 }
 
 header {
-  padding: 1em 1em 0;
+  padding: 0 1em 0;
   border-bottom: 1px solid #b7b7b7;
 }
 
@@ -315,10 +315,16 @@ footer {
   height: 45px;
 }
 
+footer {
+  padding: 0 1em;
+}
+
 footer #footer_content {
   text-align: center;
-  font-size: 80%;
   border-top: 1px solid #b7b7b7;
+  font-size: 80%;
+  margin: 0 -1.25em;
+  padding: 0 1.25em;
 }
 
 #logo {
