@@ -73,7 +73,7 @@ def render_message(title, message):
 
 def render_redirect(url, code=302):
     if request.is_xhr:
-        return render_template('redirect.html', url=url)
+        return render_template('redirect.html', url=Markup(url))
     else:
         return redirect(url, code=code)
 
