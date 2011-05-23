@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import urlparse
 
 from flask import g, render_template, redirect, request, jsonify
+from flask import get_flashed_messages
 
 from lastuserapp import app
 from lastuserapp.models import db, Client, AuthCode, AuthToken, getuser
@@ -30,11 +31,21 @@ def oauth_make_auth_code(client, scope, redirect_uri):
     return authcode.code
 
 
+def clear_flashed_messages():
+    """
+    Clear pending flashed messages. This is useful when redirecting the user to a
+    remote site where they cannot see the messages. If they return much later,
+    they could be confused by a message for an action they do not recall.
+    """
+    discard = list(get_flashed_messages())
+
+
 def oauth_auth_success(redirect_uri, state, code):
     """
     Commit session and redirect to OAuth redirect URI
     """
     db.session.commit()
+    clear_flashed_messages()
     if state is None:
         return redirect(make_redirect_url(redirect_uri, code=code), code=302)
     else:
@@ -52,6 +63,7 @@ def oauth_auth_error(redirect_uri, state, error, error_description=None, error_u
         params['error_description'] = error_description
     if error_uri is not None:
         params['error_uri'] = error_uri
+    clear_flashed_messages()
     return redirect(make_redirect_url(redirect_uri, **params), code=302)
 
 

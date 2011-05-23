@@ -75,8 +75,10 @@ class User(db.Model, BaseMixin):
             # whether the request ended in a database commit.
             useremail.primary=True
             return useremail
-        # This user has no email address.
-        return None
+        # This user has no email address. Return a blank string instead of None
+        # to support the common use case, where the caller will use unicode(user.email)
+        # to get the email address as a string.
+        return u''
 
 
 class UserEmail(db.Model, BaseMixin):

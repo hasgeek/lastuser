@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime, timedelta
+import urlparse
 
 from flask import g, redirect, request, session, flash, render_template, url_for, abort, Markup, escape
 
 from lastuserapp import app
 from lastuserapp.openidclient import oid
 from lastuserapp.mailclient import send_email_verify_link, send_password_reset_link
-from lastuserapp.models import db, User, UserEmailClaim, PasswordResetRequest
+from lastuserapp.models import db, User, UserEmailClaim, PasswordResetRequest, Client
 from lastuserapp.forms import LoginForm, OpenIdForm, RegisterForm, PasswordResetForm, PasswordResetRequestForm
 from lastuserapp.views import (get_next_url, login_internal, logout_internal, register_internal,
     render_form, render_message, render_redirect)
@@ -50,9 +51,48 @@ def login():
 
 @app.route('/logout')
 def logout():
-    logout_internal()
-    flash('You are now logged out', category='info')
-    return redirect(get_next_url(), code=303)
+    errormsg = "We detected an unauthorized attempt to log you out. "\
+    "If you really did intend to logout, please click on the logout link again."
+
+    # Logout, but protect from CSRF attempts
+    if 'client_id' in request.args:
+        client = Client.query.filter_by(key=request.args['client_id']).first()
+        if client is None:
+            # No such client. Possible CSRF. Don't logout and don't send them back
+            flash(errormsg, 'error')
+            return redirect(url_for('index'))
+        if client.trusted:
+            # This is a trusted client. Does the referring domain match?
+            clienthost = urlparse.urlsplit(client.redirect_uri).hostname
+            if request.referrer:
+                if clienthost != urlparse.urlsplit(request.referrer).hostname:
+                    # Doesn't. Don't logout and don't send back
+                    flash(errormsg, 'error')
+                    return redirect(url_for('index'))
+            # else: no referrer? Either stripped out by browser or a proxy, or this is a direct link.
+            # We can't do anything about that, so assume it's a legit case.
+            #
+            # If there is a next destination, is it in the same domain?
+            if 'next' in request.args:
+                if clienthost != urlparse.urlsplit(request.args['next']).hostname:
+                    # Doesn't. Assume CSRF and redirect to index without logout
+                    flash(errormsg, 'error')
+                    return redirect(url_for('index'))
+            # All good. Log them out and send them back
+            logout_internal()
+            return redirect(get_next_url(external=True))
+        else:
+            # We know this client, but it's not trusted. Send back without logout.
+            return redirect(get_next_url(external=True))
+    # If this is not a logout request from a client, check if all is good.
+    if not request.referrer or (urlparse.urlsplit(request.referrer).hostname != urlparse.urlsplit(request.url).hostname):
+        # TODO: present a logout form
+        flash(errormsg, 'error')
+        return redirect(url_for('index'))
+    else:
+        logout_internal()
+        flash('You are now logged out', category='info')
+        return redirect(get_next_url())
 
 
 @app.route('/register', methods=['GET', 'POST'])
