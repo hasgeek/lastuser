@@ -7,7 +7,7 @@ from flask import g, render_template, redirect, request, jsonify
 from flask import get_flashed_messages
 
 from lastuserapp import app
-from lastuserapp.models import db, Client, AuthCode, AuthToken, getuser
+from lastuserapp.models import db, Client, AuthCode, AuthToken, UserFlashMessage, getuser
 from lastuserapp.forms import AuthorizeForm
 from lastuserapp.utils import make_redirect_url, newid, newsecret
 from lastuserapp.views import requires_login
@@ -40,12 +40,23 @@ def clear_flashed_messages():
     discard = list(get_flashed_messages())
 
 
-def oauth_auth_success(redirect_uri, state, code):
+def save_flashed_messages():
+    """
+    Save flashed messages so they can be relayed back to trusted clients.
+    """
+    for index, (category, message) in enumerate(get_flashed_messages(with_categories=True)):
+        db.session.add(UserFlashMessage(user=g.user, seq=index, category=category, message=message))
+
+
+def oauth_auth_success(client, redirect_uri, state, code):
     """
     Commit session and redirect to OAuth redirect URI
     """
+    if client.trusted:
+        save_flashed_messages()
+    else:
+        clear_flashed_messages()
     db.session.commit()
-    clear_flashed_messages()
     if state is None:
         return redirect(make_redirect_url(redirect_uri, code=code), code=302)
     else:
@@ -126,13 +137,13 @@ def oauth_authorize():
     # The client does not get access to any data here -- they still have to authenticate to /token.
     if request.method == 'GET' and client.trusted:
         # Return auth token. No need for user confirmation
-        return oauth_auth_success(redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
+        return oauth_auth_success(client, redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
 
     # Ask user. validate_on_submit() only validates if request.method == 'POST'
     if form.validate_on_submit():
         if 'accept' in request.form:
             # User said yes. Return an auth code to the client
-            return oauth_auth_success(redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
+            return oauth_auth_success(client, redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
         elif 'deny' in request.form:
             # User said no. Return "access_denied" error (OAuth2 spec)
             return oauth_auth_error(redirect_uri, state, 'access_denied')
@@ -173,6 +184,14 @@ def oauth_token_success(token, **params):
     params['access_token'] = token.token
     params['token_type'] = token.token_type
     params['scope'] = u' '.join(token.scope)
+    if token.client.trusted:
+        # Trusted client. Send back waiting user messages.
+        for ufm in list(UserFlashMessage.query.filter_by(user=token.user).all()):
+            params.setdefault('messages', []).append({
+                'category': ufm.category,
+                'message': ufm.message
+                })
+            db.session.delete(ufm)
     # TODO: Understand how refresh_token works.
     if token.validity:
         params['expires_in'] = token.validity

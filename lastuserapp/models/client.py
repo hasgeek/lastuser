@@ -35,6 +35,18 @@ class Client(db.Model, BaseMixin):
     trusted = db.Column(db.Boolean, nullable=False, default=False)
 
 
+class UserFlashMessage(db.Model, BaseMixin):
+    """
+    Saved messages for a user, to be relayed to trusted clients.
+    """
+    __tablename__ = 'userflashmessage'
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship(User, primaryjoin=user_id == User.id)
+    seq = db.Column(db.Integer, default=0, nullable=False)
+    category = db.Column(db.Unicode(20), nullable=False)
+    message = db.Column(db.Unicode(250), nullable=False)
+
+
 class Resource(db.Model, BaseMixin):
     """
     Resources are provided by client applications. Other client applications
@@ -177,4 +189,4 @@ class PermissionAssigned(db.Model, BaseMixin):
     assigner = db.relationship(User, primaryjoin=assigner_id == User.id)
 
 
-__all__ = ['Client', 'Resource', 'ResourceAction', 'AuthCode', 'AuthToken']
+__all__ = ['Client', 'UserFlashMessage', 'Resource', 'ResourceAction', 'AuthCode', 'AuthToken']
