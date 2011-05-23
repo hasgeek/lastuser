@@ -49,42 +49,10 @@ def login():
             oiderror=oid.fetch_error(), oidnext=oid.get_next_url())
 
 
-@app.route('/logout')
-def logout():
-    errormsg = "We detected an unauthorized attempt to log you out. "\
-    "If you really did intend to logout, please click on the logout link again."
-
-    # Logout, but protect from CSRF attempts
-    if 'client_id' in request.args:
-        client = Client.query.filter_by(key=request.args['client_id']).first()
-        if client is None:
-            # No such client. Possible CSRF. Don't logout and don't send them back
-            flash(errormsg, 'error')
-            return redirect(url_for('index'))
-        if client.trusted:
-            # This is a trusted client. Does the referring domain match?
-            clienthost = urlparse.urlsplit(client.redirect_uri).hostname
-            if request.referrer:
-                if clienthost != urlparse.urlsplit(request.referrer).hostname:
-                    # Doesn't. Don't logout and don't send back
-                    flash(errormsg, 'error')
-                    return redirect(url_for('index'))
-            # else: no referrer? Either stripped out by browser or a proxy, or this is a direct link.
-            # We can't do anything about that, so assume it's a legit case.
-            #
-            # If there is a next destination, is it in the same domain?
-            if 'next' in request.args:
-                if clienthost != urlparse.urlsplit(request.args['next']).hostname:
-                    # Doesn't. Assume CSRF and redirect to index without logout
-                    flash(errormsg, 'error')
-                    return redirect(url_for('index'))
-            # All good. Log them out and send them back
-            logout_internal()
-            return redirect(get_next_url(external=True))
-        else:
-            # We know this client, but it's not trusted. Send back without logout.
-            return redirect(get_next_url(external=True))
-    # If this is not a logout request from a client, check if all is good.
+def logout_user():
+    """
+    User-initiated logout
+    """
     if not request.referrer or (urlparse.urlsplit(request.referrer).hostname != urlparse.urlsplit(request.url).hostname):
         # TODO: present a logout form
         flash(errormsg, 'error')
@@ -94,6 +62,52 @@ def logout():
         flash('You are now logged out', category='info')
         return redirect(get_next_url())
 
+
+def logout_client():
+    """
+    Client-initiated logout
+    """
+    errormsg = "We detected an unauthorized attempt to log you out. "\
+    "If you really did intend to logout, please click on the logout link again."
+    client = Client.query.filter_by(key=request.args['client_id']).first()
+    if client is None:
+        # No such client. Possible CSRF. Don't logout and don't send them back
+        flash(errormsg, 'error')
+        return redirect(url_for('index'))
+    if client.trusted:
+        # This is a trusted client. Does the referring domain match?
+        clienthost = urlparse.urlsplit(client.redirect_uri).hostname
+        if request.referrer:
+            if clienthost != urlparse.urlsplit(request.referrer).hostname:
+                # Doesn't. Don't logout and don't send back
+                flash(errormsg, 'error')
+                return redirect(url_for('index'))
+        # else: no referrer? Either stripped out by browser or a proxy, or this is a direct link.
+        # We can't do anything about that, so assume it's a legit case.
+        #
+        # If there is a next destination, is it in the same domain?
+        if 'next' in request.args:
+            if clienthost != urlparse.urlsplit(request.args['next']).hostname:
+                # Doesn't. Assume CSRF and redirect to index without logout
+                flash(errormsg, 'error')
+                return redirect(url_for('index'))
+        # All good. Log them out and send them back
+        logout_internal()
+        return redirect(get_next_url(external=True))
+    else:
+        # We know this client, but it's not trusted. Send back without logout.
+        return redirect(get_next_url(external=True))
+
+
+@app.route('/logout')
+def logout():
+
+    # Logout, but protect from CSRF attempts
+    if 'client_id' in request.args:
+        return logout_client()
+    else:
+        # If this is not a logout request from a client, check if all is good.
+        return logout_user()
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
