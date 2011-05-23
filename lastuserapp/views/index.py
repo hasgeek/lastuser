@@ -12,4 +12,4 @@ def index():
 
 @app.route('/favicon.ico')
 def favicon():
-    return redirect(url_for('static', filename='favicon.ico'), code=301)
+    return redirect(url_for('static', filename='img/favicon.ico'), code=301)
