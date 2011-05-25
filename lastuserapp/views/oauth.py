@@ -189,7 +189,7 @@ def oauth_authorize():
         client=client,
         redirect_uri=redirect_uri,
         scope=scope,
-        resources=resources, # TODO: Show friendly message
+        resources=resources,
         )
 
 
@@ -211,6 +211,8 @@ def oauth_make_token(user, client, scope):
     else:
         token = AuthToken(user=user, client=client, scope=scope)
         db.session.add(token)
+    # TODO: Look up Resources for items in scope; look up their providing clients apps,
+    # and notify each client app of this token
     return token
 
 
@@ -254,7 +256,6 @@ def oauth_token():
     OAuth2 server -- token endpoint
     """
     # Always required parameters
-    # TODO: Support other forms of client authentication
     grant_type = request.form.get('grant_type')
     client_id = request.form.get('client_id')
     if request.authorization:

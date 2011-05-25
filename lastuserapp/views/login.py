@@ -49,13 +49,17 @@ def login():
             oiderror=oid.fetch_error(), oidnext=oid.get_next_url())
 
 
+# TODO: Move this into settings.py
+logout_errormsg = "We detected an unauthorized attempt to log you out. "\
+            "If you really did intend to logout, please click on the logout link again."
+
 def logout_user():
     """
     User-initiated logout
     """
     if not request.referrer or (urlparse.urlsplit(request.referrer).hostname != urlparse.urlsplit(request.url).hostname):
         # TODO: present a logout form
-        flash(errormsg, 'error')
+        flash(logout_errormsg, 'error')
         return redirect(url_for('index'))
     else:
         logout_internal()
@@ -67,12 +71,10 @@ def logout_client():
     """
     Client-initiated logout
     """
-    errormsg = "We detected an unauthorized attempt to log you out. "\
-    "If you really did intend to logout, please click on the logout link again."
     client = Client.query.filter_by(key=request.args['client_id']).first()
     if client is None:
         # No such client. Possible CSRF. Don't logout and don't send them back
-        flash(errormsg, 'error')
+        flash(logout_errormsg, 'error')
         return redirect(url_for('index'))
     if client.trusted:
         # This is a trusted client. Does the referring domain match?
@@ -80,7 +82,7 @@ def logout_client():
         if request.referrer:
             if clienthost != urlparse.urlsplit(request.referrer).hostname:
                 # Doesn't. Don't logout and don't send back
-                flash(errormsg, 'error')
+                flash(logout_errormsg, 'error')
                 return redirect(url_for('index'))
         # else: no referrer? Either stripped out by browser or a proxy, or this is a direct link.
         # We can't do anything about that, so assume it's a legit case.
@@ -89,7 +91,7 @@ def logout_client():
         if 'next' in request.args:
             if clienthost != urlparse.urlsplit(request.args['next']).hostname:
                 # Doesn't. Assume CSRF and redirect to index without logout
-                flash(errormsg, 'error')
+                flash(logout_errormsg, 'error')
                 return redirect(url_for('index'))
         # All good. Log them out and send them back
         logout_internal()
