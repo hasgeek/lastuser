@@ -1,0 +1,65 @@
+{% extends "inc/layout.html" %}
+{% block title %}List of permissions{% endblock %}
+
+{% block content %}
+<p>
+  <a href="{{url_for('permission_new') }}">Define a new permission &rarr;</a>
+</p>
+<h2>Global permissions</h2>
+<table class="listing">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Name</th>
+      <th>Title</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for perm in allperms %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ perm.name }}</td>
+        <td>{{ perm.title }}</td>
+        <td>{{ perm.description }}</td>
+      </tr>
+    {% else %}
+      <tr>
+        <td colspan="4"><em>(No global permissions have been defined)</em></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>Your permissions</h2>
+<table class="listing">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Name</th>
+      <th>Title</th>
+      <th>Description</th>
+      <th colspan="2">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for perm in userperms %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ perm.name }}</td>
+        <td>{{ perm.title }}</td>
+        <td>{{ perm.description }}</td>
+        <td><a href="{{ url_for('permission_edit', id=perm.id) }}">Edit</a></td>
+        <td><a href="{{ url_for('permission_delete', id=perm.id) }}">Delete</a></td>
+      </tr>
+    {% else %}
+      <tr>
+        <td colspan="5"><em>(You have not defined any permissions)</em></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p>
+  Users can be assigned permissions from each application's info page.
+</p>
+{% endblock %}

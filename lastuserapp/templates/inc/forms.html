@@ -4,12 +4,12 @@
 {% endif %}
 <div class="field{% if css_class %} {{ css_class}}{% endif %}" id="field-{{ field.id }}">
   {% if field.widget.input_type == 'checkbox' %}
-    <div class="label">&nbsp;</div><div class="control checkbox">{% if widget_css_class %}{{ field(class=widget_css_class) }}{% else %}{{ field }}{% endif %} {{ field.label }}<br/>
-      <span class="description">{{ field.description }}</span></div>
-  {% else %}
-    {% if not nolabeldesc %}<div class="label">{{ field.label }}</div>{% endif %}
-    <div class="control">{% if autofocus %}{% if widget_css_class %}{{ field(autofocus="autofocus", class=widget_css_class) }}{% else %}{{ field(autofocus="autofocus") }}{% endif %}{% else %}{% if widget_css_class %}{{ field(class=widget_css_class) }}{% else %}{{ field }}{% endif %}{% endif %}{% if not nolabeldesc %}{% if sidetext %} <span class="sidetext">{{ sidetext|safe }}</span>{% endif %}<br/>
+    <div class="label">&nbsp;</div><div class="control checkbox">{% if widget_css_class %}{{ field(class=widget_css_class) }}{% else %}{{ field }}{% endif %} {{ field.label }}{% if field.description %}<br/>
       <span class="description">{{ field.description }}</span>{% endif %}</div>
+  {% else %}
+    {% if not nolabeldesc %}<div class="label">{{ field.label }}{% if field.flags.required == true %} <span class="required">*</span>{% endif %}</div>{% endif %}
+    <div class="control">{% if autofocus %}{% if widget_css_class %}{{ field(autofocus="autofocus", class=widget_css_class) }}{% else %}{{ field(autofocus="autofocus") }}{% endif %}{% else %}{% if widget_css_class %}{{ field(class=widget_css_class) }}{% else %}{{ field }}{% endif %}{% endif %}{% if not nolabeldesc %}{% if sidetext %} <span class="sidetext">{{ sidetext|safe }}</span>{% endif %}{% if field.description %}<br/>
+      <span class="description">{{ field.description }}</span>{% endif %}{% endif %}</div>
   {% endif %}
 </div>
 {% endmacro %}
@@ -25,7 +25,7 @@
         {% if widget_class %} class="{{ widget_class|e }}" {% else %} {% endif -%}
         />
     {% endfor %}
-    <span class="loading">&nbsp;</span>
+    <span class="loading hidden">&nbsp;</span>
   </div>
 </div>
 {% endmacro %}
@@ -58,7 +58,7 @@
       replaceTarget: true,
     });
     $('#{{ formid }} input[type="submit"]').click(function() {
-      $('#{{ formid }}').find(".loading").css('display', 'inline-block');
+      $('#{{ formid }}').find(".loading").removeClass('hidden');
     });
   });
 </script>

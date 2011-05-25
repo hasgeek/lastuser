@@ -22,7 +22,7 @@ header {
     padding: 1em;
 }
 
-@include sticky-footer(45px, "#container", "#main_footer", "footer");
+@include sticky-footer(50px, "#container", "#main_footer", "footer");
 footer {
     padding: 0 1em;
 }
@@ -103,6 +103,29 @@ dl dt {
 dl dd {
     text-indent: 1em;
     margin-bottom: 1em;
+}
+
+dl.infoblock {
+    @include pie-clearfix;
+
+    dt {
+        width: 7em;
+        float: left;
+        clear: left;
+        margin: 0 1em 1em 0;
+        text-align: right;
+    }
+
+    dd {
+        text-indent: 0;
+        float: left;
+        clear: none;
+        margin: 0 0 1em 0;
+
+        p, ul, ol {
+            margin-top: 0;
+        }
+    }
 }
 
 img.avatar {
@@ -196,6 +219,9 @@ div.field {
     .checkbox label {
         padding-left: 0.25em;
     }
+    div.label .required {
+        color: $color-required;
+    }
     &.small div.label {
         float: left;
         clear: left;
@@ -241,6 +267,7 @@ div.field {
         clear: left;
     }
 }
+
 div.error {
     position: relative;
     background-color: $color-title-h1;
@@ -261,24 +288,30 @@ div.error {
         border-top-color: $color-title-h1;
     }
 }
+
 span.sidetext {
     padding-left: 0.5em;
 }
+
 span.description {
     font-size: 90%;
     color: #666;
 }
+
 form {
     margin-bottom: 1em;
 }
-input, textarea {
+
+input, textarea, select {
     font-family: $font-input;
 }
+
 fieldset {
     @include pie-clearfix;
     margin-top: 1em;
     margin-bottom: 1em;
 }
+
 textarea {
     width: 90%;
     height: 10em;
@@ -303,6 +336,10 @@ input[type="text"], input[type="email"], input[type="password"], input[type="url
     height: 20px;
     margin-bottom: 5px;
     background: #fff;
+}
+
+select {
+    margin-bottom: 5px;
 }
 
 input[name="openid"] {
@@ -331,11 +368,24 @@ input[type="submit"] {
     }
 }
 
+input[type="submit"].delete {
+    border: 1px solid #d47645;
+    background: #ff8e53;
+    @include linear-gradient(color-stops(#ff8e53, #ee7e43));
+    &:hover {
+        background: #ee7e43;
+        @include linear-gradient(color-stops(#ff8e53, #dd6e33));
+    }
+}
+
 span.loading {
-    display: none;
+    display: inline-block;
     background: image-url("ajax-loader.gif") center no-repeat;
     width: 16px;
     height: 16px;
+    &.hidden {
+        display: none;
+    }
 }
 
 /* Tables */
@@ -353,6 +403,10 @@ table.listing {
     vertical-align: top;
     border-left: 1px solid $color-listing-outline;
     border-right: 1px solid $color-listing-outline;
+}
+
+.listing td.separator {
+    border-bottom: 1px solid $color-listing-outline;
 }
 
 .listing tr:nth-of-type(even) {

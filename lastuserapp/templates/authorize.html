@@ -5,9 +5,7 @@
 <p>
   An application is requesting access to your data.
 </p>
-<dl>
-  <dt>Scope:</dt>
-  <dd>{{ " ".join(scope) }}</dd>
+<dl class="infoblock">
   <dt>Name:</dt>
   <dd>{{ client.title|e }}</dd>
   <dt>Description:</dt>
@@ -16,6 +14,24 @@
   <dd>{{ client.owner|e }}</dd>
   <dt>Website:</dt>
   <dd><a href="{{ client.website|e }}">{{ client.website|e }}</a></dd>
+  <dt>Scope:</dt>
+  <dd>
+    <ol>
+      {% if 'id' in scope %}<li>Your name and username</li>{% endif %}
+      {% if 'email' in scope %}<li>Your email address</li>{% endif %}
+      {% for resource in resources %}
+        <li>{{ resource.title }}
+          {% if resources[resource] %}
+            <ul>
+              {% for action in resources[resource] %}
+                <li>{{ action.title }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </dd>
 </dl>
 <p>
   You should authorize this only if you initiated the request

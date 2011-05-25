@@ -7,6 +7,7 @@ from flask import g, request, session, flash, redirect, url_for, render_template
 
 from lastuserapp import app
 from lastuserapp.models import db, User
+from lastuserapp.forms import ConfirmDeleteForm
 
 
 @app.before_request
@@ -88,6 +89,19 @@ def render_redirect(url, code=302):
         return render_template('redirect.html', url=Markup(url))
     else:
         return redirect(url, code=code)
+
+def render_delete(ob, title, message, success='', next=None):
+    if not ob:
+        abort(404)
+    form = ConfirmDeleteForm()
+    if form.validate_on_submit():
+        if 'delete' in request.form:
+            db.session.delete(ob)
+            db.session.commit()
+            if success:
+                flash(success, "info")
+        return render_redirect(next or url_for('index'))
+    return render_template('delete.html', form=form, title=title, message=message)
 
 
 @app.template_filter('usessl')

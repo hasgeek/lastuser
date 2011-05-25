@@ -7,7 +7,8 @@ from flask import g, render_template, redirect, request, jsonify
 from flask import get_flashed_messages
 
 from lastuserapp import app
-from lastuserapp.models import db, Client, AuthCode, AuthToken, UserFlashMessage, getuser
+from lastuserapp.models import (db, Client, AuthCode, AuthToken, UserFlashMessage,
+    UserClientPermissions, getuser, Resource, ResourceAction)
 from lastuserapp.forms import AuthorizeForm
 from lastuserapp.utils import make_redirect_url, newid, newsecret
 from lastuserapp.views import requires_login
@@ -127,10 +128,38 @@ def oauth_authorize():
     # Validation 3.1: Scope present?
     if not scope:
         return oauth_auth_error(redirect_uri, state, 'invalid_request', "Scope not specified")
+
+    resources = {} # resource_object: [action_object, ...]
+
+    # Validation 3.2: Scope valid?
     for item in scope:
         if item not in [u'id', u'email']:
-            # TODO: Implement support for multiple scopes (using the Resource model)
-            return oauth_auth_error(redirect_uri, state, 'invalid_scope')
+            # Validation 3.2.1: resource/action is properly formatted
+            if '/' in item:
+                parts = item.split('/')
+                if len(parts) != 2:
+                    return oauth_auth_error(redirect_uri, state, 'invalid_scope', "Too many / characters in %s in scope" % item)
+                resource_name, action_name = parts
+            else:
+                resource_name = item
+                action_name = None
+            resource = Resource.query.filter_by(name=resource_name).first()
+            # Validation 3.2.2: Resource exists
+            if not resource:
+                return oauth_auth_error(redirect_uri, state, 'invalid_scope', "Unknown resource %s in scope" % resource_name)
+            # Validation 3.2.3: Client has access to resource
+            if resource.trusted and not client.trusted:
+                return oauth_auth_error(redirect_uri, state, 'invalid_scope', "Client does not have access to resource %s in scope" % resource_name)
+            # Validation 3.2.4: If action is specified, it exists for this resource
+            if action_name:
+                action = ResourceAction.query.filter_by(name=action_name, resource=resource).first()
+                if not action:
+                    return oauth_auth_error(redirect_uri, state, 'invalid_scope',
+                        "Unknown action %s on resource %s in scope" % (action_name, resource_name))
+                resources.setdefault(resource, []).append(action)
+            else:
+                action = None
+                resources.setdefault(resource, [])
 
     # Validations complete. Now ask user for permission
     # If the client is trusted (LastUser feature, not in OAuth2 spec), don't ask user.
@@ -139,7 +168,12 @@ def oauth_authorize():
         # Return auth token. No need for user confirmation
         return oauth_auth_success(client, redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
 
-    # Ask user. validate_on_submit() only validates if request.method == 'POST'
+    # If there is an existing auth token with the same or greater scope, don't ask user again; authorise silently
+    existing_token = AuthToken.query.filter_by(user=g.user, client=client).first()
+    if set(scope).issubset(set(existing_token.scope)):
+        return oauth_auth_success(client, redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
+
+    # First request. Ask user.
     if form.validate_on_submit():
         if 'accept' in request.form:
             # User said yes. Return an auth code to the client
@@ -154,8 +188,8 @@ def oauth_authorize():
         form=form,
         client=client,
         redirect_uri=redirect_uri,
-        scope=scope, # TODO: Show friendly message
-        state=state, # TODO: merge this into redirect_uri
+        scope=scope,
+        resources=resources, # TODO: Show friendly message
         )
 
 
@@ -202,12 +236,15 @@ def oauth_token_success(token, **params):
     return response
 
 
-def get_userinfo(user, scope=[]):
+def get_userinfo(user, client, scope=[]):
     userinfo = {'userid': user.userid,
                 'username': user.username,
                 'fullname': user.fullname}
     if 'email' in scope:
         userinfo['email'] = unicode(user.email)
+    perms = UserClientPermissions.query.filter_by(user=user, client=client).first()
+    if perms:
+        userinfo['permissions'] = perms.permissions.split(u' ')
     return userinfo
 
 
@@ -220,7 +257,11 @@ def oauth_token():
     # TODO: Support other forms of client authentication
     grant_type = request.form.get('grant_type')
     client_id = request.form.get('client_id')
-    client_secret = request.form.get('client_secret')
+    if request.authorization:
+        client_secret = request.authorization.password
+    else:
+        # TODO: drop support for this
+        client_secret = request.form.get('client_secret')
     scope = request.form.get('scope', u'').split(u' ')
     # if grant_type == 'authorization_code' (POST)
     code = request.form.get('code')
@@ -229,6 +270,10 @@ def oauth_token():
     username = request.form.get('username')
     password = request.form.get('password')
 
+    # Validations 0: HTTP Basic authentication matches client_id
+    if request.authorization:
+        if client_id != request.authorization.username:
+            return oauth_token_error('invalid_request')
     # Validations 1: Required parameters
     if not grant_type or not client_id or not client_secret:
         return oauth_token_error('invalid_request')
@@ -266,7 +311,7 @@ def oauth_token():
             return oauth_token_error('invalid_client', "redirect_uri does not match")
 
         token = oauth_make_token(user=authcode.user, client=client, scope=scope)
-        return oauth_token_success(token, userinfo=get_userinfo(user=authcode.user, scope=scope))
+        return oauth_token_success(token, userinfo=get_userinfo(user=authcode.user, client=client, scope=scope))
 
     elif grant_type == 'client_credentials':
         token = oauth_make_token(user=None, client=client, scope=scope)
@@ -287,4 +332,4 @@ def oauth_token():
 
         # All good. Grant access
         token = oauth_make_token(user=user, client=client, scope=scope)
-        return oauth_token_success(token, userinfo=get_userinfo(user=user, scope=scope))
+        return oauth_token_success(token, userinfo=get_userinfo(user=user, client=client, scope=scope))

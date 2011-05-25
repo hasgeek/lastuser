@@ -303,16 +303,16 @@ html, body {
   min-height: 100%;
   height: auto !important;
   height: 100%;
-  margin-bottom: -45px;
+  margin-bottom: -50px;
 }
 #container #main_footer {
-  height: 45px;
+  height: 50px;
 }
 
 footer {
   clear: both;
   position: relative;
-  height: 45px;
+  height: 50px;
 }
 
 footer {
@@ -411,6 +411,34 @@ dl dt {
 dl dd {
   text-indent: 1em;
   margin-bottom: 1em;
+}
+
+dl.infoblock {
+  *zoom: 1;
+}
+dl.infoblock:after {
+  content: "\0020";
+  display: block;
+  height: 0;
+  clear: both;
+  overflow: hidden;
+  visibility: hidden;
+}
+dl.infoblock dt {
+  width: 7em;
+  float: left;
+  clear: left;
+  margin: 0 1em 1em 0;
+  text-align: right;
+}
+dl.infoblock dd {
+  text-indent: 0;
+  float: left;
+  clear: none;
+  margin: 0 0 1em 0;
+}
+dl.infoblock dd p, dl.infoblock dd ul, dl.infoblock dd ol {
+  margin-top: 0;
 }
 
 img.avatar {
@@ -532,6 +560,9 @@ div.field:after {
 div.field .checkbox label {
   padding-left: 0.25em;
 }
+div.field div.label .required {
+  color: #df5e0e;
+}
 div.field.small div.label {
   float: left;
   clear: left;
@@ -620,7 +651,7 @@ form {
   margin-bottom: 1em;
 }
 
-input, textarea {
+input, textarea, select {
   font-family: ff-meta-web-pro-1, ff-meta-web-pro-2, arial, sans-serif;
 }
 
@@ -668,6 +699,10 @@ input[type="text"], input[type="email"], input[type="password"], input[type="url
   background: #fff;
 }
 
+select {
+  margin-bottom: 5px;
+}
+
 input[name="openid"] {
   background: url('/static/img/openid.png?1305572482') 4px no-repeat;
   width: 230px;
@@ -701,11 +736,28 @@ input[type="submit"]:hover {
   background-image: linear-gradient(top, #d6d6d6 0%, #c6c6c6 100%);
 }
 
+input[type="submit"].delete {
+  border: 1px solid #d47645;
+  background: #ff8e53;
+  background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, #ff8e53), color-stop(100%, #ee7e43));
+  background-image: -moz-linear-gradient(top, #ff8e53 0%, #ee7e43 100%);
+  background-image: linear-gradient(top, #ff8e53 0%, #ee7e43 100%);
+}
+input[type="submit"].delete:hover {
+  background: #ee7e43;
+  background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, #ff8e53), color-stop(100%, #dd6e33));
+  background-image: -moz-linear-gradient(top, #ff8e53 0%, #dd6e33 100%);
+  background-image: linear-gradient(top, #ff8e53 0%, #dd6e33 100%);
+}
+
 span.loading {
-  display: none;
+  display: inline-block;
   background: url('/static/img/ajax-loader.gif?1305733694') center no-repeat;
   width: 16px;
   height: 16px;
+}
+span.loading.hidden {
+  display: none;
 }
 
 /* Tables */
@@ -723,6 +775,10 @@ table.listing {
   vertical-align: top;
   border-left: 1px solid #b7b7b7;
   border-right: 1px solid #b7b7b7;
+}
+
+.listing td.separator {
+  border-bottom: 1px solid #b7b7b7;
 }
 
 .listing tr:nth-of-type(even) {

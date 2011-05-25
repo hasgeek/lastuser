@@ -168,7 +168,7 @@ def reset():
     if form.validate_on_submit():
         username = form.username.data
         user = form.user
-        if '@' in username:
+        if '@' in username and not username.startswith('@'):
             # They provided an email address. Send reset email to that address
             email = username
         else:

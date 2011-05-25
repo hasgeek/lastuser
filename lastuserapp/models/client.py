@@ -7,7 +7,8 @@ class Client(db.Model, BaseMixin):
     __tablename__ = 'client'
     #: User who owns this client
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(User, primaryjoin=user_id == User.id, backref='clients')
+    user = db.relationship(User, primaryjoin=user_id == User.id,
+        backref = db.backref('clients', cascade="all, delete-orphan"))
     #: Human-readable title
     title = db.Column(db.Unicode(250), nullable=False)
     #: Long description
@@ -18,8 +19,10 @@ class Client(db.Model, BaseMixin):
     website = db.Column(db.Unicode(250), nullable=False)
     #: Redirect URI
     redirect_uri = db.Column(db.Unicode(250), nullable=False)
-    #: Service URI
-    service_uri = db.Column(db.Unicode(250), nullable=True)
+    #: Notification URI
+    notification_uri = db.Column(db.Unicode(250), nullable=True)
+    #: Resource URI
+    resource_uri = db.Column(db.Unicode(250), nullable=True)
     #: Active flag
     active = db.Column(db.Boolean, nullable=False, default=True)
     #: Allow anyone to login to this app?
@@ -41,7 +44,8 @@ class UserFlashMessage(db.Model, BaseMixin):
     """
     __tablename__ = 'userflashmessage'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(User, primaryjoin=user_id == User.id)
+    user = db.relationship(User, primaryjoin=user_id == User.id,
+        backref=db.backref("flashmessages", cascade="delete, delete-orphan"))
     seq = db.Column(db.Integer, default=0, nullable=False)
     category = db.Column(db.Unicode(20), nullable=False)
     message = db.Column(db.Unicode(250), nullable=False)
@@ -54,11 +58,15 @@ class Resource(db.Model, BaseMixin):
     `name` as part of the requested `scope`.
     """
     __tablename__ = 'resource'
+    # Resource names are unique across client apps
     name = db.Column(db.Unicode(20), unique=True, nullable=False)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    client = db.relationship(Client, primaryjoin=client_id == Client.id, backref='resources')
+    client = db.relationship(Client, primaryjoin=client_id == Client.id,
+        backref = db.backref('resources', cascade="all, delete-orphan"))
     title = db.Column(db.Unicode(250), nullable=False)
     description = db.Column(db.Text, default='', nullable=False)
+    siteresource = db.Column(db.Boolean, default=False, nullable=False)
+    trusted = db.Column(db.Boolean, default=False, nullable=False)
 
 
 class ResourceAction(db.Model, BaseMixin):
@@ -67,11 +75,15 @@ class ResourceAction(db.Model, BaseMixin):
     a 'read' action.
     """
     __tablename__ = 'resourceaction'
-    name = db.Column(db.Unicode(20), unique=True, nullable=False)
+    name = db.Column(db.Unicode(20), nullable=False)
     resource_id = db.Column(db.Integer, db.ForeignKey('resource.id'), nullable=False)
-    resource = db.relationship(Resource, primaryjoin=resource_id == Resource.id, backref='actions')
+    resource = db.relationship(Resource, primaryjoin=resource_id == Resource.id,
+        backref = db.backref('actions', cascade="all, delete-orphan"))
     title = db.Column(db.Unicode(250), nullable=False)
     description = db.Column(db.Text, default='', nullable=False)
+
+    # Action names are unique per client app
+    __table_args__ = ( db.UniqueConstraint("name", "resource_id"), {} )
 
 
 class AuthCode(db.Model, BaseMixin):
@@ -80,7 +92,8 @@ class AuthCode(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    client = db.relationship(Client, primaryjoin=client_id == Client.id)
+    client = db.relationship(Client, primaryjoin=client_id == Client.id,
+        backref = db.backref("authcodes", cascade="all, delete-orphan"))
     code = db.Column(db.String(44), default=newsecret, nullable=False)
     _scope = db.Column('scope', db.Unicode(250), nullable=False)
     redirect_uri = db.Column(db.Unicode(250), nullable=False)
@@ -105,10 +118,11 @@ class AuthCode(db.Model, BaseMixin):
 class AuthToken(db.Model, BaseMixin):
     """Access tokens for access to data."""
     __tablename__ = 'authtoken'
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # For client-only
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # Null for client-only
     user = db.relationship(User, primaryjoin=user_id == User.id)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    client = db.relationship(Client, primaryjoin=client_id == Client.id)
+    client = db.relationship(Client, primaryjoin=client_id == Client.id,
+        backref=db.backref("authtokens", cascade="all, delete-orphan"))
     token = db.Column(db.String(22), default=newid, nullable=False, unique=True)
     token_type = db.Column(db.String(250), default='bearer', nullable=False) # 'bearer', 'mac' or a URL
     secret = db.Column(db.String(44), nullable=True)
@@ -162,7 +176,8 @@ class Permission(db.Model, BaseMixin):
     __tablename__ = 'permission'
     #: User who created this permission
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(User, primaryjoin=user_id == User.id, backref='permissions_created')
+    user = db.relationship(User, primaryjoin=user_id == User.id,
+        backref = db.backref('permissions_created', cascade="all, delete-orphan"))
     #: Name token
     name = db.Column(db.Unicode(80), nullable=False)
     #: Human-friendly title
@@ -170,23 +185,28 @@ class Permission(db.Model, BaseMixin):
     #: Description of what this permission is about
     description = db.Column(db.Text, default='', nullable=False)
     #: Is this permission available to all users and client apps?
-    universal = db.Column(db.Boolean, default=False, nullable=False)
+    allusers = db.Column(db.Boolean, default=False, nullable=False)
 
 
-class PermissionAssigned(db.Model, BaseMixin):
-    __tablename__ = 'permissionassigned'
-    # Call this 'assignee' instead of 'user' to reduce ambiguity
-    assignee_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    assignee = db.relationship(User, primaryjoin=assignee_id == User.id, backref='permissions')
-    # Permission that's assigned
-    permission_id = db.Column(db.Integer, db.ForeignKey('permission.id'), nullable=False)
-    permission = db.relationship(Permission, primaryjoin=permission_id == Permission.id)
-    # Client app it's assigned on
+# This model's name is in plural because it defines multiple permissions within each instance
+class UserClientPermissions(db.Model, BaseMixin):
+    __tablename__ = 'userclientpermissions'
+    # User who has these permissions
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship(User, primaryjoin=user_id == User.id, backref='permissions')
+    # Client app they are assigned on
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    client = db.relationship(Client, primaryjoin=client_id == Client.id)
-    # Audit: user who assigned the permission (is this really needed? Maybe when we support groups)
-    assigner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    assigner = db.relationship(User, primaryjoin=assigner_id == User.id)
+    client = db.relationship(Client, primaryjoin=client_id == Client.id,
+        backref=db.backref('permissions', cascade="all, delete-orphan"))
+    # The permissions as a string of tokens
+    permissions = db.Column(db.Unicode(250), default='', nullable=False)
+
+    # Only one assignment per user and client
+    # TODO: Also define context for permission:
+    # a. User1 has permissions x, y (without context) in app1
+    # b. User1 has permissions a, b, c in context p in app1
+    __table_args__ = ( db.UniqueConstraint("user_id", "client_id"), {} )
 
 
-__all__ = ['Client', 'UserFlashMessage', 'Resource', 'ResourceAction', 'AuthCode', 'AuthToken']
+__all__ = ['Client', 'UserFlashMessage', 'Resource', 'ResourceAction', 'AuthCode', 'AuthToken',
+    'Permission', 'UserClientPermissions']

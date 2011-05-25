@@ -40,6 +40,9 @@ class User(db.Model, BaseMixin):
         else:
             return self.userid
 
+    def displayname(self):
+        return self.fullname or self.username or self.userid
+
     def add_email(self, email, primary=False):
         # TODO: Need better handling for primary email id
         useremail = UserEmail(user=self, email=email, primary=primary)
@@ -84,7 +87,8 @@ class User(db.Model, BaseMixin):
 class UserEmail(db.Model, BaseMixin):
     __tablename__ = 'useremail'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(User, primaryjoin=user_id == User.id, backref='emails')
+    user = db.relationship(User, primaryjoin=user_id == User.id,
+        backref= db.backref('emails', cascade="all, delete-orphan"))
     _email = db.Column('email', db.Unicode(80), unique=True, nullable=False)
     md5sum = db.Column(db.String(32), unique=True, nullable=False)
     primary = db.Column(db.Boolean, nullable=False, default=False)
@@ -113,7 +117,8 @@ class UserEmail(db.Model, BaseMixin):
 class UserEmailClaim(db.Model, BaseMixin):
     __tablename__ = 'useremailclaim'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(User, primaryjoin=user_id == User.id, backref='emailclaims')
+    user = db.relationship(User, primaryjoin=user_id == User.id,
+        backref = db.backref('emailclaims', cascade="all, delete-orphan"))
     _email = db.Column('email', db.Unicode(80), nullable=True)
     verification_code = db.Column(db.String(44), nullable=False, default=newsecret)
     md5sum = db.Column(db.String(32), unique=True, nullable=False)
@@ -154,7 +159,8 @@ class PasswordResetRequest(db.Model, BaseMixin):
 class UserExternalId(db.Model, BaseMixin):
     __tablename__ = 'userexternalid'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(User, primaryjoin=user_id == User.id, backref='externalids')
+    user = db.relationship(User, primaryjoin=user_id == User.id,
+        backref = db.backref('externalids', cascade="all, delete-orphan"))
     service = db.Column(db.String(20), nullable=False)
     userid = db.Column(db.String(250), nullable=False) # Unique id (or OpenID)
     username = db.Column(db.Unicode(80), nullable=True)
