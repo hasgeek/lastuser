@@ -105,26 +105,47 @@ dl dd {
     margin-bottom: 1em;
 }
 
-dl.infoblock {
-    @include pie-clearfix;
+dl.infobox {
+    $width-infobox-term: 10em;
+
+    margin-bottom: 0;
+    font-size: 85%;
+    border: 1px solid $color-outline;
+    @include border-radius(4px);
+    padding: 0;
+    background: $color-infobox-term;
 
     dt {
-        width: 7em;
+        width: $width-infobox-term;
         float: left;
         clear: left;
-        margin: 0 1em 1em 0;
+        margin: 0;
+        padding: 0.5em 0 0 0.5em;
         text-align: right;
     }
 
     dd {
+        @include pie-clearfix;
         text-indent: 0;
-        float: left;
         clear: none;
-        margin: 0 0 1em 0;
+        margin: 0;
+        margin-left: ($width-infobox-term + 1em);
+        border-left: 1px solid $color-outline;
+        background: $color-infobox-description;
+        padding: 0.5em;
 
         p, ul, ol {
             margin-top: 0;
         }
+        ul, ol {
+            margin-bottom: 0;
+        }
+    }
+    dt:first-child + dd {
+        @include border-top-right-radius(4px);
+    }
+    dd:last-child {
+        @include border-bottom-right-radius(4px);
     }
 }
 
@@ -138,7 +159,7 @@ img.avatar {
 .usertools {
     list-style: none;
     position: absolute;
-    right: 1em;
+    right: 1.25em; // (100%/80% = 1.25)
     bottom: 0;
     margin: 0;
     font-size: 80%;

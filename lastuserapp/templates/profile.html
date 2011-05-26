@@ -7,7 +7,7 @@
 <h1>{{ self.title()|e }}</h1>
 {% endblock %}
 {% block content %}
-<dl>
+<dl class="infobox">
   {%- if user.username %}
     <dt>Username</dt>
     <dd>{{ user.username }}</dd>

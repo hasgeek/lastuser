@@ -107,6 +107,14 @@ def oauth_authorize():
         else:
             return oauth_auth_403("Unknown client_id")
 
+    # Validation 1.2.1: Client allows login for this user
+    if not client.allow_any_login:
+        print "Checking for permissions"
+        permissions = UserClientPermissions.query.filter_by(user=g.user, client=client).first()
+        print permissions
+        if not permissions:
+            return oauth_auth_error(redirect_uri, state, 'invalid_scope', "You do not have access to this application")
+
     # Validation 1.3: Is the client active?
     if not client.active:
         return oauth_auth_error(redirect_uri, state, 'unauthorized_client')
@@ -146,16 +154,17 @@ def oauth_authorize():
             resource = Resource.query.filter_by(name=resource_name).first()
             # Validation 3.2.2: Resource exists
             if not resource:
-                return oauth_auth_error(redirect_uri, state, 'invalid_scope', "Unknown resource %s in scope" % resource_name)
+                return oauth_auth_error(redirect_uri, state, 'invalid_scope', "Unknown resource '%s' in scope" % resource_name)
             # Validation 3.2.3: Client has access to resource
             if resource.trusted and not client.trusted:
-                return oauth_auth_error(redirect_uri, state, 'invalid_scope', "Client does not have access to resource %s in scope" % resource_name)
+                return oauth_auth_error(redirect_uri, state, 'invalid_scope',
+                    "This application does not have access to resource '%s' in scope" % resource_name)
             # Validation 3.2.4: If action is specified, it exists for this resource
             if action_name:
                 action = ResourceAction.query.filter_by(name=action_name, resource=resource).first()
                 if not action:
                     return oauth_auth_error(redirect_uri, state, 'invalid_scope',
-                        "Unknown action %s on resource %s in scope" % (action_name, resource_name))
+                        "Unknown action '%s' on resource '%s' in scope" % (action_name, resource_name))
                 resources.setdefault(resource, []).append(action)
             else:
                 action = None
@@ -170,7 +179,7 @@ def oauth_authorize():
 
     # If there is an existing auth token with the same or greater scope, don't ask user again; authorise silently
     existing_token = AuthToken.query.filter_by(user=g.user, client=client).first()
-    if set(scope).issubset(set(existing_token.scope)):
+    if existing_token and set(scope).issubset(set(existing_token.scope)):
         return oauth_auth_success(client, redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
 
     # First request. Ask user.
@@ -291,7 +300,11 @@ def oauth_token():
     if grant_type == 'password' and not client.trusted:
         return oauth_token_error('unauthorized_client', "Client not trusted for password grant_type")
 
-    if grant_type == 'authorization_code':
+    if grant_type == 'client_credentials':
+        # Client data. User isn't part of it
+        token = oauth_make_token(user=None, client=client, scope=scope)
+        return oauth_token_success(token)
+    elif grant_type == 'authorization_code':
         # Validations 3: auth code
         authcode = AuthCode.query.filter_by(code=code, client=client).first()
         if not authcode:
@@ -314,9 +327,6 @@ def oauth_token():
         token = oauth_make_token(user=authcode.user, client=client, scope=scope)
         return oauth_token_success(token, userinfo=get_userinfo(user=authcode.user, client=client, scope=scope))
 
-    elif grant_type == 'client_credentials':
-        token = oauth_make_token(user=None, client=client, scope=scope)
-        return oauth_token_success(token)
     elif grant_type == 'password':
         # Validations 4.1: password grant_type is only for trusted clients
         if not client.trusted:

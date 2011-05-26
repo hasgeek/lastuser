@@ -12,7 +12,7 @@ from lastuserapp.forms import (RegisterClientForm, PermissionForm, UserPermissio
 
 @app.route('/apps')
 def client_list():
-    return render_template('client_list.html', clients=Client.query.all())
+    return render_template('client_list.html', clients=Client.query.order_by('title').all())
 
 
 @app.route('/apps/new', methods=['GET', 'POST'])
@@ -70,7 +70,7 @@ def client_edit(key):
         return render_redirect(url_for('client_info', key=client.key), code=303)
 
     return render_form(form=form, title="Edit application", formid="client_edit",
-        submit="Edit application", ajax=True)
+        submit="Save changes", ajax=True)
 
 @app.route('/apps/<key>/delete', methods=['GET', 'POST'])
 def client_delete(key):
@@ -197,7 +197,7 @@ def permission_user_edit(key, userid):
         else:
             flash("All permissions have been revoked for user %s" % user.displayname(), "info")
         return render_redirect(url_for('client_info', key=key), code=303)
-    return render_form(form=form, title="Edit permissions", formid="perm_edit", submit="Save changes", ajax=False)
+    return render_form(form=form, title="Edit permissions", formid="perm_edit", submit="Save changes", ajax=True)
 
 
 @app.route('/apps/<key>/perms/<userid>/delete', methods=['GET', 'POST'])

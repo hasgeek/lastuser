@@ -139,21 +139,17 @@ def confirm_email(md5sum, secret):
         if emailclaim.verification_code == secret:
             # Verification code matches
             if g.user is None or g.user == emailclaim.user:
-                # Not logged in as someone else.
+                # Not logged in as someone else
                 # Claim verified!
-                useremail = emailclaim.user.add_email(emailclaim.email)
+                useremail = emailclaim.user.add_email(emailclaim.email, primary=emailclaim.user.email is None)
                 db.session.delete(emailclaim)
                 db.session.commit()
                 return render_message(title="Email address verified",
                     message=Markup("Hello %s! Your email address <code>%s</code> has now been verified." % (
                         escape(emailclaim.user.fullname), escape(useremail.email))))
             else:
-                # Logged in as someone else. Logout and ask them to login again
-                # Note that we don't need them to be logged in to verify a claim.
-                # Just that they shouldn't be logged in as someone else.
-                # FIXME: Why ask them to login again then?
-                logout_internal()
-                return redirect(url_for('login', next=request.url))
+                # Logged in as someone else. Abort
+                abort(403)
         else:
             # Verification code doesn't match
             abort(403)

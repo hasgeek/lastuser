@@ -3,9 +3,10 @@
 from flask import g, request, abort, flash, redirect, render_template, url_for
 
 from lastuserapp import app
-from lastuserapp.models import db, User
+from lastuserapp.models import db, User, UserEmailClaim
+from lastuserapp.mailclient import send_email_verify_link
 from lastuserapp.views import requires_login, render_form, render_redirect
-from lastuserapp.forms import ProfileForm, PasswordResetForm, PasswordChangeForm
+from lastuserapp.forms import ProfileForm, PasswordResetForm, PasswordChangeForm, NewEmailAddressForm
 
 
 @app.route('/profile')
@@ -45,6 +46,20 @@ def change_password():
         flash("Your new password has been saved.", category='info')
         return render_redirect(url_for('profile_current'), code=303)
     return render_form(form=form, title="Change password", formid="changepassword", submit="Change password", ajax=True)
+
+
+@app.route('/profile/addemail', methods=['GET', 'POST'])
+@requires_login
+def add_email():
+    form = NewEmailAddressForm()
+    if form.validate_on_submit():
+        useremail = UserEmailClaim(user=g.user, email=form.email.data)
+        db.session.add(useremail)
+        db.session.commit()
+        send_email_verify_link(useremail)
+        flash("We sent you an email to confirm your address.", "info")
+        return render_redirect(url_for('profile_current'), code=303)
+    return render_form(form=form, title="Add an email address", formid="email_add", submit="Add email", ajax=True)
 
 
 # Note: This must always be the last route in the app

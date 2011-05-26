@@ -413,10 +413,38 @@ dl dd {
   margin-bottom: 1em;
 }
 
-dl.infoblock {
-  *zoom: 1;
+dl.infobox {
+  margin-bottom: 0;
+  font-size: 85%;
+  border: 1px solid #b7b7b7;
+  -moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
+  -o-border-radius: 4px;
+  -ms-border-radius: 4px;
+  -khtml-border-radius: 4px;
+  border-radius: 4px;
+  padding: 0;
+  background: #e8e8e8;
 }
-dl.infoblock:after {
+dl.infobox dt {
+  width: 10em;
+  float: left;
+  clear: left;
+  margin: 0;
+  padding: 0.5em 0 0 0.5em;
+  text-align: right;
+}
+dl.infobox dd {
+  *zoom: 1;
+  text-indent: 0;
+  clear: none;
+  margin: 0;
+  margin-left: 11em;
+  border-left: 1px solid #b7b7b7;
+  background: #f6f6f6;
+  padding: 0.5em;
+}
+dl.infobox dd:after {
   content: "\0020";
   display: block;
   height: 0;
@@ -424,21 +452,27 @@ dl.infoblock:after {
   overflow: hidden;
   visibility: hidden;
 }
-dl.infoblock dt {
-  width: 7em;
-  float: left;
-  clear: left;
-  margin: 0 1em 1em 0;
-  text-align: right;
-}
-dl.infoblock dd {
-  text-indent: 0;
-  float: left;
-  clear: none;
-  margin: 0 0 1em 0;
-}
-dl.infoblock dd p, dl.infoblock dd ul, dl.infoblock dd ol {
+dl.infobox dd p, dl.infobox dd ul, dl.infobox dd ol {
   margin-top: 0;
+}
+dl.infobox dd ul, dl.infobox dd ol {
+  margin-bottom: 0;
+}
+dl.infobox dt:first-child + dd {
+  -moz-border-radius-topright: 4px;
+  -webkit-border-top-right-radius: 4px;
+  -o-border-top-right-radius: 4px;
+  -ms-border-top-right-radius: 4px;
+  -khtml-border-top-right-radius: 4px;
+  border-top-right-radius: 4px;
+}
+dl.infobox dd:last-child {
+  -moz-border-radius-bottomright: 4px;
+  -webkit-border-bottom-right-radius: 4px;
+  -o-border-bottom-right-radius: 4px;
+  -ms-border-bottom-right-radius: 4px;
+  -khtml-border-bottom-right-radius: 4px;
+  border-bottom-right-radius: 4px;
 }
 
 img.avatar {
@@ -459,7 +493,7 @@ img.avatar {
 .usertools {
   list-style: none;
   position: absolute;
-  right: 1em;
+  right: 1.25em;
   bottom: 0;
   margin: 0;
   font-size: 80%;
@@ -782,7 +816,7 @@ table.listing {
 }
 
 .listing tr:nth-of-type(even) {
-  background: rgba(232, 232, 232, 0.4);
+  background: #f6f6f6;
 }
 
 .listing thead th {

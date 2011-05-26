@@ -1,74 +1,40 @@
 {% extends "inc/layout.html" %}
 {% block title %}Client application information{% endblock %}
 {% block content %}
-{% if client.user == g.user %}
-  <p><a href="{{ url_for('client_edit', key=client.key) }}">Edit this application &rarr;</a></p>
-{% endif %}
-<dl>
-  <dt>Title:</dt>
-  <dd>{{ client.title }}</dd>
-  <dt>Description:</dt>
+<dl class="infobox">
+  <dt>Application title</dt>
+  <dd><strong>{{ client.title }}</strong></dd>
+  <dt>Description</dt>
   <dd>{{ client.description }}</dd>
-  <dt>Owner:</dt>
+  <dt>Owner</dt>
   <dd>{{ client.owner }}</dd>
-  <dt>Website:</dt>
-  <dd>{{ client.website }}</dd>
-  <dt>Redirect URI:</dt>
+  <dt>Website</dt>
+  <dd><a rel="nofollow" href="{{ client.website }}">{{ client.website }}</a></dd>
+  <dt>Redirect URI</dt>
   <dd>{{ client.redirect_uri }}</dd>
-  <dt>Notification URI:</dt>
+  <dt>Notification URI</dt>
   <dd>{{ client.notification_uri }}</dd>
-  <dt>Resource URI:</dt>
+  <dt>Resource URI</dt>
   <dd>{{ client.resource_uri }}</dd>
   <dt>Active?</dt>
   <dd>{{ client.active }}</dd>
-  {% if g.user == client.user %}
-  <dt>Client id (key):</dt>
+  <dt>Allow anyone to login?</dt>
+  <dd>{{ client.allow_any_login }}</dd>
+  {%- if g.user == client.user %}
+  <dt>Client id (key)</dt>
   <dd>{{ client.key }}</dd>
-  <dt>Client secret:</dt>
+  <dt>Client secret</dt>
   <dd>{{ client.secret }}</dd>
-  {% endif %}
-  <dt>Registered date:</dt>
+  {%- endif %}
+  <dt>Registered date</dt>
   <dd>{{ client.created_at }}</dd>
 </dl>
-{% if g.user == client.user %}
-  <h2>Permissions</h2>
-  <p>
-    The following users have permissions to this app.
-  </p>
-  <table class="listing">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>User</th>
-        <th>Permissions</th>
-        <th colspan="2">Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for pa in permassignments %}
-      <tr>
-        <td>{{ loop.index }}</td>
-        <td>{{ pa.user.displayname() }}</td>
-        <td>{{ pa.permissions }}</td>
-        <td><a href="{{ url_for('permission_user_edit', key=client.key, userid=pa.user.userid) }}">Edit</a></td>
-        <td><a href="{{ url_for('permission_user_delete', key=client.key, userid=pa.user.userid) }}">Delete</a></td>
-      {% else %}
-      <tr>
-        <td colspan="4">
-          <em>(No permissions assigned)</em>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <p>
-    <a href="{{ url_for('permission_new') }}">Define a new permission &rarr;</a><br/>
-    <a href="{{ url_for('permission_user_new', key=client.key) }}">Assign permissions to a new user &rarr;</a>
-  </p>
+{% if client.user == g.user %}
+  <p><a href="{{ url_for('client_edit', key=client.key) }}">Edit this application &rarr;</a></p>
 {% endif %}
 <h2>Resources</h2>
 <p>
-  The app provides the following resources and actions on resources
+  This app provides the following resources and actions on resources.
 </p>
 <table class="listing">
   <thead>
@@ -125,6 +91,42 @@
 {% if g.user == client.user %}
   <p>
     <a href="{{ url_for('resource_new', key=client.key) }}">Define a new resource &rarr;</a>
+  </p>
+{% endif %}
+{% if g.user == client.user %}
+  <h2>Permissions</h2>
+  <p>
+    The following users have permissions to this app.
+  </p>
+  <table class="listing">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>User</th>
+        <th>Permissions</th>
+        <th colspan="2">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for pa in permassignments %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ pa.user.displayname() }}</td>
+        <td>{{ pa.permissions }}</td>
+        <td><a href="{{ url_for('permission_user_edit', key=client.key, userid=pa.user.userid) }}">Edit</a></td>
+        <td><a href="{{ url_for('permission_user_delete', key=client.key, userid=pa.user.userid) }}">Delete</a></td>
+      {% else %}
+      <tr>
+        <td colspan="4">
+          <em>(No permissions assigned)</em>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p>
+    <a href="{{ url_for('permission_new') }}">Define a new permission &rarr;</a><br/>
+    <a href="{{ url_for('permission_user_new', key=client.key) }}">Assign permissions to a new user &rarr;</a>
   </p>
 {% endif %}
 {% endblock %}
