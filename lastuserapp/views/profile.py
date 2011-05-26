@@ -11,8 +11,8 @@ from lastuserapp.forms import ProfileForm, PasswordResetForm, PasswordChangeForm
 
 @app.route('/profile')
 @requires_login
-def profile_current():
-    return render_template('profile_current.html')
+def profile():
+    return render_template('profile.html')
 
 
 @app.route('/profile/edit', methods=['GET', 'POST'])
@@ -29,7 +29,7 @@ def profile_edit():
         g.user.description = form.description.data
         db.session.commit()
         flash("Your profile was successfully edited.", category='info')
-        return render_redirect(url_for('profile_current'), code=303)
+        return render_redirect(url_for('profile'), code=303)
     return render_form(form, title="Edit profile", formid="profile_edit", submit="Save changes", ajax=True)
 
 
@@ -44,7 +44,7 @@ def change_password():
         g.user.password = form.password.data
         db.session.commit()
         flash("Your new password has been saved.", category='info')
-        return render_redirect(url_for('profile_current'), code=303)
+        return render_redirect(url_for('profile'), code=303)
     return render_form(form=form, title="Change password", formid="changepassword", submit="Change password", ajax=True)
 
 
@@ -58,24 +58,5 @@ def add_email():
         db.session.commit()
         send_email_verify_link(useremail)
         flash("We sent you an email to confirm your address.", "info")
-        return render_redirect(url_for('profile_current'), code=303)
+        return render_redirect(url_for('profile'), code=303)
     return render_form(form=form, title="Add an email address", formid="email_add", submit="Add email", ajax=True)
-
-
-# Note: This must always be the last route in the app
-@app.route('/<profileid>')
-def profile(profileid):
-    user = User.query.filter_by(username=profileid).first()
-    if user is None:
-        if len(profileid) == 22:
-            user = User.query.filter_by(userid=profileid).first()
-        elif len(profileid) == 32:
-            useremail = UserEmail.query.filter_by(md5sum=profileid).first()
-            if useremail:
-                user = useremail.user
-    if user is None:
-        abort(404)
-    if user.profileid() != profileid:
-        return redirect(url_for('profile', profileid=user.profileid()), code=301)
-
-    return render_template('profile.html', user=user)
