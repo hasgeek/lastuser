@@ -530,8 +530,8 @@ img.login_avatar {
 .flash, #guide {
   background: #ffffa2;
   position: relative;
-  margin-left: -1em;
-  margin-right: -1em;
+  margin-left: 0;
+  margin-right: 0;
   margin-top: 0;
   margin-bottom: 1em;
   border: 1px solid #afafaf;
