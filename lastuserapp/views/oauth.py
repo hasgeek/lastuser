@@ -283,10 +283,10 @@ def oauth_token():
     # Validations 0: HTTP Basic authentication matches client_id
     if request.authorization:
         if client_id != request.authorization.username:
-            return oauth_token_error('invalid_request')
+            return oauth_token_error('invalid_request', "client_id does not match HTTP headers")
     # Validations 1: Required parameters
     if not grant_type or not client_id or not client_secret:
-        return oauth_token_error('invalid_request')
+        return oauth_token_error('invalid_request', "Missing one of grant_type, client_id or client_secret")
     # grant_type == 'refresh_token' is not supported. All tokens are permanent unless revoked
     if grant_type not in ['authorization_code', 'client_credentials', 'password']:
         return oauth_token_error('unsupported_grant_type')
