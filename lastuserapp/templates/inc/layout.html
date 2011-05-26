@@ -36,10 +36,13 @@
 <body>
   <div id="container" class="container">
     <header>
-      <div id="logo"><a href="{{ url_for('index')|e }}">Home</a></div>
+      <div id="logo"><a href="{{ url_for('index') }}">Home</a></div>
+      {# {% if g.avatar_url %}
+        <a href="{{ url_for('profile_current') }}"><img class="avatar login_avatar" src="{{ g.avatar_url }}" alt="Avatar"/></a>
+      {% endif %} #}
       <ul class="usertools">
         {% if g.user -%}
-          <li class="profile"><a href="{{ url_for('profile_current')|e }}">{{ g.user.fullname }}</a></li>
+          <li class="profile"><a href="{{ url_for('profile_current') }}">{{ g.user.fullname }}</a></li>
           <li><a href="{{ url_for('logout') }}">Logout</a></li>
         {% else %}
           <li><a href="{{ url_for('login') }}">Login</a></li>

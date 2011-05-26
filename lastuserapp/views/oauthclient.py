@@ -62,7 +62,7 @@ def login_twitter_authorized(resp):
         extid.oauth_token_secret = resp['oauth_token_secret']
         db.session.commit()
         login_internal(extid.user)
-        session['userid_external'] = {'service': 'twitter', 'userid': resp['user_id']}
+        session['userid_external'] = {'service': 'twitter', 'userid': resp['user_id'], 'username': resp['screen_name']}
         flash('You have logged in as %s via Twitter' % resp['screen_name'])
     else:
         user = register_internal(None, resp['screen_name'], None)

@@ -157,6 +157,14 @@ img.avatar {
     @include box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
 }
 
+img.login_avatar {
+    position: absolute;
+    right: 1em;
+    top: 1em;
+    width: 48px;
+    height: 48px;
+}
+
 .usertools {
     list-style: none;
     position: absolute;

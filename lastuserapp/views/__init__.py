@@ -2,12 +2,24 @@
 
 from functools import wraps
 import urlparse
+from urllib2 import urlopen
 
 from flask import g, request, session, flash, redirect, url_for, render_template, Markup, escape
 
 from lastuserapp import app
 from lastuserapp.models import db, User
 from lastuserapp.forms import ConfirmDeleteForm
+
+def avatar_url_email(useremail):
+    if request.url.startswith('https:'):
+        return 'https://secure.gravatar.com/avatar/%s?s=48&d=mm' % useremail.md5sum
+    else:
+        return 'http://www.gravatar.com/avatar/%s?s=48&d=mm' % useremail.md5sum
+
+
+def avatar_url_twitter(twitterid):
+    if twitterid:
+        return urlopen('http://api.twitter.com/1/users/profile_image/%s' % twitterid).geturl()
 
 
 @app.before_request
@@ -19,6 +31,17 @@ def lookup_current_user():
     g.user = None
     if 'userid' in session:
         g.user = User.query.filter_by(userid=session['userid']).first()
+        if not 'avatar_url' in session:
+            if g.user.email:
+                session['avatar_url'] = avatar_url_email(g.user.email)
+            elif session.get('userid_external', {}).get('service') == 'twitter':
+                session['avatar_url'] = avatar_url_twitter(session['userid_external'].get('username'))
+            else:
+                session['avatar_url'] = None
+        g.avatar_url = session['avatar_url']
+    else:
+        session.pop('avatar_url', None)
+        g.avatar_url = None
 
 
 def requires_login(f):
