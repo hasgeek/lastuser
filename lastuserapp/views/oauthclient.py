@@ -4,7 +4,6 @@ from flask import session, redirect, render_template, flash, url_for
 from flaskext.oauth import OAuth, OAuthException # OAuth 1.0a
 
 from lastuserapp import app
-from lastuserapp.oauthclient import twitter
 from lastuserapp.models import db, UserExternalId
 from lastuserapp.views import get_next_url, login_internal, register_internal
 

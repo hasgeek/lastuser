@@ -6,7 +6,7 @@ import urlparse
 from flask import g, redirect, request, session, flash, render_template, url_for, abort, Markup, escape
 
 from lastuserapp import app
-from lastuserapp.openidclient import oid
+from lastuserapp.views.openidclient import oid
 from lastuserapp.mailclient import send_email_verify_link, send_password_reset_link
 from lastuserapp.models import db, User, UserEmailClaim, PasswordResetRequest, Client
 from lastuserapp.forms import LoginForm, OpenIdForm, RegisterForm, PasswordResetForm, PasswordResetRequestForm
