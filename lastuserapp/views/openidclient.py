@@ -5,7 +5,7 @@ from flaskext.openid import OpenID
 
 from lastuserapp import app
 from lastuserapp.models import db, UserExternalId, UserEmail, UserEmailClaim
-from lastuserapp.views import login_internal, register_internal
+from lastuserapp.views import login_internal, register_internal, get_next_url
 
 oid = OpenID(app)
 
@@ -23,14 +23,21 @@ def login_openid_success(resp):
     Called when OpenID login succeeds
     """
     openid = resp.identity_url
-    extid = UserExternalId.query.filter_by(service="openid", userid=openid).first()
+    if openid.startswith('https://profiles.google.com/') or openid.startswith('https://www.google.com/accounts/o8/id?id='):
+        service = 'google'
+    else:
+        service = 'openid'
+
+    extid = UserExternalId.query.filter_by(service=service, userid=openid).first()
+
     if extid is not None:
         login_internal(extid.user)
-        session['userid_external'] = {'service': 'openid', 'userid': openid}
+        session['userid_external'] = {'service': service, 'userid': openid}
         flash("You are now logged in", category='info')
-        return redirect(oid.get_next_url())
+        return redirect(get_next_url())
     else:
         firsttime = True
+        username = None
         if resp.email:
             useremail = UserEmail.query.filter_by(email=resp.email).first()
             if openid.startswith('https://profiles.google.com/') or openid.startswith('https://www.google.com/accounts/o8/id?id='):
@@ -60,19 +67,31 @@ def login_openid_success(resp):
         else:
             # First login and no email address provided. Create a new user account
             user = register_internal(None, resp.fullname or resp.nickname or openid, None)
-        # Record this OpenID for the user
+
+        # Set username for Google ids
+        if openid.startswith('https://profiles.google.com/'):
+            # Use profile name as username
+            parts = openid.split('/')
+            while not parts[-1]:
+                parts.pop(-1)
+            username = parts[-1]
+        elif openid.startswith('https://www.google.com/accounts/o8/id?id='):
+            # Use email address as username
+            username = resp.email
+
+        # Record this OpenID/Google id for the user
         extid = UserExternalId(user = user,
-                               service = 'openid',
+                               service = service,
                                userid = openid,
-                               username = None,
+                               username = username,
                                oauth_token = None,
                                oauth_token_secret = None)
         db.session.add(extid)
         db.session.commit()
         login_internal(user)
-        session['userid_external'] = {'service': 'openid', 'userid': openid}
+        session['userid_external'] = {'service': service, 'userid': openid}
         if firsttime:
             flash("You are now logged in. This is your first time here", category='info')
         else:
             flash("You are now logged in.", category='info')
-        return redirect(oid.get_next_url())
+        return redirect(get_next_url())
