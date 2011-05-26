@@ -112,6 +112,7 @@ dl.infobox {
     font-size: 85%;
     border: 1px solid $color-outline;
     @include border-radius(4px);
+    @include box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
     padding: 0;
     background: $color-infobox-term;
 
@@ -416,6 +417,7 @@ table.listing {
     border-bottom: 1px solid $color-listing-outline;
     border-collapse: collapse;
     font-size: 85%;
+    @include box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
 }
 
 .listing th, .listing td {

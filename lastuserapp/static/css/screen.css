@@ -269,7 +269,6 @@ button {
   zoom: 1;
 }
 
-@charset "UTF-8";
 body {
   font-family: ff-meta-web-pro-1, ff-meta-web-pro-2, arial, sans-serif;
   font-size: 100%;
@@ -390,17 +389,17 @@ a.loginbutton {
   -ms-border-radius: 3px;
   -khtml-border-radius: 3px;
   border-radius: 3px;
-  -moz-box-shadow: rgba(0, 0, 0, 0.1) 0 1px 2px 0;
-  -webkit-box-shadow: rgba(0, 0, 0, 0.1) 0 1px 2px 0;
-  -o-box-shadow: rgba(0, 0, 0, 0.1) 0 1px 2px 0;
-  box-shadow: rgba(0, 0, 0, 0.1) 0 1px 2px 0;
+  -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  -o-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 a.loginbutton:hover {
-  -moz-box-shadow: rgba(0, 0, 0, 0.3) 0 1px 5px 0;
-  -webkit-box-shadow: rgba(0, 0, 0, 0.3) 0 1px 5px 0;
-  -o-box-shadow: rgba(0, 0, 0, 0.3) 0 1px 5px 0;
-  box-shadow: rgba(0, 0, 0, 0.3) 0 1px 5px 0;
+  -moz-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+  -webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+  -o-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
 }
 
 dl dt {
@@ -423,6 +422,10 @@ dl.infobox {
   -ms-border-radius: 4px;
   -khtml-border-radius: 4px;
   border-radius: 4px;
+  -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  -o-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   padding: 0;
   background: #e8e8e8;
 }
@@ -484,10 +487,10 @@ img.avatar {
   -ms-border-radius: 3px;
   -khtml-border-radius: 3px;
   border-radius: 3px;
-  -moz-box-shadow: rgba(0, 0, 0, 0.1) 0 1px 2px 0;
-  -webkit-box-shadow: rgba(0, 0, 0, 0.1) 0 1px 2px 0;
-  -o-box-shadow: rgba(0, 0, 0, 0.1) 0 1px 2px 0;
-  box-shadow: rgba(0, 0, 0, 0.1) 0 1px 2px 0;
+  -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  -o-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .usertools {
@@ -530,10 +533,10 @@ img.avatar {
   -ms-border-radius: 4px;
   -khtml-border-radius: 4px;
   border-radius: 4px;
-  -moz-box-shadow: rgba(0, 0, 0, 0.1) 0 1px 2px 0;
-  -webkit-box-shadow: rgba(0, 0, 0, 0.1) 0 1px 2px 0;
-  -o-box-shadow: rgba(0, 0, 0, 0.1) 0 1px 2px 0;
-  box-shadow: rgba(0, 0, 0, 0.1) 0 1px 2px 0;
+  -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  -o-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 .flash div.flashmessage, .flash div.guidecontent, #guide div.flashmessage, #guide div.guidecontent {
   margin: 0.5em 1em 0.6em;
@@ -756,32 +759,40 @@ input[type="submit"] {
   border-radius: 3px;
   padding: 0 12px;
   background: #e6e6e6;
-  background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, #e6e6e6), color-stop(100%, #d6d6d6));
-  background-image: -moz-linear-gradient(top, #e6e6e6 0%, #d6d6d6 100%);
-  background-image: linear-gradient(top, #e6e6e6 0%, #d6d6d6 100%);
+  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #e6e6e6), color-stop(100%, #d6d6d6));
+  background-image: -webkit-linear-gradient(top, #e6e6e6, #d6d6d6);
+  background-image: -moz-linear-gradient(top, #e6e6e6, #d6d6d6);
+  background-image: -o-linear-gradient(top, #e6e6e6, #d6d6d6);
+  background-image: linear-gradient(top, #e6e6e6, #d6d6d6);
   font-weight: bold;
   color: #444;
   vertical-align: text-bottom;
 }
 input[type="submit"]:hover {
   background: #d6d6d6;
-  background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, #d6d6d6), color-stop(100%, #c6c6c6));
-  background-image: -moz-linear-gradient(top, #d6d6d6 0%, #c6c6c6 100%);
-  background-image: linear-gradient(top, #d6d6d6 0%, #c6c6c6 100%);
+  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #d6d6d6), color-stop(100%, #c6c6c6));
+  background-image: -webkit-linear-gradient(top, #d6d6d6, #c6c6c6);
+  background-image: -moz-linear-gradient(top, #d6d6d6, #c6c6c6);
+  background-image: -o-linear-gradient(top, #d6d6d6, #c6c6c6);
+  background-image: linear-gradient(top, #d6d6d6, #c6c6c6);
 }
 
 input[type="submit"].delete {
   border: 1px solid #d47645;
   background: #ff8e53;
-  background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, #ff8e53), color-stop(100%, #ee7e43));
-  background-image: -moz-linear-gradient(top, #ff8e53 0%, #ee7e43 100%);
-  background-image: linear-gradient(top, #ff8e53 0%, #ee7e43 100%);
+  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #ff8e53), color-stop(100%, #ee7e43));
+  background-image: -webkit-linear-gradient(top, #ff8e53, #ee7e43);
+  background-image: -moz-linear-gradient(top, #ff8e53, #ee7e43);
+  background-image: -o-linear-gradient(top, #ff8e53, #ee7e43);
+  background-image: linear-gradient(top, #ff8e53, #ee7e43);
 }
 input[type="submit"].delete:hover {
   background: #ee7e43;
-  background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, #ff8e53), color-stop(100%, #dd6e33));
-  background-image: -moz-linear-gradient(top, #ff8e53 0%, #dd6e33 100%);
-  background-image: linear-gradient(top, #ff8e53 0%, #dd6e33 100%);
+  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #ff8e53), color-stop(100%, #dd6e33));
+  background-image: -webkit-linear-gradient(top, #ff8e53, #dd6e33);
+  background-image: -moz-linear-gradient(top, #ff8e53, #dd6e33);
+  background-image: -o-linear-gradient(top, #ff8e53, #dd6e33);
+  background-image: linear-gradient(top, #ff8e53, #dd6e33);
 }
 
 span.loading {
@@ -801,6 +812,10 @@ table.listing {
   border-bottom: 1px solid #b7b7b7;
   border-collapse: collapse;
   font-size: 85%;
+  -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  -o-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .listing th, .listing td {
@@ -855,12 +870,9 @@ table.listing {
   display: none;
 }
 
-@media all and (orientation:portrait) {}
-@media all and (orientation:landscape) {}
 @media screen and (max-device-width: 480px) {
   /* html { -webkit-text-size-adjust:none; -ms-text-size-adjust:none; } */
 }
-
 @media print {
   * {
     background: transparent !important;
