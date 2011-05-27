@@ -4,7 +4,8 @@ from functools import wraps
 import urlparse
 from urllib2 import urlopen
 
-from flask import g, request, session, flash, redirect, url_for, render_template, Markup, escape
+from flask import (g, request, session, flash, redirect, url_for, render_template,
+    Markup, escape, json)
 
 from lastuserapp import app
 from lastuserapp.models import db, User
@@ -109,7 +110,7 @@ def render_message(title, message):
 
 def render_redirect(url, code=302):
     if request.is_xhr:
-        return render_template('redirect.html', url=Markup(url))
+        return render_template('redirect.html', quoted_url=Markup(json.dumps(url)))
     else:
         return redirect(url, code=code)
 
