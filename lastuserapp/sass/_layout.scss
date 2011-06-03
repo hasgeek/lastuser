@@ -4,7 +4,7 @@ body {
 }
 
 header, #main, footer {
-    max-width: 960px;
+    max-width: 900px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -88,11 +88,11 @@ a.loginbutton {
     padding: 5px;
     //margin: 1em 0;
     @include border-radius(3px);
-    @include box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
+    @include single-box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
 }
 
 a.loginbutton:hover {
-    @include box-shadow(rgba(0, 0, 0, 0.3), 0, 1px, 5px);
+    @include single-box-shadow(rgba(0, 0, 0, 0.3), 0, 1px, 5px);
 }
 
 dl dt {
@@ -112,7 +112,7 @@ dl.infobox {
     font-size: 85%;
     border: 1px solid $color-outline;
     @include border-radius(4px);
-    @include box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
+    @include single-box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
     padding: 0;
     background: $color-infobox-term;
 
@@ -127,6 +127,7 @@ dl.infobox {
 
     dd {
         @include pie-clearfix;
+        position: relative;
         text-indent: 0;
         clear: none;
         margin: 0;
@@ -135,6 +136,15 @@ dl.infobox {
         background: $color-infobox-description;
         padding: 0.5em;
 
+        &:before {
+            display: block;
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            border-left: 1px solid #eee; /* Fake shadow colour */
+        }
         p, ul, ol {
             margin-top: 0;
         }
@@ -154,7 +164,7 @@ img.avatar {
     padding: 3px;
     border: 1px solid $color-outline;
     @include border-radius(3px);
-    @include box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
+    @include single-box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
 }
 
 img.login_avatar {
@@ -212,7 +222,7 @@ img.login_avatar {
     form {
         margin-bottom: 2em;
     }
-    @include box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
+    @include single-box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
 }
 
 .flash:before, #guide:before {
@@ -269,10 +279,10 @@ div.field {
             list-style: none;
             margin: 0;
             li {
-                padding: 0.5em;
+                padding: 0.25em;
                 @include border-radius(4px);
                 label {
-                    padding-left: 0.5em;
+                    padding-left: 0.25em;
                 }
             }
             li.selected {
@@ -386,14 +396,16 @@ input[type="submit"] {
     @include border-radius(3px);
     padding: 0 12px;
     background: #e6e6e6;
-    @include linear-gradient(color-stops(#e6e6e6, #d6d6d6));
+    //@include linear-gradient(color-stops(#e6e6e6, #d6d6d6));
+    @include background-image(linear-gradient(#e6e6e6, #d6d6d6));
     font-weight: bold;
     color: #444;
     vertical-align: text-bottom;
     &:hover {
         //text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
         background: #d6d6d6;
-        @include linear-gradient(color-stops(#d6d6d6, #c6c6c6));
+        //@include linear-gradient(color-stops(#d6d6d6, #c6c6c6));
+        @include background-image(linear-gradient(#d6d6d6, #c6c6c6));
         //color: #fff;
     }
 }
@@ -401,10 +413,12 @@ input[type="submit"] {
 input[type="submit"].delete {
     border: 1px solid #d47645;
     background: #ff8e53;
-    @include linear-gradient(color-stops(#ff8e53, #ee7e43));
+    //@include linear-gradient(color-stops(#ff8e53, #ee7e43));
+    @include background-image(linear-gradient(#ff8e53, #ee7e43));
     &:hover {
         background: #ee7e43;
-        @include linear-gradient(color-stops(#ff8e53, #dd6e33));
+        //@include linear-gradient(color-stops(#ff8e53, #dd6e33));
+        @include background-image(linear-gradient(#ff8e53, #dd6e33));
     }
 }
 
@@ -425,7 +439,7 @@ table.listing {
     border-bottom: 1px solid $color-listing-outline;
     border-collapse: collapse;
     font-size: 85%;
-    @include box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
+    @include single-box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
 }
 
 .listing th, .listing td {
@@ -473,6 +487,63 @@ table.listing {
 
 .listing tr.link:hover {
     background: $color-listing-hover;
+}
+
+ul.cardset {
+    @include pie-clearfix;
+    list-style: none;
+    margin: 1.5em 0 1em 0;
+    padding: 0;
+
+    li {
+        background: #fff;
+        vertical-align: top;
+        margin: 0 0.5em 0.5em 0;
+        padding: 0;
+        width: 310px;
+        border: 1px solid $color-card-border;
+        display: block;
+        float: left;
+        @include border-radius(4px);
+        -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 0 10px rgba(0, 0, 0, 0.1) inset;
+           -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 0 10px rgba(0, 0, 0, 0.1) inset;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 0 10px rgba(0, 0, 0, 0.1) inset;
+        &:hover {
+            background: #f6f6f6;
+        }
+        a, a:hover, a:active, a:visited {
+            color: inherit;
+            display: block;
+            margin: 0;
+            padding: 0;
+            text-decoration: none;
+
+            .title {
+                display: block;
+                padding: 0 1em;
+                height: 5.5em;
+                overflow: hidden;
+                h2 {
+                    color: $color-title-h2;
+                    margin: 0.5em 0 0 0;
+                    font-size: 130%;
+                }
+                h3 {
+                    margin: 0.5em 0 0 0;
+                    font-size: 80%;
+                    color: #666;
+                    font-weight: normal;
+                }
+            }
+            .body {
+                display: block;
+                padding: 0 1em;
+                height: 7em;
+                overflow: hidden;
+                border-top: 1px solid $color-outline-thin;
+            }
+        }
+    }
 }
 
 /* Spam protection */

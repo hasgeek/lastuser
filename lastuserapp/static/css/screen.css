@@ -270,12 +270,12 @@ button {
 }
 
 body {
-  font-family: ff-meta-web-pro-1, ff-meta-web-pro-2, arial, sans-serif;
+  font-family: ff-meta-web-pro-1, ff-meta-web-pro-2, Meta, MetaPlus, "Droid Sans", arial, sans-serif;
   font-size: 100%;
 }
 
 header, #main, footer {
-  max-width: 960px;
+  max-width: 900px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -439,6 +439,7 @@ dl.infobox dt {
 }
 dl.infobox dd {
   *zoom: 1;
+  position: relative;
   text-indent: 0;
   clear: none;
   margin: 0;
@@ -454,6 +455,16 @@ dl.infobox dd:after {
   clear: both;
   overflow: hidden;
   visibility: hidden;
+}
+dl.infobox dd:before {
+  display: block;
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  border-left: 1px solid #eee;
+  /* Fake shadow colour */
 }
 dl.infobox dd p, dl.infobox dd ul, dl.infobox dd ol {
   margin-top: 0;
@@ -627,7 +638,7 @@ div.field.small div.control ul {
   margin: 0;
 }
 div.field.small div.control ul li {
-  padding: 0.5em;
+  padding: 0.25em;
   -moz-border-radius: 4px;
   -webkit-border-radius: 4px;
   -o-border-radius: 4px;
@@ -636,7 +647,7 @@ div.field.small div.control ul li {
   border-radius: 4px;
 }
 div.field.small div.control ul li label {
-  padding-left: 0.5em;
+  padding-left: 0.25em;
 }
 div.field.small div.control ul li.selected {
   background-color: #f0a40c;
@@ -697,7 +708,7 @@ form {
 }
 
 input, textarea, select {
-  font-family: ff-meta-web-pro-1, ff-meta-web-pro-2, arial, sans-serif;
+  font-family: ff-meta-web-pro-1, ff-meta-web-pro-2, Meta, MetaPlus, "Droid Sans", arial, sans-serif;
 }
 
 fieldset {
@@ -757,7 +768,7 @@ input[name="openid"] {
 input[type="submit"] {
   height: 27px;
   border: 1px solid #b7b7b7;
-  font-family: ff-meta-web-pro-1, ff-meta-web-pro-2, arial, sans-serif;
+  font-family: ff-meta-web-pro-1, ff-meta-web-pro-2, Meta, MetaPlus, "Droid Sans", arial, sans-serif;
   font-size: 14px;
   -moz-border-radius: 3px;
   -webkit-border-radius: 3px;
@@ -768,10 +779,10 @@ input[type="submit"] {
   padding: 0 12px;
   background: #e6e6e6;
   background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #e6e6e6), color-stop(100%, #d6d6d6));
-  background-image: -webkit-linear-gradient(top, #e6e6e6, #d6d6d6);
-  background-image: -moz-linear-gradient(top, #e6e6e6, #d6d6d6);
-  background-image: -o-linear-gradient(top, #e6e6e6, #d6d6d6);
-  background-image: linear-gradient(top, #e6e6e6, #d6d6d6);
+  background-image: -webkit-linear-gradient(#e6e6e6, #d6d6d6);
+  background-image: -moz-linear-gradient(#e6e6e6, #d6d6d6);
+  background-image: -o-linear-gradient(#e6e6e6, #d6d6d6);
+  background-image: linear-gradient(#e6e6e6, #d6d6d6);
   font-weight: bold;
   color: #444;
   vertical-align: text-bottom;
@@ -779,28 +790,28 @@ input[type="submit"] {
 input[type="submit"]:hover {
   background: #d6d6d6;
   background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #d6d6d6), color-stop(100%, #c6c6c6));
-  background-image: -webkit-linear-gradient(top, #d6d6d6, #c6c6c6);
-  background-image: -moz-linear-gradient(top, #d6d6d6, #c6c6c6);
-  background-image: -o-linear-gradient(top, #d6d6d6, #c6c6c6);
-  background-image: linear-gradient(top, #d6d6d6, #c6c6c6);
+  background-image: -webkit-linear-gradient(#d6d6d6, #c6c6c6);
+  background-image: -moz-linear-gradient(#d6d6d6, #c6c6c6);
+  background-image: -o-linear-gradient(#d6d6d6, #c6c6c6);
+  background-image: linear-gradient(#d6d6d6, #c6c6c6);
 }
 
 input[type="submit"].delete {
   border: 1px solid #d47645;
   background: #ff8e53;
   background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #ff8e53), color-stop(100%, #ee7e43));
-  background-image: -webkit-linear-gradient(top, #ff8e53, #ee7e43);
-  background-image: -moz-linear-gradient(top, #ff8e53, #ee7e43);
-  background-image: -o-linear-gradient(top, #ff8e53, #ee7e43);
-  background-image: linear-gradient(top, #ff8e53, #ee7e43);
+  background-image: -webkit-linear-gradient(#ff8e53, #ee7e43);
+  background-image: -moz-linear-gradient(#ff8e53, #ee7e43);
+  background-image: -o-linear-gradient(#ff8e53, #ee7e43);
+  background-image: linear-gradient(#ff8e53, #ee7e43);
 }
 input[type="submit"].delete:hover {
   background: #ee7e43;
   background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #ff8e53), color-stop(100%, #dd6e33));
-  background-image: -webkit-linear-gradient(top, #ff8e53, #dd6e33);
-  background-image: -moz-linear-gradient(top, #ff8e53, #dd6e33);
-  background-image: -o-linear-gradient(top, #ff8e53, #dd6e33);
-  background-image: linear-gradient(top, #ff8e53, #dd6e33);
+  background-image: -webkit-linear-gradient(#ff8e53, #dd6e33);
+  background-image: -moz-linear-gradient(#ff8e53, #dd6e33);
+  background-image: -o-linear-gradient(#ff8e53, #dd6e33);
+  background-image: linear-gradient(#ff8e53, #dd6e33);
 }
 
 span.loading {
@@ -871,6 +882,74 @@ table.listing {
 
 .listing tr.link:hover {
   background: rgba(232, 232, 232, 0.8);
+}
+
+ul.cardset {
+  *zoom: 1;
+  list-style: none;
+  margin: 1.5em 0 1em 0;
+  padding: 0;
+}
+ul.cardset:after {
+  content: "\0020";
+  display: block;
+  height: 0;
+  clear: both;
+  overflow: hidden;
+  visibility: hidden;
+}
+ul.cardset li {
+  background: #fff;
+  vertical-align: top;
+  margin: 0 0.5em 0.5em 0;
+  padding: 0;
+  width: 310px;
+  border: 1px solid #afafaf;
+  display: block;
+  float: left;
+  -moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
+  -o-border-radius: 4px;
+  -ms-border-radius: 4px;
+  -khtml-border-radius: 4px;
+  border-radius: 4px;
+  -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 0 10px rgba(0, 0, 0, 0.1) inset;
+  -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 0 10px rgba(0, 0, 0, 0.1) inset;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 0 10px rgba(0, 0, 0, 0.1) inset;
+}
+ul.cardset li:hover {
+  background: #f6f6f6;
+}
+ul.cardset li a, ul.cardset li a:hover, ul.cardset li a:active, ul.cardset li a:visited {
+  color: inherit;
+  display: block;
+  margin: 0;
+  padding: 0;
+  text-decoration: none;
+}
+ul.cardset li a .title, ul.cardset li a:hover .title, ul.cardset li a:active .title, ul.cardset li a:visited .title {
+  display: block;
+  padding: 0 1em;
+  height: 5.5em;
+  overflow: hidden;
+}
+ul.cardset li a .title h2, ul.cardset li a:hover .title h2, ul.cardset li a:active .title h2, ul.cardset li a:visited .title h2 {
+  color: #816894;
+  margin: 0.5em 0 0 0;
+  font-size: 130%;
+}
+ul.cardset li a .title h3, ul.cardset li a:hover .title h3, ul.cardset li a:active .title h3, ul.cardset li a:visited .title h3 {
+  margin: 0.5em 0 0 0;
+  font-size: 80%;
+  color: #666;
+  font-weight: normal;
+}
+ul.cardset li a .body, ul.cardset li a:hover .body, ul.cardset li a:active .body, ul.cardset li a:visited .body {
+  display: block;
+  padding: 0 1em;
+  height: 7em;
+  overflow: hidden;
+  border-top: 1px solid #e8e8e8;
 }
 
 /* Spam protection */
