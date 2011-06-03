@@ -4,6 +4,7 @@ from flask import redirect, session, flash
 from flaskext.openid import OpenID
 
 from lastuserapp import app
+from lastuserapp.mailclient import send_email_verify_link
 from lastuserapp.models import db, UserExternalId, UserEmail, UserEmailClaim
 from lastuserapp.views import login_internal, register_internal, get_next_url
 
