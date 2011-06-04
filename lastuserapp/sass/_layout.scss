@@ -36,7 +36,7 @@ footer #footer_content {
 }
 
 #logo {
-    @include replace-text-with-dimensions('logo.png', 100, 100);
+    @include replace-text-with-dimensions('logo.png');
     a {
         display: block;
         width: 100%;
@@ -128,6 +128,10 @@ dl.bar {
         @include box-flex(1);
         margin: 0 1em 0 0;
         text-indent: 0;
+    }
+    dd:last-child {
+        @include box-flex(0);
+        margin: 0;
     }
 }
 
@@ -679,22 +683,31 @@ ul.cardset {
         padding-left: 1em;
         .choices {
             font-size: 200%;
+            span.score {
+                font-family: $font-monospace;
+                border: 1px solid $color-outline;
+                @include border-radius(3px);
+                padding: 0 3px;
+            }
+            span.indicator {
+                font-family: $font-monospace;
+            }
             a.votechoice {
+                font-family: $font-monospace;
                 border: 1px solid transparent;
                 @include border-radius(3px);
-                padding: 0 0.25em;
+                padding: 0 3px;
             }
             a.votechoice:hover {
-                border: 1px solid $color-outline-thin;
+                border: 1px solid $color-outline;
                 text-decoration: none;
             }
             a.votechoice:active, a.votechoice.selected {
-                border: 1px solid $color-outline;
+                background-color: $color-outline-thin;
             }
         }
         .label {
-            margin-top: 0.9em; // Hand-measured
-            font-size: 80%;
+            margin-top: 0.5em;
         }
     }
     .section {
@@ -709,6 +722,21 @@ ul.cardset {
         h1+p, h1+ul, h1+ol, h2+p, h2+ul, h2+ol {
             margin-top: 0.5em;
         }
+        .social {
+            position: relative;
+            margin: 1em 0;
+            iframe {
+                display: inline-block;
+            }
+            .facebooklike {
+                position: relative;
+                top: 1px;
+            }
+        }
+    }
+    .section.bar {
+        background-color: $color-outline-thin;
+        padding: 1px 2em;
     }
     .section.first {
         border-top: none;
