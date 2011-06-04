@@ -47,6 +47,10 @@ footer #footer_content {
     }
 }
 
+small {
+    font-size: 80%;
+}
+
 p, blockquote, ul, ol, table, dl {
     margin-top: 1em;
     margin-bottom: 1em;
@@ -103,6 +107,28 @@ dl dt {
 dl dd {
     text-indent: 1em;
     margin-bottom: 1em;
+}
+
+dl.bar {
+    display: block;
+    @include display-box;
+
+    margin: 1em 0;
+    dt {
+        display: inline;
+        @include display-box;
+        margin: 0 0.5em 0 0;
+    }
+    dt:after {
+        content: ":";
+    }
+    dd {
+        display: inline;
+        @include display-box;
+        @include box-flex(1);
+        margin: 0 1em 0 0;
+        text-indent: 0;
+    }
 }
 
 dl.infobox {
@@ -173,6 +199,38 @@ img.login_avatar {
     top: 1em;
     width: 48px;
     height: 48px;
+}
+
+.breadcrumbs {
+    @include pie-clearfix;
+    list-style: none;
+    margin: {
+        top: -1em;
+        bottom: 1em;
+        left: 0;
+        right: 0;
+    }
+    padding: 0;
+    li {
+        float: left;
+        padding: 0.25em 0.25em;
+        font-size: 80%;
+        &:before {
+            content: "→";
+            padding-right: 0.5em;
+        }
+        &:first-child:before {
+            content: "";
+            padding-right: 0;
+        }
+        &.home {
+            @include replace-text-with-dimensions('home.png', 12, 22);
+            padding: 0 0.2em 0 0;
+            a {
+                display: block;
+            }
+        }
+    }
 }
 
 .usertools {
@@ -286,7 +344,8 @@ div.field {
                 }
             }
             li.selected {
-                background-color: $color-radio-selected;
+                //background-color: $color-radio-selected;
+                font-weight: bold;
             }
         }
     }
@@ -376,6 +435,16 @@ input[type="text"], input[type="email"], input[type="password"], input[type="url
     height: 20px;
     margin-bottom: 5px;
     background: #fff;
+}
+
+input[type="url"] {
+    width: 500px;
+}
+
+input[name="title"] {
+    font-weight: bold;
+    font-size: 120%;
+    width: 500px;
 }
 
 select {
@@ -543,6 +612,106 @@ ul.cardset {
                 border-top: 1px solid $color-outline-thin;
             }
         }
+    }
+}
+
+.infosheet {
+    position: relative;
+    max-width: 800px;
+    margin: 2em auto;
+    padding-bottom: 1em;
+    border: 1px solid $color-sheet-border;
+    @include border-radius(4px);
+    @include box-shadow($color-shadow 0 1px 5px);//, rgba(0, 0, 0, 0.1) 0 0 20px inset);
+    .leftear, .rightear {
+        position: absolute;
+        top: 0.5em;
+        font-weight: bold;
+        margin: 0;
+        padding: 0;
+        width: 4em;
+        span {
+            color: #ccc;
+        }
+        a, span {
+            display: block;
+            position: relative;
+            font-size: 300%;
+            //color: #BC97D7;
+            text-decoration: none;
+        }
+        a:hover {
+            //@include text-shadow($color-shadow 0 0 2px);
+            //color: $color-link;
+            text-decoration: none;
+        }
+    }
+    .leftear {
+        left: -4em;
+        text-align: right;
+        a, span {
+            padding-right: 0.33em;
+            @include transition(left, 0.1s, linear);
+        }
+        a:hover {
+            left: -5px;
+            @include transition(left, 0.1s, linear);
+        }
+    }
+    .rightear {
+        right: -4em;
+        text-align: left;
+        a, span {
+            padding-left: 0.33em;
+            @include transition(right, 0.1s, linear);
+        }
+        a:hover {
+            right: -5px;
+            @include transition(right, 0.1s, linear);
+        }
+    }
+    .votebox {
+        //position: absolute;
+        //top: 1em;
+        //right: 2em;
+        float: right;
+        text-align: center;
+        padding-left: 1em;
+        .choices {
+            font-size: 200%;
+            a.votechoice {
+                border: 1px solid transparent;
+                @include border-radius(3px);
+                padding: 0 0.25em;
+            }
+            a.votechoice:hover {
+                border: 1px solid $color-outline-thin;
+                text-decoration: none;
+            }
+            a.votechoice:active, a.votechoice.selected {
+                border: 1px solid $color-outline;
+            }
+        }
+        .label {
+            margin-top: 0.9em; // Hand-measured
+            font-size: 80%;
+        }
+    }
+    .section {
+        border-top: 1px solid $color-outline-thin;
+        padding: 0 2em;
+        h1 {
+            margin: 0.5em 0 0 0;
+        }
+        h2 {
+            margin: 0.66em 0 0 0;
+        }
+        h1+p, h1+ul, h1+ol, h2+p, h2+ul, h2+ol {
+            margin-top: 0.5em;
+        }
+    }
+    .section.first {
+        border-top: none;
     }
 }
 
