@@ -53,7 +53,8 @@ def requires_login(f):
     def decorated_function(*args, **kwargs):
         if g.user is None:
             flash(u"You need to be logged in for that page")
-            return redirect(url_for('login', next=request.url))
+            session['next'] = request.url
+            return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -64,6 +65,9 @@ def get_next_url(referrer=False, external=False):
     explicitly asked for. This is to protect the site from being an unwitting
     redirector to external URLs.
     """
+    next_url = session.pop('next', None)
+    if next_url:
+        return next_url
     next_url = request.args.get('next', '')
     if not external:
         if next_url.startswith('http:') or next_url.startswith('https:') or next_url.startswith('//'):
