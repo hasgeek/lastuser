@@ -959,7 +959,7 @@ table.listing {
 }
 
 .listing tr.link:hover {
-  background: rgba(232, 232, 232, 0.8);
+  background: #d9e8f0;
 }
 
 ul.cardset {

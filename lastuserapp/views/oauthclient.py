@@ -24,7 +24,7 @@ def get_extid_token(service):
     if useridinfo:
         if service != useridinfo.get('service'):
             return None
-        extid = UserExternalId.query.filter_by(service, useridinfo['userid']).first()
+        extid = UserExternalId.query.filter_by(service=service, userid=useridinfo['userid']).first()
         if extid:
             return {'oauth_token': extid.oauth_token,
                     'oauth_token_secret': extid.oauth_token_secret}
