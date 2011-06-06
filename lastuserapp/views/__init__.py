@@ -32,17 +32,18 @@ def lookup_current_user():
     g.user = None
     if 'userid' in session:
         g.user = User.query.filter_by(userid=session['userid']).first()
-        if not 'avatar_url' in session:
-            if g.user.email:
-                session['avatar_url'] = avatar_url_email(g.user.email)
-            elif session.get('userid_external', {}).get('service') == 'twitter':
-                session['avatar_url'] = avatar_url_twitter(session['userid_external'].get('username'))
-            else:
-                session['avatar_url'] = None
-        g.avatar_url = session['avatar_url']
+        #if not 'avatar_url' in session:
+        #    if g.user.email:
+        #        session['avatar_url'] = avatar_url_email(g.user.email)
+        #    elif session.get('userid_external', {}).get('service') == 'twitter':
+        #        session['avatar_url'] = avatar_url_twitter(session['userid_external'].get('username'))
+        #    else:
+        #        session['avatar_url'] = None
+        #g.avatar_url = session['avatar_url']
     else:
-        session.pop('avatar_url', None)
-        g.avatar_url = None
+        pass
+        #session.pop('avatar_url', None)
+        #g.avatar_url = None
 
 
 def requires_login(f):
