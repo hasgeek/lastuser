@@ -181,7 +181,7 @@ class UserPhoneClaim(db.Model, BaseMixin):
         backref = db.backref('phoneclaims', cascade="all, delete-orphan"))
     _phone = db.Column('phone', db.Unicode(80), unique=True, nullable=False)
     gets_text = db.Column(db.Boolean, nullable=False, default=True)
-    verification_code = db.Column(db.Unicode, nullable=False, default=newpin)
+    verification_code = db.Column(db.Unicode(4), nullable=False, default=newpin)
 
     def __init__(self, phone, **kwargs):
         super(UserPhoneClaim, self).__init__(**kwargs)
