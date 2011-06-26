@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from flask import session, redirect, render_template, flash, url_for
+from urllib import urlencode
+from urllib2 import urlopen, URLError
+
+from flask import session, redirect, render_template, flash, url_for, json
 from flaskext.oauth import OAuth, OAuthException # OAuth 1.0a
 
 from lastuserapp import app
@@ -55,17 +58,24 @@ def login_twitter_authorized(resp):
         flash(u'You denied the request to login via Twitter.')
         return redirect(next_url)
 
+    # Try to read more from the user's Twitter profile
+    try:
+        twinfo = json.loads(urlopen('http://api.twitter.com/1/users/lookup.json?%s' % urlencode({'user_id': resp['user_id']})).read())[0]
+        session['avatar_url'] = twinfo.get('profile_image_url')
+    except URLError:
+        twinfo = {}
+
     extid = UserExternalId.query.filter_by(service='twitter', userid=resp['user_id']).first()
     if extid is not None:
-        extid.username = resp['screen_name']
         extid.oauth_token = resp['oauth_token']
         extid.oauth_token_secret = resp['oauth_token_secret']
+        extid.username = resp['screen_name']
         db.session.commit()
         login_internal(extid.user)
         session['userid_external'] = {'service': 'twitter', 'userid': resp['user_id'], 'username': resp['screen_name']}
         flash('You have logged in as %s via Twitter' % resp['screen_name'])
     else:
-        user = register_internal(None, resp['screen_name'], None)
+        user = register_internal(None, twinfo.get('name', '@'+resp['screen_name']), None)
         extid = UserExternalId(user = user,
                                service = 'twitter',
                                userid = resp['user_id'],

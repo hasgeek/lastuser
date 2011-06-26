@@ -40,5 +40,9 @@ RECAPTCHA_USE_SSL=USE_SSL
 RECAPTCHA_PUBLIC_KEY=''
 RECAPTCHA_PRIVATE_KEY=''
 RECAPTCHA_OPTIONS=''
+#: SMS gateways
+SMS_SMSGUPSHUP_MASK=''
+SMS_SMSGUPSHUP_USER=''
+SMS_SMSGUPSHUP_PASS=''
 #: Messages (in markdown)
 MESSAGE_FOOTER='Copyright &copy; HasGeek. Powered by LastUser, open source software from HasGeek.'

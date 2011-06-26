@@ -56,6 +56,13 @@ p, blockquote, ul, ol, table, dl {
     margin-bottom: 1em;
 }
 
+blockquote {
+    margin-left: 0.25em;
+    border-left: 5px solid $color-outline-thin;
+    padding-left: 0.25em;
+    color: #888;
+}
+
 h1 {
     font-size: 200%;
     color: $color-title-h1;
@@ -703,7 +710,8 @@ ul.cardset {
                 text-decoration: none;
             }
             a.votechoice:active, a.votechoice.selected {
-                background-color: $color-outline-thin;
+                background-color: $color-section-heading-background;
+                color: $color-section-heading;
             }
         }
         .label {
@@ -711,13 +719,19 @@ ul.cardset {
         }
     }
     .section {
-        border-top: 1px solid $color-outline-thin;
+        // border-top: 1px solid $color-outline-thin;
         padding: 0 2em;
         h1 {
             margin: 0.5em 0 0 0;
         }
         h2 {
-            margin: 0.66em 0 0 0;
+            //margin: 0.66em 0 0 0;
+            font-size: 100%;
+            background: $color-section-heading-background;
+            padding: 0.25em 0.5em;
+            margin: 0 -0.5em;
+            color: $color-section-heading;
+            @include border-radius(3px);
         }
         h1+p, h1+ul, h1+ol, h2+p, h2+ul, h2+ol {
             margin-top: 0.5em;
@@ -735,13 +749,114 @@ ul.cardset {
         }
     }
     .section.bar {
-        background-color: $color-outline-thin;
-        padding: 1px 2em;
+        position: relative;
+        color: $color-bar;
+        background-color: $color-bar-background;
+        padding: 1px 3em;
+        margin: 1em -1em;
+        @include box-shadow($color-shadow 0 1px 2px);
+        &:before, &:after {
+            display: block;
+            content: "";
+            position: absolute;
+            border-style: solid;
+            border-width: 0.5em 1em;
+            height: 0px;
+            width: 0px;
+            z-index: -1;
+        }
+        &:before {
+            left: -1em;
+            bottom: -0.5em;
+            border-color: transparent $color-bar-background transparent transparent;
+        }
+        &:after {
+            right: -1em;
+            bottom: -0.5em;
+            border-color: transparent transparent transparent $color-bar-background;
+        }
     }
     .section.first {
         border-top: none;
     }
 }
+
+.comments {
+    list-style: none;
+    margin-left: 0;
+    padding-left: 1em;
+    p, blockquote, ul, ol, table, dl {
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+    }
+    li.comment {
+        position: relative;
+        padding: 0.5em 0.5em;
+        margin: 0;
+        min-height: 3em;
+    }
+    div:target {
+        margin: -0.25em;
+        padding: 0.25em;
+        background-color: $color-flash; //$color-listing-hover;
+        @include border-radius(3px);
+    }
+    .collapse, .uncollapse {
+        font-family: $font-monospace;
+    }
+    .comment-vote {
+        position: absolute;
+        text-align: center;
+        left: -2em;
+        width: 2em;
+        font-size: 80%;
+        a {
+            color: $color-link-metadata;
+        }
+        a:hover {
+            text-decoration: none;
+            color: $color-link;
+        }
+        a.comment-vote-cancel {
+            color: $color-link;
+        }
+    }
+    .com-children {
+        border-left: 1px dotted $color-outline;
+        list-style: none;
+        margin-left: 0;
+        padding-left: 2em;
+        margin-bottom: 0;
+    }
+    .com-header, .com-footer {
+        font-size: 80%;
+        color: $color-link-metadata;
+        .commenter {
+            color: #444;
+            font-weight: bold;
+        }
+        .commenter.selected {
+            color: $color-section-heading;
+            background-color: $color-section-heading-background;
+            padding: 1px 0.25em;
+            @include border-radius(3px);
+        }
+    }
+    .com-header a,
+    .com-footer a {
+        color: $color-link-metadata;
+    }
+    .com-footer a {
+        font-weight: bold;
+    }
+    .com-header a:hover,
+    .com-footer a:hover {
+        color: $color-link;
+        text-decoration: none;
+    }
+}
+
+
 
 /* Spam protection */
 .z {

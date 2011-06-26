@@ -4,7 +4,7 @@ from hashlib import md5
 from werkzeug import generate_password_hash, check_password_hash
 
 from lastuserapp.models import db, BaseMixin
-from lastuserapp.utils import newid, newsecret
+from lastuserapp.utils import newid, newsecret, newpin
 
 class User(db.Model, BaseMixin):
     __tablename__ = 'user'
@@ -145,6 +145,65 @@ class UserEmailClaim(db.Model, BaseMixin):
         return str(self.__unicode__())
 
 
+class UserPhone(db.Model, BaseMixin):
+    __tablename__ = 'userphone'
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship(User, primaryjoin=user_id == User.id,
+        backref = db.backref('phones', cascade="all, delete-orphan"))
+    primary = db.Column(db.Boolean, nullable=False, default=False)
+    _phone = db.Column('phone', db.Unicode(80), unique=True, nullable=False)
+    gets_text = db.Column(db.Boolean, nullable=False, default=True)
+
+    def __init__(self, phone, **kwargs):
+        super(UserPhone, self).__init__(**kwargs)
+        self._phone = phone
+
+    @property
+    def phone(self):
+        return self._phone
+
+    phone = db.synonym('_phone', descriptor=phone)
+
+    def __repr__(self):
+        return u'<UserPhone %s of user %s>' % (self.phone, repr(self.user))
+
+    def __unicode__(self):
+        return unicode(self.phone)
+
+    def __str__(self):
+        return str(self.__unicode__())
+
+
+class UserPhoneClaim(db.Model, BaseMixin):
+    __tablename__ = 'userphoneclaim'
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship(User, primaryjoin=user_id == User.id,
+        backref = db.backref('phoneclaims', cascade="all, delete-orphan"))
+    _phone = db.Column('phone', db.Unicode(80), unique=True, nullable=False)
+    gets_text = db.Column(db.Boolean, nullable=False, default=True)
+    verification_code = db.Column(db.Unicode, nullable=False, default=newpin)
+
+    def __init__(self, phone, **kwargs):
+        super(UserPhoneClaim, self).__init__(**kwargs)
+        self.verification_code = newpin()
+        self._phone = phone
+
+    @property
+    def phone(self):
+        return self._phone
+
+    phone = db.synonym('_phone', descriptor=phone)
+
+    def __repr__(self):
+        return u'<UserPhoneClaim %s of user %s>' % (self.phone, repr(self.user))
+
+    def __unicode__(self):
+        return unicode(self.phone)
+
+    def __str__(self):
+        return str(self.__unicode__())
+
+
 class PasswordResetRequest(db.Model, BaseMixin):
     __tablename__ = 'passwordresetrequest'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -170,4 +229,5 @@ class UserExternalId(db.Model, BaseMixin):
     __table_args__ = ( db.UniqueConstraint("service", "userid"), {} )
 
 
-__all__ = ['User', 'UserEmail', 'UserEmailClaim', 'PasswordResetRequest', 'UserExternalId']
+__all__ = ['User', 'UserEmail', 'UserEmailClaim', 'PasswordResetRequest', 'UserExternalId',
+           'UserPhone', 'UserPhoneClaim']

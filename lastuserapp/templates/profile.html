@@ -21,14 +21,29 @@
 <h2>My email addresses</h2>
 <ul>
   {% for useremail in g.user.emails %}
-    <li>{{ useremail }}{% if useremail.primary %} <em>(primary)</em>{% endif %}</li>
+    <li>{{ useremail }} {% if useremail.primary %} <em>(primary)</em> {% endif -%}
+      <a href="{{ url_for('remove_email', md5sum=useremail.md5sum) }}">(delete)</a></li>
   {% else %}
     <li><em>(no verified addresses)</em></li>
   {% endfor %}
   {% for useremail in g.user.emailclaims %}
-    <li>{{ useremail }} <em>(pending verification)</em></li>
+    <li>{{ useremail }} <em>(pending verification)</em>
+      <a href="{{ url_for('remove_email', md5sum=useremail.md5sum) }}">(delete)</a></li>
   {% endfor %}
   <li><a href="{{ url_for('add_email') }}">Add another email address &rarr;</a></li>
+</ul>
+<h2>My mobile numbers</h2>
+<ul>
+  {% for userphone in g.user.phones %}
+    <li>{{ userphone }} {% if userphone.primary %} <em>(primary)</em> {% endif -%}
+      <a href="{{ url_for('remove_phone', number=userphone.phone) }}">(delete)</a></li>
+  {% else %}
+    <li><em>(no verified numbers)</em></li>
+  {% endfor %}
+  {% for userphone in g.user.phoneclaims %}
+    <li>{{ userphone }} <em>(pending verification)</em></li>
+  {% endfor %}
+  <li><a href="{{ url_for('add_phone') }}">Add a mobile number &rarr;</a></li>
 </ul>
 <h2>My external ids</h2>
 <ul>

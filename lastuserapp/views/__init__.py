@@ -2,7 +2,7 @@
 
 from functools import wraps
 import urlparse
-from urllib2 import urlopen
+from urllib2 import urlopen, URLError
 
 from flask import (g, request, session, flash, redirect, url_for, render_template,
     Markup, escape, json)
@@ -20,7 +20,10 @@ def avatar_url_email(useremail):
 
 def avatar_url_twitter(twitterid):
     if twitterid:
-        return urlopen('http://api.twitter.com/1/users/profile_image/%s' % twitterid).geturl()
+        try:
+            return urlopen('http://api.twitter.com/1/users/profile_image/%s' % twitterid).geturl()
+        except URLError:
+            return None
 
 
 @app.before_request
@@ -32,18 +35,17 @@ def lookup_current_user():
     g.user = None
     if 'userid' in session:
         g.user = User.query.filter_by(userid=session['userid']).first()
-        #if not 'avatar_url' in session:
-        #    if g.user.email:
-        #        session['avatar_url'] = avatar_url_email(g.user.email)
-        #    elif session.get('userid_external', {}).get('service') == 'twitter':
-        #        session['avatar_url'] = avatar_url_twitter(session['userid_external'].get('username'))
-        #    else:
-        #        session['avatar_url'] = None
-        #g.avatar_url = session['avatar_url']
+        if not 'avatar_url' in session:
+            if g.user.email:
+                session['avatar_url'] = avatar_url_email(g.user.email)
+            elif session.get('userid_external', {}).get('service') == 'twitter':
+                session['avatar_url'] = avatar_url_twitter(session['userid_external'].get('username'))
+            else:
+                session['avatar_url'] = None
+        g.avatar_url = session['avatar_url']
     else:
-        pass
-        #session.pop('avatar_url', None)
-        #g.avatar_url = None
+        session.pop('avatar_url', None)
+        g.avatar_url = None
 
 
 def requires_login(f):
@@ -175,3 +177,4 @@ import lastuserapp.views.oauth
 import lastuserapp.views.client
 import lastuserapp.views.httperror
 import lastuserapp.views.profile
+import lastuserapp.views.sms

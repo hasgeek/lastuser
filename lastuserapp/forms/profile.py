@@ -5,8 +5,8 @@ import re
 from flask import g
 import flaskext.wtf as wtf
 
-from lastuserapp.utils import valid_username
-from lastuserapp.models import User, UserEmail, UserEmailClaim, getuser
+from lastuserapp.utils import valid_username, strip_phone, valid_phone
+from lastuserapp.models import User, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim, getuser
 
 
 class PasswordResetRequestForm(wtf.Form):
@@ -66,3 +66,34 @@ class NewEmailAddressForm(wtf.Form):
         existing = UserEmailClaim.query.filter_by(email=field.data, user=g.user).first()
         if existing is not None:
             raise wtf.ValidationError, "That email address is pending verification."
+
+
+class NewPhoneForm(wtf.Form):
+    phone = wtf.TextField('Phone number', default='+91', validators=[wtf.Required()],
+        description="Indian mobile numbers only")
+
+    def validate_phone(self, field):
+        existing = UserPhone.query.filter_by(phone=field.data).first()
+        if existing is not None:
+            if existing.user == g.user:
+                raise wtf.ValidationError, "You have already registered this phone number."
+            else:
+                raise wtf.ValidationError, "That phone number has already been claimed."
+        existing = UserPhoneClaim.query.filter_by(phone=field.data, user=g.user).first()
+        if existing is not None:
+            raise wtf.ValidationError, "That phone number is pending verification."
+        # Step 1: Remove punctuation in number
+        field.data = strip_phone(field.data)
+        # Step 2: Validate number format
+        if not valid_phone(field.data):
+            raise wtf.ValidationError, "Invalid phone number (must be in international format with a leading + symbol)"
+        # Step 3: Check if Indian number (startswith('+91'))
+        if not field.data.startswith('+91') or len(field.data) != 13:
+            raise wtf.ValidationError, "Only Indian mobile numbers are allowed at this time"
+
+
+class VerifyPhoneForm(wtf.Form):
+    verification_code = wtf.TextField('Verification code', validators=[wtf.Required()])
+    def validate_verification_code(self, field):
+        if self.phoneclaim.verification_code != field.data:
+            raise wtf.ValidationError, "Verification code does not match."

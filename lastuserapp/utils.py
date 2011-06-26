@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Id generation
+from random import randint
 import uuid
 from base64 import urlsafe_b64encode
 import re
@@ -10,6 +11,8 @@ from urllib import urlencode as make_query_string
 # --- Constants ---------------------------------------------------------------
 
 USERNAME_VALID_RE = re.compile('^[a-z0-9][a-z0-9-]*[a-z0-9]$')
+PHONE_STRIP_RE = re.compile(r'[\t .()\[\]-]+')
+PHONE_VALID_RE = re.compile(r'^\+[0-9]+$')
 
 # --- Utilities ---------------------------------------------------------------
 
@@ -28,6 +31,12 @@ def newsecret():
     """
     return newid()+newid()
 
+def newpin(digits=4):
+    """
+    Return a random numeric string with the specified number of digits, default 4
+    """
+    return (u'%%0%dd' % digits) % randint(0, 10**digits)
+
 
 def make_redirect_url(url, **params):
     urlparts = list(urlparse.urlsplit(url))
@@ -45,3 +54,9 @@ def make_redirect_url(url, **params):
 
 def valid_username(candidate):
     return not USERNAME_VALID_RE.search(candidate) is None
+
+def strip_phone(candidate):
+    return PHONE_STRIP_RE.sub('', candidate)
+
+def valid_phone(candidate):
+    return not PHONE_VALID_RE.search(candidate) is None
