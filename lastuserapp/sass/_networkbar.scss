@@ -1,0 +1,91 @@
+.hg-h { color: #df5e0e; }
+.hg-g { color: #816894; }
+.hg-s { color: #f0a40c; }
+
+$color-hg-bar: #ccc;
+//$color-hg-bar-background: rgba(223, 94, 14, 1);
+$color-hg-bar-background: rgba(0, 0, 0, 0.8);
+$color-hg-bar-highlight: #fff;
+$color-hg-bar-highlight-background: rgba(255, 255, 255, 0.2);
+
+#hg-bar {
+    background: $color-hg-bar-background;
+    color: $color-hg-bar;
+    font-size: 90%;
+    ul#hg-barlinks {
+        @include pie-clearfix;
+        max-width: 930px;
+        margin: 0 auto;
+        padding: 0 1em;
+        position: relative;
+        list-style: none;
+        & > li {
+            float: left;
+            position: relative;
+            margin: 0;
+            padding: 0;
+            a {
+                display: block;
+                padding: 0.4em 0.5em 0.5em;
+                text-decoration: none;
+                background-color: inherit;
+                color: $color-hg-bar;
+                border-bottom: 2px solid transparent;
+            }
+            a:visited {
+                text-decoration: none;
+                background-color: inherit;
+                color: $color-hg-bar;
+            }
+            ul {
+                position: absolute;
+                left: 0;
+                margin: 0;
+                background: $color-hg-bar-background;
+                color: $color-hg-bar;
+                list-style: none;
+                z-index: 9999;
+                left: -9999px;
+                @include border-bottom-left-radius(6px);
+                @include border-bottom-right-radius(6px);
+                li {
+                    float: none;
+                    position: relative;
+                    white-space: nowrap;
+                }
+                li:last-child {
+                    @include border-bottom-left-radius(6px);
+                    @include border-bottom-right-radius(6px);
+                }
+                li:hover > a {
+                    text-decoration: none;
+                    background: $color-hg-bar-highlight-background;
+                    color: $color-hg-bar-highlight;
+                }
+                li.hg-menu-section {
+                    padding: 0.4em 0.5em 0.5em;
+                    font-style: italic;
+                    &:before, &:after {
+                        content: " — ";
+                    }
+                }
+            }
+        }
+        & > li:hover > a, & > li > a:active {
+            text-decoration: none;
+            background: $color-hg-bar-highlight-background;
+            color: $color-hg-bar-highlight;
+        }
+        & > li:hover > ul {
+            left: 0;
+        }
+        & > li:first-child {
+            margin-left: -0.5em;
+        }
+        & > li.selected a {
+            border-bottom: 2px solid #df5e0e;
+            color: $color-hg-bar-highlight;
+            font-weight: bold;
+        }
+    }
+}
