@@ -1351,9 +1351,10 @@ ul.cardset li a .body, ul.cardset li a:hover .body, ul.cardset li a:active .body
 }
 
 #hg-bar {
-  background: rgba(0, 0, 0, 0.8);
-  color: #cccccc;
-  font-size: 90%;
+  background: #e8e8e8;
+  color: black;
+  border-bottom: 1px solid #df5e0e;
+  margin-bottom: 1em;
 }
 #hg-bar ul#hg-barlinks {
   *zoom: 1;
@@ -1362,6 +1363,7 @@ ul.cardset li a .body, ul.cardset li a:hover .body, ul.cardset li a:active .body
   padding: 0 1em;
   position: relative;
   list-style: none;
+  font-size: 90%;
 }
 #hg-bar ul#hg-barlinks:after {
   content: "";
@@ -1376,23 +1378,26 @@ ul.cardset li a .body, ul.cardset li a:hover .body, ul.cardset li a:active .body
 }
 #hg-bar ul#hg-barlinks > li a {
   display: block;
-  padding: 0.4em 0.5em 0.5em;
+  padding: 0.4em 0.5em;
   text-decoration: none;
   background-color: inherit;
-  color: #cccccc;
-  border-bottom: 2px solid transparent;
+  color: black;
+  border-top: 2px solid transparent;
 }
 #hg-bar ul#hg-barlinks > li a:visited {
   text-decoration: none;
   background-color: inherit;
-  color: #cccccc;
+  color: black;
+}
+#hg-bar ul#hg-barlinks > li a.hg-submenu:after {
+  content: " ▾";
 }
 #hg-bar ul#hg-barlinks > li ul {
   position: absolute;
   left: 0;
   margin: 0;
-  background: rgba(0, 0, 0, 0.8);
-  color: #cccccc;
+  background: #e8e8e8;
+  color: black;
   list-style: none;
   z-index: 9999;
   left: -9999px;
@@ -1408,6 +1413,8 @@ ul.cardset li a .body, ul.cardset li a:hover .body, ul.cardset li a:active .body
   -ms-border-bottom-right-radius: 6px;
   -khtml-border-bottom-right-radius: 6px;
   border-bottom-right-radius: 6px;
+  border: 1px solid #df5e0e;
+  border-top: none;
 }
 #hg-bar ul#hg-barlinks > li ul li {
   float: none;
@@ -1430,8 +1437,22 @@ ul.cardset li a .body, ul.cardset li a:hover .body, ul.cardset li a:active .body
 }
 #hg-bar ul#hg-barlinks > li ul li:hover > a {
   text-decoration: none;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: rgba(0, 0, 0, 0.1);
+  color: black;
+}
+#hg-bar ul#hg-barlinks > li ul li:last-child > a {
+  -moz-border-radius-bottomleft: 6px;
+  -webkit-border-bottom-left-radius: 6px;
+  -o-border-bottom-left-radius: 6px;
+  -ms-border-bottom-left-radius: 6px;
+  -khtml-border-bottom-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+  -moz-border-radius-bottomright: 6px;
+  -webkit-border-bottom-right-radius: 6px;
+  -o-border-bottom-right-radius: 6px;
+  -ms-border-bottom-right-radius: 6px;
+  -khtml-border-bottom-right-radius: 6px;
+  border-bottom-right-radius: 6px;
 }
 #hg-bar ul#hg-barlinks > li ul li.hg-menu-section {
   padding: 0.4em 0.5em 0.5em;
@@ -1442,8 +1463,8 @@ ul.cardset li a .body, ul.cardset li a:hover .body, ul.cardset li a:active .body
 }
 #hg-bar ul#hg-barlinks > li:hover > a, #hg-bar ul#hg-barlinks > li > a:active {
   text-decoration: none;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: rgba(0, 0, 0, 0.1);
+  color: black;
 }
 #hg-bar ul#hg-barlinks > li:hover > ul {
   left: 0;
@@ -1452,8 +1473,8 @@ ul.cardset li a .body, ul.cardset li a:hover .body, ul.cardset li a:active .body
   margin-left: -0.5em;
 }
 #hg-bar ul#hg-barlinks > li.selected a {
-  border-bottom: 2px solid #df5e0e;
-  color: white;
+  border-top: 2px solid #df5e0e;
+  color: black;
   font-weight: bold;
 }
 
