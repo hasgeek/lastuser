@@ -2,7 +2,7 @@
 .hg-g { color: #816894; }
 .hg-s { color: #f0a40c; }
 
-$color-hg-bar: #000;
+$color-hg-bar: #444;
 $color-hg-bar-border: #df5e0e;
 //$color-hg-bar-background: rgba(223, 94, 14, 1);
 //$color-hg-bar-background: rgba(129, 104, 148, 0.5);
@@ -13,8 +13,11 @@ $color-hg-bar-highlight: #000;
 $color-hg-bar-highlight-background: rgba(0, 0, 0, 0.1);
 $color-hg-bar-selected: #000;
 
+// -webkit-gradient(linear, 0% 0%, 0% 100%, from(#434343), to(#292929))
+
 #hg-bar {
     background: $color-hg-bar-background;
+    @include linear-gradient(color-stops(#f9f9f9, #e8e8e8));
     color: $color-hg-bar;
     border-bottom: 1px solid $color-hg-bar-border;
     margin-bottom: 1em;
@@ -49,7 +52,6 @@ $color-hg-bar-selected: #000;
             }
             ul {
                 position: absolute;
-                left: 0;
                 margin: 0;
                 background: $color-hg-bar-background;
                 color: $color-hg-bar;
@@ -81,19 +83,24 @@ $color-hg-bar-selected: #000;
                 li.hg-menu-section {
                     padding: 0.4em 0.5em 0.5em;
                     font-style: italic;
-                    &:before, &:after {
+                    &:before,
+                    &:after {
                         content: " — ";
                     }
                 }
             }
         }
-        & > li:hover > a, & > li > a:active {
+        & > li:hover > a,
+        & > li > a:active {
             text-decoration: none;
-            background: $color-hg-bar-highlight-background;
+            //background: $color-hg-bar-highlight-background;
+            background: #e8e8e8;
+            border-top: 2px solid #e8e8e8;
+            @include linear-gradient(color-stops(#e8e8e8, #d1d1d1));
             color: $color-hg-bar-highlight;
         }
         & > li:hover > ul {
-            left: 0;
+            left: -1px;
         }
         & > li:first-child {
             margin-left: -0.5em;

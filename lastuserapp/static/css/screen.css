@@ -1352,7 +1352,13 @@ ul.cardset li a .body, ul.cardset li a:hover .body, ul.cardset li a:active .body
 
 #hg-bar {
   background: #e8e8e8;
-  color: black;
+  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #f9f9f9), color-stop(100%, #e8e8e8));
+  background-image: -webkit-linear-gradient(top, #f9f9f9, #e8e8e8);
+  background-image: -moz-linear-gradient(top, #f9f9f9, #e8e8e8);
+  background-image: -o-linear-gradient(top, #f9f9f9, #e8e8e8);
+  background-image: -ms-linear-gradient(top, #f9f9f9, #e8e8e8);
+  background-image: linear-gradient(top, #f9f9f9, #e8e8e8);
+  color: #444444;
   border-bottom: 1px solid #df5e0e;
   margin-bottom: 1em;
 }
@@ -1381,23 +1387,22 @@ ul.cardset li a .body, ul.cardset li a:hover .body, ul.cardset li a:active .body
   padding: 0.4em 0.5em;
   text-decoration: none;
   background-color: inherit;
-  color: black;
+  color: #444444;
   border-top: 2px solid transparent;
 }
 #hg-bar ul#hg-barlinks > li a:visited {
   text-decoration: none;
   background-color: inherit;
-  color: black;
+  color: #444444;
 }
 #hg-bar ul#hg-barlinks > li a.hg-submenu:after {
   content: " ▾";
 }
 #hg-bar ul#hg-barlinks > li ul {
   position: absolute;
-  left: 0;
   margin: 0;
   background: #e8e8e8;
-  color: black;
+  color: #444444;
   list-style: none;
   z-index: 9999;
   left: -9999px;
@@ -1463,11 +1468,18 @@ ul.cardset li a .body, ul.cardset li a:hover .body, ul.cardset li a:active .body
 }
 #hg-bar ul#hg-barlinks > li:hover > a, #hg-bar ul#hg-barlinks > li > a:active {
   text-decoration: none;
-  background: rgba(0, 0, 0, 0.1);
+  background: #e8e8e8;
+  border-top: 2px solid #e8e8e8;
+  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #e8e8e8), color-stop(100%, #d1d1d1));
+  background-image: -webkit-linear-gradient(top, #e8e8e8, #d1d1d1);
+  background-image: -moz-linear-gradient(top, #e8e8e8, #d1d1d1);
+  background-image: -o-linear-gradient(top, #e8e8e8, #d1d1d1);
+  background-image: -ms-linear-gradient(top, #e8e8e8, #d1d1d1);
+  background-image: linear-gradient(top, #e8e8e8, #d1d1d1);
   color: black;
 }
 #hg-bar ul#hg-barlinks > li:hover > ul {
-  left: 0;
+  left: -1px;
 }
 #hg-bar ul#hg-barlinks > li:first-child {
   margin-left: -0.5em;
