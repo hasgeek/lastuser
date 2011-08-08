@@ -10,6 +10,7 @@ from flask import (g, request, session, flash, redirect, url_for, render_templat
 from lastuserapp import app
 from lastuserapp.models import db, User
 from lastuserapp.forms import ConfirmDeleteForm
+from lastuserapp.utils import newid
 
 def avatar_url_email(useremail):
     if request.url.startswith('https:'):
@@ -106,6 +107,8 @@ def logout_internal():
 
 
 def register_internal(username, fullname, password):
+    if(username is None):
+       username = newid()
     user = User(username=username, fullname=fullname, password=password)
     db.session.add(user)
     return user

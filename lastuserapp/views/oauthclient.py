@@ -127,7 +127,8 @@ def config_external_id(service, userid, username, handle, avatar, access_token, 
         flash('You have logged in as %s via %s' % (username, service.capitalize()))
         return
     else:
-        user = register_internal(None, handle, None)
+        user = register_internal(userid, handle, None)
+        user.username = username.lower()
         extid = UserExternalId(user = user, service = service, userid = userid, username = username,
                                oauth_token = access_token, oauth_token_secret = secret)
         db.session.add(extid)
