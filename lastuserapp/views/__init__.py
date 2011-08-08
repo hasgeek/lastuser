@@ -25,6 +25,7 @@ def avatar_url_twitter(twitterid):
         except URLError:
             return None
 
+
 def avatar_url_github(githubid):
     if githubid:
         try:

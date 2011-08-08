@@ -38,6 +38,7 @@ def get_extid_token(service):
 def get_twitter_token():
     return get_extid_token('twitter')
 
+
 @app.route('/login/twitter')
 def login_twitter():
     next_url = get_next_url(referrer=False)
@@ -47,6 +48,7 @@ def login_twitter():
     except OAuthException, e:
         flash("Twitter login failed: %s" % unicode(e), category="error")
         return redirect(next_url)
+
 
 @app.route('/login/twitter/callback')
 @twitter.authorized_handler
@@ -66,6 +68,7 @@ def login_twitter_authorized(resp):
 
     return redirect(next_url)
 
+
 github = {
   'key': app.config.get('OAUTH_GITHUB_KEY'),
   'secret': app.config.get('OAUTH_GITHUB_SECRET'),
@@ -82,6 +85,7 @@ def login_github():
     except OAuthException, e:
         flash("Github login failed: %s" % unicode(e), category="error")
         return redirect(next_url)
+
 
 @app.route('/login/github/callback')
 def login_github_authorized():
@@ -104,6 +108,7 @@ def login_github_authorized():
         ghinfo = {}
     
     return redirect(next_url)
+
 
 def config_external_id(service, userid, username, handle, avatar, access_token, secret):
     session['avatar_url'] = avatar
