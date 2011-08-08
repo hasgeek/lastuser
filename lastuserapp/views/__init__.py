@@ -25,6 +25,13 @@ def avatar_url_twitter(twitterid):
         except URLError:
             return None
 
+def avatar_url_github(githubid):
+    if githubid:
+        try:
+            ghinfo = json.loads(urlopen('https://api.github.com/users/%s' % githubid).read())
+            return ghinfo.get('avatar_url')
+        except URLError:
+            return None
 
 @app.before_request
 def lookup_current_user():
@@ -40,6 +47,8 @@ def lookup_current_user():
                 session['avatar_url'] = avatar_url_email(g.user.email)
             elif session.get('userid_external', {}).get('service') == 'twitter':
                 session['avatar_url'] = avatar_url_twitter(session['userid_external'].get('username'))
+            elif session.get('userid_external', {}).get('service') == 'github':
+                session['avatar_url'] = avatar_url_github(session['userid_external'].get('userid'))
             else:
                 session['avatar_url'] = None
         g.avatar_url = session['avatar_url']
