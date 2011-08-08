@@ -13,9 +13,9 @@ from lastuserapp.forms import ConfirmDeleteForm
 
 def avatar_url_email(useremail):
     if request.url.startswith('https:'):
-        return 'https://secure.gravatar.com/avatar/%s?s=48&d=mm' % useremail.md5sum
+        return 'https://secure.gravatar.com/avatar/%s?s=80&d=mm' % useremail.md5sum
     else:
-        return 'http://www.gravatar.com/avatar/%s?s=48&d=mm' % useremail.md5sum
+        return 'http://www.gravatar.com/avatar/%s?s=80&d=mm' % useremail.md5sum
 
 
 def avatar_url_twitter(twitterid):

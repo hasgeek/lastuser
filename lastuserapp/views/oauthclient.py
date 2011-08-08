@@ -60,7 +60,7 @@ def login_twitter_authorized(resp):
     try:
         twinfo = json.loads(urlopen('http://api.twitter.com/1/users/lookup.json?%s' % urlencode({'user_id': resp['user_id']})).read())[0]
         config_external_id('twitter', resp['user_id'], resp['screen_name'], twinfo.get('name', '@'+resp['screen_name']), 
-                      twinfo.get('profile_image_url'), resp['oauth_token'], resp['oauth_token_secret'])
+                      twinfo.get('profile_image_url').replace("normal.","bigger."), resp['oauth_token'], resp['oauth_token_secret'])
     except URLError:
         twinfo = {}
 

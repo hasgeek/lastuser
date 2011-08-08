@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import g, request, abort, flash, redirect, render_template, url_for
+from flask import g, request, abort, flash, redirect, render_template, url_for, session
 
 from lastuserapp import app
 from lastuserapp.models import db, User, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
@@ -14,7 +14,8 @@ from lastuserapp.forms import (ProfileForm, PasswordResetForm, PasswordChangeFor
 @app.route('/profile')
 @requires_login
 def profile():
-    return render_template('profile.html')
+    # TODO: move the avatar in the user model
+    return render_template('profile.html', avatar = session['avatar_url'])
 
 
 @app.route('/profile/edit', methods=['GET', 'POST'])
