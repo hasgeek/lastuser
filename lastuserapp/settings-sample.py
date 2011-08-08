@@ -35,6 +35,11 @@ USE_SSL=False
 #: Twitter integration
 OAUTH_TWITTER_KEY=''
 OAUTH_TWITTER_SECRET=''
+
+#: Github integration
+OAUTH_GITHUB_KEY=''
+OAUTH_GITHUB_SECRET=''
+
 #: Recaptcha for the registration form
 RECAPTCHA_USE_SSL=USE_SSL
 RECAPTCHA_PUBLIC_KEY=''
