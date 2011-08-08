@@ -63,4 +63,4 @@ SMS_SMSGUPSHUP_USER=''
 SMS_SMSGUPSHUP_PASS=''
 
 #: Messages (in markdown)
-MESSAGE_FOOTER='Copyright &copy; HasGeek. Powered by LastUser, open source software from HasGeek.'
+MESSAGE_FOOTER='Copyright &copy; [HasGeek](http://hasgeek.in/). Powered by [LastUser](https://github.com/hasgeek/lastuser "github project page"), open source software from [HasGeek](https://github.com/hasgeek).'
