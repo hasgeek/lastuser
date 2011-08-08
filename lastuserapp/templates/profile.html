@@ -48,7 +48,7 @@
 <h2>My external ids</h2>
 <ul>
   {% for extid in g.user.externalids %}
-    <li>Service: {{ extid.service }}, Userid: {{ extid.userid }}, Username: {{ extid.username }}</li>
+    <li>Service: <b>{{ extid.service }}</b>, Userid: <b>{{ extid.userid }}</b>, Username: <b>{{ extid.username }}</b></li>
   {% else %}
     <li><em>(none)</em></li>
   {% endfor %}
@@ -60,5 +60,6 @@
   {% else %}
   <li><em>(you do not have any applications)</em></li>
   {% endfor %}
+  <li><a href="{{ url_for('client_new') }}">Register an application &rarr;</a></li>
 </ul>
 {% endblock %}
