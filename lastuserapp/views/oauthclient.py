@@ -21,7 +21,6 @@ twitter = oauth.remote_app('twitter',
     consumer_secret=app.config.get('OAUTH_TWITTER_SECRET'),
 )
 
-
 def get_extid_token(service):
     useridinfo = session.get('userid_external')
     if useridinfo:
@@ -61,8 +60,10 @@ def login_twitter_authorized(resp):
     # Try to read more from the user's Twitter profile
     try:
         twinfo = json.loads(urlopen('http://api.twitter.com/1/users/lookup.json?%s' % urlencode({'user_id': resp['user_id']})).read())[0]
-        config_external_id('twitter', resp['user_id'], resp['screen_name'], twinfo.get('name', '@'+resp['screen_name']), 
-                      twinfo.get('profile_image_url').replace("normal.","bigger."), resp['oauth_token'], resp['oauth_token_secret'])
+        return_url = config_external_id('twitter', resp['user_id'], resp['screen_name'], twinfo.get('name', '@'+resp['screen_name']), 
+                      twinfo.get('profile_image_url').replace("normal.","bigger."), resp['oauth_token'], resp['oauth_token_secret'], next_url)
+        if(return_url is not None):
+            next_url = return_url
     except URLError:
         twinfo = {}
 
@@ -100,19 +101,23 @@ def login_github_authorized():
     # Try to read more from the user's Github profile
     try:
         response = urlopen(github['token_url'], params).read()
-        access_token = response.partition("&")[0].partition("=")[2]
+        access_token = response.partition("&")[0].partition("=")[2] # TODO: clean this up & handle any possible errors
         ghinfo = json.loads(urlopen(github['user_info'] % access_token).read())
-        config_external_id('github', ghinfo.get('login'), ghinfo.get('name'), ghinfo.get('name'), 
-                      ghinfo.get('avatar_url'), access_token, github['secret'])
+        return_url = config_external_id('github', ghinfo.get('login'), ghinfo.get('name'), ghinfo.get('name'), 
+                      ghinfo.get('avatar_url'), access_token, github['secret'], next_url)
+        if(return_url is not None):
+            next_url = return_url
     except URLError:
         ghinfo = {}
     
     return redirect(next_url)
 
 
-def config_external_id(service, userid, username, handle, avatar, access_token, secret):
+def config_external_id(service, userid, username, handle, avatar, access_token, secret, next_url):
     session['avatar_url'] = avatar
     extid = UserExternalId.query.filter_by(service=service, userid=userid).first()
+    session['userid_external'] = {'service': service, 'userid': userid, 'username': username}
+
     if extid is not None:
         extid.oauth_token = access_token
         extid.oauth_token_secret = secret
@@ -120,6 +125,7 @@ def config_external_id(service, userid, username, handle, avatar, access_token, 
         db.session.commit()
         login_internal(extid.user)
         flash('You have logged in as %s via %s' % (username, service.capitalize()))
+        return
     else:
         user = register_internal(None, handle, None)
         extid = UserExternalId(user = user, service = service, userid = userid, username = username,
@@ -127,6 +133,10 @@ def config_external_id(service, userid, username, handle, avatar, access_token, 
         db.session.add(extid)
         db.session.commit()
         login_internal(user)
-        flash('You have logged in as %s via %s. This is your first time here' % (username, service.capitalize()))
-    session['userid_external'] = {'service': service, 'userid': userid, 'username': username}
+        flash('You have logged in as %s via %s. This is your first time here, so please fill in a \
+              few details about yourself' % (username, service.capitalize()))
+        
+        # redirect the user to profile edit page to fill in more details
+        return url_for('profile_edit', _external=True, next=next_url)
+
     

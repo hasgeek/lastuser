@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import redirect, session, flash
+from flask import redirect, session, flash, url_for
 from flaskext.openid import OpenID
 
 from lastuserapp import app
@@ -92,7 +92,8 @@ def login_openid_success(resp):
         login_internal(user)
         session['userid_external'] = {'service': service, 'userid': openid}
         if firsttime:
-            flash("You are now logged in. This is your first time here", category='info')
+            flash("You are now logged in. This is your first time here, so please fill in a few details about yourself", category='info')
+            return redirect(url_for('profile_edit', _external=True, next=get_next_url()))
         else:
             flash("You are now logged in.", category='info')
-        return redirect(get_next_url())
+            return redirect(get_next_url())

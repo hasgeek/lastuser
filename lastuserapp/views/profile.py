@@ -5,7 +5,7 @@ from flask import g, request, abort, flash, redirect, render_template, url_for, 
 from lastuserapp import app
 from lastuserapp.models import db, User, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
 from lastuserapp.mailclient import send_email_verify_link
-from lastuserapp.views import requires_login, render_form, render_redirect, render_delete
+from lastuserapp.views import get_next_url, requires_login, render_form, render_redirect, render_delete
 from lastuserapp.views.sms import send_phone_verify_code
 from lastuserapp.forms import (ProfileForm, PasswordResetForm, PasswordChangeForm, NewEmailAddressForm,
     NewPhoneForm, VerifyPhoneForm)
@@ -31,8 +31,13 @@ def profile_edit():
         g.user.username = form.username.data
         g.user.description = form.description.data
         db.session.commit()
-        flash("Your profile was successfully edited.", category='info')
-        return render_redirect(url_for('profile'), code=303)
+        
+        next_url = get_next_url()
+        if(next_url is not None):
+            return render_redirect(next_url)
+        else:
+            flash("Your profile was successfully edited.", category='info')
+            return render_redirect(url_for('profile'), code=303)
     return render_form(form, title="Edit profile", formid="profile_edit", submit="Save changes", ajax=True)
 
 
