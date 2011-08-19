@@ -17,7 +17,8 @@ $color-hg-bar-selected: #000;
 
 #hg-bar {
     background: $color-hg-bar-background;
-    @include linear-gradient(color-stops(#f9f9f9, #e8e8e8));
+    //$experimental-support-for-svg: true;
+    @include background-image(linear-gradient(#f9f9f9, #e8e8e8));
     color: $color-hg-bar;
     border-bottom: 1px solid $color-hg-bar-border;
     margin-bottom: 1em;
@@ -96,7 +97,8 @@ $color-hg-bar-selected: #000;
             //background: $color-hg-bar-highlight-background;
             background: #e8e8e8;
             border-top: 2px solid #e8e8e8;
-            @include linear-gradient(color-stops(#e8e8e8, #d1d1d1));
+            //$experimental-support-for-svg: true;
+            @include background-image(linear-gradient(#e8e8e8, #d1d1d1));
             color: $color-hg-bar-highlight;
         }
         & > li:hover > ul {

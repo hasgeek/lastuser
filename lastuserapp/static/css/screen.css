@@ -982,7 +982,7 @@ ul.cardset li {
   vertical-align: top;
   margin: 0 0.5em 0.5em 0;
   padding: 0;
-  width: 310px;
+  width: 300px;
   border: 1px solid #afafaf;
   display: block;
   float: left;
@@ -1353,11 +1353,11 @@ ul.cardset li a .body, ul.cardset li a:hover .body, ul.cardset li a:active .body
 #hg-bar {
   background: #e8e8e8;
   background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #f9f9f9), color-stop(100%, #e8e8e8));
-  background-image: -webkit-linear-gradient(top, #f9f9f9, #e8e8e8);
-  background-image: -moz-linear-gradient(top, #f9f9f9, #e8e8e8);
-  background-image: -o-linear-gradient(top, #f9f9f9, #e8e8e8);
-  background-image: -ms-linear-gradient(top, #f9f9f9, #e8e8e8);
-  background-image: linear-gradient(top, #f9f9f9, #e8e8e8);
+  background-image: -webkit-linear-gradient(#f9f9f9, #e8e8e8);
+  background-image: -moz-linear-gradient(#f9f9f9, #e8e8e8);
+  background-image: -o-linear-gradient(#f9f9f9, #e8e8e8);
+  background-image: -ms-linear-gradient(#f9f9f9, #e8e8e8);
+  background-image: linear-gradient(#f9f9f9, #e8e8e8);
   color: #444444;
   border-bottom: 1px solid #df5e0e;
   margin-bottom: 1em;
@@ -1471,11 +1471,11 @@ ul.cardset li a .body, ul.cardset li a:hover .body, ul.cardset li a:active .body
   background: #e8e8e8;
   border-top: 2px solid #e8e8e8;
   background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #e8e8e8), color-stop(100%, #d1d1d1));
-  background-image: -webkit-linear-gradient(top, #e8e8e8, #d1d1d1);
-  background-image: -moz-linear-gradient(top, #e8e8e8, #d1d1d1);
-  background-image: -o-linear-gradient(top, #e8e8e8, #d1d1d1);
-  background-image: -ms-linear-gradient(top, #e8e8e8, #d1d1d1);
-  background-image: linear-gradient(top, #e8e8e8, #d1d1d1);
+  background-image: -webkit-linear-gradient(#e8e8e8, #d1d1d1);
+  background-image: -moz-linear-gradient(#e8e8e8, #d1d1d1);
+  background-image: -o-linear-gradient(#e8e8e8, #d1d1d1);
+  background-image: -ms-linear-gradient(#e8e8e8, #d1d1d1);
+  background-image: linear-gradient(#e8e8e8, #d1d1d1);
   color: black;
 }
 #hg-bar ul#hg-barlinks > li:hover > ul {
