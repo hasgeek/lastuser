@@ -9,6 +9,7 @@ from flaskext.oauth import OAuth, OAuthException # OAuth 1.0a
 from lastuserapp import app
 from lastuserapp.models import db, UserExternalId
 from lastuserapp.views import get_next_url, login_internal, register_internal
+from lastuserapp.utils import valid_username
 
 # OAuth 1.0a handlers
 oauth = OAuth()
@@ -60,7 +61,7 @@ def login_twitter_authorized(resp):
     # Try to read more from the user's Twitter profile
     try:
         twinfo = json.loads(urlopen('http://api.twitter.com/1/users/lookup.json?%s' % urlencode({'user_id': resp['user_id']})).read())[0]
-        return_url = config_external_id('twitter', resp['user_id'], resp['screen_name'], twinfo.get('name', '@'+resp['screen_name']), 
+        return_url = config_external_id('twitter', resp['user_id'], resp['screen_name'], twinfo.get('name', '@'+resp['screen_name']),
                       twinfo.get('profile_image_url').replace("normal.","bigger."), resp['oauth_token'], resp['oauth_token_secret'], next_url)
         if(return_url is not None):
             next_url = return_url
@@ -70,6 +71,7 @@ def login_twitter_authorized(resp):
     return redirect(next_url)
 
 
+# FIXME: Don't place config at module scope
 github = {
   'key': app.config.get('OAUTH_GITHUB_KEY'),
   'secret': app.config.get('OAUTH_GITHUB_SECRET'),
@@ -93,23 +95,23 @@ def login_github_authorized():
     code = request.args.get('code', None)
     next_url = get_next_url()
     params = urlencode({
-      'client_id': github['key'], 
-      'client_secret': github['secret'], 
+      'client_id': github['key'],
+      'client_secret': github['secret'],
       'code': code
     })
-    
+
     # Try to read more from the user's Github profile
     try:
         response = urlopen(github['token_url'], params).read()
         access_token = response.partition("&")[0].partition("=")[2] # TODO: clean this up & handle any possible errors
         ghinfo = json.loads(urlopen(github['user_info'] % access_token).read())
-        return_url = config_external_id('github', ghinfo.get('login'), ghinfo.get('name'), ghinfo.get('name'), 
+        return_url = config_external_id('github', ghinfo.get('login'), ghinfo.get('name'), ghinfo.get('name'),
                       ghinfo.get('avatar_url'), access_token, github['secret'], next_url)
         if(return_url is not None):
             next_url = return_url
     except URLError:
         ghinfo = {}
-    
+
     return redirect(next_url)
 
 
@@ -121,23 +123,25 @@ def config_external_id(service, userid, username, handle, avatar, access_token, 
     if extid is not None:
         extid.oauth_token = access_token
         extid.oauth_token_secret = secret
-        #extid.username = username # why setting this ?? ain't the username already in the DB ??
+        extid.username = username # For twitter: update username if it changed
         db.session.commit()
         login_internal(extid.user)
         flash('You have logged in as %s via %s' % (username, service.capitalize()))
         return
     else:
-        user = register_internal(userid, handle, None)
-        user.username = username.lower()
+        user = register_internal(None, handle, None)
         extid = UserExternalId(user = user, service = service, userid = userid, username = username,
                                oauth_token = access_token, oauth_token_secret = secret)
+        # If the service provided a username that is valid for LastUser and not already in use, assign
+        # it to this user
+        if valid_username(username):
+            if User.query.filter_by(username=username).first() is None:
+                user.username = username
         db.session.add(extid)
         db.session.commit()
         login_internal(user)
         flash('You have logged in as %s via %s. This is your first time here, so please fill in a \
               few details about yourself' % (username, service.capitalize()))
-        
+
         # redirect the user to profile edit page to fill in more details
         return url_for('profile_edit', _external=True, next=next_url)
-
-    

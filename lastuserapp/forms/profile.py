@@ -40,7 +40,7 @@ class PasswordChangeForm(wtf.Form):
 
 class ProfileForm(wtf.Form):
     fullname = wtf.TextField('Full name', validators=[wtf.Required()])
-    username = wtf.TextField('Username', validators=[wtf.Required()])
+    username = wtf.TextField('Username (optional)', validators=[wtf.Optional()])
     description = wtf.TextAreaField('Bio')
 
     def validate_username(self, field):

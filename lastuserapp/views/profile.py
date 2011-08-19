@@ -31,7 +31,7 @@ def profile_edit():
         g.user.username = form.username.data or None
         g.user.description = form.description.data
         db.session.commit()
-        
+
         next_url = get_next_url()
         if(next_url is not None):
             return render_redirect(next_url)
