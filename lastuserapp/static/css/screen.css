@@ -314,7 +314,7 @@ footer #footer_content {
   text-indent: -119988px;
   overflow: hidden;
   text-align: left;
-  background-image: url('/static/img/logo.png?1305301303');
+  background-image: url('/static/img/logo.png?1310771260');
   background-repeat: no-repeat;
   background-position: 50% 50%;
   width: 100px;
@@ -448,6 +448,7 @@ dl.bar dd:last-child {
 }
 
 dl.infobox {
+  position: relative;
   margin-bottom: 0;
   font-size: 85%;
   border: 1px solid #b7b7b7;
@@ -464,6 +465,15 @@ dl.infobox {
   padding: 0;
   background: #e8e8e8;
 }
+dl.infobox img {
+  position: absolute;
+  right: 4px;
+  top: 3px;
+  width: 80px;
+  height: 80px;
+  border: 1px solid #b7b7b7;
+  border-radius: 4px;
+}
 dl.infobox dt {
   width: 10em;
   float: left;
@@ -479,7 +489,9 @@ dl.infobox dd {
   clear: none;
   margin: 0;
   margin-left: 11em;
-  border-left: 1px solid #b7b7b7;
+  margin-right: 6.8em;
+  border: 0 solid #b7b7b7;
+  border-width: 0 1px;
   background: #f6f6f6;
   padding: 0.5em;
 }
@@ -575,7 +587,7 @@ img.login_avatar {
   text-indent: -119988px;
   overflow: hidden;
   text-align: left;
-  background-image: url('/static/img/home.png?1307204489');
+  background-image: url('/static/img/home.png?1310771260');
   background-repeat: no-repeat;
   background-position: 12 22;
   width: 12px;
@@ -838,7 +850,7 @@ select {
 }
 
 input[name="openid"] {
-  background: url('/static/img/openid.png?1305572482') 4px no-repeat;
+  background: url('/static/img/openid.png?1310771260') 4px no-repeat;
   width: 230px;
   padding-left: 25px;
 }
@@ -898,7 +910,7 @@ input[type="submit"].delete:hover {
 
 span.loading {
   display: inline-block;
-  background: url('/static/img/ajax-loader.gif?1305733694') center no-repeat;
+  background: url('/static/img/ajax-loader.gif?1310771260') center no-repeat;
   width: 16px;
   height: 16px;
 }

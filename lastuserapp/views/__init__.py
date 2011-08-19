@@ -10,12 +10,13 @@ from flask import (g, request, session, flash, redirect, url_for, render_templat
 from lastuserapp import app
 from lastuserapp.models import db, User
 from lastuserapp.forms import ConfirmDeleteForm
+from lastuserapp.utils import newid
 
 def avatar_url_email(useremail):
     if request.url.startswith('https:'):
-        return 'https://secure.gravatar.com/avatar/%s?s=48&d=mm' % useremail.md5sum
+        return 'https://secure.gravatar.com/avatar/%s?s=80&d=mm' % useremail.md5sum
     else:
-        return 'http://www.gravatar.com/avatar/%s?s=48&d=mm' % useremail.md5sum
+        return 'http://www.gravatar.com/avatar/%s?s=80&d=mm' % useremail.md5sum
 
 
 def avatar_url_twitter(twitterid):
@@ -25,6 +26,14 @@ def avatar_url_twitter(twitterid):
         except URLError:
             return None
 
+
+def avatar_url_github(githubid):
+    if githubid:
+        try:
+            ghinfo = json.loads(urlopen('https://api.github.com/users/%s' % githubid).read())
+            return ghinfo.get('avatar_url')
+        except URLError:
+            return None
 
 @app.before_request
 def lookup_current_user():
@@ -40,6 +49,8 @@ def lookup_current_user():
                 session['avatar_url'] = avatar_url_email(g.user.email)
             elif session.get('userid_external', {}).get('service') == 'twitter':
                 session['avatar_url'] = avatar_url_twitter(session['userid_external'].get('username'))
+            elif session.get('userid_external', {}).get('service') == 'github':
+                session['avatar_url'] = avatar_url_github(session['userid_external'].get('userid'))
             else:
                 session['avatar_url'] = None
         g.avatar_url = session['avatar_url']
@@ -96,6 +107,8 @@ def logout_internal():
 
 
 def register_internal(username, fullname, password):
+    if(username is None):
+       username = newid()
     user = User(username=username, fullname=fullname, password=password)
     db.session.add(user)
     return user
