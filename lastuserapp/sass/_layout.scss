@@ -145,6 +145,7 @@ dl.bar {
 dl.infobox {
     $width-infobox-term: 10em;
 
+    position: relative;
     margin-bottom: 0;
     font-size: 85%;
     border: 1px solid $color-outline;
@@ -152,6 +153,16 @@ dl.infobox {
     @include single-box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px);
     padding: 0;
     background: $color-infobox-term;
+
+    img {
+        position: absolute;
+        right: 4px;
+        top: 3px;
+        width: 80px;
+        height: 80px;
+        border: 1px solid $color-outline;
+        border-radius: 4px;
+    }
 
     dt {
         width: $width-infobox-term;
@@ -169,7 +180,9 @@ dl.infobox {
         clear: none;
         margin: 0;
         margin-left: ($width-infobox-term + 1em);
-        border-left: 1px solid $color-outline;
+        margin-right: 6.8em;
+        border: 0 solid $color-outline;
+        border-width: 0 1px;
         background: $color-infobox-description;
         padding: 0.5em;
 

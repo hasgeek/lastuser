@@ -33,7 +33,7 @@ class OpenIdForm(wtf.Form):
 class RegisterForm(wtf.Form):
     fullname = wtf.TextField('Full name', validators=[wtf.Required()])
     email = wtf.html5.EmailField('Email address', validators=[wtf.Required(), wtf.Email()])
-    username = wtf.TextField('Username (optional)', validators=[wtf.Optional()])
+    username = wtf.TextField('Username', validators=[wtf.Required()])
     password = wtf.PasswordField('Password', validators=[wtf.Required()])
     confirm_password = wtf.PasswordField('Confirm password',
                           validators=[wtf.Required(), wtf.EqualTo('password')])
@@ -44,7 +44,7 @@ class RegisterForm(wtf.Form):
         if field.data in RESERVED_USERNAMES:
             raise wtf.ValidationError, "That name is reserved"
         if not valid_username(field.data):
-            raise wtf.ValidationError, u"Invalid characters in name. Names must be made of ‘a-z’ ‘0-9’ and ‘-’, without trailing dashes"
+            raise wtf.ValidationError, u"Invalid characters in name. Names must be made of ‘a-z’, ‘0-9’, ‘.’ and ‘-’, without trailing dashes or dots"
         existing = User.query.filter_by(username=field.data).first()
         if existing is not None:
             raise wtf.ValidationError, "That username is taken"
