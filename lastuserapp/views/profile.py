@@ -27,7 +27,7 @@ def profile_edit():
         form.description.data = g.user.description
     elif form.validate_on_submit():
         g.user.fullname = form.fullname.data
-        g.user.username = form.username.data
+        g.user.username = form.username.data or None
         g.user.description = form.description.data
         db.session.commit()
         flash("Your profile was successfully edited.", category='info')
