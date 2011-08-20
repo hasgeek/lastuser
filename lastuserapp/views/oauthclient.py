@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from urllib import urlencode
+from urllib import urlencode, quote
 from urllib2 import urlopen, URLError
 from urlparse import parse_qs
 
@@ -97,7 +97,7 @@ github = {
 def login_github():
     next_url = get_next_url(referrer=False)
     try:
-        return redirect(github['auth_url'] % (github['key'], url_for('login_github_authorized', _external=True, next=next_url)))
+        return redirect(github['auth_url'] % (github['key'], url_for('login_github_authorized', _external=True, next=quote(next_url))))
     except OAuthException, e:
         flash(u"GitHub login failed: %s" % unicode(e), category="error")
         return redirect(next_url)
