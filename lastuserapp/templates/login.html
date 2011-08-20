@@ -10,10 +10,10 @@
   <div class="control">
     <a class="loginbutton" href="{{ url_for('login_twitter', next=request.args.get('next')) }}"
         style="background-image: url({{ url_for('static', filename='img/login/twitter.png') }});">Twitter</a>
-    <a class="loginbutton" href="{{ url_for('login_github', next=request.args.get('next')) }}"
-        style="background-image: url({{ url_for('static', filename='img/login/github.png') }});">Github</a>
     <a class="loginbutton" href="{{ url_for('login_google', next=request.args.get('next') or url_for('index')) }}"
         style="background-image: url({{ url_for('static', filename='img/login/google.png') }});">Google</a>
+    <a class="loginbutton" href="{{ url_for('login_github', next=request.args.get('next')) }}"
+        style="background-image: url({{ url_for('static', filename='img/login/github.png') }});">GitHub</a>
     <a class="loginbutton" id="openidbutton" href="#openidform"
         style="background-image: url({{ url_for('static', filename='img/login/openid.png') }});">OpenID</a>
   </div>

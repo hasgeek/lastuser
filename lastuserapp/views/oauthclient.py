@@ -2,14 +2,15 @@
 
 from urllib import urlencode
 from urllib2 import urlopen, URLError
+from urlparse import parse_qs
 
 from flask import request, session, redirect, render_template, flash, url_for, json
 from flaskext.oauth import OAuth, OAuthException # OAuth 1.0a
 
 from lastuserapp import app
-from lastuserapp.models import db, UserExternalId
+from lastuserapp.models import db, UserExternalId, UserEmail, User
 from lastuserapp.views import get_next_url, login_internal, register_internal
-from lastuserapp.utils import valid_username
+from lastuserapp.utils import valid_username, get_gravatar_md5sum
 
 # OAuth 1.0a handlers
 oauth = OAuth()
@@ -61,14 +62,25 @@ def login_twitter_authorized(resp):
     # Try to read more from the user's Twitter profile
     try:
         twinfo = json.loads(urlopen('http://api.twitter.com/1/users/lookup.json?%s' % urlencode({'user_id': resp['user_id']})).read())[0]
-        return_url = config_external_id('twitter', resp['user_id'], resp['screen_name'], twinfo.get('name', '@'+resp['screen_name']),
-                      twinfo.get('profile_image_url').replace("normal.","bigger."), resp['oauth_token'], resp['oauth_token_secret'], next_url)
-        if(return_url is not None):
+        return_url = config_external_id(service='twitter',
+                                        service_name='Twitter',
+                                        user=None,
+                                        userid=resp['user_id'],
+                                        username=resp['screen_name'],
+                                        fullname=twinfo.get('name', '@'+resp['screen_name']),
+                                        avatar=twinfo.get('profile_image_url').replace("normal.","bigger."),
+                                        access_token=resp['oauth_token'],
+                                        secret=resp['oauth_token_secret'],
+                                        token_type=None,
+                                        next_url=next_url)
+        if return_url is not None:
             next_url = return_url
     except URLError:
         twinfo = {}
 
-    return redirect(next_url)
+    # Redirect with 303 because users hitting the back button
+    # cause invalid/expired token errors from Twitter
+    return redirect(next_url, code=303)
 
 
 # FIXME: Don't place config at module scope
@@ -80,13 +92,14 @@ github = {
   'user_info': "https://api.github.com/user?access_token=%s"
 }
 
+# XXX: GitHub has a non-standard OAuth flow, so we can't use the Flask-OAuth library
 @app.route('/login/github')
 def login_github():
     next_url = get_next_url(referrer=False)
     try:
         return redirect(github['auth_url'] % (github['key'], url_for('login_github_authorized', _external=True, next=next_url)))
     except OAuthException, e:
-        flash("Github login failed: %s" % unicode(e), category="error")
+        flash(u"GitHub login failed: %s" % unicode(e), category="error")
         return redirect(next_url)
 
 
@@ -103,19 +116,39 @@ def login_github_authorized():
     # Try to read more from the user's Github profile
     try:
         response = urlopen(github['token_url'], params).read()
-        access_token = response.partition("&")[0].partition("=")[2] # TODO: clean this up & handle any possible errors
+        respdict = parse_qs(response)
+        access_token = respdict['access_token'][0]
+        token_type = respdict['token_type'][0]
         ghinfo = json.loads(urlopen(github['user_info'] % access_token).read())
-        return_url = config_external_id('github', ghinfo.get('login'), ghinfo.get('name'), ghinfo.get('name'),
-                      ghinfo.get('avatar_url'), access_token, github['secret'], next_url)
-        if(return_url is not None):
+        md5sum = get_gravatar_md5sum(ghinfo['avatar_url'])
+        user = None
+        if md5sum:
+            # Look for an existing user account
+            useremail = UserEmail.query.filter_by(md5sum=md5sum).first()
+            if useremail:
+                user = useremail.user
+        return_url = config_external_id(service='github',
+                                        service_name = 'GitHub',
+                                        user=user,
+                                        userid=ghinfo.get('login'),
+                                        username=ghinfo.get('login'),
+                                        fullname=ghinfo.get('name'),
+                                        avatar=ghinfo.get('avatar_url'),
+                                        access_token=access_token,
+                                        secret=github['secret'],
+                                        token_type=token_type,
+                                        next_url=next_url)
+        if return_url is not None:
             next_url = return_url
-    except URLError:
+    except URLError, e:
         ghinfo = {}
+        flash(u"GitHub login failed" % unicode(e), category="error")
 
-    return redirect(next_url)
+    # As with Twitter, redirect with code 303
+    return redirect(next_url, code=303)
 
 
-def config_external_id(service, userid, username, handle, avatar, access_token, secret, next_url):
+def config_external_id(service, service_name, user, userid, username, fullname, avatar, access_token, secret, token_type, next_url):
     session['avatar_url'] = avatar
     extid = UserExternalId.query.filter_by(service=service, userid=userid).first()
     session['userid_external'] = {'service': service, 'userid': userid, 'username': username}
@@ -123,15 +156,19 @@ def config_external_id(service, userid, username, handle, avatar, access_token, 
     if extid is not None:
         extid.oauth_token = access_token
         extid.oauth_token_secret = secret
+        extid.oauth_token_type = token_type
         extid.username = username # For twitter: update username if it changed
         db.session.commit()
         login_internal(extid.user)
-        flash('You have logged in as %s via %s' % (username, service.capitalize()))
+        flash('You have logged in as %s via %s' % (username, service_name))
         return
     else:
-        user = register_internal(None, handle, None)
+        # If caller wants this id connected to an existing user, do it.
+        if not user:
+            user = register_internal(None, fullname, None)
         extid = UserExternalId(user = user, service = service, userid = userid, username = username,
-                               oauth_token = access_token, oauth_token_secret = secret)
+                               oauth_token = access_token, oauth_token_secret = secret,
+                               oauth_token_type = token_type)
         # If the service provided a username that is valid for LastUser and not already in use, assign
         # it to this user
         if valid_username(username):
@@ -140,8 +177,10 @@ def config_external_id(service, userid, username, handle, avatar, access_token, 
         db.session.add(extid)
         db.session.commit()
         login_internal(user)
-        flash('You have logged in as %s via %s. This is your first time here, so please fill in a \
-              few details about yourself' % (username, service.capitalize()))
+        if user:
+            flash('You have logged in as %s via %s. This id has been linked to your existing account' % (username, service_name))
+        else:
+            flash('You have logged in as %s via %s. This is your first time here' % (username, service_name))
 
         # redirect the user to profile edit page to fill in more details
         return url_for('profile_edit', _external=True, next=next_url)

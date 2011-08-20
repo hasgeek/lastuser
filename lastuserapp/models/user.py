@@ -225,6 +225,7 @@ class UserExternalId(db.Model, BaseMixin):
     username = db.Column(db.Unicode(80), nullable=True)
     oauth_token = db.Column(db.String(250), nullable=True)
     oauth_token_secret = db.Column(db.String(250), nullable=True)
+    oauth_token_type = db.Column(db.String(250), nullable=True)
 
     __table_args__ = ( db.UniqueConstraint("service", "userid"), {} )
 

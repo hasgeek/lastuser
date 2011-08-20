@@ -154,16 +154,6 @@ dl.infobox {
     padding: 0;
     background: $color-infobox-term;
 
-    img {
-        position: absolute;
-        right: 4px;
-        top: 3px;
-        width: 80px;
-        height: 80px;
-        border: 1px solid $color-outline;
-        border-radius: 4px;
-    }
-
     dt {
         width: $width-infobox-term;
         float: left;
@@ -180,9 +170,8 @@ dl.infobox {
         clear: none;
         margin: 0;
         margin-left: ($width-infobox-term + 1em);
-        margin-right: 6.8em;
         border: 0 solid $color-outline;
-        border-width: 0 1px;
+        border-left-width: 1px;
         background: $color-infobox-description;
         padding: 0.5em;
 
@@ -311,12 +300,12 @@ img.login_avatar {
     content: "";
     display: block; /* reduce the damage in FF3.0 */
     position: absolute;
-    bottom: -21px; /* value = - border-top-width - border-bottom-width */
+    top: -21px; /* value = - border-top-width - border-bottom-width */
     left: 1.5em; /* controls horizontal position */
     width: 0;
     height: 0;
     border: 10px solid transparent;
-    border-top-color: $color-sheet-border;
+    border-bottom-color: $color-sheet-border;
 }
 
 /* creates the smaller  triangle */
@@ -324,12 +313,12 @@ img.login_avatar {
     content: "";
     display: block; /* reduce the damage in FF3.0 */
     position: absolute;
-    bottom: -20px; /* value = - border-top-width - border-bottom-width */
+    top: -20px; /* value = - border-top-width - border-bottom-width */
     left: 1.5em; /* value = (:before left) + (:before border-left) - (:after border-left) */
     width: 0;
     height: 0;
     border: 10px solid transparent;
-    border-top-color: $color-flash;
+    border-bottom-color: $color-flash;
 }
 
 

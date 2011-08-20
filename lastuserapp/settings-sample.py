@@ -47,7 +47,7 @@ USE_SSL=False
 OAUTH_TWITTER_KEY=''
 OAUTH_TWITTER_SECRET=''
 
-#: Github integration
+#: GitHub integration
 OAUTH_GITHUB_KEY=''
 OAUTH_GITHUB_SECRET=''
 
@@ -63,4 +63,4 @@ SMS_SMSGUPSHUP_USER=''
 SMS_SMSGUPSHUP_PASS=''
 
 #: Messages (in markdown)
-MESSAGE_FOOTER='Copyright &copy; [HasGeek](http://hasgeek.in/). Powered by [LastUser](https://github.com/hasgeek/lastuser "github project page"), open source software from [HasGeek](https://github.com/hasgeek).'
+MESSAGE_FOOTER='Copyright &copy; [HasGeek](http://hasgeek.com/). Powered by [LastUser](https://github.com/hasgeek/lastuser "GitHub project page"), open source software from [HasGeek](https://github.com/hasgeek).'

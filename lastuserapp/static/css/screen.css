@@ -314,7 +314,7 @@ footer #footer_content {
   text-indent: -119988px;
   overflow: hidden;
   text-align: left;
-  background-image: url('/static/img/logo.png?1310771260');
+  background-image: url('/static/img/logo.png?1305301303');
   background-repeat: no-repeat;
   background-position: 50% 50%;
   width: 100px;
@@ -465,15 +465,6 @@ dl.infobox {
   padding: 0;
   background: #e8e8e8;
 }
-dl.infobox img {
-  position: absolute;
-  right: 4px;
-  top: 3px;
-  width: 80px;
-  height: 80px;
-  border: 1px solid #b7b7b7;
-  border-radius: 4px;
-}
 dl.infobox dt {
   width: 10em;
   float: left;
@@ -489,9 +480,8 @@ dl.infobox dd {
   clear: none;
   margin: 0;
   margin-left: 11em;
-  margin-right: 6.8em;
   border: 0 solid #b7b7b7;
-  border-width: 0 1px;
+  border-left-width: 1px;
   background: #f6f6f6;
   padding: 0.5em;
 }
@@ -587,7 +577,7 @@ img.login_avatar {
   text-indent: -119988px;
   overflow: hidden;
   text-align: left;
-  background-image: url('/static/img/home.png?1310771260');
+  background-image: url('/static/img/home.png?1307204489');
   background-repeat: no-repeat;
   background-position: 12 22;
   width: 12px;
@@ -659,14 +649,14 @@ img.login_avatar {
   display: block;
   /* reduce the damage in FF3.0 */
   position: absolute;
-  bottom: -21px;
+  top: -21px;
   /* value = - border-top-width - border-bottom-width */
   left: 1.5em;
   /* controls horizontal position */
   width: 0;
   height: 0;
   border: 10px solid transparent;
-  border-top-color: #afafaf;
+  border-bottom-color: #afafaf;
 }
 
 /* creates the smaller  triangle */
@@ -675,14 +665,14 @@ img.login_avatar {
   display: block;
   /* reduce the damage in FF3.0 */
   position: absolute;
-  bottom: -20px;
+  top: -20px;
   /* value = - border-top-width - border-bottom-width */
   left: 1.5em;
   /* value = (:before left) + (:before border-left) - (:after border-left) */
   width: 0;
   height: 0;
   border: 10px solid transparent;
-  border-top-color: #ffffa2;
+  border-bottom-color: #ffffa2;
 }
 
 /* Form elements */
@@ -850,7 +840,7 @@ select {
 }
 
 input[name="openid"] {
-  background: url('/static/img/openid.png?1310771260') 4px no-repeat;
+  background: url('/static/img/openid.png?1305572482') 4px no-repeat;
   width: 230px;
   padding-left: 25px;
 }
@@ -910,7 +900,7 @@ input[type="submit"].delete:hover {
 
 span.loading {
   display: inline-block;
-  background: url('/static/img/ajax-loader.gif?1310771260') center no-repeat;
+  background: url('/static/img/ajax-loader.gif?1305733694') center no-repeat;
   width: 16px;
   height: 16px;
 }
