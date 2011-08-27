@@ -146,7 +146,7 @@ def permission_user_new(key):
         abort(404)
     if client.user != g.user:
         abort(403)
-    available_perms = Permission.query.filter(Permission.allusers == True or Permission.user == g.user).order_by('name').all()
+    available_perms = Permission.query.filter(db.or_(Permission.allusers == True, Permission.user == g.user)).order_by('name').all()
     form = UserPermissionAssignForm()
     form.perms.choices = [(ap.name, u"%s – %s" % (ap.name, ap.title)) for ap in available_perms]
     if form.validate_on_submit():
