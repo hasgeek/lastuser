@@ -480,8 +480,7 @@ dl.infobox dd {
   clear: none;
   margin: 0;
   margin-left: 11em;
-  border: 0 solid #b7b7b7;
-  border-left-width: 1px;
+  border-left: 1px solid #b7b7b7;
   background: #f6f6f6;
   padding: 0.5em;
 }

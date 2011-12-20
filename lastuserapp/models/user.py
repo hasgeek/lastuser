@@ -9,7 +9,7 @@ from lastuserapp.utils import newid, newsecret, newpin
 class User(db.Model, BaseMixin):
     __tablename__ = 'user'
     userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
-    fullname = db.Column(db.Unicode(80), default='', nullable=False)
+    fullname = db.Column(db.Unicode(80), default=u'', nullable=False)
     username = db.Column(db.Unicode(80), unique=True, nullable=True)
     pw_hash = db.Column(db.String(80), nullable=True)
     description = db.Column(db.Text, default='', nullable=False)
@@ -121,7 +121,7 @@ class UserEmailClaim(db.Model, BaseMixin):
         backref = db.backref('emailclaims', cascade="all, delete-orphan"))
     _email = db.Column('email', db.Unicode(80), nullable=True)
     verification_code = db.Column(db.String(44), nullable=False, default=newsecret)
-    md5sum = db.Column(db.String(32), unique=True, nullable=False)
+    md5sum = db.Column(db.String(32), nullable=False)
 
     def __init__(self, email, **kwargs):
         super(UserEmailClaim, self).__init__(**kwargs)

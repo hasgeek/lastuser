@@ -116,8 +116,7 @@ def register():
     form = RegisterForm()
     if form.validate_on_submit():
         user = register_internal(None, form.fullname.data, form.password.data)
-        if form.username.data:
-            user.username = form.username.data
+        user.username = form.username.data or None
         useremail = UserEmailClaim(user=user, email=form.email.data)
         db.session.add(useremail)
         db.session.commit()

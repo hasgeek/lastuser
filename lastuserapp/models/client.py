@@ -183,7 +183,7 @@ class Permission(db.Model, BaseMixin):
     #: Human-friendly title
     title = db.Column(db.Unicode(250), nullable=False)
     #: Description of what this permission is about
-    description = db.Column(db.Text, default='', nullable=False)
+    description = db.Column(db.Text, default=u'', nullable=False)
     #: Is this permission available to all users and client apps?
     allusers = db.Column(db.Boolean, default=False, nullable=False)
 
@@ -199,14 +199,32 @@ class UserClientPermissions(db.Model, BaseMixin):
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('permissions', cascade="all, delete-orphan"))
     # The permissions as a string of tokens
-    permissions = db.Column(db.Unicode(250), default='', nullable=False)
+    permissions = db.Column(db.Unicode(250), default=u'', nullable=False)
 
     # Only one assignment per user and client
     # TODO: Also define context for permission:
     # a. User1 has permissions x, y (without context) in app1
     # b. User1 has permissions a, b, c in context p in app1
+    # Contexts could be defined with a separator, suffixed to the permission
+    # such as permission:context/subpath.
     __table_args__ = ( db.UniqueConstraint("user_id", "client_id"), {} )
 
 
+class NoticeType(db.Model, BaseMixin):
+    __tablename__ = 'noticetype'
+    #: User who created this notice type
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship(User, primaryjoin=user_id == User.id,
+        backref = db.backref('noticetypes_created', cascade="all, delete-orphan"))
+    #: Name token
+    name = db.Column(db.Unicode(80), nullable=False)
+    #: Human-friendly title
+    title = db.Column(db.Unicode(250), nullable=False)
+    #: Description of what this notice type is about
+    description = db.Column(db.Text, default=u'', nullable=False)
+    #: Is this notice type available to all users and client apps?
+    allusers = db.Column(db.Boolean, default=False, nullable=False)
+
+
 __all__ = ['Client', 'UserFlashMessage', 'Resource', 'ResourceAction', 'AuthCode', 'AuthToken',
-    'Permission', 'UserClientPermissions']
+    'Permission', 'UserClientPermissions', 'NoticeType']

@@ -17,8 +17,9 @@
   <dt>Access scope</dt>
   <dd>
     <ol>
-      {% if 'id' in scope %}<li>Your name and username</li>{% endif %}
-      {% if 'email' in scope %}<li>Your email address</li>{% endif %}
+      {% if 'id' in scope %}<li>Read your name and username</li>{% endif %}
+      {% if 'email' in scope %}<li>Read your email address</li>{% endif %}
+      {% if 'notice/send' in scope %}<li>Send you notifications</li>{% endif %}
       {% for resource in resources %}
         <li>{{ resource.title }}
           {% if resources[resource] %}

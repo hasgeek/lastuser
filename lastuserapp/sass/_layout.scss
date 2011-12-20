@@ -170,8 +170,7 @@ dl.infobox {
         clear: none;
         margin: 0;
         margin-left: ($width-infobox-term + 1em);
-        border: 0 solid $color-outline;
-        border-left-width: 1px;
+        border-left: 1px solid $color-outline;
         background: $color-infobox-description;
         padding: 0.5em;
 

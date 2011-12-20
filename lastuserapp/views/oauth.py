@@ -141,12 +141,12 @@ def oauth_authorize():
 
     # Validation 3.2: Scope valid?
     for item in scope:
-        if item not in [u'id', u'email']:
+        if item not in [u'id', u'email', u'notice/send']: # These are internal resources
             # Validation 3.2.1: resource/action is properly formatted
             if '/' in item:
                 parts = item.split('/')
                 if len(parts) != 2:
-                    return oauth_auth_error(redirect_uri, state, 'invalid_scope', "Too many / characters in %s in scope" % item)
+                    return oauth_auth_error(redirect_uri, state, 'invalid_scope', "Too many / characters in '%s' in scope" % item)
                 resource_name, action_name = parts
             else:
                 resource_name = item

@@ -107,6 +107,8 @@ def logout_internal():
 
 def register_internal(username, fullname, password):
     user = User(username=username, fullname=fullname, password=password)
+    if not username:
+        user.username = None
     db.session.add(user)
     return user
 
