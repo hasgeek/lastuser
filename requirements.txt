@@ -1,0 +1,10 @@
+Flask
+markdown
+Flask-Assets
+Flask-Mail
+Flask-Sqlalchemy
+jsmin
+Flask-Wtf
+Flask-OpenID
+Flask-Oauth
+pytz

@@ -12,7 +12,7 @@ class User(db.Model, BaseMixin):
     fullname = db.Column(db.Unicode(80), default=u'', nullable=False)
     username = db.Column(db.Unicode(80), unique=True, nullable=True)
     pw_hash = db.Column(db.String(80), nullable=True)
-    description = db.Column(db.Text, default='', nullable=False)
+    description = db.Column(db.Text, default=u'', nullable=False)
 
     def __init__(self, password=None, **kwargs):
         self.password = password
