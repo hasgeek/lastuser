@@ -109,9 +109,7 @@ def oauth_authorize():
 
     # Validation 1.2.1: Client allows login for this user
     if not client.allow_any_login:
-        print "Checking for permissions"
         permissions = UserClientPermissions.query.filter_by(user=g.user, client=client).first()
-        print permissions
         if not permissions:
             return oauth_auth_error(redirect_uri, state, 'invalid_scope', "You do not have access to this application")
 
