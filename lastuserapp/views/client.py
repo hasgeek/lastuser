@@ -12,6 +12,14 @@ from lastuserapp.forms import (RegisterClientForm, PermissionForm, UserPermissio
 
 @app.route('/apps')
 def client_list():
+    if g.user:
+        return render_template('client_list.html', clients=Client.query.filter_by(user_id=g.user.id).order_by('title').all())
+    else:
+        # TODO: Show better UI for non-logged in users
+        return render_template('client_list.html', clients=[])
+
+@app.route('/apps/all')
+def client_list_all():
     return render_template('client_list.html', clients=Client.query.order_by('title').all())
 
 
