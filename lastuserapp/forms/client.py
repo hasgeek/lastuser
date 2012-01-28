@@ -117,10 +117,8 @@ class ResourceForm(wtf.Form):
         if not valid_username(field.data):
             raise wtf.ValidationError("Name contains invalid characters.")
 
-        edit_id = getattr(self, 'edit_id', None)
-
         existing = Resource.query.filter_by(name=field.data).first()
-        if existing and existing.id != edit_id:
+        if existing and existing.id != self.edit_id:
             raise wtf.ValidationError("A resource with that name already exists")
 
 class ResourceActionForm(wtf.Form):

@@ -78,7 +78,7 @@ def client_edit(key):
 
 @app.route('/apps/<key>/delete', methods=['GET', 'POST'])
 def client_delete(key):
-    client = Client.query.filter_by(key=key).first()
+    client = Client.query.filter_by(key=key).first_or_404()
     return render_delete(client, title="Confirm delete", message="Delete application '%s'? " % client.title,
         success="You have deleted application '%s' and all its associated permissions and resources" % client.title,
         next=url_for('client_list'))
@@ -205,7 +205,7 @@ def permission_user_delete(key, userid):
     if client.user != g.user:
         abort(403)
     user = User.query.filter_by(userid=userid).first_or_404()
-    permassign = UserClientPermissions.query.filter_by(user=user, client=client).first()
+    permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
     return render_delete(permassign, title="Confirm delete", message="Remove all permissions assigned to user '%s' for app '%s'?" % (
         (user.displayname()), client.title),
         success="You have revoked permisions for user '%s'" % user.displayname(),
@@ -221,6 +221,7 @@ def resource_new(key):
     if client.user != g.user:
         abort(403)
     form = ResourceForm()
+    form.edit_id = None
     if form.validate_on_submit():
         resource = Resource(client=client)
         form.populate_obj(resource)
@@ -261,7 +262,7 @@ def resource_delete(key, idr):
     client = Client.query.filter_by(key=key).first_or_404()
     if client.user != g.user:
         abort(403)
-    resource = Resource.query.get(idr)
+    resource = Resource.query.get_or_404(idr)
     if resource.client != client:
         abort(403)
     return render_delete(resource, title="Confirm delete", message="Delete resource '%s' from app '%s'?" % (
@@ -307,7 +308,7 @@ def resource_action_edit(key, idr, ida):
     if action.resource != resource:
         abort(404)
     form = ResourceActionForm()
-    form.edit_id = None
+    form.edit_id = ida
     form.edit_resource = resource
     if request.method == 'GET':
         form.name.data = action.name
