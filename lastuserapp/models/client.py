@@ -193,7 +193,8 @@ class UserClientPermissions(db.Model, BaseMixin):
     __tablename__ = 'userclientpermissions'
     # User who has these permissions
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(User, primaryjoin=user_id == User.id, backref='permissions')
+    user = db.relationship(User, primaryjoin=user_id == User.id, backref=
+        db.backref('permissions', cascade='all, delete-orphan'))
     # Client app they are assigned on
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,

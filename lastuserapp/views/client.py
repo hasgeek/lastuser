@@ -43,9 +43,7 @@ def client_new():
 
 @app.route('/apps/<key>')
 def client_info(key):
-    client = Client.query.filter_by(key=key).first()
-    if not client:
-        abort(404)
+    client = Client.query.filter_by(key=key).first_or_404()
     permassignments = UserClientPermissions.query.filter_by(client=client).all()
     resources = Resource.query.filter_by(client=client).order_by('name').all()
     return render_template('client_info.html', client=client,
@@ -56,9 +54,7 @@ def client_info(key):
 @app.route('/apps/<key>/edit', methods=['GET', 'POST'])
 @requires_login
 def client_edit(key):
-    client = Client.query.filter_by(key=key).first()
-    if not client:
-        abort(404)
+    client = Client.query.filter_by(key=key).first_or_404()
     if client.user != g.user:
         abort(403)
     form = RegisterClientForm()
@@ -116,9 +112,9 @@ def permission_new():
 @app.route('/perms/<int:id>/edit', methods=['GET', 'POST'])
 @requires_login
 def permission_edit(id):
-    perm = Permission.query.get(id)
-    if not perm:
-        abort(404)
+    perm = Permission.query.get_or_404(id)
+    if perm.user != g.user:
+        abort(403)
     form = PermissionForm()
     form.edit_id = id
     if request.method == 'GET':
@@ -137,9 +133,9 @@ def permission_edit(id):
 @app.route('/perms/<int:id>/delete', methods=['GET', 'POST'])
 @requires_login
 def permission_delete(id):
-    perm = Permission.query.get(id)
-    if not perm:
-        abort(404)
+    perm = Permission.query.get_or_404(id)
+    if perm.user != g.user:
+        abort(403)
     return render_delete(perm, title="Confirm delete", message="Delete permission %s?" % perm.name,
         success="Your permission has been deleted",
         next=url_for('permission_list'))
@@ -149,9 +145,7 @@ def permission_delete(id):
 @app.route('/apps/<key>/perms/new', methods=['GET', 'POST'])
 @requires_login
 def permission_user_new(key):
-    client = Client.query.filter_by(key=key).first()
-    if not client:
-        abort(404)
+    client = Client.query.filter_by(key=key).first_or_404()
     if client.user != g.user:
         abort(403)
     available_perms = Permission.query.filter(db.or_(Permission.allusers == True, Permission.user == g.user)).order_by('name').all()
@@ -171,14 +165,10 @@ def permission_user_new(key):
 @app.route('/apps/<key>/perms/<userid>/edit', methods=['GET', 'POST'])
 @requires_login
 def permission_user_edit(key, userid):
-    client = Client.query.filter_by(key=key).first()
-    if not client:
-        abort(404)
+    client = Client.query.filter_by(key=key).first_or_404()
     if client.user != g.user:
         abort(403)
-    user = User.query.filter_by(userid=userid).first()
-    if not user:
-        abort(404)
+    user = User.query.filter_by(userid=userid).first_or_404()
     available_perms = Permission.query.filter(Permission.allusers == True or Permission.user == g.user).order_by('name').all()
     permassign = UserClientPermissions.query.filter_by(user=user, client=client).first()
     form = UserPermissionEditForm()
@@ -211,14 +201,10 @@ def permission_user_edit(key, userid):
 @app.route('/apps/<key>/perms/<userid>/delete', methods=['GET', 'POST'])
 @requires_login
 def permission_user_delete(key, userid):
-    client = Client.query.filter_by(key=key).first()
-    if not client:
-        abort(404)
+    client = Client.query.filter_by(key=key).first_or_404()
     if client.user != g.user:
         abort(403)
-    user = User.query.filter_by(userid=userid).first()
-    if not user:
-        abort(404)
+    user = User.query.filter_by(userid=userid).first_or_404()
     permassign = UserClientPermissions.query.filter_by(user=user, client=client).first()
     return render_delete(permassign, title="Confirm delete", message="Remove all permissions assigned to user '%s' for app '%s'?" % (
         (user.displayname()), client.title),
@@ -231,9 +217,7 @@ def permission_user_delete(key, userid):
 @app.route('/apps/<key>/resources/new', methods=['GET', 'POST'])
 @requires_login
 def resource_new(key):
-    client = Client.query.filter_by(key=key).first()
-    if not client:
-        abort(404)
+    client = Client.query.filter_by(key=key).first_or_404()
     if client.user != g.user:
         abort(403)
     form = ResourceForm()
@@ -250,14 +234,12 @@ def resource_new(key):
 @app.route('/apps/<key>/resources/<int:idr>/edit', methods=['GET', 'POST'])
 @requires_login
 def resource_edit(key, idr):
-    client = Client.query.filter_by(key=key).first()
-    if not client:
-        abort(404)
+    client = Client.query.filter_by(key=key).first_or_404()
     if client.user != g.user:
         abort(403)
-    resource = Resource.query.get(idr)
-    if not resource:
-        abort(404)
+    resource = Resource.query.get_or_404(idr)
+    if resource.client != client:
+        abort(403)
     form = ResourceForm()
     form.edit_id = idr
     if request.method == 'GET':
@@ -276,12 +258,12 @@ def resource_edit(key, idr):
 @app.route('/apps/<key>/resources/<int:idr>/delete', methods=['GET', 'POST'])
 @requires_login
 def resource_delete(key, idr):
-    client = Client.query.filter_by(key=key).first()
-    if not client:
-        abort(404)
+    client = Client.query.filter_by(key=key).first_or_404()
     if client.user != g.user:
         abort(403)
     resource = Resource.query.get(idr)
+    if resource.client != client:
+        abort(403)
     return render_delete(resource, title="Confirm delete", message="Delete resource '%s' from app '%s'?" % (
         resource.title, client.title),
         success="You have deleted resource '%s' on app '%s'" % (resource.title, client.title),
@@ -293,14 +275,12 @@ def resource_delete(key, idr):
 @app.route('/apps/<key>/resources/<int:idr>/actions/new', methods=['GET', 'POST'])
 @requires_login
 def resource_action_new(key, idr):
-    client = Client.query.filter_by(key=key).first()
-    if not client:
-        abort(404)
+    client = Client.query.filter_by(key=key).first_or_404()
     if client.user != g.user:
         abort(403)
-    resource = Resource.query.get(idr)
-    if not resource:
-        abort(404)
+    resource = Resource.query.get_or_404(idr)
+    if resource.client != client:
+        abort(403)
     form = ResourceActionForm()
     form.edit_id = None
     form.edit_resource = resource
@@ -317,16 +297,14 @@ def resource_action_new(key, idr):
 @app.route('/apps/<key>/resources/<int:idr>/actions/<int:ida>/edit', methods=['GET', 'POST'])
 @requires_login
 def resource_action_edit(key, idr, ida):
-    client = Client.query.filter_by(key=key).first()
-    if not client:
-        abort(404)
+    client = Client.query.filter_by(key=key).first_or_404()
     if client.user != g.user:
         abort(403)
-    resource = Resource.query.get(idr)
-    if not resource:
+    resource = Resource.query.get_or_404(idr)
+    if resource.client != client:
         abort(404)
-    action = ResourceAction.query.get(ida)
-    if not action:
+    action = ResourceAction.query.get_or_404(ida)
+    if action.resource != resource:
         abort(404)
     form = ResourceActionForm()
     form.edit_id = None
@@ -346,15 +324,15 @@ def resource_action_edit(key, idr, ida):
 @app.route('/apps/<key>/resources/<int:idr>/actions/<int:ida>/delete', methods=['GET', 'POST'])
 @requires_login
 def resource_action_delete(key, idr, ida):
-    client = Client.query.filter_by(key=key).first()
-    if not client:
-        abort(404)
+    client = Client.query.filter_by(key=key).first_or_404()
     if client.user != g.user:
         abort(403)
-    resource = Resource.query.get(idr)
-    if not resource:
-        abort(404)
-    action = ResourceAction.query.get(ida)
+    resource = Resource.query.get_or_404(idr)
+    if resource.client != client:
+        abort(403)
+    action = ResourceAction.query.get_or_404(ida)
+    if action.resource != resource:
+        abort(403)
     return render_delete(action, title="Confirm delete", message="Delete action '%s' from resource '%s' of app '%s'?" % (
         action.title, resource.title, client.title),
         success="You have deleted action '%s' on resource '%s' of app '%s'" % (action.title, resource.title, client.title),
