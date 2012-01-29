@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import redirect, session, flash, url_for
-from flaskext.openid import OpenID
+from flask.ext.openid import OpenID
 
 from lastuserapp import app
 from lastuserapp.mailclient import send_email_verify_link

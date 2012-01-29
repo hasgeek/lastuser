@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from flask import g
-import flaskext.wtf as wtf
+import flask.ext.wtf as wtf
 
 from lastuserapp.models import Permission, Resource, ResourceAction, getuser
 from lastuserapp.utils import valid_username
+
 
 class AuthorizeForm(wtf.Form):
     """
@@ -32,7 +33,7 @@ class RegisterClientForm(wtf.Form):
         description="Name of the organization or individual who owns this application")
     website = wtf.html5.URLField('Application website', validators=[wtf.Required(), wtf.URL()],
         description="Website where users may access this application")
-    redirect_uri = wtf.html5.URLField('Redirect URI', validators=[wtf.Required(), wtf.URL()],
+    redirect_uri = wtf.html5.URLField('Redirect URI', validators=[wtf.Optional(), wtf.URL()],
         description="OAuth2 Redirect URI")
     notification_uri = wtf.html5.URLField('Notification URI', validators=[wtf.Optional(), wtf.URL()],
         description="LastUser resource provider Notification URI. When another application requests access to "

@@ -2,6 +2,7 @@
 from lastuserapp.models import db, User, BaseMixin
 from lastuserapp.utils import newid, newsecret
 
+
 class Client(db.Model, BaseMixin):
     """OAuth client applications"""
     __tablename__ = 'client'
@@ -18,7 +19,7 @@ class Client(db.Model, BaseMixin):
     #: Website
     website = db.Column(db.Unicode(250), nullable=False)
     #: Redirect URI
-    redirect_uri = db.Column(db.Unicode(250), nullable=False)
+    redirect_uri = db.Column(db.Unicode(250), nullable=True)
     #: Notification URI
     notification_uri = db.Column(db.Unicode(250), nullable=True)
     #: Resource URI
@@ -36,6 +37,12 @@ class Client(db.Model, BaseMixin):
     #: When a single provider provides multiple services, each can be declared
     #: as a trusted client to provide single sign-in across the services
     trusted = db.Column(db.Boolean, nullable=False, default=False)
+
+    def secret_is(self, candidate):
+        """
+        Check if the provided client secret is valid.
+        """
+        return self.secret == candidate
 
 
 class UserFlashMessage(db.Model, BaseMixin):
@@ -118,7 +125,7 @@ class AuthCode(db.Model, BaseMixin):
 class AuthToken(db.Model, BaseMixin):
     """Access tokens for access to data."""
     __tablename__ = 'authtoken'
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # Null for client-only
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # Null for client-only tokens
     user = db.relationship(User, primaryjoin=user_id == User.id)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,

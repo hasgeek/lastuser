@@ -2,7 +2,7 @@
 
 from markdown import markdown
 from flask import render_template
-from flaskext.mail import Mail, Message
+from flask.ext.mail import Mail, Message
 from lastuserapp import app
 
 mail = Mail(app)

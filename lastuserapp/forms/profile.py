@@ -3,7 +3,7 @@
 import re
 
 from flask import g
-import flaskext.wtf as wtf
+import flask.ext.wtf as wtf
 
 from lastuserapp.utils import valid_username, strip_phone, valid_phone
 from lastuserapp.models import User, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim, getuser

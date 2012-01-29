@@ -5,7 +5,7 @@ from urllib2 import urlopen, URLError
 from urlparse import parse_qs
 
 from flask import request, session, redirect, render_template, flash, url_for, json
-from flaskext.oauth import OAuth, OAuthException # OAuth 1.0a
+from flask.ext.oauth import OAuth, OAuthException # OAuth 1.0a
 
 from lastuserapp import app
 from lastuserapp.models import db, UserExternalId, UserEmail, User

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import Markup, url_for
-import flaskext.wtf as wtf
+import flask.ext.wtf as wtf
 
 from lastuserapp import RESERVED_USERNAMES
 from lastuserapp.models import User, UserEmail, getuser

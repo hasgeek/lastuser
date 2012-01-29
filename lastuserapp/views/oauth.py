@@ -4,14 +4,58 @@ from datetime import datetime, timedelta
 import urlparse
 
 from flask import g, render_template, redirect, request, jsonify
-from flask import get_flashed_messages
+from flask import get_flashed_messages, Response
 
 from lastuserapp import app
 from lastuserapp.models import (db, Client, AuthCode, AuthToken, UserFlashMessage,
     UserClientPermissions, getuser, Resource, ResourceAction)
 from lastuserapp.forms import AuthorizeForm
 from lastuserapp.utils import make_redirect_url, newid, newsecret
-from lastuserapp.views import requires_login
+from lastuserapp.views import requires_login, requires_client_login
+from lastuserapp.views.resource import get_userinfo
+
+# TODO: Construct this from the resources dict
+__internal_resources = [u'id', u'email', u'notice/send']
+
+
+class ScopeException(Exception):
+    pass
+
+
+def verifyscope(scope, client):
+    """
+    Verify if requested scope is valid for this client. Scope must be a list.
+    """
+    resources = {} # resource_object: [action_object, ...]
+
+    for item in scope:
+        if item not in __internal_resources: # These are internal resources
+            # Validation 1: resource/action is properly formatted
+            if '/' in item:
+                parts = item.split('/')
+                if len(parts) != 2:
+                    raise ScopeException("Too many / characters in '%s' in scope" % item)
+                resource_name, action_name = parts
+            else:
+                resource_name = item
+                action_name = None
+            resource = Resource.query.filter_by(name=resource_name).first()
+            # Validation 2: Resource exists
+            if not resource:
+                raise ScopeException("Unknown resource '%s' in scope" % resource_name)
+            # Validation 3: Client has access to resource
+            if resource.trusted and not client.trusted:
+                raise ScopeException(
+                    "This application does not have access to resource '%s' in scope" % resource_name)
+            # Validation 4: Action is valid
+            if action_name:
+                action = ResourceAction.query.filter_by(name=action_name, resource=resource).first()
+                if not action:
+                    raise ScopeException("Unknown action '%s' on resource '%s'" % (action_name, resource_name))
+                resources.setdefault(resource, []).append(action)
+            else:
+                resources.setdefault(resource, [])
+    return resources
 
 
 def oauth_auth_403(reason):
@@ -59,9 +103,12 @@ def oauth_auth_success(client, redirect_uri, state, code):
         clear_flashed_messages()
     db.session.commit()
     if state is None:
-        return redirect(make_redirect_url(redirect_uri, code=code), code=302)
+        response = redirect(make_redirect_url(redirect_uri, code=code), code=302)
     else:
-        return redirect(make_redirect_url(redirect_uri, code=code, state=state), code=302)
+        response = redirect(make_redirect_url(redirect_uri, code=code, state=state), code=302)
+    response.headers['Cache-Control'] = 'no-store'
+    response.headers['Pragma'] = 'no-cache'
+    return response
 
 
 def oauth_auth_error(redirect_uri, state, error, error_description=None, error_uri=None):
@@ -76,7 +123,10 @@ def oauth_auth_error(redirect_uri, state, error, error_description=None, error_u
     if error_uri is not None:
         params['error_uri'] = error_uri
     clear_flashed_messages()
-    return redirect(make_redirect_url(redirect_uri, **params), code=302)
+    response = redirect(make_redirect_url(redirect_uri, **params), code=302)
+    response.headers['Cache-Control'] = 'no-store'
+    response.headers['Pragma'] = 'no-cache'
+    return response
 
 
 @app.route('/auth', methods=['GET', 'POST'])
@@ -95,34 +145,30 @@ def oauth_authorize():
 
     # Validation 1.1: Client_id present
     if not client_id:
-        if redirect_uri:
-            return oauth_auth_error(redirect_uri, state, 'invalid_request', "client_id missing")
-        else:
-            return oauth_auth_403("Missing client_id")
+        return oauth_auth_403(u"Missing client_id")
     # Validation 1.2: Client exists
     client = Client.query.filter_by(key=client_id).first()
     if not client:
-        if redirect_uri:
-            return oauth_auth_error(redirect_uri, state, 'unauthorized_client')
-        else:
-            return oauth_auth_403("Unknown client_id")
+        return oauth_auth_403(u"Unknown client_id")
 
-    # Validation 1.2.1: Client allows login for this user
+    # Validation 1.2.1: Is the client active?
+    if not client.active:
+        return oauth_auth_error(client.redirect_uri, state, 'unauthorized_client')
+
+    # Validation 1.3: Cross-check redirect_uri
+    if not redirect_uri:
+        redirect_uri = client.redirect_uri
+        if not redirect_uri: # Validation 1.3.1: No redirect_uri specified
+            return oauth_auth_403(u"No redirect URI specified")
+    elif redirect_uri != client.redirect_uri:
+        if urlparse.urlsplit(redirect_uri).hostname != urlparse.urlsplit(client.redirect_uri).hostname:
+            return oauth_auth_error(client.redirect_uri, state, 'invalid_request', u"Redirect URI hostname doesn't match")
+
+    # Validation 1.4: Client allows login for this user
     if not client.allow_any_login:
         permissions = UserClientPermissions.query.filter_by(user=g.user, client=client).first()
         if not permissions:
-            return oauth_auth_error(redirect_uri, state, 'invalid_scope', "You do not have access to this application")
-
-    # Validation 1.3: Is the client active?
-    if not client.active:
-        return oauth_auth_error(redirect_uri, state, 'unauthorized_client')
-
-    # Validation 1.4: Cross-check redirection_uri
-    if not redirect_uri:
-        redirect_uri = client.redirect_uri
-    elif redirect_uri != client.redirect_uri:
-        if urlparse.urlsplit(redirect_uri).hostname != urlparse.urlsplit(client.redirect_uri).hostname:
-            return oauth_auth_error(redirect_uri, state, 'invalid_request', "Redirect URI hostname doesn't match")
+            return oauth_auth_error(client.redirect_uri, state, 'invalid_scope', u"You do not have access to this application")
 
     # Validation 2.1: Is response_type present?
     if not response_type:
@@ -131,42 +177,15 @@ def oauth_authorize():
     if response_type not in [u'code']:
         return oauth_auth_error(redirect_uri, state, 'unsupported_response_type')
 
-    # Validation 3.1: Scope present?
+    # Validation 3.1: Is scope present?
     if not scope:
         return oauth_auth_error(redirect_uri, state, 'invalid_request', "Scope not specified")
 
-    resources = {} # resource_object: [action_object, ...]
-
-    # Validation 3.2: Scope valid?
-    for item in scope:
-        if item not in [u'id', u'email', u'notice/send']: # These are internal resources
-            # Validation 3.2.1: resource/action is properly formatted
-            if '/' in item:
-                parts = item.split('/')
-                if len(parts) != 2:
-                    return oauth_auth_error(redirect_uri, state, 'invalid_scope', "Too many / characters in '%s' in scope" % item)
-                resource_name, action_name = parts
-            else:
-                resource_name = item
-                action_name = None
-            resource = Resource.query.filter_by(name=resource_name).first()
-            # Validation 3.2.2: Resource exists
-            if not resource:
-                return oauth_auth_error(redirect_uri, state, 'invalid_scope', "Unknown resource '%s' in scope" % resource_name)
-            # Validation 3.2.3: Client has access to resource
-            if resource.trusted and not client.trusted:
-                return oauth_auth_error(redirect_uri, state, 'invalid_scope',
-                    "This application does not have access to resource '%s' in scope" % resource_name)
-            # Validation 3.2.4: If action is specified, it exists for this resource
-            if action_name:
-                action = ResourceAction.query.filter_by(name=action_name, resource=resource).first()
-                if not action:
-                    return oauth_auth_error(redirect_uri, state, 'invalid_scope',
-                        "Unknown action '%s' on resource '%s' in scope" % (action_name, resource_name))
-                resources.setdefault(resource, []).append(action)
-            else:
-                action = None
-                resources.setdefault(resource, [])
+    # Validation 3.2: Is scope valid?
+    try:
+        resources = verifyscope(scope, client)
+    except ScopeException as scopeex:
+        return oauth_auth_error(redirect_uri, state, 'invalid_scope', unicode(scopeex))
 
     # Validations complete. Now ask user for permission
     # If the client is trusted (LastUser feature, not in OAuth2 spec), don't ask user.
@@ -207,6 +226,8 @@ def oauth_token_error(error, error_description=None, error_uri=None):
     if error_uri is not None:
         params['error_uri'] = error_uri
     response = jsonify(**params)
+    response.headers['Cache-Control'] = 'no-store'
+    response.headers['Pragma'] = 'no-cache'
     response.status_code = 400
     return response
 
@@ -241,35 +262,20 @@ def oauth_token_success(token, **params):
         params['refresh_token'] = token.refresh_token
     response = jsonify(**params)
     response.headers['Cache-Control'] = 'no-store'
+    response.headers['Pragma'] = 'no-cache'
     db.session.commit()
     return response
 
 
-def get_userinfo(user, client, scope=[]):
-    userinfo = {'userid': user.userid,
-                'username': user.username,
-                'fullname': user.fullname}
-    if 'email' in scope:
-        userinfo['email'] = unicode(user.email)
-    perms = UserClientPermissions.query.filter_by(user=user, client=client).first()
-    if perms:
-        userinfo['permissions'] = perms.permissions.split(u' ')
-    return userinfo
-
-
 @app.route('/token', methods=['POST'])
+@requires_client_login
 def oauth_token():
     """
     OAuth2 server -- token endpoint
     """
     # Always required parameters
     grant_type = request.form.get('grant_type')
-    client_id = request.form.get('client_id')
-    if request.authorization:
-        client_secret = request.authorization.password
-    else:
-        # TODO: drop support for this
-        client_secret = request.form.get('client_secret')
+    client = g.client # Provided by @requires_client_login
     scope = request.form.get('scope', u'').split(u' ')
     # if grant_type == 'authorization_code' (POST)
     code = request.form.get('code')
@@ -278,32 +284,26 @@ def oauth_token():
     username = request.form.get('username')
     password = request.form.get('password')
 
-    # Validations 0: HTTP Basic authentication matches client_id
-    if request.authorization:
-        if client_id != request.authorization.username:
-            return oauth_token_error('invalid_request', "client_id does not match HTTP headers")
     # Validations 1: Required parameters
-    if not grant_type or not client_id or not client_secret:
-        return oauth_token_error('invalid_request', "Missing one of grant_type, client_id or client_secret")
+    if not grant_type:
+        return oauth_token_error('invalid_request', "Missing grant_type")
     # grant_type == 'refresh_token' is not supported. All tokens are permanent unless revoked
     if grant_type not in ['authorization_code', 'client_credentials', 'password']:
         return oauth_token_error('unsupported_grant_type')
 
-    # Validations 2: client
-    client = Client.query.filter_by(key=client_id).first()
-    if not client or not client.active:
-        return oauth_token_error('invalid_client', "Unknown client_id")
-    if client_secret != client.secret:
-        return oauth_token_error('invalid_client', "client_secret mismatch")
-    if grant_type == 'password' and not client.trusted:
-        return oauth_token_error('unauthorized_client', "Client not trusted for password grant_type")
-
+    # Validations 2: client scope
     if grant_type == 'client_credentials':
         # Client data. User isn't part of it
+        try:
+            verifyscope(scope, client)
+        except ScopeException as scopeex:
+            return oauth_token_error('invalid_scope', unicode(scopeex))
+
         token = oauth_make_token(user=None, client=client, scope=scope)
         return oauth_token_success(token)
+
+    # Validations 3: auth code
     elif grant_type == 'authorization_code':
-        # Validations 3: auth code
         authcode = AuthCode.query.filter_by(code=code, client=client).first()
         if not authcode:
             return oauth_token_error('invalid_grant', "Unknown auth code")
@@ -323,6 +323,7 @@ def oauth_token():
             return oauth_token_error('invalid_client', "redirect_uri does not match")
 
         token = oauth_make_token(user=authcode.user, client=client, scope=scope)
+        db.session.delete(authcode)
         return oauth_token_success(token, userinfo=get_userinfo(user=authcode.user, client=client, scope=scope))
 
     elif grant_type == 'password':
@@ -338,7 +339,11 @@ def oauth_token():
             return oauth_token_error('invalid_client', "No such user") # XXX: invalid_client doesn't seem right
         if not user.password_is(password):
             return oauth_token_error('invalid_client', "Password mismatch")
-
+        # Validations 4.3: verify scope
+        try:
+            verifyscope(scope, client)
+        except ScopeException as scopeex:
+            return oauth_token_error('invalid_scope', unicode(scopeex))
         # All good. Grant access
         token = oauth_make_token(user=user, client=client, scope=scope)
         return oauth_token_success(token, userinfo=get_userinfo(user=user, client=client, scope=scope))

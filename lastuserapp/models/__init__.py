@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flaskext.sqlalchemy import SQLAlchemy
+from flask.ext.sqlalchemy import SQLAlchemy
 from lastuserapp import app
 
 db = SQLAlchemy(app)

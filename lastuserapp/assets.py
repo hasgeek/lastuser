@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flaskext.assets import Environment, Bundle
+from flask.ext.assets import Environment, Bundle
 from lastuserapp import app
 
 assets = Environment(app)
