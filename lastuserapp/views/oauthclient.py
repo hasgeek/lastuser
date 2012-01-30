@@ -15,10 +15,10 @@ from lastuserapp.utils import valid_username, get_gravatar_md5sum
 # OAuth 1.0a handlers
 oauth = OAuth()
 twitter = oauth.remote_app('twitter',
-    base_url='http://api.twitter.com/1/',
-    request_token_url='http://api.twitter.com/oauth/request_token',
-    access_token_url='http://api.twitter.com/oauth/access_token',
-    authorize_url='http://api.twitter.com/oauth/authenticate',
+    base_url='https://api.twitter.com/1/',
+    request_token_url='https://api.twitter.com/oauth/request_token',
+    access_token_url='https://api.twitter.com/oauth/access_token',
+    authorize_url='https://api.twitter.com/oauth/authenticate',
     consumer_key=app.config.get('OAUTH_TWITTER_KEY'),
     consumer_secret=app.config.get('OAUTH_TWITTER_SECRET'),
 )
