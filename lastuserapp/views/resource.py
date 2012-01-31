@@ -87,12 +87,10 @@ def token_verify():
         'userid': authtoken.client.user.userid,
         'owner': authtoken.client.owner,
         'website': authtoken.client.website,
-        'key': authtoken.client.key
+        'key': authtoken.client.key,
+        'trusted': authtoken.client.trusted,
         }
-    response = jsonify(params)
-    response.headers['Cache-Control'] = 'no-store'
-    response.headers['Pragma'] = 'no-cache'
-    return response
+    return token_verify_result('ok', **params)
 
 
 @app.route('/api/1/email')
