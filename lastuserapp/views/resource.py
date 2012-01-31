@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import jsonify
+from flask import jsonify, request
 
 from lastuserapp import app
 from lastuserapp.models import AuthToken, Resource, ResourceAction, UserClientPermissions
