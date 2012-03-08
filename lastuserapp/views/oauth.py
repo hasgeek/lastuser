@@ -237,7 +237,7 @@ def oauth_make_token(user, client, scope):
     if token:
         token.add_scope(scope)
     else:
-        token = AuthToken(user=user, client=client, scope=scope)
+        token = AuthToken(user=user, client=client, scope=scope, token_type='bearer')
         db.session.add(token)
     # TODO: Look up Resources for items in scope; look up their providing clients apps,
     # and notify each client app of this token
@@ -259,7 +259,9 @@ def oauth_token_success(token, **params):
     # TODO: Understand how refresh_token works.
     if token.validity:
         params['expires_in'] = token.validity
-        params['refresh_token'] = token.refresh_token
+        # No refresh tokens for client_credentials tokens
+        if token.user is not None:
+            params['refresh_token'] = token.refresh_token
     response = jsonify(**params)
     response.headers['Cache-Control'] = 'no-store'
     response.headers['Pragma'] = 'no-cache'
