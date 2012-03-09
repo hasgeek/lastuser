@@ -45,7 +45,7 @@ def token_verify_result(status, **params):
 @requires_client_login
 def token_verify():
     token = request.form.get('access_token')
-    client_resource = request.form.get('resource') # Can only be a single resource
+    client_resource = request.form.get('resource')  # Can only be a single resource
     if not client_resource:
         # No resource specified by caller
         return resource_error('no_resource')
@@ -79,7 +79,7 @@ def token_verify():
 
     # All validations passed. Token is valid for this client and scope. Return with information on the token
     # TODO: Don't return validity. Set the HTTP cache headers instead.
-    params = {'validity': 120} # Period (in seconds) for which this assertion may be cached.
+    params = {'validity': 120}  # Period (in seconds) for which this assertion may be cached.
     if authtoken.user:
         params['userinfo'] = get_userinfo(authtoken.user, g.client)
     params['clientinfo'] = {
@@ -97,6 +97,19 @@ def token_verify():
 @provides_resource('email')
 def resource_email(authtoken, args, files=None):
     """
-    Return user's primary email address.
+    Return user's email addresses.
     """
-    return {'email': unicode(authtoken.user.email)}
+    if 'all' in args and int(args['all']):
+        return {'email': unicode(authtoken.user.email),
+                'all': [unicode(email) for email in authtoken.user.emails]}
+    else:
+        return {'email': unicode(authtoken.user.email)}
+
+
+#@app.route('/api/1/email/add')
+#@provides_resource('email/add')
+#def resource_email_add(authtoken, args, files=None):
+#    """
+#    Add an email address to the user's account.
+#    """
+#    pass
