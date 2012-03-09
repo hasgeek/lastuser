@@ -79,7 +79,7 @@ class UserPermissionAssignForm(wtf.Form):
     Assign permissions to a user
     """
     username = wtf.TextField("User", validators=[wtf.Required()],
-        description = 'Lookup a user by their username or email address')
+        description='Lookup a user by their username or email address')
     perms = wtf.SelectMultipleField("Permissions", validators=[wtf.Required()])
 
     def validate_username(self, field):
@@ -121,6 +121,7 @@ class ResourceForm(wtf.Form):
         existing = Resource.query.filter_by(name=field.data).first()
         if existing and existing.id != self.edit_id:
             raise wtf.ValidationError("A resource with that name already exists")
+
 
 class ResourceActionForm(wtf.Form):
     """

@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from flask import g, request, render_template, redirect, url_for, flash, abort
+from flask import g, request, render_template, url_for, flash, abort
 
 from lastuserapp import app
-from lastuserapp.views import requires_login, render_form, render_message, render_redirect, render_delete
+from lastuserapp.views import requires_login, render_form, render_redirect, render_delete
 from lastuserapp.models import db, User, Client, Permission, UserClientPermissions, Resource, ResourceAction
 from lastuserapp.forms import (RegisterClientForm, PermissionForm, UserPermissionAssignForm,
     UserPermissionEditForm, ResourceForm, ResourceActionForm)
 
 # --- Routes: client apps -----------------------------------------------------
+
 
 @app.route('/apps')
 def client_list():
@@ -17,6 +18,7 @@ def client_list():
     else:
         # TODO: Show better UI for non-logged in users
         return render_template('client_list.html', clients=[])
+
 
 @app.route('/apps/all')
 def client_list_all():
@@ -76,6 +78,7 @@ def client_edit(key):
     return render_form(form=form, title="Edit application", formid="client_edit",
         submit="Save changes", ajax=True)
 
+
 @app.route('/apps/<key>/delete', methods=['GET', 'POST'])
 def client_delete(key):
     client = Client.query.filter_by(key=key).first_or_404()
@@ -83,7 +86,9 @@ def client_delete(key):
         success="You have deleted application '%s' and all its associated permissions and resources" % client.title,
         next=url_for('client_list'))
 
+
 # --- Routes: user permissions ------------------------------------------------
+
 
 @app.route('/perms')
 @requires_login
@@ -140,7 +145,9 @@ def permission_delete(id):
         success="Your permission has been deleted",
         next=url_for('permission_list'))
 
+
 # --- Routes: client app permissions ------------------------------------------
+
 
 @app.route('/apps/<key>/perms/new', methods=['GET', 'POST'])
 @requires_login

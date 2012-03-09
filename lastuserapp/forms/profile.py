@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import re
-
 from flask import g
 import flask.ext.wtf as wtf
 
@@ -94,6 +92,7 @@ class NewPhoneForm(wtf.Form):
 
 class VerifyPhoneForm(wtf.Form):
     verification_code = wtf.TextField('Verification code', validators=[wtf.Required()])
+
     def validate_verification_code(self, field):
         if self.phoneclaim.verification_code != field.data:
             raise wtf.ValidationError, "Verification code does not match."

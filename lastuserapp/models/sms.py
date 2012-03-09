@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from lastuserapp.models import db, BaseMixin, UserPhone
+from lastuserapp.models import db, BaseMixin
 
 __all__ = ['SMSMessage', 'SMS_STATUS']
+
 
 class SMS_STATUS:
     QUEUED = 0
@@ -10,6 +11,7 @@ class SMS_STATUS:
     DELIVERED = 2
     FAILED = 3
     UNKNOWN = 4
+
 
 class SMSMessage(db.Model, BaseMixin):
     __tablename__ = 'smsmessage'

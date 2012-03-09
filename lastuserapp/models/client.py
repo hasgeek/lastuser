@@ -9,7 +9,7 @@ class Client(db.Model, BaseMixin):
     #: User who owns this client
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref = db.backref('clients', cascade="all, delete-orphan"))
+        backref=db.backref('clients', cascade="all, delete-orphan"))
     #: Human-readable title
     title = db.Column(db.Unicode(250), nullable=False)
     #: Long description
@@ -69,7 +69,7 @@ class Resource(db.Model, BaseMixin):
     name = db.Column(db.Unicode(20), unique=True, nullable=False)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
-        backref = db.backref('resources', cascade="all, delete-orphan"))
+        backref=db.backref('resources', cascade="all, delete-orphan"))
     title = db.Column(db.Unicode(250), nullable=False)
     description = db.Column(db.Text, default='', nullable=False)
     siteresource = db.Column(db.Boolean, default=False, nullable=False)
@@ -85,12 +85,12 @@ class ResourceAction(db.Model, BaseMixin):
     name = db.Column(db.Unicode(20), nullable=False)
     resource_id = db.Column(db.Integer, db.ForeignKey('resource.id'), nullable=False)
     resource = db.relationship(Resource, primaryjoin=resource_id == Resource.id,
-        backref = db.backref('actions', cascade="all, delete-orphan"))
+        backref=db.backref('actions', cascade="all, delete-orphan"))
     title = db.Column(db.Unicode(250), nullable=False)
     description = db.Column(db.Text, default='', nullable=False)
 
     # Action names are unique per client app
-    __table_args__ = ( db.UniqueConstraint("name", "resource_id"), {} )
+    __table_args__ = (db.UniqueConstraint("name", "resource_id"), {})
 
 
 class AuthCode(db.Model, BaseMixin):
@@ -100,7 +100,7 @@ class AuthCode(db.Model, BaseMixin):
     user = db.relationship(User, primaryjoin=user_id == User.id)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
-        backref = db.backref("authcodes", cascade="all, delete-orphan"))
+        backref=db.backref("authcodes", cascade="all, delete-orphan"))
     code = db.Column(db.String(44), default=newsecret, nullable=False)
     _scope = db.Column('scope', db.Unicode(250), nullable=False)
     redirect_uri = db.Column(db.Unicode(250), nullable=False)
@@ -125,27 +125,36 @@ class AuthCode(db.Model, BaseMixin):
 class AuthToken(db.Model, BaseMixin):
     """Access tokens for access to data."""
     __tablename__ = 'authtoken'
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # Null for client-only tokens
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Null for client-only tokens
     user = db.relationship(User, primaryjoin=user_id == User.id)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref("authtokens", cascade="all, delete-orphan"))
     token = db.Column(db.String(22), default=newid, nullable=False, unique=True)
-    token_type = db.Column(db.String(250), default='bearer', nullable=False) # 'bearer', 'mac' or a URL
+    token_type = db.Column(db.String(250), default='bearer', nullable=False)  # 'bearer', 'mac' or a URL
     secret = db.Column(db.String(44), nullable=True)
     _algorithm = db.Column('algorithm', db.String(20), nullable=True)
     _scope = db.Column('scope', db.Unicode(250), nullable=False)
-    validity = db.Column(db.Integer, nullable=False, default=0) # Validity period in seconds
-    refresh_token = db.Column(db.String(22), default=newid, nullable=False)
+    validity = db.Column(db.Integer, nullable=False, default=0)  # Validity period in seconds
+    refresh_token = db.Column(db.String(22), nullable=True, unique=True)
 
     # Only one authtoken per user and client. Add to scope as needed
-    __table_args__ = ( db.UniqueConstraint("user_id", "client_id"), {} )
+    __table_args__ = (db.UniqueConstraint("user_id", "client_id"), {})
 
     def __init__(self, **kwargs):
         super(AuthToken, self).__init__(**kwargs)
         self.token = newid()
-        self.refresh_token = newid()
+        if self.user:
+            self.refresh_token = newid()
         self.secret = newsecret()
+
+    def refresh(self):
+        """
+        Create a new token while retaining the refresh token.
+        """
+        if self.refresh_token is not None:
+            self.token = newid()
+            self.secret = newsecret()
 
     @property
     def scope(self):
@@ -174,7 +183,7 @@ class AuthToken(db.Model, BaseMixin):
         elif value in ['hmac-sha-1', 'hmac-sha-256']:
             self._algorithm = value
         else:
-            raise ValueError, "Unrecognized algorithm '%s'" % value
+            raise ValueError("Unrecognized algorithm '%s'" % value)
 
     algorithm = db.synonym('_algorithm', descriptor=algorithm)
 
@@ -184,7 +193,7 @@ class Permission(db.Model, BaseMixin):
     #: User who created this permission
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref = db.backref('permissions_created', cascade="all, delete-orphan"))
+        backref=db.backref('permissions_created', cascade="all, delete-orphan"))
     #: Name token
     name = db.Column(db.Unicode(80), nullable=False)
     #: Human-friendly title
@@ -200,8 +209,8 @@ class UserClientPermissions(db.Model, BaseMixin):
     __tablename__ = 'userclientpermissions'
     # User who has these permissions
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(User, primaryjoin=user_id == User.id, backref=
-        db.backref('permissions', cascade='all, delete-orphan'))
+    user = db.relationship(User, primaryjoin=user_id == User.id,
+        backref=db.backref('permissions', cascade='all, delete-orphan'))
     # Client app they are assigned on
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
@@ -215,7 +224,7 @@ class UserClientPermissions(db.Model, BaseMixin):
     # b. User1 has permissions a, b, c in context p in app1
     # Contexts could be defined with a separator, suffixed to the permission
     # such as permission:context/subpath.
-    __table_args__ = ( db.UniqueConstraint("user_id", "client_id"), {} )
+    __table_args__ = (db.UniqueConstraint("user_id", "client_id"), {})
 
 
 class NoticeType(db.Model, BaseMixin):
@@ -223,7 +232,7 @@ class NoticeType(db.Model, BaseMixin):
     #: User who created this notice type
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref = db.backref('noticetypes_created', cascade="all, delete-orphan"))
+        backref=db.backref('noticetypes_created', cascade="all, delete-orphan"))
     #: Name token
     name = db.Column(db.Unicode(80), nullable=False)
     #: Human-friendly title

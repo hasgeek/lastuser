@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import re
 from functools import wraps
 import urlparse
@@ -13,10 +14,18 @@ from lastuserapp.models import db, User, AuthToken, Client
 from lastuserapp.forms import ConfirmDeleteForm
 
 # Mapping of resource handlers. Links to the internal, unwrapped function
-resources = {}
+__resources = {}
 
 # Bearer token, as per http://tools.ietf.org/html/draft-ietf-oauth-v2-bearer-15#section-2.1
 auth_bearer_re = re.compile("^Bearer ([a-zA-Z0-9_.~+/-]+=*)$")
+
+
+def resource_details(name):
+    """
+    Return the requested resource.
+    """
+    global __resources
+    return __resources.get(name)
 
 
 def avatar_url_email(useremail):
@@ -146,7 +155,9 @@ def provides_resource(name):
             response.headers['Cache-Control'] = 'no-store'
             response.headers['Pragma'] = 'no-cache'
             return response
-        resources[name] = f
+
+        global __resources
+        __resources[name] = f
         return decorated_function
     return wrapper
 
@@ -212,6 +223,7 @@ def render_redirect(url, code=302):
     else:
         return redirect(url, code=code)
 
+
 def render_delete(ob, title, message, success='', next=None):
     if not ob:
         abort(404)
@@ -233,23 +245,23 @@ def usessl(url):
     """
     if not app.config.get('USE_SSL'):
         return url
-    if url.startswith('//'): # //www.example.com/path
+    if url.startswith('//'):  # //www.example.com/path
         return 'https:' + url
-    if url.startswith('/'): # /path
+    if url.startswith('/'):  # /path
         url = os.path.join(request.url_root, url[1:])
-    if url.startswith('http:'): # http://www.example.com
+    if url.startswith('http:'):  # http://www.example.com
         url = 'https:' + url[5:]
     return url
 
 
 @app.template_filter('nossl')
-def usessl(url):
+def nossl(url):
     """
     Convert a URL to http:// if using SSL
     """
     if url.startswith('//'):
         return 'http:' + url
-    if url.startswith('/') and request.url.startswith('https:'): # /path and SSL is on
+    if url.startswith('/') and request.url.startswith('https:'):  # /path and SSL is on
         url = os.path.join(request.url_root, url[1:])
     if url.startswith('https://'):
         return 'http:' + url[6:]

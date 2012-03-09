@@ -56,4 +56,3 @@ class RegisterForm(wtf.Form):
                 'This email address is already registered. Do you want to <a href="%s">login</a> instead?'
                 % url_for('login')
                 )
-

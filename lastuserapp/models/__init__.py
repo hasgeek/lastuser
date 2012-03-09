@@ -5,12 +5,15 @@ from lastuserapp import app
 
 db = SQLAlchemy(app)
 
+
 class IdMixin(object):
     id = db.Column(db.Integer, primary_key=True)
+
 
 class TimestampMixin(object):
     created_at = db.Column(db.DateTime, default=db.func.now(), nullable=False)
     updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now(), nullable=False)
+
 
 class BaseMixin(IdMixin, TimestampMixin):
     """
@@ -22,6 +25,7 @@ class BaseMixin(IdMixin, TimestampMixin):
 from lastuserapp.models.user import *
 from lastuserapp.models.client import *
 from lastuserapp.models.sms import *
+
 
 def getuser(name):
     if '@' in name:

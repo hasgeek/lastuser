@@ -16,6 +16,7 @@ PHONE_VALID_RE = re.compile(r'^\+[0-9]+$')
 
 # --- Utilities ---------------------------------------------------------------
 
+
 def newid():
     """
     Return a new random id that is exactly 22 characters long. See
@@ -29,13 +30,14 @@ def newsecret():
     """
     Cheap OAuth secret generator.
     """
-    return newid()+newid()
+    return newid() + newid()
+
 
 def newpin(digits=4):
     """
     Return a random numeric string with the specified number of digits, default 4
     """
-    return (u'%%0%dd' % digits) % randint(0, 10**digits)
+    return (u'%%0%dd' % digits) % randint(0, 10 ** digits)
 
 
 def make_redirect_url(url, **params):

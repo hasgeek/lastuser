@@ -6,6 +6,7 @@ from werkzeug import generate_password_hash, check_password_hash
 from lastuserapp.models import db, BaseMixin
 from lastuserapp.utils import newid, newsecret, newpin
 
+
 class User(db.Model, BaseMixin):
     __tablename__ = 'user'
     userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
@@ -50,16 +51,16 @@ class User(db.Model, BaseMixin):
         return useremail
 
     def del_email(self, email):
-        setprimary=False
+        setprimary = False
         useremail = UserEmail.query.filter_by(user=self, email=email).first()
         if useremail:
             if useremail.primary:
-                setprimary=True
+                setprimary = True
             db.session.delete(useremail)
         if setprimary:
             for emailob in UserEmail.query.filter_by(user_id=self.id).all():
                 if emailob is not useremail:
-                    emailob.primary=True
+                    emailob.primary = True
                     break
 
     @property
@@ -76,7 +77,7 @@ class User(db.Model, BaseMixin):
         if useremail:
             # XXX: Mark at primary. This may or may not be saved depending on
             # whether the request ended in a database commit.
-            useremail.primary=True
+            useremail.primary = True
             return useremail
         # This user has no email address. Return a blank string instead of None
         # to support the common use case, where the caller will use unicode(user.email)
@@ -88,7 +89,7 @@ class UserEmail(db.Model, BaseMixin):
     __tablename__ = 'useremail'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref= db.backref('emails', cascade="all, delete-orphan"))
+        backref=db.backref('emails', cascade="all, delete-orphan"))
     _email = db.Column('email', db.Unicode(80), unique=True, nullable=False)
     md5sum = db.Column(db.String(32), unique=True, nullable=False)
     primary = db.Column(db.Boolean, nullable=False, default=False)
@@ -118,7 +119,7 @@ class UserEmailClaim(db.Model, BaseMixin):
     __tablename__ = 'useremailclaim'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref = db.backref('emailclaims', cascade="all, delete-orphan"))
+        backref=db.backref('emailclaims', cascade="all, delete-orphan"))
     _email = db.Column('email', db.Unicode(80), nullable=True)
     verification_code = db.Column(db.String(44), nullable=False, default=newsecret)
     md5sum = db.Column(db.String(32), nullable=False)
@@ -149,7 +150,7 @@ class UserPhone(db.Model, BaseMixin):
     __tablename__ = 'userphone'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref = db.backref('phones', cascade="all, delete-orphan"))
+        backref=db.backref('phones', cascade="all, delete-orphan"))
     primary = db.Column(db.Boolean, nullable=False, default=False)
     _phone = db.Column('phone', db.Unicode(80), unique=True, nullable=False)
     gets_text = db.Column(db.Boolean, nullable=False, default=True)
@@ -178,7 +179,7 @@ class UserPhoneClaim(db.Model, BaseMixin):
     __tablename__ = 'userphoneclaim'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref = db.backref('phoneclaims', cascade="all, delete-orphan"))
+        backref=db.backref('phoneclaims', cascade="all, delete-orphan"))
     _phone = db.Column('phone', db.Unicode(80), unique=True, nullable=False)
     gets_text = db.Column(db.Boolean, nullable=False, default=True)
     verification_code = db.Column(db.Unicode(4), nullable=False, default=newpin)
@@ -219,15 +220,15 @@ class UserExternalId(db.Model, BaseMixin):
     __tablename__ = 'userexternalid'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref = db.backref('externalids', cascade="all, delete-orphan"))
+        backref=db.backref('externalids', cascade="all, delete-orphan"))
     service = db.Column(db.String(20), nullable=False)
-    userid = db.Column(db.String(250), nullable=False) # Unique id (or OpenID)
+    userid = db.Column(db.String(250), nullable=False)  # Unique id (or OpenID)
     username = db.Column(db.Unicode(80), nullable=True)
     oauth_token = db.Column(db.String(250), nullable=True)
     oauth_token_secret = db.Column(db.String(250), nullable=True)
     oauth_token_type = db.Column(db.String(250), nullable=True)
 
-    __table_args__ = ( db.UniqueConstraint("service", "userid"), {} )
+    __table_args__ = (db.UniqueConstraint("service", "userid"), {})
 
 
 __all__ = ['User', 'UserEmail', 'UserEmailClaim', 'PasswordResetRequest', 'UserExternalId',
