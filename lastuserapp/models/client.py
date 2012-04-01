@@ -22,13 +22,13 @@ class Client(db.Model, BaseMixin):
     #: Website
     website = db.Column(db.Unicode(250), nullable=False)
     #: Redirect URI
-    redirect_uri = db.Column(db.Unicode(250), nullable=True)
+    redirect_uri = db.Column(db.Unicode(250), nullable=True, default=u'')
     #: Back-end notification URI
-    notification_uri = db.Column(db.Unicode(250), nullable=True)
+    notification_uri = db.Column(db.Unicode(250), nullable=True, default=u'')
     #: Front-end notification URI
-    iframe_uri = db.Column(db.Unicode(250), nullable=True)
+    iframe_uri = db.Column(db.Unicode(250), nullable=True, default=u'')
     #: Resource discovery URI
-    resource_uri = db.Column(db.Unicode(250), nullable=True)
+    resource_uri = db.Column(db.Unicode(250), nullable=True, default=u'')
     #: Active flag
     active = db.Column(db.Boolean, nullable=False, default=True)
     #: Allow anyone to login to this app?
