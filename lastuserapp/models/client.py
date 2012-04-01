@@ -55,9 +55,9 @@ class Client(db.Model, BaseMixin):
         Return human-readable owner name.
         """
         if self.user:
-            return self.user.displayname()
+            return self.user.pickername
         elif self.org:
-            return self.org.title
+            return self.org.pickername
         else:
             raise AttributeError("This client has no owner")
 
