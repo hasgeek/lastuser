@@ -22,6 +22,7 @@ RESERVED_USERNAMES = set([
     'reset',
     'register',
     'token',
+    'organizations',
     ])
 
 app = Flask('lastuserapp')

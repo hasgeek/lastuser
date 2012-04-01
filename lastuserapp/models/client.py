@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from lastuserapp.models import db, User, BaseMixin
+from lastuserapp.models import db, BaseMixin
+from lastuserapp.models.user import User, Organization, Team
 from lastuserapp.utils import newid, newsecret
 
 
@@ -7,22 +8,26 @@ class Client(db.Model, BaseMixin):
     """OAuth client applications"""
     __tablename__ = 'client'
     #: User who owns this client
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(User, primaryjoin=user_id == User.id,
+        backref=db.backref('clients', cascade="all, delete-orphan"))
+    #: Organization that owns this client. Only one of this or user must be set
+    org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
+    org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
         backref=db.backref('clients', cascade="all, delete-orphan"))
     #: Human-readable title
     title = db.Column(db.Unicode(250), nullable=False)
     #: Long description
-    description = db.Column(db.Text, nullable=False, default='')
-    #: Human-readable owner name
-    owner = db.Column(db.Unicode(250), nullable=False)
+    description = db.Column(db.UnicodeText, nullable=False, default=u'')
     #: Website
     website = db.Column(db.Unicode(250), nullable=False)
     #: Redirect URI
     redirect_uri = db.Column(db.Unicode(250), nullable=True)
-    #: Notification URI
+    #: Back-end notification URI
     notification_uri = db.Column(db.Unicode(250), nullable=True)
-    #: Resource URI
+    #: Front-end notification URI
+    iframe_uri = db.Column(db.Unicode(250), nullable=True)
+    #: Resource discovery URI
     resource_uri = db.Column(db.Unicode(250), nullable=True)
     #: Active flag
     active = db.Column(db.Boolean, nullable=False, default=True)
@@ -43,6 +48,21 @@ class Client(db.Model, BaseMixin):
         Check if the provided client secret is valid.
         """
         return self.secret == candidate
+
+    @property
+    def owner(self):
+        """
+        Return human-readable owner name.
+        """
+        if self.user:
+            return self.user.displayname()
+        elif self.org:
+            return self.org.title
+        else:
+            raise AttributeError("This client has no owner")
+
+    def owner_is(self, user):
+        return self.user == user or (self.org and self.org in user.organizations_owned())
 
 
 class UserFlashMessage(db.Model, BaseMixin):
@@ -71,7 +91,7 @@ class Resource(db.Model, BaseMixin):
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('resources', cascade="all, delete-orphan"))
     title = db.Column(db.Unicode(250), nullable=False)
-    description = db.Column(db.Text, default='', nullable=False)
+    description = db.Column(db.UnicodeText, default=u'', nullable=False)
     siteresource = db.Column(db.Boolean, default=False, nullable=False)
     trusted = db.Column(db.Boolean, default=False, nullable=False)
 
@@ -87,7 +107,7 @@ class ResourceAction(db.Model, BaseMixin):
     resource = db.relationship(Resource, primaryjoin=resource_id == Resource.id,
         backref=db.backref('actions', cascade="all, delete-orphan"))
     title = db.Column(db.Unicode(250), nullable=False)
-    description = db.Column(db.Text, default='', nullable=False)
+    description = db.Column(db.UnicodeText, default=u'', nullable=False)
 
     # Action names are unique per client app
     __table_args__ = (db.UniqueConstraint("name", "resource_id"), {})
@@ -191,30 +211,42 @@ class AuthToken(db.Model, BaseMixin):
 class Permission(db.Model, BaseMixin):
     __tablename__ = 'permission'
     #: User who created this permission
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(User, primaryjoin=user_id == User.id,
+        backref=db.backref('permissions_created', cascade="all, delete-orphan"))
+    org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
+    org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
         backref=db.backref('permissions_created', cascade="all, delete-orphan"))
     #: Name token
     name = db.Column(db.Unicode(80), nullable=False)
     #: Human-friendly title
     title = db.Column(db.Unicode(250), nullable=False)
     #: Description of what this permission is about
-    description = db.Column(db.Text, default=u'', nullable=False)
+    description = db.Column(db.UnicodeText, default=u'', nullable=False)
     #: Is this permission available to all users and client apps?
     allusers = db.Column(db.Boolean, default=False, nullable=False)
+
+    def owner_is(self, user):
+        return self.user == user or (self.org and self.org in user.organizations_owned())
+
+    def owner_name(self):
+        if self.user:
+            return self.user.pickername
+        else:
+            return self.org.pickername
 
 
 # This model's name is in plural because it defines multiple permissions within each instance
 class UserClientPermissions(db.Model, BaseMixin):
     __tablename__ = 'userclientpermissions'
-    # User who has these permissions
+    #: User who has these permissions
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('permissions', cascade='all, delete-orphan'))
     # Client app they are assigned on
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
-        backref=db.backref('permissions', cascade="all, delete-orphan"))
+        backref=db.backref('permissions_users', cascade="all, delete-orphan"))
     # The permissions as a string of tokens
     permissions = db.Column(db.Unicode(250), default=u'', nullable=False)
 
@@ -225,6 +257,45 @@ class UserClientPermissions(db.Model, BaseMixin):
     # Contexts could be defined with a separator, suffixed to the permission
     # such as permission:context/subpath.
     __table_args__ = (db.UniqueConstraint("user_id", "client_id"), {})
+
+    @property
+    def pickername(self):
+        return self.user.pickername
+
+    @property
+    def userid(self):
+        return self.user.userid
+
+
+# This model's name is in plural because it defines multiple permissions within each instance
+class TeamClientPermissions(db.Model, BaseMixin):
+    __tablename__ = 'teamclientpermissions'
+    #: Team which has these permissions
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
+    team = db.relationship(Team, primaryjoin=team_id == Team.id,
+        backref=db.backref('permissions', cascade='all, delete-orphan'))
+    # Client app they are assigned on
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    client = db.relationship(Client, primaryjoin=client_id == Client.id,
+        backref=db.backref('permissions_teams', cascade="all, delete-orphan"))
+    # The permissions as a string of tokens
+    permissions = db.Column(db.Unicode(250), default=u'', nullable=False)
+
+    # Only one assignment per team and client
+    # TODO: Also define context for permission:
+    # a. User1 has permissions x, y (without context) in app1
+    # b. User1 has permissions a, b, c in context p in app1
+    # Contexts could be defined with a separator, suffixed to the permission
+    # such as permission:context/subpath.
+    __table_args__ = (db.UniqueConstraint("team_id", "client_id"), {})
+
+    @property
+    def pickername(self):
+        return self.team.pickername
+
+    @property
+    def userid(self):
+        return self.team.userid
 
 
 class NoticeType(db.Model, BaseMixin):
@@ -238,10 +309,10 @@ class NoticeType(db.Model, BaseMixin):
     #: Human-friendly title
     title = db.Column(db.Unicode(250), nullable=False)
     #: Description of what this notice type is about
-    description = db.Column(db.Text, default=u'', nullable=False)
+    description = db.Column(db.UnicodeText, default=u'', nullable=False)
     #: Is this notice type available to all users and client apps?
     allusers = db.Column(db.Boolean, default=False, nullable=False)
 
 
 __all__ = ['Client', 'UserFlashMessage', 'Resource', 'ResourceAction', 'AuthCode', 'AuthToken',
-    'Permission', 'UserClientPermissions', 'NoticeType']
+    'Permission', 'UserClientPermissions', 'TeamClientPermissions', 'NoticeType']

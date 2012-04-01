@@ -54,8 +54,8 @@
   {% if message %}<p>{{ message }}</p>{% endif %}
   <div style="display:none;"><input type="hidden" name="form.id" value="{{ formid }}" /></div>
   {{ form.hidden_tag() }}
-  {% if form.csrf.errors %}
-    {% for error in form.csrf.errors %}<div class="error">{{ error }}</div>{% endfor %}
+  {% if form.csrf_token.errors %}
+    {% for error in form.csrf_token.errors %}<div class="error">{{ error }}</div>{% endfor %}
   {% endif %}
   {% for field in form %}
     {% if field.widget.input_type and field.widget.input_type == 'hidden' -%}

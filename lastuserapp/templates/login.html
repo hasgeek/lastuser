@@ -23,9 +23,9 @@
   <input type="hidden" name="form.id" value="openid"/>
   <input type="hidden" name="next" value="{{ oidnext }}"/>
   {{ openidform.hidden_tag() }}
-  {#{% if openidform.csrf.errors %}
-    {% for error in openidform.csrf.errors %}<div class="error">{{ error }}</div>{% endfor %}
-  {% endif %}#}
+  {% if openidform.csrf_token.errors %}
+    {% for error in openidform.csrf_token.errors %}<div class="error">{{ error }}</div>{% endfor %}
+  {% endif %}
   {% if oiderror %}<div class=error>{{ oiderror }}</div>{% endif %}
   {{ renderfield(openidform.openid, "small") }}
   {{ rendersubmit([(None, "Login", None)], "small") }}

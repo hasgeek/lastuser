@@ -2,7 +2,7 @@
 from flask import g
 import flask.ext.wtf as wtf
 
-from lastuserapp.models import Permission, Resource, ResourceAction, getuser
+from lastuserapp.models import db, Permission, Resource, ResourceAction, getuser, Organization
 from lastuserapp.utils import valid_username
 
 
@@ -29,8 +29,9 @@ class RegisterClientForm(wtf.Form):
         description="The name of your application")
     description = wtf.TextAreaField('Description', validators=[wtf.Required()],
         description="A description to help users recognize your application")
-    owner = wtf.TextField('Organization name', validators=[wtf.Required()],
-        description="Name of the organization or individual who owns this application")
+    client_owner = wtf.RadioField('Owner', validators=[wtf.Required()],
+        description="User or organization that owns this application. Changing the owner "
+            "will revoke all currently assigned permissions for this app")
     website = wtf.html5.URLField('Application website', validators=[wtf.Required(), wtf.URL()],
         description="Website where users may access this application")
     redirect_uri = wtf.html5.URLField('Redirect URI', validators=[wtf.Optional(), wtf.URL()],
@@ -38,11 +39,27 @@ class RegisterClientForm(wtf.Form):
     notification_uri = wtf.html5.URLField('Notification URI', validators=[wtf.Optional(), wtf.URL()],
         description="LastUser resource provider Notification URI. When another application requests access to "
             "resources provided by this app, LastUser will post a notice to this URI with a copy of the access "
-            "token that was provided to the other application. Other notices may be posted too.")
+            "token that was provided to the other application. Other notices may be posted too "
+            "(not yet implemented)")
+    iframe_uri = wtf.html5.URLField('IFrame URI', validators=[wtf.Optional(), wtf.URL()],
+        description="Front-end notifications URL. This is loaded in a hidden iframe to notify the app that the "
+            "user updated their profile in some way (not yet implemented)")
     resource_uri = wtf.html5.URLField('Resource URI', validators=[wtf.Optional(), wtf.URL()],
-        description="URI at which this application provides resources as per the LastUser Resource API")
+        description="URI at which this application provides resources as per the LastUser Resource API "
+        "(not yet implemented)")
     allow_any_login = wtf.BooleanField('Allow anyone to login', default=True,
         description="If your application requires access to be restricted to specific users, uncheck this")
+
+    def validate_client_owner(self, field):
+        if field.data == g.user.userid:
+            self.user = g.user
+            self.org = None
+        else:
+            orgs = [org for org in g.user.organizations_owned() if org.userid == field.data]
+            if len(orgs) != 1:
+                raise wtf.ValidationError("Invalid owner")
+            self.user = None
+            self.org = orgs[0]
 
 
 class PermissionForm(wtf.Form):
@@ -58,20 +75,52 @@ class PermissionForm(wtf.Form):
         description='Permission title that is displayed to users')
     description = wtf.TextAreaField('Description',
         description='An optional description of what the permission is for')
+    context = wtf.RadioField('Context', validators=[wtf.Required()],
+        description='Context where this permission is available')
 
-    def validate_name(self, field):
-        if not valid_username(field.data):
-            raise wtf.ValidationError("Name contains invalid characters.")
+    def validate(self):
+        rv = super(PermissionForm, self).validate()
+        if not rv:
+            return False
 
-        edit_id = getattr(self, 'edit_id', None)
+        if not valid_username(self.name.data):
+            raise wtf.ValidationError("Name contains invalid characters")
 
-        existing = Permission.query.filter_by(name=field.data, allusers=True).first()
+        edit_obj = getattr(self, 'edit_obj', None)
+        if edit_obj:
+            edit_id = edit_obj.id
+        else:
+            edit_id = None
+
+        existing = Permission.query.filter_by(name=self.name.data, allusers=True).first()
         if existing and existing.id != edit_id:
-            raise wtf.ValidationError("A global permission with that name already exists")
+            self.name.errors.append("A global permission with that name already exists")
+            return False
 
-        existing = Permission.query.filter_by(name=field.data, user=g.user).first()
+        if self.context.data == g.user.userid:
+            existing = Permission.query.filter_by(name=self.name.data, user=g.user).first()
+        else:
+            org = Organization.query.filter_by(userid=self.context.data).first()
+            if org:
+                existing = Permission.query.filter_by(name=self.name.data, org=org).first()
+            else:
+                existing = None
         if existing and existing.id != edit_id:
-            raise wtf.ValidationError("You have another permission with the same name")
+            self.name.errors.append("You have another permission with the same name")
+            return False
+
+        return True
+
+    def validate_context(self, field):
+        if field.data == g.user.userid:
+            self.user = g.user
+            self.org = None
+        else:
+            orgs = [org for org in g.user.organizations_owned() if org.userid == field.data]
+            if len(orgs) != 1:
+                raise wtf.ValidationError("Invalid context")
+            self.user = None
+            self.org = orgs[0]
 
 
 class UserPermissionAssignForm(wtf.Form):
@@ -85,13 +134,28 @@ class UserPermissionAssignForm(wtf.Form):
     def validate_username(self, field):
         existing = getuser(field.data)
         if existing is None:
-            raise wtf.ValidationError, "User does not exist"
+            raise wtf.ValidationError("User does not exist")
         self.user = existing
 
 
-class UserPermissionEditForm(wtf.Form):
+class TeamPermissionAssignForm(wtf.Form):
     """
-    Edit a user's permissions
+    Assign permissions to a team
+    """
+    team_id = wtf.RadioField("Team", validators=[wtf.Required()],
+        description='Select a team to assign permissiont to')
+    perms = wtf.SelectMultipleField("Permissions", validators=[wtf.Required()])
+
+    def validate_team_id(self, field):
+        teams = [team for team in self.org.teams if team.userid == field.data]
+        if len(teams) != 1:
+            raise wtf.ValidationError("Unknown team")
+        self.team = teams[0]
+
+
+class PermissionEditForm(wtf.Form):
+    """
+    Edit a user or team's permissions
     """
     perms = wtf.SelectMultipleField("Permissions", validators=[wtf.Required()])
 

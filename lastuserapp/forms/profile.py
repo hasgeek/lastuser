@@ -3,8 +3,9 @@
 from flask import g
 import flask.ext.wtf as wtf
 
+from lastuserapp import RESERVED_USERNAMES
 from lastuserapp.utils import valid_username, strip_phone, valid_phone
-from lastuserapp.models import User, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim, getuser
+from lastuserapp.models import User, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim, Organization, getuser
 
 
 class PasswordResetRequestForm(wtf.Form):
@@ -44,9 +45,12 @@ class ProfileForm(wtf.Form):
     def validate_username(self, field):
         if not valid_username(field.data):
             raise wtf.ValidationError, "Invalid characters in username"
-        if field.data == g.user.username:
-            return
+        if field.data in RESERVED_USERNAMES:
+            raise wtf.ValidationError, "That name is reserved"
         existing = User.query.filter_by(username=field.data).first()
+        if existing is not None and existing.id != self.edit_obj.id:
+            raise wtf.ValidationError, "That username is taken"
+        existing = Organization.query.filter_by(name=field.data).first()
         if existing is not None:
             raise wtf.ValidationError, "That username is taken"
 

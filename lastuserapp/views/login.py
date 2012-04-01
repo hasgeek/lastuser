@@ -11,7 +11,7 @@ from lastuserapp.mailclient import send_email_verify_link, send_password_reset_l
 from lastuserapp.models import db, User, UserEmailClaim, PasswordResetRequest, Client
 from lastuserapp.forms import LoginForm, OpenIdForm, RegisterForm, PasswordResetForm, PasswordResetRequestForm
 from lastuserapp.views import (get_next_url, login_internal, logout_internal, register_internal,
-    render_form, render_message, render_redirect)
+    render_form, render_message, render_redirect, requires_login)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -52,6 +52,7 @@ def login():
 # TODO: Move this into settings.py
 logout_errormsg = "We detected an unauthorized attempt to log you out. "\
             "If you really did intend to logout, please click on the logout link again."
+
 
 def logout_user():
     """
@@ -111,6 +112,7 @@ def logout():
         # If this is not a logout request from a client, check if all is good.
         return logout_user()
 
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
@@ -130,14 +132,16 @@ def register():
     return render_form(form=form, title='Register an account', formid='register', submit='Register')
 
 
+# FIXME: This should not be a GET request. Make it a POST. Autosubmit with JS to simplify UX
 @app.route('/confirm/<md5sum>/<secret>')
+@requires_login
 def confirm_email(md5sum, secret):
     emailclaim = UserEmailClaim.query.filter_by(md5sum=md5sum).first()
     if emailclaim is not None:
         # Claim exists
         if emailclaim.verification_code == secret:
             # Verification code matches
-            if g.user is None or g.user == emailclaim.user:
+            if g.user == emailclaim.user:
                 # Not logged in as someone else
                 # Claim verified!
                 useremail = emailclaim.user.add_email(emailclaim.email, primary=emailclaim.user.email is None)

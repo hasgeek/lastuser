@@ -4,18 +4,18 @@ from datetime import datetime, timedelta
 import urlparse
 
 from flask import g, render_template, redirect, request, jsonify
-from flask import get_flashed_messages, Response
+from flask import get_flashed_messages
 
 from lastuserapp import app
 from lastuserapp.models import (db, Client, AuthCode, AuthToken, UserFlashMessage,
-    UserClientPermissions, getuser, Resource, ResourceAction)
+    UserClientPermissions, TeamClientPermissions, getuser, Resource, ResourceAction)
 from lastuserapp.forms import AuthorizeForm
-from lastuserapp.utils import make_redirect_url, newid, newsecret
+from lastuserapp.utils import make_redirect_url, newsecret
 from lastuserapp.views import requires_login, requires_client_login
 from lastuserapp.views.resource import get_userinfo
 
 # TODO: Construct this from the resources dict
-__internal_resources = [u'id', u'email', u'notice/send']
+__internal_resources = [u'id', u'email', u'organizations', u'notice/send']
 
 
 class ScopeException(Exception):
@@ -26,10 +26,10 @@ def verifyscope(scope, client):
     """
     Verify if requested scope is valid for this client. Scope must be a list.
     """
-    resources = {} # resource_object: [action_object, ...]
+    resources = {}  # resource_object: [action_object, ...]
 
     for item in scope:
-        if item not in __internal_resources: # These are internal resources
+        if item not in __internal_resources:  # These are internal resources
             # Validation 1: resource/action is properly formatted
             if '/' in item:
                 parts = item.split('/')
@@ -82,7 +82,7 @@ def clear_flashed_messages():
     remote site where they cannot see the messages. If they return much later,
     they could be confused by a message for an action they do not recall.
     """
-    discard = list(get_flashed_messages())
+    list(get_flashed_messages())
 
 
 def save_flashed_messages():
@@ -158,7 +158,7 @@ def oauth_authorize():
     # Validation 1.3: Cross-check redirect_uri
     if not redirect_uri:
         redirect_uri = client.redirect_uri
-        if not redirect_uri: # Validation 1.3.1: No redirect_uri specified
+        if not redirect_uri:  # Validation 1.3.1: No redirect_uri specified
             return oauth_auth_403(u"No redirect URI specified")
     elif redirect_uri != client.redirect_uri:
         if urlparse.urlsplit(redirect_uri).hostname != urlparse.urlsplit(client.redirect_uri).hostname:
@@ -166,7 +166,11 @@ def oauth_authorize():
 
     # Validation 1.4: Client allows login for this user
     if not client.allow_any_login:
-        permissions = UserClientPermissions.query.filter_by(user=g.user, client=client).first()
+        if client.user:
+            permissions = UserClientPermissions.query.filter_by(user=g.user, client=client).first()
+        else:
+            permissions = TeamClientPermissions.query.filter_by(client=client).filter(
+                TeamClientPermissions.team_id.in_([team.id for team in g.user.teams])).first()
         if not permissions:
             return oauth_auth_error(client.redirect_uri, state, 'invalid_scope', u"You do not have access to this application")
 
@@ -277,7 +281,7 @@ def oauth_token():
     """
     # Always required parameters
     grant_type = request.form.get('grant_type')
-    client = g.client # Provided by @requires_client_login
+    client = g.client  # Provided by @requires_client_login
     scope = request.form.get('scope', u'').split(u' ')
     # if grant_type == 'authorization_code' (POST)
     code = request.form.get('code')
@@ -309,7 +313,7 @@ def oauth_token():
         authcode = AuthCode.query.filter_by(code=code, client=client).first()
         if not authcode:
             return oauth_token_error('invalid_grant', "Unknown auth code")
-        if authcode.created_at < (datetime.utcnow()-timedelta(minutes=1)): # XXX: Time limit: 1 minute
+        if authcode.created_at < (datetime.utcnow() - timedelta(minutes=1)):  # XXX: Time limit: 1 minute
             db.session.delete(authcode)
             db.session.commit()
             return oauth_token_error('invalid_grant', "Expired auth code")
@@ -338,7 +342,7 @@ def oauth_token():
             return oauth_token_error('invalid_request', "Username or password not provided")
         user = getuser(username)
         if not user:
-            return oauth_token_error('invalid_client', "No such user") # XXX: invalid_client doesn't seem right
+            return oauth_token_error('invalid_client', "No such user")  # XXX: invalid_client doesn't seem right
         if not user.password_is(password):
             return oauth_token_error('invalid_client', "Password mismatch")
         # Validations 4.3: verify scope

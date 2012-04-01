@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from flask import g, request, abort, flash, redirect, render_template, url_for, session
+from flask import g, abort, flash, render_template, url_for, session
 
 from lastuserapp import app
-from lastuserapp.models import db, User, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
+from lastuserapp.models import db, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
 from lastuserapp.mailclient import send_email_verify_link
 from lastuserapp.views import get_next_url, requires_login, render_form, render_redirect, render_delete
 from lastuserapp.views.sms import send_phone_verify_code
@@ -15,25 +15,20 @@ from lastuserapp.forms import (ProfileForm, PasswordResetForm, PasswordChangeFor
 @requires_login
 def profile():
     # TODO: move the avatar in the user model
-    return render_template('profile.html', avatar = session['avatar_url'])
+    return render_template('profile.html', avatar=session['avatar_url'])
 
 
 @app.route('/profile/edit', methods=['GET', 'POST'])
 @requires_login
 def profile_edit():
-    form = ProfileForm()
-    if request.method == 'GET':
-        form.fullname.data = g.user.fullname
-        form.username.data = g.user.username
-        form.description.data = g.user.description
-    elif form.validate_on_submit():
-        g.user.fullname = form.fullname.data
-        g.user.username = form.username.data or None
-        g.user.description = form.description.data
+    form = ProfileForm(obj=g.user)
+    form.edit_obj = g.user
+    if form.validate_on_submit():
+        form.populate_obj(g.user)
         db.session.commit()
 
         next_url = get_next_url()
-        if(next_url is not None):
+        if next_url is not None:
             return render_redirect(next_url)
         else:
             flash("Your profile was successfully edited.", category='info')
@@ -69,15 +64,14 @@ def add_email():
         return render_redirect(url_for('profile'), code=303)
     return render_form(form=form, title="Add an email address", formid="email_add", submit="Add email", ajax=True)
 
+
 @app.route('/profile/email/<md5sum>/remove', methods=['GET', 'POST'])
 @requires_login
 def remove_email(md5sum):
     useremail = UserEmail.query.filter_by(md5sum=md5sum, user=g.user).first()
     if not useremail:
-        useremail = UserEmailClaim.query.filter_by(md5sum=md5sum, user=g.user).first()
-        if not useremail:
-            abort(404)
-    if useremail.primary:
+        useremail = UserEmailClaim.query.filter_by(md5sum=md5sum, user=g.user).first_or_404()
+    if isinstance(useremail, UserEmail) and useremail.primary:
         flash("You cannot remove your primary email address", "error")
         return render_redirect(url_for('profile'), code=303)
     return render_delete(useremail, title="Confirm removal", message="Remove email address %s?" % useremail,
@@ -104,7 +98,7 @@ def add_phone():
 def remove_phone(number):
     userphone = UserPhone.query.filter_by(phone=number, user=g.user).first()
     if userphone is None:
-        userphone = UserPhoneClaim.query.filter_by(phone=number, user=g.user).first()
+        userphone = UserPhoneClaim.query.filter_by(phone=number, user=g.user).first_or_404()
     return render_delete(userphone, title="Confirm removal", message="Remove phone number %s?" % userphone,
         success="You have removed your number %s." % userphone,
         next=url_for('profile'))
@@ -113,18 +107,16 @@ def remove_phone(number):
 @app.route('/profile/phone/<number>/verify', methods=['GET', 'POST'])
 @requires_login
 def verify_phone(number):
-    form = VerifyPhoneForm()
-    phoneclaim = UserPhoneClaim.query.filter_by(phone=number).first()
-    if not phoneclaim:
-        abort(404)
+    phoneclaim = UserPhoneClaim.query.filter_by(phone=number).first_or_404()
     if phoneclaim.user != g.user:
         abort(403)
+    form = VerifyPhoneForm()
     form.phoneclaim = phoneclaim
     if form.validate_on_submit():
         if not g.user.phones:
-            primary=True
+            primary = True
         else:
-            primary=False
+            primary = False
         userphone = UserPhone(user=g.user, phone=phoneclaim.phone, gets_text=True, primary=primary)
         db.session.add(userphone)
         db.session.delete(phoneclaim)

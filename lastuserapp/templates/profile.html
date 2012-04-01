@@ -63,4 +63,11 @@
   {% endfor %}
   <li><a href="{{ url_for('client_new') }}">Register an application &rarr;</a></li>
 </ul>
+<h2>My organizations</h2>
+<ul>
+  {%- for org in g.user.organizations_owned() %}
+    <li><a href="{{ url_for('org_info', name=org.name) }}">{{ org.title }}</a></li>
+  {%- endfor %}
+  <li><a href="{{ url_for('org_new') }}">Create a new organization &rarr;</a></li>
+</ul>
 {% endblock %}

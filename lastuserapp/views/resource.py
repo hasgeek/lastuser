@@ -3,7 +3,7 @@
 from flask import jsonify, request, g
 
 from lastuserapp import app
-from lastuserapp.models import AuthToken, Resource, ResourceAction, UserClientPermissions
+from lastuserapp.models import AuthToken, Resource, ResourceAction, UserClientPermissions, TeamClientPermissions
 from lastuserapp.views import provides_resource, requires_client_login
 
 
@@ -13,9 +13,23 @@ def get_userinfo(user, client, scope=[]):
                 'fullname': user.fullname}
     if 'email' in scope:
         userinfo['email'] = unicode(user.email)
-    perms = UserClientPermissions.query.filter_by(user=user, client=client).first()
-    if perms:
-        userinfo['permissions'] = perms.permissions.split(u' ')
+    if 'organizations' in scope:
+        userinfo['organizations'] = {
+            'owner': [{'userid': org.userid, 'name': org.name, 'title': org.title} for org in user.organizations_owned()],
+            'member': [{'userid': org.userid, 'name': org.name, 'title': org.title} for org in user.organizations()],
+            }
+        userinfo['teams'] = [{'userid': team.userid, 'title': team.title, 'org': team.org.userid} for team in user.teams]
+    if client.user:
+        perms = UserClientPermissions.query.filter_by(user=user, client=client).first()
+        if perms:
+            userinfo['permissions'] = perms.permissions.split(u' ')
+    else:
+        perms = TeamClientPermissions.query.filter_by(client=client).filter(
+            TeamClientPermissions.team_id.in_([team.id for team in user.teams])).all()
+        permsset = set()
+        for permob in perms:
+            permsset.update(permob.permissions.split(u' '))
+        userinfo['permissions'] = sorted(permsset)
     return userinfo
 
 

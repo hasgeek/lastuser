@@ -19,7 +19,7 @@ class SMSMessage(db.Model, BaseMixin):
     phone_number = db.Column(db.String(15), nullable=False)
     transaction_id = db.Column(db.Unicode(40), unique=True, nullable=True)
     # The message itself
-    message = db.Column(db.Text, nullable=False)
+    message = db.Column(db.UnicodeText, nullable=False)
     # Flags
     status = db.Column(db.Integer, default=0, nullable=False)
     status_at = db.Column(db.DateTime, nullable=True)

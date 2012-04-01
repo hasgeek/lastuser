@@ -281,4 +281,5 @@ import lastuserapp.views.client
 import lastuserapp.views.httperror
 import lastuserapp.views.sms
 import lastuserapp.views.resource
+import lastuserapp.views.org
 import lastuserapp.views.profile

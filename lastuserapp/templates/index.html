@@ -21,7 +21,7 @@
   shown this page as an excuse for poor usability.
 </p>
 <p>
-  At its core, LastUser is an <a href="http://oauth.net/2/">OAuth 2.0 (draft 16)</a> authorization server with custom extensions to fill
+  At its core, LastUser is an <a href="http://oauth.net/2/">OAuth 2.0 (draft 22)</a> authorization server with custom extensions to fill
   gaps in the spec. OAuth 2.0 distinguishes between the roles of authorization and resource servers but does not define communication
   between the two. LastUser is an authorization-only server and defines a protocol for passing authorization tokens to resource servers.
   The accompanying <a href="https://github.com/hasgeek/flask-lastuser">flask-lastuser</a> library implements the client side for the
@@ -34,6 +34,7 @@
   <ol>
     <li><a href="{{ url_for('client_list') }}">Client applications</a></li>
     <li><a href="{{ url_for('permission_list') }}">Permissions</a></li>
+    <li><a href="{{ url_for('org_list') }}">Organizations</a></li>
   </ol>
 {% endif %}
 {% endblock %}

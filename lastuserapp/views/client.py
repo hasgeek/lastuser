@@ -4,9 +4,10 @@ from flask import g, request, render_template, url_for, flash, abort
 
 from lastuserapp import app
 from lastuserapp.views import requires_login, render_form, render_redirect, render_delete
-from lastuserapp.models import db, User, Client, Permission, UserClientPermissions, Resource, ResourceAction
+from lastuserapp.models import (db, User, Client, Team, Permission, UserClientPermissions, TeamClientPermissions,
+    Resource, ResourceAction)
 from lastuserapp.forms import (RegisterClientForm, PermissionForm, UserPermissionAssignForm,
-    UserPermissionEditForm, ResourceForm, ResourceActionForm)
+    TeamPermissionAssignForm, PermissionEditForm, ResourceForm, ResourceActionForm)
 
 # --- Routes: client apps -----------------------------------------------------
 
@@ -14,7 +15,8 @@ from lastuserapp.forms import (RegisterClientForm, PermissionForm, UserPermissio
 @app.route('/apps')
 def client_list():
     if g.user:
-        return render_template('client_list.html', clients=Client.query.filter_by(user_id=g.user.id).order_by('title').all())
+        return render_template('client_list.html', clients=Client.query.filter(db.or_(Client.user == g.user,
+            Client.org_id.in_(g.user.organizations_owned_ids()))).order_by('title').all())
     else:
         # TODO: Show better UI for non-logged in users
         return render_template('client_list.html', clients=[])
@@ -25,15 +27,30 @@ def client_list_all():
     return render_template('client_list.html', clients=Client.query.order_by('title').all())
 
 
+def available_client_owners():
+    """
+    Return a list of possible client owners for the current user.
+    """
+    choices = []
+    choices.append((g.user.userid, g.user.pickername))
+    for org in g.user.organizations_owned():
+        choices.append((org.userid, org.pickername))
+    return choices
+
+
 @app.route('/apps/new', methods=['GET', 'POST'])
 @requires_login
 def client_new():
     form = RegisterClientForm()
+    form.client_owner.choices = available_client_owners()
+    if request.method == 'GET':
+        form.client_owner.data = g.user.userid
 
     if form.validate_on_submit():
         client = Client()
         form.populate_obj(client)
-        client.user = g.user
+        client.user = form.user
+        client.org = form.org
         client.trusted = False
         db.session.add(client)
         db.session.commit()
@@ -46,7 +63,10 @@ def client_new():
 @app.route('/apps/<key>')
 def client_info(key):
     client = Client.query.filter_by(key=key).first_or_404()
-    permassignments = UserClientPermissions.query.filter_by(client=client).all()
+    if client.user:
+        permassignments = UserClientPermissions.query.filter_by(client=client).all()
+    else:
+        permassignments = TeamClientPermissions.query.filter_by(client=client).all()
     resources = Resource.query.filter_by(client=client).order_by('name').all()
     return render_template('client_info.html', client=client,
         permassignments=permassignments,
@@ -57,21 +77,30 @@ def client_info(key):
 @requires_login
 def client_edit(key):
     client = Client.query.filter_by(key=key).first_or_404()
-    if client.user != g.user:
+    if not client.owner_is(g.user):
         abort(403)
-    form = RegisterClientForm()
+
+    form = RegisterClientForm(obj=client)
+    form.edit_obj = client
+    form.client_owner.choices = available_client_owners()
     if request.method == 'GET':
-        form.title.data = client.title
-        form.description.data = client.description
-        form.owner.data = client.owner
-        form.website.data = client.website
-        form.redirect_uri.data = client.redirect_uri
-        form.notification_uri.data = client.notification_uri
-        form.resource_uri.data = client.resource_uri
-        form.allow_any_login.data = client.allow_any_login
+        if client.user:
+            form.client_owner.data = client.user.userid
+        else:
+            form.client_owner.data = client.org.userid
 
     if form.validate_on_submit():
+        if client.user != form.user or client.org != form.org:
+            # Ownership has changed. Remove existing permission assignments
+            for perm in UserClientPermissions.query.filter_by(client=client).all():
+                db.session.delete(perm)
+            for perm in TeamClientPermissions.query.filter_by(client=client).all():
+                db.session.delete(perm)
+            flash("This application’s owner has changed, so all previously assigned permissions "
+                "have been revoked", "warning")
         form.populate_obj(client)
+        client.user = form.user
+        client.org = form.org
         db.session.commit()
         return render_redirect(url_for('client_info', key=client.key), code=303)
 
@@ -80,8 +109,11 @@ def client_edit(key):
 
 
 @app.route('/apps/<key>/delete', methods=['GET', 'POST'])
+@requires_login
 def client_delete(key):
     client = Client.query.filter_by(key=key).first_or_404()
+    if not client.owner_is(g.user):
+        abort(403)
     return render_delete(client, title="Confirm delete", message="Delete application '%s'? " % client.title,
         success="You have deleted application '%s' and all its associated permissions and resources" % client.title,
         next=url_for('client_list'))
@@ -94,7 +126,10 @@ def client_delete(key):
 @requires_login
 def permission_list():
     allperms = Permission.query.filter_by(allusers=True).order_by('name').all()
-    userperms = Permission.query.filter_by(user=g.user).order_by('name').all()
+    userperms = Permission.query.filter(
+        db.or_(Permission.user_id == g.user.id,
+               Permission.org_id.in_(g.user.organizations_owned_ids()))
+        ).order_by('name').all()
     return render_template('permission_list.html', allperms=allperms, userperms=userperms)
 
 
@@ -102,9 +137,14 @@ def permission_list():
 @requires_login
 def permission_new():
     form = PermissionForm()
+    form.context.choices = available_client_owners()
+    if request.method == 'GET':
+        form.context.data = g.user.userid
     if form.validate_on_submit():
-        perm = Permission(user=g.user)
+        perm = Permission()
         form.populate_obj(perm)
+        perm.user = form.user
+        perm.org = form.org
         perm.allusers = False
         db.session.add(perm)
         db.session.commit()
@@ -118,16 +158,20 @@ def permission_new():
 @requires_login
 def permission_edit(id):
     perm = Permission.query.get_or_404(id)
-    if perm.user != g.user:
+    if not perm.owner_is(g.user):
         abort(403)
-    form = PermissionForm()
-    form.edit_id = id
+    form = PermissionForm(obj=perm)
+    form.context.choices = available_client_owners()
+    form.edit_obj = perm
     if request.method == 'GET':
-        form.name.data = perm.name
-        form.title.data = perm.title
-        form.description.data = perm.description
+        if perm.user:
+            form.context.data = perm.user.userid
+        else:
+            form.context.data = perm.org.userid
     if form.validate_on_submit():
         form.populate_obj(perm)
+        perm.user = form.user
+        perm.org = form.org
         db.session.commit()
         flash("Your permission has been saved", "info")
         return render_redirect(url_for('permission_list'), code=303)
@@ -139,7 +183,7 @@ def permission_edit(id):
 @requires_login
 def permission_delete(id):
     perm = Permission.query.get_or_404(id)
-    if perm.user != g.user:
+    if not perm.owner_is(g.user):
         abort(403)
     return render_delete(perm, title="Confirm delete", message="Delete permission %s?" % perm.name,
         success="Your permission has been deleted",
@@ -153,18 +197,46 @@ def permission_delete(id):
 @requires_login
 def permission_user_new(key):
     client = Client.query.filter_by(key=key).first_or_404()
-    if client.user != g.user:
+    if not client.owner_is(g.user):
         abort(403)
-    available_perms = Permission.query.filter(db.or_(Permission.allusers == True, Permission.user == g.user)).order_by('name').all()
-    form = UserPermissionAssignForm()
+    if client.user:
+        available_perms = Permission.query.filter(db.or_(
+            Permission.allusers == True,
+            Permission.user == g.user)).order_by('name').all()
+        form = UserPermissionAssignForm()
+    elif client.org:
+        available_perms = Permission.query.filter(db.or_(
+            Permission.allusers == True,
+            Permission.org == client.org)).order_by('name').all()
+        form = TeamPermissionAssignForm()
+        form.org = client.org
+        form.team_id.choices = [(team.userid, team.title) for team in client.org.teams]
+    else:
+        abort(403)  # This should never happen. Clients always have an owner.
     form.perms.choices = [(ap.name, u"%s – %s" % (ap.name, ap.title)) for ap in available_perms]
     if form.validate_on_submit():
-        form.perms.data.sort()
-        perms = u' '.join(form.perms.data)
-        permassign = UserClientPermissions(user=form.user, client=client, permissions=perms)
-        db.session.add(permassign)
+        perms = set()
+        if client.user:
+            permassign = UserClientPermissions.query.filter_by(user=form.user, client=client).first()
+            if permassign:
+                perms.update(permassign.permissions.split(u' '))
+            else:
+                permassign = UserClientPermissions(user=form.user, client=client)
+                db.session.add(permassign)
+        else:
+            permassign = TeamClientPermissions.query.filter_by(team=form.team, client=client).first()
+            if permassign:
+                perms.update(permassign.permissions.split(u' '))
+            else:
+                permassign = TeamClientPermissions(team=form.team, client=client)
+                db.session.add(permassign)
+        perms.update(form.perms.data)
+        permassign.permissions = u' '.join(sorted(perms))
         db.session.commit()
-        flash("Permissions have been assigned to user %s" % form.user.displayname(), "info")
+        if client.user:
+            flash("Permissions have been assigned to user %s" % form.user.pickername, "info")
+        else:
+            flash("Permissions have been assigned to team '%s'" % permassign.team.pickername, "info")
         return render_redirect(url_for('client_info', key=key), code=303)
     return render_form(form=form, title="Assign permissions", formid="perm_assign", submit="Assign permissions", ajax=True)
 
@@ -173,12 +245,21 @@ def permission_user_new(key):
 @requires_login
 def permission_user_edit(key, userid):
     client = Client.query.filter_by(key=key).first_or_404()
-    if client.user != g.user:
+    if not client.owner_is(g.user):
         abort(403)
-    user = User.query.filter_by(userid=userid).first_or_404()
-    available_perms = Permission.query.filter(Permission.allusers == True or Permission.user == g.user).order_by('name').all()
-    permassign = UserClientPermissions.query.filter_by(user=user, client=client).first()
-    form = UserPermissionEditForm()
+    if client.user:
+        user = User.query.filter_by(userid=userid).first_or_404()
+        available_perms = Permission.query.filter(db.or_(
+            Permission.allusers == True,
+            Permission.user == g.user)).order_by('name').all()
+        permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
+    elif client.org:
+        team = Team.query.filter_by(userid=userid).first_or_404()
+        available_perms = Permission.query.filter(db.or_(
+            Permission.allusers == True,
+            Permission.org == client.org)).order_by('name').all()
+        permassign = TeamClientPermissions.query.filter_by(team=team, client=client).first_or_404()
+    form = PermissionEditForm()
     form.perms.choices = [(ap.name, u"%s – %s" % (ap.name, ap.title)) for ap in available_perms]
     if request.method == 'GET':
         if permassign:
@@ -187,20 +268,20 @@ def permission_user_edit(key, userid):
         form.perms.data.sort()
         perms = u' '.join(form.perms.data)
         if not perms:
-            # No permissions specified. Delete this assignment
-            if permassign:
-                db.session.delete(permassign)
-        elif not permassign:
-            permassign = UserClientPermissions(user=user, client=client)
-            permassign.permissions = perms
-            db.session.add(permassign)
+            db.session.delete(permassign)
         else:
             permassign.permissions = perms
         db.session.commit()
         if perms:
-            flash("Permissions have been updated for user %s" % user.displayname(), "info")
+            if client.user:
+                flash("Permissions have been updated for user %s" % user.pickername, "info")
+            else:
+                flash("Permissions have been updated for team '%s'" % team.title, "info")
         else:
-            flash("All permissions have been revoked for user %s" % user.displayname(), "info")
+            if client.user:
+                flash("All permissions have been revoked for user %s" % user.pickername, "info")
+            else:
+                flash("All permissions have been revoked for team '%s'" % team.title, "info")
         return render_redirect(url_for('client_info', key=key), code=303)
     return render_form(form=form, title="Edit permissions", formid="perm_edit", submit="Save changes", ajax=True)
 
@@ -209,14 +290,22 @@ def permission_user_edit(key, userid):
 @requires_login
 def permission_user_delete(key, userid):
     client = Client.query.filter_by(key=key).first_or_404()
-    if client.user != g.user:
+    if not client.owner_is(g.user):
         abort(403)
-    user = User.query.filter_by(userid=userid).first_or_404()
-    permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
-    return render_delete(permassign, title="Confirm delete", message="Remove all permissions assigned to user '%s' for app '%s'?" % (
-        (user.displayname()), client.title),
-        success="You have revoked permisions for user '%s'" % user.displayname(),
-        next=url_for('client_info', key=client.key))
+    if client.user:
+        user = User.query.filter_by(userid=userid).first_or_404()
+        permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
+        return render_delete(permassign, title="Confirm delete", message="Remove all permissions assigned to user %s for app '%s'?" % (
+            (user.pickername), client.title),
+            success="You have revoked permisions for user %s" % user.pickername,
+            next=url_for('client_info', key=client.key))
+    else:
+        team = Team.query.filter_by(userid=userid).first_or_404()
+        permassign = TeamClientPermissions.query.filter_by(team=team, client=client).first_or_404()
+        return render_delete(permassign, title="Confirm delete", message="Remove all permissions assigned to team '%s' for app '%s'?" % (
+            (team.title), client.title),
+            success="You have revoked permisions for team '%s'" % team.title,
+            next=url_for('client_info', key=client.key))
 
 
 # --- Routes: client app resources --------------------------------------------
@@ -225,7 +314,7 @@ def permission_user_delete(key, userid):
 @requires_login
 def resource_new(key):
     client = Client.query.filter_by(key=key).first_or_404()
-    if client.user != g.user:
+    if not client.owner_is(g.user):
         abort(403)
     form = ResourceForm()
     form.edit_id = None
@@ -243,7 +332,7 @@ def resource_new(key):
 @requires_login
 def resource_edit(key, idr):
     client = Client.query.filter_by(key=key).first_or_404()
-    if client.user != g.user:
+    if not client.owner_is(g.user):
         abort(403)
     resource = Resource.query.get_or_404(idr)
     if resource.client != client:
@@ -267,7 +356,7 @@ def resource_edit(key, idr):
 @requires_login
 def resource_delete(key, idr):
     client = Client.query.filter_by(key=key).first_or_404()
-    if client.user != g.user:
+    if not client.owner_is(g.user):
         abort(403)
     resource = Resource.query.get_or_404(idr)
     if resource.client != client:
@@ -284,7 +373,7 @@ def resource_delete(key, idr):
 @requires_login
 def resource_action_new(key, idr):
     client = Client.query.filter_by(key=key).first_or_404()
-    if client.user != g.user:
+    if not client.owner_is(g.user):
         abort(403)
     resource = Resource.query.get_or_404(idr)
     if resource.client != client:
@@ -306,7 +395,7 @@ def resource_action_new(key, idr):
 @requires_login
 def resource_action_edit(key, idr, ida):
     client = Client.query.filter_by(key=key).first_or_404()
-    if client.user != g.user:
+    if not client.owner_is(g.user):
         abort(403)
     resource = Resource.query.get_or_404(idr)
     if resource.client != client:
@@ -333,7 +422,7 @@ def resource_action_edit(key, idr, ida):
 @requires_login
 def resource_action_delete(key, idr, ida):
     client = Client.query.filter_by(key=key).first_or_404()
-    if client.user != g.user:
+    if not client.owner_is(g.user):
         abort(403)
     resource = Resource.query.get_or_404(idr)
     if resource.client != client:

@@ -2,18 +2,22 @@
 
 from hashlib import md5
 from werkzeug import generate_password_hash, check_password_hash
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from lastuserapp.models import db, BaseMixin
 from lastuserapp.utils import newid, newsecret, newpin
+
+__all__ = ['User', 'UserEmail', 'UserEmailClaim', 'PasswordResetRequest', 'UserExternalId',
+           'UserPhone', 'UserPhoneClaim', 'Team', 'Organization']
 
 
 class User(db.Model, BaseMixin):
     __tablename__ = 'user'
     userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
     fullname = db.Column(db.Unicode(80), default=u'', nullable=False)
-    username = db.Column(db.Unicode(80), unique=True, nullable=True)
+    _username = db.Column('username', db.Unicode(80), unique=True, nullable=True)
     pw_hash = db.Column(db.String(80), nullable=True)
-    description = db.Column(db.Text, default=u'', nullable=False)
+    description = db.Column(db.UnicodeText, default=u'', nullable=False)
 
     def __init__(self, password=None, **kwargs):
         self.password = password
@@ -26,6 +30,24 @@ class User(db.Model, BaseMixin):
             self.pw_hash = generate_password_hash(password)
 
     password = property(fset=_set_password)
+
+    @hybrid_property
+    def username(self):
+        return self._username
+
+    @username.setter
+    def username(self, value):
+        if self.valid_username(value):
+            self._username = value
+
+    def valid_username(self, value):
+        existing = User.query.filter_by(username=value).first()
+        if existing and existing.id != self.id:
+            return False
+        existing = Organization.query.filter_by(name=value).first()
+        if existing:
+            return False
+        return True
 
     def password_is(self, password):
         if self.pw_hash is None:
@@ -44,8 +66,18 @@ class User(db.Model, BaseMixin):
     def displayname(self):
         return self.fullname or self.username or self.userid
 
+    @property
+    def pickername(self):
+        if self.username:
+            return '%s (~%s)' % (self.fullname, self.username)
+        else:
+            return self.fullname
+
     def add_email(self, email, primary=False):
-        # TODO: Need better handling for primary email id
+        if primary:
+            for emailob in self.emails:
+                if emailob.primary:
+                    emailob.primary = False
         useremail = UserEmail(user=self, email=email, primary=primary)
         db.session.add(useremail)
         return useremail
@@ -84,6 +116,25 @@ class User(db.Model, BaseMixin):
         # to get the email address as a string.
         return u''
 
+    def organizations(self):
+        """
+        Return the organizations this user is a member of.
+        """
+        return list(set([team.org for team in self.teams]))
+
+    def organizations_owned(self):
+        """
+        Return the organizations this user is an owner of.
+        """
+        return list(set([team.org for team in self.teams if team.org.owners == team]))
+
+    def organizations_owned_ids(self):
+        """
+        Return the database ids of the organizations this user is an owner of. This is used
+        for database queries.
+        """
+        return list(set([team.org.id for team in self.teams if team.org.owners == team]))
+
 
 class UserEmail(db.Model, BaseMixin):
     __tablename__ = 'useremail'
@@ -103,6 +154,7 @@ class UserEmail(db.Model, BaseMixin):
     def email(self):
         return self._email
 
+    #: Make email immutable. There is no setter for email.
     email = db.synonym('_email', descriptor=email)
 
     def __repr__(self):
@@ -134,6 +186,7 @@ class UserEmailClaim(db.Model, BaseMixin):
     def email(self):
         return self._email
 
+    #: Make email immutable. There is no setter for email.
     email = db.synonym('_email', descriptor=email)
 
     def __repr__(self):
@@ -231,5 +284,80 @@ class UserExternalId(db.Model, BaseMixin):
     __table_args__ = (db.UniqueConstraint("service", "userid"), {})
 
 
-__all__ = ['User', 'UserEmail', 'UserEmailClaim', 'PasswordResetRequest', 'UserExternalId',
-           'UserPhone', 'UserPhoneClaim']
+# --- Organizations and teams -------------------------------------------------
+
+
+team_membership = db.Table(
+    'team_membership', db.Model.metadata,
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), nullable=False),
+    db.Column('team_id', db.Integer, db.ForeignKey('team.id'), nullable=False)
+    )
+
+
+class Organization(db.Model, BaseMixin):
+    __tablename__ = 'organization'
+    # owners_id cannot be null, but must be declared with nullable=True since there is
+    # a circular dependency. The post_update flag on the relationship tackles the circular
+    # dependency within SQLAlchemy.
+    owners_id = db.Column(db.Integer, db.ForeignKey('team.id',
+        use_alter=True, name='fk_organization_owners_id'), nullable=True)
+    owners = db.relationship('Team', primaryjoin='Organization.owners_id == Team.id',
+        uselist=False, cascade='all', post_update=True)
+    userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
+    _name = db.Column('name', db.Unicode(80), unique=True, nullable=True)
+    title = db.Column(db.Unicode(80), default=u'', nullable=False)
+    description = db.Column(db.UnicodeText, default=u'', nullable=False)
+
+    def __init__(self, *args, **kwargs):
+        super(Organization, self).__init__(*args, **kwargs)
+        if self.owners is None:
+            self.owners = Team(title=u"Owners", org=self)
+
+    @hybrid_property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        if self.valid_name(value):
+            self._name = value
+
+    def valid_name(self, value):
+        existing = Organization.query.filter_by(name=value).first()
+        if existing and existing.id != self.id:
+            return False
+        existing = User.query.filter_by(username=value).first()
+        if existing:
+            return False
+        return True
+
+    def __repr__(self):
+        return '<Organization %s "%s">' % (self.name or self.userid, self.title)
+
+    @property
+    def pickername(self):
+        if self.name:
+            return '%s (~%s)' % (self.title, self.name)
+        else:
+            return self.title
+
+
+class Team(db.Model, BaseMixin):
+    __tablename__ = 'team'
+    #: Unique and non-changing id
+    userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
+    #: Displayed name
+    title = db.Column(db.Unicode(250), nullable=False)
+    #: Organization
+    org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=False)
+    org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
+        backref=db.backref('teams', cascade='all, delete-orphan'))
+    users = db.relationship(User, secondary='team_membership',
+        backref='teams')  # No cascades here! Cascades will delete users
+
+    def __repr__(self):
+        return '<Team %s of %s>' % (self.title, self.org.title)
+
+    @property
+    def pickername(self):
+        return self.title
