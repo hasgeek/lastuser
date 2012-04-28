@@ -928,7 +928,8 @@ table.listing {
   border-right: 1px solid #b7b7b7;
 }
 
-.listing td.separator {
+.listing td.separator,
+.listing tbody.separator {
   border-bottom: 1px solid #b7b7b7;
 }
 
@@ -954,7 +955,8 @@ table.listing {
   text-align: right;
 }
 
-.listing tr.link a {
+.listing tr.link a,
+.listing tbody.link a {
   text-decoration: none;
   border-bottom: 0;
   display: block;
@@ -963,7 +965,8 @@ table.listing {
   color: inherit;
 }
 
-.listing tr.link:hover {
+.listing tr.link:hover,
+.listing tbody.link:hover tr {
   background: #d9e8f0;
 }
 
@@ -1324,9 +1327,6 @@ ul.cardset li a .body, ul.cardset li a:hover .body, ul.cardset li a:active .body
 .comments .com-header a,
 .comments .com-footer a {
   color: #b7b7b7;
-}
-.comments .com-footer a {
-  font-weight: bold;
 }
 .comments .com-header a:hover,
 .comments .com-footer a:hover {

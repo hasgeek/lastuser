@@ -531,7 +531,8 @@ table.listing {
     border-right: 1px solid $color-listing-outline;
 }
 
-.listing td.separator {
+.listing td.separator,
+.listing tbody.separator {
     border-bottom: 1px solid $color-listing-outline;
 }
 
@@ -557,7 +558,8 @@ table.listing {
     text-align: right;
 }
 
-.listing tr.link a {
+.listing tr.link a,
+.listing tbody.link a {
     text-decoration: none;
     border-bottom: 0;
     display: block;
@@ -566,7 +568,8 @@ table.listing {
     color: inherit;
 }
 
-.listing tr.link:hover {
+.listing tr.link:hover,
+.listing tbody.link:hover tr {
     background: $color-listing-hover;
 }
 
@@ -663,11 +666,11 @@ ul.cardset {
         text-align: right;
         a, span {
             padding-right: 0.33em;
-            @include transition(left, 0.1s, linear);
+            @include single-transition(left, 0.1s, linear);
         }
         a:hover {
             left: -5px;
-            @include transition(left, 0.1s, linear);
+            @include single-transition(left, 0.1s, linear);
         }
     }
     .rightear {
@@ -675,11 +678,11 @@ ul.cardset {
         text-align: left;
         a, span {
             padding-left: 0.33em;
-            @include transition(right, 0.1s, linear);
+            @include single-transition(right, 0.1s, linear);
         }
         a:hover {
             right: -5px;
-            @include transition(right, 0.1s, linear);
+            @include single-transition(right, 0.1s, linear);
         }
     }
     .votebox {
@@ -846,9 +849,6 @@ ul.cardset {
     .com-header a,
     .com-footer a {
         color: $color-link-metadata;
-    }
-    .com-footer a {
-        font-weight: bold;
     }
     .com-header a:hover,
     .com-footer a:hover {
