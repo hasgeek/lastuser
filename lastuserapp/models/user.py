@@ -351,7 +351,7 @@ class Team(db.Model, BaseMixin):
     #: Organization
     org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=False)
     org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
-        backref=db.backref('teams', cascade='all, delete-orphan'))
+        backref=db.backref('teams', order_by=title, cascade='all, delete-orphan'))
     users = db.relationship(User, secondary='team_membership',
         backref='teams')  # No cascades here! Cascades will delete users
 

@@ -11,8 +11,9 @@ from lastuserapp.models import db, Organization, Team
 
 
 @app.route('/organizations')
+@requires_login
 def org_list():
-    return render_template('org_list.html', organizations=Organization.query.order_by('title').all())
+    return render_template('org_list.html', organizations=g.user.organizations_owned())
 
 
 @app.route('/organizations/new', methods=['GET', 'POST'])
