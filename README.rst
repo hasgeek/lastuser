@@ -19,4 +19,4 @@ Here is how you make a test deployment::
     $ cp lastuserapp/settings-sample.py lastuserapp/settings.py
     $ open lastuserapp/settings.py # Customize this file as needed
     $ python setup.py develop
-    $ python lastuserapp/website.py
+    $ python runserver.py
