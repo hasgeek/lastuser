@@ -4,8 +4,8 @@ from urllib import urlencode, quote
 from urllib2 import urlopen, URLError
 from urlparse import parse_qs
 
-from flask import request, session, redirect, render_template, flash, url_for, json
-from flask.ext.oauth import OAuth, OAuthException # OAuth 1.0a
+from flask import request, session, redirect, flash, url_for, json
+from flask.ext.oauth import OAuth, OAuthException  # OAuth 1.0a
 
 from lastuserapp import app
 from lastuserapp.models import db, UserExternalId, UserEmail, User
@@ -22,6 +22,7 @@ twitter = oauth.remote_app('twitter',
     consumer_key=app.config.get('OAUTH_TWITTER_KEY'),
     consumer_secret=app.config.get('OAUTH_TWITTER_SECRET'),
 )
+
 
 def get_extid_token(service):
     useridinfo = session.get('userid_external')
@@ -67,8 +68,8 @@ def login_twitter_authorized(resp):
                                         user=None,
                                         userid=resp['user_id'],
                                         username=resp['screen_name'],
-                                        fullname=twinfo.get('name', '@'+resp['screen_name']),
-                                        avatar=twinfo.get('profile_image_url').replace("normal.","bigger."),
+                                        fullname=twinfo.get('name', '@' + resp['screen_name']),
+                                        avatar=twinfo.get('profile_image_url').replace("normal.", "bigger."),
                                         access_token=resp['oauth_token'],
                                         secret=resp['oauth_token_secret'],
                                         token_type=None,
@@ -105,8 +106,16 @@ def login_github():
 
 @app.route('/login/github/callback')
 def login_github_authorized():
-    code = request.args.get('code', None)
     next_url = get_next_url()
+
+    if request.args.get('error'):
+        if request.args['error'] == 'user_denied':
+            flash(u"You denied the GitHub login request", category='error')
+        else:
+            flash(u"GitHub login failed", category="error")
+        return redirect(next_url, code=303)
+
+    code = request.args.get('code', None)
     params = urlencode({
       'client_id': github['key'],
       'client_secret': github['secret'],
@@ -128,7 +137,7 @@ def login_github_authorized():
             if useremail:
                 user = useremail.user
         return_url = config_external_id(service='github',
-                                        service_name = 'GitHub',
+                                        service_name='GitHub',
                                         user=user,
                                         userid=ghinfo.get('login'),
                                         username=ghinfo.get('login'),
@@ -157,7 +166,7 @@ def config_external_id(service, service_name, user, userid, username, fullname, 
         extid.oauth_token = access_token
         extid.oauth_token_secret = secret
         extid.oauth_token_type = token_type
-        extid.username = username # For twitter: update username if it changed
+        extid.username = username  # For twitter: update username if it changed
         db.session.commit()
         login_internal(extid.user)
         flash('You have logged in as %s via %s' % (username, service_name))
@@ -166,9 +175,9 @@ def config_external_id(service, service_name, user, userid, username, fullname, 
         # If caller wants this id connected to an existing user, do it.
         if not user:
             user = register_internal(None, fullname, None)
-        extid = UserExternalId(user = user, service = service, userid = userid, username = username,
-                               oauth_token = access_token, oauth_token_secret = secret,
-                               oauth_token_type = token_type)
+        extid = UserExternalId(user=user, service=service, userid=userid, username=username,
+                               oauth_token=access_token, oauth_token_secret=secret,
+                               oauth_token_type=token_type)
         # If the service provided a username that is valid for LastUser and not already in use, assign
         # it to this user
         if valid_username(username):
