@@ -46,9 +46,12 @@ class RegisterClientForm(wtf.Form):
             "user updated their profile in some way (not yet implemented)")
     resource_uri = wtf.html5.URLField('Resource URI', validators=[wtf.Optional(), wtf.URL()],
         description="URI at which this application provides resources as per the LastUser Resource API "
-        "(not yet implemented)")
+            "(not yet implemented)")
     allow_any_login = wtf.BooleanField('Allow anyone to login', default=True,
         description="If your application requires access to be restricted to specific users, uncheck this")
+    team_access = wtf.BooleanField('Requires access to teams', default=True,
+        description="If your application is capable of assigning access permissions to teams, check this. "
+            "Organization owners will then able to grant access to teams in their organizations.")
 
     def validate_client_owner(self, field):
         if field.data == g.user.userid:
@@ -209,3 +212,10 @@ class ResourceActionForm(wtf.Form):
         existing = ResourceAction.query.filter_by(name=field.data, resource=self.edit_resource).first()
         if existing and existing.id != self.edit_id:
             raise wtf.ValidationError("An action with that name already exists for this resource")
+
+
+class ClientTeamAccessForm(wtf.Form):
+    """
+    Select organizations that the client has access to the teams of
+    """
+    organizations = wtf.SelectMultipleField('Organizations')

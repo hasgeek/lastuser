@@ -24,7 +24,7 @@ class BaseMixin(IdMixin, TimestampMixin):
 
 from lastuserapp.models.user import *
 from lastuserapp.models.client import *
-from lastuserapp.models.sms import *
+from lastuserapp.models.notice import *
 
 
 def getuser(name):

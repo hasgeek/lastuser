@@ -341,6 +341,13 @@ class Organization(db.Model, BaseMixin):
         else:
             return self.title
 
+    def clients_with_team_access(self):
+        """
+        Return a list of clients with access to the organization's teams.
+        """
+        from lastuserapp.models.client import CLIENT_TEAM_ACCESS
+        return [cta.client for cta in self.client_team_access if cta.access_level == CLIENT_TEAM_ACCESS.ALL]
+
 
 class Team(db.Model, BaseMixin):
     __tablename__ = 'team'

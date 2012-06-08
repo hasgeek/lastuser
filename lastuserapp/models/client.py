@@ -33,6 +33,8 @@ class Client(db.Model, BaseMixin):
     active = db.Column(db.Boolean, nullable=False, default=True)
     #: Allow anyone to login to this app?
     allow_any_login = db.Column(db.Boolean, nullable=False, default=True)
+    #: Team access flag
+    team_access = db.Column(db.Boolean, nullable=False, default=False)
     #: OAuth client key/id
     key = db.Column(db.String(22), nullable=False, unique=True, default=newid)
     #: OAuth client secret
@@ -63,6 +65,12 @@ class Client(db.Model, BaseMixin):
 
     def owner_is(self, user):
         return self.user == user or (self.org and self.org in user.organizations_owned())
+
+    def orgs_with_team_access(self):
+        """
+        Return a list of organizations that this client has access to the teams of.
+        """
+        return [cta.org for cta in self.org_team_access if cta.access_level == CLIENT_TEAM_ACCESS.ALL]
 
 
 class UserFlashMessage(db.Model, BaseMixin):
@@ -214,6 +222,7 @@ class Permission(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('permissions_created', cascade="all, delete-orphan"))
+    #: Organization which created this permission
     org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
     org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
         backref=db.backref('permissions_created', cascade="all, delete-orphan"))
@@ -243,11 +252,11 @@ class UserClientPermissions(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('permissions', cascade='all, delete-orphan'))
-    # Client app they are assigned on
+    #: Client app they are assigned on
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('permissions_users', cascade="all, delete-orphan"))
-    # The permissions as a string of tokens
+    #: The permissions as a string of tokens
     permissions = db.Column(db.Unicode(250), default=u'', nullable=False)
 
     # Only one assignment per user and client
@@ -274,11 +283,11 @@ class TeamClientPermissions(db.Model, BaseMixin):
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     team = db.relationship(Team, primaryjoin=team_id == Team.id,
         backref=db.backref('permissions', cascade='all, delete-orphan'))
-    # Client app they are assigned on
+    #: Client app they are assigned on
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('permissions_teams', cascade="all, delete-orphan"))
-    # The permissions as a string of tokens
+    #: The permissions as a string of tokens
     permissions = db.Column(db.Unicode(250), default=u'', nullable=False)
 
     # Only one assignment per team and client
@@ -298,6 +307,25 @@ class TeamClientPermissions(db.Model, BaseMixin):
         return self.team.userid
 
 
+class CLIENT_TEAM_ACCESS:
+    NONE = 0     # The default if there's no connecting object
+    ALL = 1      # All teams can be seen
+    PARTIAL = 2  # TODO: Not supported yet
+
+
+class ClientTeamAccess(db.Model, BaseMixin):
+    __tablename__ = 'clientteamaccess'
+    #: Organization whose teams are exposed to the client app
+    org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
+    org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
+        backref=db.backref('client_team_access', cascade="all, delete-orphan"))
+    #: Client app they are exposed to
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    client = db.relationship(Client, primaryjoin=client_id == Client.id,
+        backref=db.backref('org_team_access', cascade="all, delete-orphan"))
+    access_level = db.Column(db.Integer, default=CLIENT_TEAM_ACCESS.NONE, nullable=False)
+
+
 class NoticeType(db.Model, BaseMixin):
     __tablename__ = 'noticetype'
     #: User who created this notice type
@@ -315,4 +343,5 @@ class NoticeType(db.Model, BaseMixin):
 
 
 __all__ = ['Client', 'UserFlashMessage', 'Resource', 'ResourceAction', 'AuthCode', 'AuthToken',
-    'Permission', 'UserClientPermissions', 'TeamClientPermissions', 'NoticeType']
+    'Permission', 'UserClientPermissions', 'TeamClientPermissions', 'NoticeType',
+    'CLIENT_TEAM_ACCESS', 'ClientTeamAccess']

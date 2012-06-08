@@ -4,10 +4,11 @@ from flask import g, request, render_template, url_for, flash, abort
 
 from lastuserapp import app
 from lastuserapp.views import requires_login, render_form, render_redirect, render_delete
-from lastuserapp.models import (db, User, Client, Team, Permission, UserClientPermissions, TeamClientPermissions,
-    Resource, ResourceAction)
+from lastuserapp.models import (db, User, Client, Organization, Team, Permission,
+    UserClientPermissions, TeamClientPermissions, Resource, ResourceAction, ClientTeamAccess,
+    CLIENT_TEAM_ACCESS)
 from lastuserapp.forms import (RegisterClientForm, PermissionForm, UserPermissionAssignForm,
-    TeamPermissionAssignForm, PermissionEditForm, ResourceForm, ResourceActionForm)
+    TeamPermissionAssignForm, PermissionEditForm, ResourceForm, ResourceActionForm, ClientTeamAccessForm)
 
 # --- Routes: client apps -----------------------------------------------------
 
@@ -101,6 +102,10 @@ def client_edit(key):
         form.populate_obj(client)
         client.user = form.user
         client.org = form.org
+        if not client.team_access:
+            # This client does not have access to teams in organizations. Remove all existing assignments
+            for cta in ClientTeamAccess.query.filter_by(client=client).all():
+                db.session.delete(cta)
         db.session.commit()
         return render_redirect(url_for('client_info', key=client.key), code=303)
 
@@ -434,3 +439,33 @@ def resource_action_delete(key, idr, ida):
         action.title, resource.title, client.title),
         success="You have deleted action '%s' on resource '%s' of app '%s'" % (action.title, resource.title, client.title),
         next=url_for('client_info', key=client.key))
+
+
+# --- Routes: client team access ----------------------------------------------
+
+@app.route('/apps/<key>/teams', methods=['GET', 'POST'])
+@requires_login
+def client_team_access(key):
+    client = Client.query.filter_by(key=key).first_or_404()
+    form = ClientTeamAccessForm()
+    user_orgs = g.user.organizations_owned()
+    form.organizations.choices = [(org.userid, org.title) for org in user_orgs]
+    org_selected = [org.userid for org in user_orgs if client in org.clients_with_team_access()]
+    if request.method == 'GET':
+        form.organizations.data = org_selected
+    if form.validate_on_submit():
+        org_del = Organization.query.filter(Organization.userid.in_(
+            set(org_selected) - set(form.organizations.data))).all()
+        org_add = Organization.query.filter(Organization.userid.in_(
+            set(form.organizations.data) - set(org_selected))).all()
+        cta_del = ClientTeamAccess.query.filter_by(client=client).filter(
+            ClientTeamAccess.org_id.in_([org.id for org in org_del])).all()
+        for cta in cta_del:
+            db.session.delete(cta)
+        for org in org_add:
+            cta = ClientTeamAccess(org=org, client=client, access_level=CLIENT_TEAM_ACCESS.ALL)
+            db.session.add(cta)
+        db.session.commit()
+        flash("You have assigned access to teams in your organizations for this app.", "info")
+        return render_redirect(url_for('client_info', key=key), code=303)
+    return render_form(form=form, title="Select organizations", submit="Save", ajax=True)

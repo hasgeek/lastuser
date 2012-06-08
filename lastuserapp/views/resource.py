@@ -158,6 +158,32 @@ def user_get():
         return api_result('error', error='not_found')
 
 
+@app.route('/api/1/org/get_teams', methods=['POST'])
+@requires_client_login
+def org_team_get():
+    """
+    Returns a list of teams in the given organization.
+    """
+    if not g.client.team_access:
+        return api_result('error', 'no_team_access')
+    org_userids = request.form.getlist('org')
+    if not org_userids:
+        return api_result('error', 'no_org_provided')
+    organizations = Organization.query.filter(Organization.userid.in_(org_userids)).all()
+    if not organizations:
+        return api_result('error', 'no_such_organization')
+    orgteams = {}
+    for org in organizations:
+        # If client has access to team information, make a list of teams.
+        # XXX: Should trusted clients have access anyway? Will this be an abuse
+        # of the trusted flag? It was originally meant to only bypass user authorization
+        # on login to HasGeek websites as that would have been very confusing to users.
+        # XXX: Return user list here?
+        if g.client in org.clients_with_team_access():
+            orgteams[org.userid] = [{'userid': team.userid, 'title': team.title} for team in org.teams]
+    return api_result('ok', org_teams=orgteams)
+
+
 # --- Token-based resource endpoints ------------------------------------------
 
 @app.route('/api/1/email')
