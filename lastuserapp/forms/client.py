@@ -49,7 +49,7 @@ class RegisterClientForm(wtf.Form):
             "(not yet implemented)")
     allow_any_login = wtf.BooleanField('Allow anyone to login', default=True,
         description="If your application requires access to be restricted to specific users, uncheck this")
-    team_access = wtf.BooleanField('Requires access to teams', default=True,
+    team_access = wtf.BooleanField('Requires access to teams', default=False,
         description="If your application is capable of assigning access permissions to teams, check this. "
             "Organization owners will then able to grant access to teams in their organizations.")
 
