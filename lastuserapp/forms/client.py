@@ -146,7 +146,7 @@ class TeamPermissionAssignForm(wtf.Form):
     Assign permissions to a team
     """
     team_id = wtf.RadioField("Team", validators=[wtf.Required()],
-        description='Select a team to assign permissiont to')
+        description='Select a team to assign permissions to')
     perms = wtf.SelectMultipleField("Permissions", validators=[wtf.Required()])
 
     def validate_team_id(self, field):
