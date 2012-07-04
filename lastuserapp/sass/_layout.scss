@@ -322,6 +322,11 @@ img.login_avatar {
 
 
 /* Form elements */
+@mixin small-field {
+    float: left;
+    width: 35em;
+}
+
 div.field {
     @include pie-clearfix;
     margin-top: 1em;
@@ -332,33 +337,71 @@ div.field {
     div.label .required {
         color: $color-required;
     }
-    &.small div.label {
-        float: left;
-        clear: left;
-        width: 11em;
-        padding-top: 6px; // Make label align with text in fields
-        label {
-            font-weight: bold;
+    div.markdown-field {
+        div.markdown-buttons {
+            float: left;
+            padding: 10px 0px;
+            a {
+                @include border-radius(3px);
+                border: 1px solid $color-outline;
+                padding: 3px;
+                background: #DF5E0E;
+                margin-bottom: 15px;
+                text-decoration: none;
+                color: #fff;
+                font-size: 80%;
+            }
+            .button {
+                opacity: 0.7;
+            }
+            .button.selected {
+                opacity: 1;
+            }
+
+        }
+        div.preview-control {
+            float: left;
+            width: 100%;
+            div.preview-block {
+                @include border-radius(3px);
+                border: 1px solid $color-outline;
+                width: 90%;
+                min-height: 10em;
+                padding: 5px;
+            }
         }
     }
-    &.small div.control {
-        float: left;
-        width: 35em;
-        ul {
-            -moz-column-count: 2;
-            list-style: none;
-            margin: 0;
-            li {
-                padding: 0.25em;
-                @include border-radius(4px);
-                label {
-                    padding-left: 0.25em;
-                }
-            }
-            li.selected {
-                //background-color: $color-radio-selected;
+    &.small {
+        div.label {
+            float: left;
+            clear: left;
+            width: 11em;
+            padding-top: 6px; // Make label align with text in fields
+            label {
                 font-weight: bold;
             }
+        }
+        div.control {
+            @include small-field;
+            ul {
+                -moz-column-count: 2;
+                list-style: none;
+                margin: 0;
+                li {
+                    padding: 0.25em;
+                    @include border-radius(4px);
+                    label {
+                        padding-left: 0.25em;
+                    }
+                }
+                li.selected {
+                    //background-color: $color-radio-selected;
+                font-weight: bold;
+                }
+            }
+        }
+        div.markdown-field {
+            @include small-field;
         }
     }
     &.check div.label,
