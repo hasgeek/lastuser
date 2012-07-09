@@ -8,3 +8,4 @@ Flask-Wtf
 Flask-OpenID
 Flask-Oauth
 pytz
+https://github.com/hasgeek/coaster/zipball/master

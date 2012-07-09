@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
+__version__ = '0.1'
+
+from os import environ
 from flask import Flask, Markup
 from markdown import markdown
-
+from coaster import configureapp
 
 __MESSAGES = ['MESSAGE_FOOTER']
 
@@ -23,14 +26,8 @@ RESERVED_USERNAMES = set([
     'organizations',
     ])
 
-app = Flask('lastuserapp')
-app.config.from_object('lastuserapp')
-try:
-    app.config.from_object('lastuserapp.settings')
-except ImportError:
-    import sys
-    print >> sys.stderr, "Please create a settings.py with the necessary settings. See settings-sample.py."
-    sys.exit()
+app = Flask(__name__, instance_relative_config=True)
+configureapp(app, 'LASTUSER_ENV')
 
 for msg in __MESSAGES:
     app.config[msg] = Markup(markdown(app.config.get(msg, '')))
@@ -41,4 +38,5 @@ import lastuserapp.mailclient
 import lastuserapp.models
 import lastuserapp.forms
 import lastuserapp.views
-import lastuserapp.loghandler
+if environ['LASTUSER_ENV'] == 'production':
+    import lastuserapp.loghandler
