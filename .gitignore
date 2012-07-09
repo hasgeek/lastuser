@@ -11,3 +11,5 @@ error.log
 *.egg-info
 .coverage
 .webassets-cache
+instance/development.py
+instance/production.py
