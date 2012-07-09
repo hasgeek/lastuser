@@ -9,3 +9,4 @@ Flask-OpenID
 Flask-Oauth
 pytz
 https://github.com/hasgeek/coaster/zipball/master
+https://github.com/hasgeek/baseframe/zipball/master

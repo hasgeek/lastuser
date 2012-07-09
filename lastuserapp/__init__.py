@@ -4,8 +4,11 @@ __version__ = '0.1'
 
 from os import environ
 from flask import Flask, Markup
+from flask.ext.assets import Environment, Bundle
 from markdown import markdown
 from coaster import configureapp
+from baseframe import baseframe, networkbar_js, networkbar_css
+
 
 __MESSAGES = ['MESSAGE_FOOTER']
 
@@ -28,6 +31,8 @@ RESERVED_USERNAMES = set([
 
 app = Flask(__name__, instance_relative_config=True)
 configureapp(app, 'LASTUSER_ENV')
+app.register_blueprint(baseframe)
+assets = Environment(app)
 
 for msg in __MESSAGES:
     app.config[msg] = Markup(markdown(app.config.get(msg, '')))
