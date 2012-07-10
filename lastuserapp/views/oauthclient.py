@@ -5,6 +5,7 @@ from functools import wraps
 from urllib import urlencode, quote
 from urllib2 import urlopen, URLError
 from urlparse import parse_qs
+from coaster import valid_username
 
 from flask import request, session, redirect, flash, url_for, json
 from flask.ext.oauth import OAuth, OAuthException  # OAuth 1.0a
@@ -12,7 +13,7 @@ from flask.ext.oauth import OAuth, OAuthException  # OAuth 1.0a
 from lastuserapp import app
 from lastuserapp.models import db, UserExternalId, UserEmail, User
 from lastuserapp.views import get_next_url, login_internal, register_internal
-from lastuserapp.utils import valid_username, get_gravatar_md5sum
+from lastuserapp.utils import get_gravatar_md5sum
 
 # OAuth 1.0a handlers
 oauth = OAuth()

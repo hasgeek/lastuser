@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from flask import g
 import flask.ext.wtf as wtf
+from coaster import valid_username
 
 from lastuserapp.models import db, Permission, Resource, ResourceAction, getuser, Organization
-from lastuserapp.utils import valid_username
 
 
 class AuthorizeForm(wtf.Form):

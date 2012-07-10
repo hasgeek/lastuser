@@ -2,9 +2,10 @@
 
 from flask import g
 import flask.ext.wtf as wtf
+from coaster import valid_username
 
 from lastuserapp import RESERVED_USERNAMES
-from lastuserapp.utils import valid_username, strip_phone, valid_phone
+from lastuserapp.utils import strip_phone, valid_phone
 from lastuserapp.models import User, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim, Organization, getuser
 
 
