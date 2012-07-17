@@ -946,3 +946,17 @@ div.markdown-field .button.selected{
 .z {
     display: none;
 }
+
+/* Cookies */
+.cookies-required-alert,
+.no-cookies .cookies-required {
+    display: none;
+}
+
+.cookies-required,
+.no-cookies .cookies-required-alert {
+    display: block;
+}
+.no-cookies .cookies-required-alert {
+    margin-top: 1em;
+}

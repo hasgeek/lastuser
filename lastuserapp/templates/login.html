@@ -3,35 +3,42 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
-<div class="field small">
-  <div class="label">
-    Login with your existing account at one of these:
-  </div>
-  <div class="control">
-    <a class="loginbutton" href="{{ url_for('login_twitter', next=request.args.get('next')) }}"
-        style="background-image: url({{ url_for('static', filename='img/login/twitter.png') }});">Twitter</a>
-    <a class="loginbutton" href="{{ url_for('login_google', next=request.args.get('next') or url_for('index')) }}"
-        style="background-image: url({{ url_for('static', filename='img/login/google.png') }});">Google</a>
-    <a class="loginbutton" href="{{ url_for('login_github', next=request.args.get('next')) }}"
-        style="background-image: url({{ url_for('static', filename='img/login/github.png') }});">GitHub</a>
-    <a class="loginbutton" id="openidbutton" href="#openidform"
-        style="background-image: url({{ url_for('static', filename='img/login/openid.png') }});">OpenID</a>
+<div class="flash cookies-required-alert">
+  <div class="flashmessage">
+    Cookies are required to login. Please enable cookies in your browser’s settings and reload this page.
   </div>
 </div>
-<form id="openidform" method="POST">
-  <input type="hidden" name="_charset_"/>
-  <input type="hidden" name="form.id" value="openid"/>
-  <input type="hidden" name="next" value="{{ oidnext }}"/>
-  {{ openidform.hidden_tag() }}
-  {% if openidform.csrf_token.errors %}
-    {% for error in openidform.csrf_token.errors %}<div class="error">{{ error }}</div>{% endfor %}
-  {% endif %}
-  {% if oiderror %}<div class=error>{{ oiderror }}</div>{% endif %}
-  {{ renderfield(openidform.openid, "small") }}
-  {{ rendersubmit([(None, "Login", None)], "small") }}
-</form>
-<h2>Or, login with a password</h2>
-{% include "forms/loginform.html" %}
+<div class="cookies-required">
+  <div class="field small">
+    <div class="label">
+      Login with your existing account at one of these:
+    </div>
+    <div class="control">
+      <a class="loginbutton" href="{{ url_for('login_twitter', next=request.args.get('next')) }}"
+          style="background-image: url({{ url_for('static', filename='img/login/twitter.png') }});">Twitter</a>
+      <a class="loginbutton" href="{{ url_for('login_google', next=request.args.get('next') or url_for('index')) }}"
+          style="background-image: url({{ url_for('static', filename='img/login/google.png') }});">Google</a>
+      <a class="loginbutton" href="{{ url_for('login_github', next=request.args.get('next')) }}"
+          style="background-image: url({{ url_for('static', filename='img/login/github.png') }});">GitHub</a>
+      <a class="loginbutton" id="openidbutton" href="#openidform"
+          style="background-image: url({{ url_for('static', filename='img/login/openid.png') }});">OpenID</a>
+    </div>
+  </div>
+  <form id="openidform" method="POST">
+    <input type="hidden" name="_charset_"/>
+    <input type="hidden" name="form.id" value="openid"/>
+    <input type="hidden" name="next" value="{{ oidnext }}"/>
+    {{ openidform.hidden_tag() }}
+    {% if openidform.csrf_token.errors %}
+      {% for error in openidform.csrf_token.errors %}<div class="error">{{ error }}</div>{% endfor %}
+    {% endif %}
+    {% if oiderror %}<div class=error>{{ oiderror }}</div>{% endif %}
+    {{ renderfield(openidform.openid, "small") }}
+    {{ rendersubmit([(None, "Login", None)], "small") }}
+  </form>
+  <h2>Or, login with a password</h2>
+  {% include "forms/loginform.html" %}
+</div>
 {% endblock %}
 
 {% block footerscripts %}

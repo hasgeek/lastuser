@@ -691,6 +691,47 @@ div.field .checkbox label {
 div.field div.label .required {
   color: #df5e0e;
 }
+div.field div.markdown-field div.markdown-buttons {
+  float: left;
+  padding: 10px 0px;
+}
+div.field div.markdown-field div.markdown-buttons a {
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  -o-border-radius: 3px;
+  -ms-border-radius: 3px;
+  -khtml-border-radius: 3px;
+  border-radius: 3px;
+  border: 1px solid #b7b7b7;
+  padding: 3px;
+  background: #DF5E0E;
+  margin-bottom: 15px;
+  text-decoration: none;
+  color: #fff;
+  font-size: 80%;
+}
+div.field div.markdown-field div.markdown-buttons .button {
+  opacity: 0.7;
+}
+div.field div.markdown-field div.markdown-buttons .button.selected {
+  opacity: 1;
+}
+div.field div.markdown-field div.preview-control {
+  float: left;
+  width: 100%;
+}
+div.field div.markdown-field div.preview-control div.preview-block {
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  -o-border-radius: 3px;
+  -ms-border-radius: 3px;
+  -khtml-border-radius: 3px;
+  border-radius: 3px;
+  border: 1px solid #b7b7b7;
+  width: 90%;
+  min-height: 10em;
+  padding: 5px;
+}
 div.field.small div.label {
   float: left;
   clear: left;
@@ -723,6 +764,10 @@ div.field.small div.control ul li label {
 }
 div.field.small div.control ul li.selected {
   font-weight: bold;
+}
+div.field.small div.markdown-field {
+  float: left;
+  width: 35em;
 }
 div.field.check div.label, div.field.wide div.label.submit {
   display: none;
@@ -1334,9 +1379,72 @@ ul.cardset li a .body, ul.cardset li a:hover .body, ul.cardset li a:active .body
   text-decoration: none;
 }
 
+/* markdown preview related */
+div.field div.preview-control {
+  float: left;
+  width: 100%;
+}
+
+div.field.small div.preview-control {
+  width: 35em;
+}
+
+div.preview-block, div.markdown-field a {
+  border: 1px solid #b7b7b7;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  -o-border-radius: 3px;
+  -ms-border-radius: 3px;
+  -khtml-border-radius: 3px;
+  border-radius: 3px;
+}
+
+div.preview-block {
+  width: 90%;
+  min-height: 10em;
+  padding: 5px;
+}
+
+div.markdown-field {
+  float: right;
+  margin: 0 8% 5px 0;
+  font-size: 80%;
+}
+
+div.markdown-field a {
+  padding: 3px;
+  background: #DF5E0E;
+  margin-bottom: 15px;
+  text-decoration: none;
+  color: #fff;
+}
+
+div.markdown-field .button {
+  opacity: 0.7;
+}
+
+div.markdown-field .button.selected {
+  opacity: 1;
+}
+
 /* Spam protection */
 .z {
   display: none;
+}
+
+/* Cookies */
+.cookies-required-alert,
+.no-cookies .cookies-required {
+  display: none;
+}
+
+.cookies-required,
+.no-cookies .cookies-required-alert {
+  display: block;
+}
+
+.no-cookies .cookies-required-alert {
+  margin-top: 1em;
 }
 
 .hg-h {

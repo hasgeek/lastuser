@@ -10,3 +10,4 @@ test.db
 error.log
 *.egg-info
 .coverage
+.webassets-cache
