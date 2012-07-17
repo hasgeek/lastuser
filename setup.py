@@ -1,6 +1,5 @@
 import os
 from setuptools import setup, find_packages
-import lastuserapp
 
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.rst')).read()
@@ -16,8 +15,8 @@ requires = [
     'Markdown',
     ]
 
-setup(name='lastuserapp',
-      version=lastuserapp.__version__,
+setup(name='lastuser',
+      version='0.1',
       description='User management app',
       long_description=README + '\n\n' + CHANGES,
       license='BSD',
@@ -30,6 +29,7 @@ setup(name='lastuserapp',
         "Programming Language :: JavaScript",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
         "Programming Language :: JavaScript",
         "Topic :: Internet",
         "Topic :: Internet :: WWW/HTTP :: Site Management",
