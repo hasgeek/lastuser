@@ -900,6 +900,46 @@ ul.cardset {
     }
 }
 
+/* markdown preview related */
+div.field div.preview-control {
+  float: left;
+  width: 100%;
+}
+div.field.small div.preview-control {
+  width: 35em;
+}
+div.preview-block, div.markdown-field a {
+  border: 1px solid #b7b7b7;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  -o-border-radius: 3px;
+  -ms-border-radius: 3px;
+  -khtml-border-radius: 3px;
+  border-radius: 3px;
+}
+div.preview-block {
+  width: 90%;
+  min-height: 10em;
+  padding: 5px;
+}
+div.markdown-field{
+  float: right;
+  margin: 0 8% 5px 0;
+  font-size: 80%;
+}
+div.markdown-field a{
+  padding: 3px;
+  background: #DF5E0E;
+  margin-bottom: 15px;
+  text-decoration: none;
+  color: #fff;
+}
+div.markdown-field .button{
+  opacity: 0.7;
+}
+div.markdown-field .button.selected{
+  opacity: 1;
+}
 
 
 /* Spam protection */
