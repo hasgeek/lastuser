@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from functools import wraps
+
 from urllib import urlencode, quote
 from urllib2 import urlopen, URLError
 from urlparse import parse_qs
@@ -49,10 +51,22 @@ def login_twitter():
             next=next_url))
     except OAuthException, e:
         flash("Twitter login failed: %s" % unicode(e), category="error")
-        return redirect(next_url)
+        return redirect(url_for('login'))
+
+
+def twitter_exception_handler(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except OAuthException, e:
+            flash("Twitter login failed: %s" % unicode(e), category="error")
+            return redirect(url_for('login'))
+    return decorated_function
 
 
 @app.route('/login/twitter/callback')
+@twitter_exception_handler
 @twitter.authorized_handler
 def login_twitter_authorized(resp):
     next_url = get_next_url()
