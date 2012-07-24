@@ -8,6 +8,7 @@ from urlparse import parse_qs
 
 from flask import request, session, redirect, flash, url_for, json
 from flask.ext.oauth import OAuth, OAuthException  # OAuth 1.0a
+from httplib import BadStatusLine
 
 from lastuserapp import app
 from lastuserapp.models import db, UserExternalId, UserEmail, User
@@ -59,7 +60,7 @@ def twitter_exception_handler(f):
     def decorated_function(*args, **kwargs):
         try:
             return f(*args, **kwargs)
-        except OAuthException, e:
+        except (OAuthException, BadStatusLine), e:
             flash("Twitter login failed: %s" % unicode(e), category="error")
             return redirect(url_for('login'))
     return decorated_function
