@@ -233,7 +233,7 @@ class UserPhoneClaim(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('phoneclaims', cascade="all, delete-orphan"))
-    _phone = db.Column('phone', db.Unicode(80), unique=True, nullable=False)
+    _phone = db.Column('phone', db.Unicode(80), nullable=False)
     gets_text = db.Column(db.Boolean, nullable=False, default=True)
     verification_code = db.Column(db.Unicode(4), nullable=False, default=newpin)
 
