@@ -33,6 +33,7 @@
   {% endfor %}
   <li><a href="{{ url_for('add_email') }}">Add another email address &rarr;</a></li>
 </ul>
+{#
 <h2>My mobile numbers</h2>
 <ul>
   {% for userphone in g.user.phones %}
@@ -46,6 +47,7 @@
   {% endfor %}
   <li><a href="{{ url_for('add_phone') }}">Add a mobile number &rarr;</a></li>
 </ul>
+#}
 <h2>My external ids</h2>
 <ul>
   {% for extid in g.user.externalids %}
