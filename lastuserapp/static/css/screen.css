@@ -314,7 +314,7 @@ footer #footer_content {
   text-indent: -119988px;
   overflow: hidden;
   text-align: left;
-  background-image: url('/static/img/logo.png?1305301303');
+  background-image: url('../img/logo.png?1305301303');
   background-repeat: no-repeat;
   background-position: 50% 50%;
   width: 100px;
@@ -576,7 +576,7 @@ img.login_avatar {
   text-indent: -119988px;
   overflow: hidden;
   text-align: left;
-  background-image: url('/static/img/home.png?1307204489');
+  background-image: url('../img/home.png?1307204489');
   background-repeat: no-repeat;
   background-position: 12 22;
   width: 12px;
@@ -884,7 +884,7 @@ select {
 }
 
 input[name="openid"] {
-  background: url('/static/img/openid.png?1305572482') 4px no-repeat;
+  background: url('../img/openid.png?1305572482') 4px no-repeat;
   width: 230px;
   padding-left: 25px;
 }
@@ -944,7 +944,7 @@ input[type="submit"].delete:hover {
 
 span.loading {
   display: inline-block;
-  background: url('/static/img/ajax-loader.gif?1305733694') center no-repeat;
+  background: url('../img/ajax-loader.gif?1305733694') center no-repeat;
   width: 16px;
   height: 16px;
 }
@@ -1389,7 +1389,7 @@ div.field.small div.preview-control {
   width: 35em;
 }
 
-div.preview-block, div.markdown-field a {
+div.preview-block, div.markdown-field a.button {
   border: 1px solid #b7b7b7;
   -moz-border-radius: 3px;
   -webkit-border-radius: 3px;
@@ -1406,24 +1406,18 @@ div.preview-block {
 }
 
 div.markdown-field {
-  float: right;
   margin: 0 8% 5px 0;
-  font-size: 80%;
 }
 
-div.markdown-field a {
+div.markdown-field a.button {
   padding: 3px;
   background: #DF5E0E;
   margin-bottom: 15px;
   text-decoration: none;
   color: #fff;
-}
-
-div.markdown-field .button {
   opacity: 0.7;
 }
-
-div.markdown-field .button.selected {
+div.markdown-field a.button.selected {
   opacity: 1;
 }
 
