@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import flask.ext.wtf as wtf
+from coaster import valid_username
 
 from lastuserapp import RESERVED_USERNAMES
-from lastuserapp.utils import valid_username
 from lastuserapp.models import User, Organization
 
 

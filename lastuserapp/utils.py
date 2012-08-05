@@ -17,29 +17,6 @@ PHONE_VALID_RE = re.compile(r'^\+[0-9]+$')
 # --- Utilities ---------------------------------------------------------------
 
 
-def newid():
-    """
-    Return a new random id that is exactly 22 characters long. See
-    http://en.wikipedia.org/wiki/Base64#Variants_summary_table
-    for URL-safe Base64
-    """
-    return urlsafe_b64encode(uuid.uuid4().bytes).rstrip('=')
-
-
-def newsecret():
-    """
-    Cheap OAuth secret generator.
-    """
-    return newid() + newid()
-
-
-def newpin(digits=4):
-    """
-    Return a random numeric string with the specified number of digits, default 4
-    """
-    return (u'%%0%dd' % digits) % randint(0, 10 ** digits)
-
-
 def make_redirect_url(url, **params):
     urlparts = list(urlparse.urlsplit(url))
     # URL parts:
@@ -52,10 +29,6 @@ def make_redirect_url(url, **params):
     queryparts.extend(params.items())
     urlparts[3] = make_query_string(queryparts)
     return urlparse.urlunsplit(urlparts)
-
-
-def valid_username(candidate):
-    return not USERNAME_VALID_RE.search(candidate) is None
 
 
 def strip_phone(candidate):

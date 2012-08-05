@@ -2,10 +2,10 @@
 
 from flask import Markup, url_for
 import flask.ext.wtf as wtf
+from coaster.utils import valid_username
 
 from lastuserapp import RESERVED_USERNAMES
 from lastuserapp.models import User, UserEmail, getuser
-from lastuserapp.utils import valid_username
 
 
 class LoginForm(wtf.Form):

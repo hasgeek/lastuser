@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+from coaster import newid, newsecret
+
 from lastuserapp.models import db, BaseMixin
 from lastuserapp.models.user import User, Organization, Team
-from lastuserapp.utils import newid, newsecret
 
 
 class Client(db.Model, BaseMixin):

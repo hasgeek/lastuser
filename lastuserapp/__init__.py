@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
 
+__version__ = '0.1'
+
+from os import environ
 from flask import Flask, Markup
+from flask.ext.assets import Environment, Bundle
 from markdown import markdown
+from coaster import configureapp
+from baseframe import baseframe, networkbar_js, networkbar_css
 
 
 __MESSAGES = ['MESSAGE_FOOTER']
@@ -23,22 +29,25 @@ RESERVED_USERNAMES = set([
     'organizations',
     ])
 
-app = Flask('lastuserapp')
-app.config.from_object('lastuserapp')
-try:
-    app.config.from_object('lastuserapp.settings')
-except ImportError:
-    import sys
-    print >> sys.stderr, "Please create a settings.py with the necessary settings. See settings-sample.py."
-    sys.exit()
+app = Flask(__name__, instance_relative_config=True)
+configureapp(app, 'LASTUSER_ENV')
+app.register_blueprint(baseframe)
+assets = Environment(app)
+
+js = Bundle('js/libs/jquery-1.5.1.min.js',
+            'js/libs/jquery.form.js',
+            'js/scripts.js',
+            filters='jsmin', output='js/packed.js')
+
+assets.register('js_all', js)
 
 for msg in __MESSAGES:
     app.config[msg] = Markup(markdown(app.config.get(msg, '')))
 
 
-import lastuserapp.assets
 import lastuserapp.mailclient
 import lastuserapp.models
 import lastuserapp.forms
 import lastuserapp.views
-import lastuserapp.loghandler
+if environ['LASTUSER_ENV'] == 'production':
+    import lastuserapp.loghandler

@@ -3,9 +3,9 @@
 from hashlib import md5
 from werkzeug import generate_password_hash, check_password_hash
 from sqlalchemy.ext.hybrid import hybrid_property
+from coaster import newid, newsecret, newpin
 
 from lastuserapp.models import db, BaseMixin
-from lastuserapp.utils import newid, newsecret, newpin
 
 __all__ = ['User', 'UserEmail', 'UserEmailClaim', 'PasswordResetRequest', 'UserExternalId',
            'UserPhone', 'UserPhoneClaim', 'Team', 'Organization']
