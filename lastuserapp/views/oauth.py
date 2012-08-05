@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 import urlparse
-
+from coaster import newsecret
 from flask import g, render_template, redirect, request, jsonify
 from flask import get_flashed_messages
 
@@ -10,7 +10,7 @@ from lastuserapp import app
 from lastuserapp.models import (db, Client, AuthCode, AuthToken, UserFlashMessage,
     UserClientPermissions, TeamClientPermissions, getuser, Resource, ResourceAction)
 from lastuserapp.forms import AuthorizeForm
-from lastuserapp.utils import make_redirect_url, newsecret
+from lastuserapp.utils import make_redirect_url
 from lastuserapp.views import requires_login, requires_client_login
 from lastuserapp.views.resource import get_userinfo
 
