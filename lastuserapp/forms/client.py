@@ -3,7 +3,7 @@ from flask import g
 import flask.ext.wtf as wtf
 from coaster import valid_username
 
-from lastuserapp.models import db, Permission, Resource, ResourceAction, getuser, Organization
+from lastuserapp.models import Permission, Resource, ResourceAction, getuser, Organization
 
 
 class AuthorizeForm(wtf.Form):

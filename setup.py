@@ -13,6 +13,7 @@ requires = [
     'Flask-OpenID',
     'Flask-OAuth',
     'Markdown',
+    'ordereddict'
     ]
 
 setup(name='lastuser',

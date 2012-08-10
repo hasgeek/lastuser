@@ -3,7 +3,7 @@
 from flask import g, render_template, url_for, abort, redirect
 
 from lastuserapp import app
-from lastuserapp.views import render_form, render_redirect, render_delete, requires_login
+from lastuserapp.views.helpers import render_form, render_redirect, render_delete, requires_login
 from lastuserapp.forms.org import OrganizationForm, TeamForm
 from lastuserapp.models import db, Organization, Team
 

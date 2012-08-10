@@ -3,7 +3,7 @@
 from flask import g, request, render_template, url_for, flash, abort
 
 from lastuserapp import app
-from lastuserapp.views import render_form, render_redirect, render_delete, requires_login
+from lastuserapp.views.helpers import render_form, render_redirect, render_delete, requires_login
 from lastuserapp.models import (db, User, Client, Organization, Team, Permission,
     UserClientPermissions, TeamClientPermissions, Resource, ResourceAction, ClientTeamAccess,
     CLIENT_TEAM_ACCESS)

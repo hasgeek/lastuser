@@ -13,7 +13,7 @@ from httplib import BadStatusLine
 
 from lastuserapp import app
 from lastuserapp.models import db, UserExternalId, UserEmail, User
-from lastuserapp.views import get_next_url, login_internal, register_internal
+from lastuserapp.views.helpers import get_next_url, login_internal, register_internal
 from lastuserapp.utils import get_gravatar_md5sum
 
 # OAuth 1.0a handlers

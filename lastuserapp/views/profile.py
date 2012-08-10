@@ -5,7 +5,7 @@ from flask import g, abort, flash, render_template, url_for, session
 from lastuserapp import app
 from lastuserapp.models import db, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
 from lastuserapp.mailclient import send_email_verify_link
-from lastuserapp.views import get_next_url, requires_login, render_form, render_redirect, render_delete
+from lastuserapp.views.helpers import get_next_url, requires_login, render_form, render_redirect, render_delete
 from lastuserapp.views.sms import send_phone_verify_code
 from lastuserapp.forms import (ProfileForm, PasswordResetForm, PasswordChangeForm, NewEmailAddressForm,
     NewPhoneForm, VerifyPhoneForm)

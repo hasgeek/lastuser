@@ -10,7 +10,7 @@ from lastuserapp.views.openidclient import oid
 from lastuserapp.mailclient import send_email_verify_link, send_password_reset_link
 from lastuserapp.models import db, User, UserEmailClaim, PasswordResetRequest, Client
 from lastuserapp.forms import LoginForm, OpenIdForm, RegisterForm, PasswordResetForm, PasswordResetRequestForm
-from lastuserapp.views import (get_next_url, login_internal, logout_internal, register_internal,
+from lastuserapp.views.helpers import (get_next_url, login_internal, logout_internal, register_internal,
     render_form, render_message, render_redirect, requires_login)
 
 

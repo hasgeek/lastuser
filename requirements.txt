@@ -8,5 +8,6 @@ Flask-Wtf
 Flask-OpenID
 Flask-Oauth
 pytz
+ordereddict
 https://github.com/hasgeek/coaster/zipball/master
 https://github.com/hasgeek/baseframe/zipball/master

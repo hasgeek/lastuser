@@ -4,7 +4,7 @@
 Adds support for texting Indian mobile numbers
 """
 
-from pytz import UTC, timezone
+from pytz import timezone
 from urllib2 import urlopen, URLError
 from urllib import urlencode
 from datetime import datetime
@@ -18,14 +18,14 @@ SMSGUPSHUP_TIMEZONE = timezone('Asia/Calcutta')
 
 
 def send_message(msg):
-    if msg.phone_number.startswith('+91'): # Indian number. Use SMS GupShup
+    if msg.phone_number.startswith('+91'):  # Indian number. Use SMS GupShup
         if len(msg.phone_number) != 13:
-            raise ValueError, "Invalid Indian mobile number"
+            raise ValueError("Invalid Indian mobile number")
         # All okay. Send!
         # TODO: Also check if we have SMS GupShup credentials in settings.py
         params = urlencode(dict(
             method='SendMessage',
-            send_to=msg.phone_number[1:], # Number with leading +
+            send_to=msg.phone_number[1:],  # Number with leading +
             msg=msg.message,
             msg_type='TEXT',
             format='text',
@@ -46,7 +46,7 @@ def send_message(msg):
             flash("Message could not be sent. Error: %s" % e)
     else:
         # Unsupported at this time
-        raise ValueError, "Unsupported phone number"
+        raise ValueError("Unsupported phone number")
 
 
 def send_phone_verify_code(phoneclaim):
@@ -67,10 +67,10 @@ def report_smsgupshup():
     cause = request.args.get('cause')
 
     # Find a corresponding message and ensure the parameters match
-    msg = SMSMessage.query.filter_by(transaction_id = externalId).first()
+    msg = SMSMessage.query.filter_by(transaction_id=externalId).first()
     if not msg:
         return "No such message", 404
-    elif msg.phone_number != '+'+phoneNo:
+    elif msg.phone_number != '+' + phoneNo:
         return "Incorrect phone number", 404
     else:
         if status == 'SUCCESS':
@@ -81,7 +81,7 @@ def report_smsgupshup():
             msg.status == SMS_STATUS.UNKNOWN
         msg.fail_reason = cause
         if deliveredTS:
-            deliveredTS = float(deliveredTS)/1000.0
+            deliveredTS = float(deliveredTS) / 1000.0
         # This delivery time is in IST, GMT+0530
         # Convert this into a naive UTC timestamp before saving
         local_status_at = datetime.fromtimestamp(deliveredTS)

@@ -6,7 +6,7 @@ from flask.ext.openid import OpenID
 from lastuserapp import app
 from lastuserapp.mailclient import send_email_verify_link
 from lastuserapp.models import db, UserExternalId, UserEmail, UserEmailClaim
-from lastuserapp.views import login_internal, register_internal, get_next_url
+from lastuserapp.views.helpers import login_internal, register_internal, get_next_url
 
 oid = OpenID(app)
 
@@ -81,12 +81,12 @@ def login_openid_success(resp):
             username = resp.email
 
         # Record this OpenID/Google id for the user
-        extid = UserExternalId(user = user,
-                               service = service,
-                               userid = openid,
-                               username = username,
-                               oauth_token = None,
-                               oauth_token_secret = None)
+        extid = UserExternalId(user=user,
+                               service=service,
+                               userid=openid,
+                               username=username,
+                               oauth_token=None,
+                               oauth_token_secret=None)
         db.session.add(extid)
         db.session.commit()
         login_internal(user)

@@ -11,11 +11,9 @@ from lastuserapp.models import (db, Client, AuthCode, AuthToken, UserFlashMessag
     UserClientPermissions, TeamClientPermissions, getuser, Resource, ResourceAction)
 from lastuserapp.forms import AuthorizeForm
 from lastuserapp.utils import make_redirect_url
-from lastuserapp.views import requires_login, requires_client_login
+from lastuserapp.views.helpers import requires_login, requires_client_login
 from lastuserapp.views.resource import get_userinfo
-
-# TODO: Construct this from the resources dict
-__internal_resources = [u'id', u'email', u'organizations', u'notice/send']
+from lastuserapp.views.registry import registry
 
 
 class ScopeException(Exception):
@@ -29,7 +27,7 @@ def verifyscope(scope, client):
     resources = {}  # resource_object: [action_object, ...]
 
     for item in scope:
-        if item not in __internal_resources:  # These are internal resources
+        if item not in registry:  # These are internal resources
             # Validation 1: resource/action is properly formatted
             if '/' in item:
                 parts = item.split('/')
@@ -220,6 +218,7 @@ def oauth_authorize():
         redirect_uri=redirect_uri,
         scope=scope,
         resources=resources,
+        registry=registry,
         )
 
 

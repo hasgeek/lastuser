@@ -5,13 +5,17 @@ from flask import jsonify, request, g
 from lastuserapp import app
 from lastuserapp.models import (getuser, User, Organization, AuthToken, Resource, ResourceAction,
     UserClientPermissions, TeamClientPermissions)
-from lastuserapp.views import provides_resource, requires_client_login
+from lastuserapp.views.helpers import requires_client_login
+from lastuserapp.views.registry import registry
 
 
-def get_userinfo(user, client, scope=[]):
-    userinfo = {'userid': user.userid,
-                'username': user.username,
-                'fullname': user.fullname}
+def get_userinfo(user, client, scope=[], get_permissions=True):
+    if 'id' in scope:
+        userinfo = {'userid': user.userid,
+                    'username': user.username,
+                    'fullname': user.fullname}
+    else:
+        userinfo = {}
     if 'email' in scope:
         userinfo['email'] = unicode(user.email)
     if 'organizations' in scope:
@@ -20,17 +24,18 @@ def get_userinfo(user, client, scope=[]):
             'member': [{'userid': org.userid, 'name': org.name, 'title': org.title} for org in user.organizations()],
             }
         userinfo['teams'] = [{'userid': team.userid, 'title': team.title, 'org': team.org.userid} for team in user.teams]
-    if client.user:
-        perms = UserClientPermissions.query.filter_by(user=user, client=client).first()
-        if perms:
-            userinfo['permissions'] = perms.permissions.split(u' ')
-    else:
-        perms = TeamClientPermissions.query.filter_by(client=client).filter(
-            TeamClientPermissions.team_id.in_([team.id for team in user.teams])).all()
-        permsset = set()
-        for permob in perms:
-            permsset.update(permob.permissions.split(u' '))
-        userinfo['permissions'] = sorted(permsset)
+    if get_permissions:
+        if client.user:
+            perms = UserClientPermissions.query.filter_by(user=user, client=client).first()
+            if perms:
+                userinfo['permissions'] = perms.permissions.split(u' ')
+        else:
+            perms = TeamClientPermissions.query.filter_by(client=client).filter(
+                TeamClientPermissions.team_id.in_([team.id for team in user.teams])).all()
+            permsset = set()
+            for permob in perms:
+                permsset.update(permob.permissions.split(u' '))
+            userinfo['permissions'] = sorted(permsset)
     return userinfo
 
 
@@ -158,6 +163,7 @@ def user_get():
         return api_result('error', error='not_found')
 
 
+# This is org/* instead of organizations/* because it's a client resource. TODO: Reconsider
 @app.route('/api/1/org/get_teams', methods=['POST'])
 @requires_client_login
 def org_team_get():
@@ -186,8 +192,17 @@ def org_team_get():
 
 # --- Token-based resource endpoints ------------------------------------------
 
+@app.route('/api/1/id')
+@registry.resource('id', u'Read your name and username')
+def resource_id(authtoken, args, files=None):
+    """
+    Return user's id
+    """
+    return get_userinfo(authtoken.user, authtoken.client, scope=['id'], get_permissions=False)
+
+
 @app.route('/api/1/email')
-@provides_resource('email')
+@registry.resource('email', u'Read your email address')
 def resource_email(authtoken, args, files=None):
     """
     Return user's email addresses.
@@ -199,10 +214,26 @@ def resource_email(authtoken, args, files=None):
         return {'email': unicode(authtoken.user.email)}
 
 
-#@app.route('/api/1/email/add')
-#@provides_resource('email/add')
-#def resource_email_add(authtoken, args, files=None):
-#    """
-#    Add an email address to the user's account.
-#    """
-#    pass
+@app.route('/api/1/email/add', methods=['POST'])
+@registry.resource('email/add', u'Add an email address to your profile')
+def resource_email_add(authtoken, args, files=None):
+    """
+    Add an email address to the user's profile.
+    """
+    email = args['email']
+    return {'email': email}  # TODO
+
+
+@app.route('/api/1/organizations')
+@registry.resource('organizations', u'Read the organizations you are a member of')
+def resource_organizations(authtoken, args, files=None):
+    """
+    Return user's organizations and teams.
+    """
+    return get_userinfo(authtoken.user, authtoken.client, scope=['organizations'], get_permissions=False)
+
+
+@app.route('/api/1/notice/send')
+@registry.resource('notice/send', u'Send you notifications')
+def resource_notice_send(authtoken, args, files=None):
+    pass
