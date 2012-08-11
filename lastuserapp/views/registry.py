@@ -10,7 +10,7 @@ try:
     from collections import OrderedDict
 except ImportError:
     from ordereddict import OrderedDict
-from flask import Response, request, jsonify
+from flask import Response, request, jsonify, abort
 from lastuserapp.models import AuthToken
 
 # Bearer token, as per http://tools.ietf.org/html/draft-ietf-oauth-v2-bearer-15#section-2.1
@@ -36,6 +36,8 @@ class ResourceRegistry(OrderedDict):
                     args = request.args
                 elif request.method in ['POST', 'PUT', 'DELETE']:
                     args = request.form
+                else:
+                    abort(405)
                 if 'Authorization' in request.headers:
                     token_match = auth_bearer_re.search(request.headers['Authorization'])
                     if token_match:
