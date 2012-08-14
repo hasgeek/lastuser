@@ -3,6 +3,7 @@
 from hashlib import md5
 from werkzeug import generate_password_hash, check_password_hash
 from sqlalchemy.ext.hybrid import hybrid_property
+from flask import url_for
 from coaster import newid, newsecret, newpin
 
 from lastuserapp.models import db, BaseMixin
@@ -134,6 +135,10 @@ class User(db.Model, BaseMixin):
         for database queries.
         """
         return list(set([team.org.id for team in self.teams if team.org.owners == team]))
+
+    @property
+    def profile_url(self):
+        return url_for('profile')
 
 
 class UserEmail(db.Model, BaseMixin):

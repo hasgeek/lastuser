@@ -1,17 +1,15 @@
-{% extends "inc/layout.html" %}
+{% extends "layout.html" %}
 {% block title %}Organization: {{ org.title }}{% endblock %}
 {% block content %}
 <h2>Teams</h2>
 <ol>
   {% for team in org.teams -%}
     <li>
-      <p>
-        <strong>{{ team.title }}</strong>
-        (<a href="{{ url_for('team_edit', name=org.name, userid=team.userid) }}">edit</a>
-        {%- if team != org.owners %},
-          <a href="{{ url_for('team_delete', name=org.name, userid=team.userid) }}">delete</a>
-        {%- endif %})
-      </p>
+      <strong>{{ team.title }}</strong>
+      (<a href="{{ url_for('team_edit', name=org.name, userid=team.userid) }}">edit</a>
+      {%- if team != org.owners %},
+        <a href="{{ url_for('team_delete', name=org.name, userid=team.userid) }}">delete</a>
+      {%- endif %})
       <ol>{% for user in team.users %}<li>{{ user.pickername }}</li>{% endfor %}</ol>
     </li>
   {% endfor %}

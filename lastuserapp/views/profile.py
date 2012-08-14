@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from flask import g, abort, flash, render_template, url_for, session
+from coaster.views import get_next_url
+from baseframe.forms import render_form, render_redirect, render_delete_sqla
 
 from lastuserapp import app
 from lastuserapp.models import db, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
 from lastuserapp.mailclient import send_email_verify_link
-from lastuserapp.views.helpers import get_next_url, requires_login, render_form, render_redirect, render_delete
+from lastuserapp.views.helpers import requires_login
 from lastuserapp.views.sms import send_phone_verify_code
 from lastuserapp.forms import (ProfileForm, PasswordResetForm, PasswordChangeForm, NewEmailAddressForm,
     NewPhoneForm, VerifyPhoneForm)
@@ -74,7 +76,7 @@ def remove_email(md5sum):
     if isinstance(useremail, UserEmail) and useremail.primary:
         flash("You cannot remove your primary email address", "error")
         return render_redirect(url_for('profile'), code=303)
-    return render_delete(useremail, title="Confirm removal", message="Remove email address %s?" % useremail,
+    return render_delete_sqla(useremail, db, title="Confirm removal", message="Remove email address %s?" % useremail,
         success="You have removed your email address %s." % useremail,
         next=url_for('profile'))
 
@@ -99,7 +101,7 @@ def remove_phone(number):
     userphone = UserPhone.query.filter_by(phone=number, user=g.user).first()
     if userphone is None:
         userphone = UserPhoneClaim.query.filter_by(phone=number, user=g.user).first_or_404()
-    return render_delete(userphone, title="Confirm removal", message="Remove phone number %s?" % userphone,
+    return render_delete_sqla(userphone, db, title="Confirm removal", message="Remove phone number %s?" % userphone,
         success="You have removed your number %s." % userphone,
         next=url_for('profile'))
 

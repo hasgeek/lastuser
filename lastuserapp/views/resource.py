@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import jsonify, request, g
+from coaster import getbool
 
 from lastuserapp import app
 from lastuserapp.models import (getuser, User, Organization, AuthToken, Resource, ResourceAction,
@@ -119,7 +120,7 @@ def token_verify():
 @requires_client_login
 def user_get_by_userid():
     """
-    Returns user or organization with the given userid (LastUser internal userid)
+    Returns user or organization with the given userid (Lastuser internal userid)
     """
     userid = request.form.get('userid')
     if not userid:
@@ -207,7 +208,7 @@ def resource_email(authtoken, args, files=None):
     """
     Return user's email addresses.
     """
-    if 'all' in args and int(args['all']):
+    if 'all' in args and getbool(args['all']):
         return {'email': unicode(authtoken.user.email),
                 'all': [unicode(email) for email in authtoken.user.emails]}
     else:

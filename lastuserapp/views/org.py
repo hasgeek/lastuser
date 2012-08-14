@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from flask import g, render_template, url_for, abort, redirect
+from baseframe.forms import render_form, render_redirect, render_delete_sqla
 
 from lastuserapp import app
-from lastuserapp.views.helpers import render_form, render_redirect, render_delete, requires_login
+from lastuserapp.views.helpers import requires_login
 from lastuserapp.forms.org import OrganizationForm, TeamForm
 from lastuserapp.models import db, Organization, Team
 
@@ -61,7 +62,7 @@ def org_delete(name):
     org = Organization.query.filter_by(name=name).first_or_404()
     if g.user not in org.owners.users:
         abort(403)
-    return render_delete(org, title="Confirm delete", message="Delete organization '%s'? " % org.title,
+    return render_delete_sqla(org, db, title="Confirm delete", message="Delete organization '%s'? " % org.title,
         success="You have deleted organization '%s' and all its associated teams." % org.title,
         next=url_for('org_list'))
 
@@ -117,6 +118,6 @@ def team_delete(name, userid):
     team = Team.query.filter_by(org=org, userid=userid).first_or_404()
     if team == org.owners:
         abort(403)
-    return render_delete(team, title=u"Confirm delete", message=u"Delete team '%s'?" % team.title,
+    return render_delete_sqla(team, db, title=u"Confirm delete", message=u"Delete team '%s'?" % team.title,
         success=u"You have deleted team '%s' from organization '%s'." % (team.title, org.title),
         next=url_for('org_info', name=org.name))

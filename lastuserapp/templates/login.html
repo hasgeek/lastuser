@@ -1,5 +1,5 @@
-{% extends "inc/layout.html" %}
-{% from "inc/forms.html" import renderfield, rendersubmit, ajaxform %}
+{% extends "layout.html" %}
+{% from "baseframe/forms.html" import renderfield, rendersubmit, ajaxform %}
 {% block title %}Login{% endblock %}
 
 {% block content %}
@@ -8,12 +8,12 @@
     Cookies are required to login. Please enable cookies in your browser’s settings and reload this page.
   </div>
 </div>
-<div class="cookies-required">
-  <div class="field small">
-    <div class="label">
-      Login with your existing account at one of these:
+<div class="cookies-required form-horizontal">
+  <div class="control-group">
+    <div class="control-label">
+      Login with your existing account at:
     </div>
-    <div class="control">
+    <div class="controls">
       <a class="loginbutton" href="{{ url_for('login_twitter', next=request.args.get('next')) }}"
           style="background-image: url({{ url_for('static', filename='img/login/twitter.png') }});">Twitter</a>
       <a class="loginbutton" href="{{ url_for('login_google', next=request.args.get('next') or url_for('index')) }}"
@@ -34,7 +34,7 @@
     {% endif %}
     {% if oiderror %}<div class=error>{{ oiderror }}</div>{% endif %}
     {{ renderfield(openidform.openid, "small") }}
-    {{ rendersubmit([(None, "Login", None)], "small") }}
+    {{ rendersubmit([(None, "Login", 'btn-primary')], "small") }}
   </form>
   <h2>Or, login with a password</h2>
   {% include "forms/loginform.html" %}

@@ -5,15 +5,16 @@ from functools import wraps
 from urllib import urlencode, quote
 from urllib2 import urlopen, URLError
 from urlparse import parse_qs
-from coaster import valid_username
 
 from flask import request, session, redirect, flash, url_for, json
 from flask.ext.oauth import OAuth, OAuthException  # OAuth 1.0a
 from httplib import BadStatusLine
+from coaster import valid_username
+from coaster.views import get_next_url
 
 from lastuserapp import app
 from lastuserapp.models import db, UserExternalId, UserEmail, User
-from lastuserapp.views.helpers import get_next_url, login_internal, register_internal
+from lastuserapp.views.helpers import login_internal, register_internal
 from lastuserapp.utils import get_gravatar_md5sum
 
 # OAuth 1.0a handlers
@@ -61,7 +62,7 @@ def twitter_exception_handler(f):
     def decorated_function(*args, **kwargs):
         try:
             return f(*args, **kwargs)
-        except (OAuthException, BadStatusLine), e:
+        except (OAuthException, BadStatusLine, AttributeError), e:
             flash("Twitter login failed: %s" % unicode(e), category="error")
             return redirect(url_for('login'))
     return decorated_function
@@ -108,6 +109,7 @@ github = {
   'token_url': "https://github.com/login/oauth/access_token",
   'user_info': "https://api.github.com/user?access_token=%s"
 }
+
 
 # XXX: GitHub has a non-standard OAuth flow, so we can't use the Flask-OAuth library
 @app.route('/login/github')
@@ -194,7 +196,7 @@ def config_external_id(service, service_name, user, userid, username, fullname, 
         extid = UserExternalId(user=user, service=service, userid=userid, username=username,
                                oauth_token=access_token, oauth_token_secret=secret,
                                oauth_token_type=token_type)
-        # If the service provided a username that is valid for LastUser and not already in use, assign
+        # If the service provided a username that is valid for Lastuser and not already in use, assign
         # it to this user
         if valid_username(username):
             if User.query.filter_by(username=username).first() is None:

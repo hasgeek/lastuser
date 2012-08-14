@@ -6,8 +6,8 @@ from os import environ
 from flask import Flask, Markup
 from flask.ext.assets import Environment, Bundle
 from markdown import markdown
-from coaster import configureapp
-from baseframe import baseframe, networkbar_js, networkbar_css
+from coaster.app import configure
+from baseframe import baseframe, baseframe_js, baseframe_css
 
 
 __MESSAGES = ['MESSAGE_FOOTER']
@@ -30,16 +30,18 @@ RESERVED_USERNAMES = set([
     ])
 
 app = Flask(__name__, instance_relative_config=True)
-configureapp(app, 'LASTUSER_ENV')
+configure(app, 'LASTUSER_ENV')
 app.register_blueprint(baseframe)
 assets = Environment(app)
 
-js = Bundle('js/libs/jquery-1.5.1.min.js',
-            'js/libs/jquery.form.js',
-            'js/scripts.js',
-            filters='jsmin', output='js/packed.js')
+js = Bundle(baseframe_js, 'js/app.js',
+    filters='jsmin', output='js/packed.js')
+
+css = Bundle(baseframe_css, 'css/app.css',
+    filters='cssmin', output='css/packed.css')
 
 assets.register('js_all', js)
+assets.register('css_all', css)
 
 for msg in __MESSAGES:
     app.config[msg] = Markup(markdown(app.config.get(msg, '')))

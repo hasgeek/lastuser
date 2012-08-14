@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #: The title of this site
-SITE_TITLE = 'LastUser'
+SITE_TITLE = 'Lastuser'
 
 #: Support contact email
 SITE_SUPPORT_EMAIL = 'test@example.com'
@@ -32,7 +32,7 @@ TIMEZONE = 'Asia/Calcutta'
 #: DEFAULT_MAIL_SENDER : default None
 MAIL_FAIL_SILENTLY = False
 MAIL_SERVER = 'localhost'
-DEFAULT_MAIL_SENDER = ('LastUser', 'test@example.com')
+DEFAULT_MAIL_SENDER = ('Lastuser', 'test@example.com')
 
 #: Logging: recipients of error emails
 ADMINS = []
@@ -63,4 +63,4 @@ SMS_SMSGUPSHUP_USER = ''
 SMS_SMSGUPSHUP_PASS = ''
 
 #: Messages (in markdown)
-MESSAGE_FOOTER = 'Copyright &copy; [HasGeek](http://hasgeek.com/). Powered by [LastUser](https://github.com/hasgeek/lastuser "GitHub project page"), open source software from [HasGeek](https://github.com/hasgeek).'
+MESSAGE_FOOTER = 'Copyright &copy; [HasGeek](http://hasgeek.com/). Powered by [Lastuser](https://github.com/hasgeek/lastuser "GitHub project page"), open source software from [HasGeek](https://github.com/hasgeek).'

@@ -121,27 +121,6 @@ def avatar_url_github(githubid):
             return None
 
 
-def get_next_url(referrer=False, external=False):
-    """
-    Get the next URL to redirect to. Don't return external URLs unless
-    explicitly asked for. This is to protect the site from being an unwitting
-    redirector to external URLs.
-    """
-    next_url = session.pop('next', None)
-    if next_url:
-        return next_url
-    next_url = request.args.get('next', '')
-    if not external:
-        if next_url.startswith('http:') or next_url.startswith('https:') or next_url.startswith('//'):
-            # Do the domains match?
-            if urlparse.urlsplit(next_url).hostname != urlparse.urlsplit(request.url).hostname:
-                next_url = ''
-    if referrer:
-        return next_url or request.referrer or url_for('index')
-    else:
-        return next_url or url_for('index')
-
-
 def login_internal(user):
     g.user = user
     session['userid'] = user.userid
@@ -160,38 +139,3 @@ def register_internal(username, fullname, password):
         user.username = None
     db.session.add(user)
     return user
-
-
-def render_form(form, title, message='', formid='form', submit='Submit', ajax=False):
-    if request.is_xhr and ajax:
-        return render_template('ajaxform.html', form=form, title=title, message=message, formid=formid, submit=submit)
-    else:
-        return render_template('autoform.html', form=form, title=title, message=message, formid=formid, submit=submit, ajax=ajax)
-
-
-def render_message(title, message):
-    if request.is_xhr:
-        return Markup("<p>%s</p>" % escape(message))
-    else:
-        return render_template('message.html', title=title, message=message)
-
-
-def render_redirect(url, code=302):
-    if request.is_xhr:
-        return render_template('redirect.html', quoted_url=Markup(json.dumps(url)))
-    else:
-        return redirect(url, code=code)
-
-
-def render_delete(ob, title, message, success='', next=None):
-    if not ob:
-        abort(404)
-    form = ConfirmDeleteForm()
-    if form.validate_on_submit():
-        if 'delete' in request.form:
-            db.session.delete(ob)
-            db.session.commit()
-            if success:
-                flash(success, "info")
-        return render_redirect(next or url_for('index'))
-    return render_template('delete.html', form=form, title=title, message=message)

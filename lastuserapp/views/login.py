@@ -2,16 +2,16 @@
 
 from datetime import datetime, timedelta
 import urlparse
-
 from flask import g, redirect, request, session, flash, render_template, url_for, abort, Markup, escape
+from coaster.views import get_next_url
+from baseframe.forms import render_form, render_message, render_redirect
 
 from lastuserapp import app
 from lastuserapp.views.openidclient import oid
 from lastuserapp.mailclient import send_email_verify_link, send_password_reset_link
 from lastuserapp.models import db, User, UserEmailClaim, PasswordResetRequest, Client
 from lastuserapp.forms import LoginForm, OpenIdForm, RegisterForm, PasswordResetForm, PasswordResetRequestForm
-from lastuserapp.views.helpers import (get_next_url, login_internal, logout_internal, register_internal,
-    render_form, render_message, render_redirect, requires_login)
+from lastuserapp.views.helpers import login_internal, logout_internal, register_internal, requires_login
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -43,10 +43,10 @@ def login():
             flash('You are now logged in', category='info')
             return render_redirect(get_next_url(), code=303)
     if request.is_xhr and formid == 'login':
-        return render_template('forms/loginform.html', loginform=loginform)
+        return render_template('forms/loginform.html', loginform=loginform, Markup=Markup)
     else:
         return render_template('login.html', openidform=openidform, loginform=loginform,
-            oiderror=oid.fetch_error(), oidnext=oid.get_next_url())
+            oiderror=oid.fetch_error(), oidnext=oid.get_next_url(), Markup=Markup)
 
 
 # TODO: Move this into settings.py

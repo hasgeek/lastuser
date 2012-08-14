@@ -1,0 +1,15 @@
+{% extends "baseframe.html" -%}
+
+{% block networkbar %}{{ networkbar(siteid='home', login=true) }}{% endblock %}
+
+{% block baseheadline -%}
+  {% block headline -%}
+    <div class="page-header">
+      <h1>{{ self.title()|e }}</h1>
+    </div>
+  {%- endblock %}
+{%- endblock %}
+
+{% block basecontent -%}
+  {% block content %}{% endblock %}
+{%- endblock %}

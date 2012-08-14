@@ -27,7 +27,7 @@ class LoginForm(wtf.Form):
 
 class OpenIdForm(wtf.Form):
     openid = wtf.html5.URLField('Login with OpenID', validators=[wtf.Required()],
-        description="Don't forget the http:// or https:// prefix")
+        description=Markup("Don't forget the <code>http://</code> or <code>https://</code> prefix"))
 
 
 class RegisterForm(wtf.Form):

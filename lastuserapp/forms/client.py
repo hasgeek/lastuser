@@ -37,21 +37,22 @@ class RegisterClientForm(wtf.Form):
     redirect_uri = wtf.html5.URLField('Redirect URI', validators=[wtf.Optional(), wtf.URL()],
         description="OAuth2 Redirect URI")
     notification_uri = wtf.html5.URLField('Notification URI', validators=[wtf.Optional(), wtf.URL()],
-        description="LastUser resource provider Notification URI. When another application requests access to "
-            "resources provided by this app, LastUser will post a notice to this URI with a copy of the access "
+        description="Lastuser resource provider Notification URI. When another application requests access to "
+            "resources provided by this app, Lastuser will post a notice to this URI with a copy of the access "
             "token that was provided to the other application. Other notices may be posted too "
             "(not yet implemented)")
     iframe_uri = wtf.html5.URLField('IFrame URI', validators=[wtf.Optional(), wtf.URL()],
         description="Front-end notifications URL. This is loaded in a hidden iframe to notify the app that the "
             "user updated their profile in some way (not yet implemented)")
     resource_uri = wtf.html5.URLField('Resource URI', validators=[wtf.Optional(), wtf.URL()],
-        description="URI at which this application provides resources as per the LastUser Resource API "
+        description="URI at which this application provides resources as per the Lastuser Resource API "
             "(not yet implemented)")
     allow_any_login = wtf.BooleanField('Allow anyone to login', default=True,
-        description="If your application requires access to be restricted to specific users, uncheck this")
+        description="If your application requires access to be restricted to specific users, uncheck this, "
+            "and only users who have been assigned a permission to the app will be able to login")
     team_access = wtf.BooleanField('Requires access to teams', default=False,
         description="If your application is capable of assigning access permissions to teams, check this. "
-            "Organization owners will then able to grant access to teams in their organizations.")
+            "Organization owners will then able to grant access to teams in their organizations")
 
     def validate_client_owner(self, field):
         if field.data == g.user.userid:

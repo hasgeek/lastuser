@@ -1,4 +1,4 @@
-{% extends "inc/layout.html" %}
+{% extends "layout.html" %}
 {% block title %}Authorization Required{% endblock %}
 
 {% block content %}
@@ -47,8 +47,8 @@
   {% if form.csrf_token.errors %}
     {% for error in form.csrf_token.errors %}<div class="error">{{ error }}</div>{% endfor %}
   {% endif %}
-  <input class="auth-accept" type="submit" name="accept" value="Authorize"/>
-  <input class="auth-deny" type="submit" name="deny" value="Deny"/>
+  <input class="btn btn-primary" type="submit" name="accept" value="Authorize"/>
+  <input class="btn btn-danger" type="submit" name="deny" value="Deny"/>
 </form>
   
 {% endblock %}

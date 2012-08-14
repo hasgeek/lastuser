@@ -2,9 +2,8 @@
 
 from datetime import datetime, timedelta
 import urlparse
+from flask import g, render_template, redirect, request, jsonify, get_flashed_messages
 from coaster import newsecret
-from flask import g, render_template, redirect, request, jsonify
-from flask import get_flashed_messages
 
 from lastuserapp import app
 from lastuserapp.models import (db, Client, AuthCode, AuthToken, UserFlashMessage,
@@ -190,7 +189,7 @@ def oauth_authorize():
         return oauth_auth_error(redirect_uri, state, 'invalid_scope', unicode(scopeex))
 
     # Validations complete. Now ask user for permission
-    # If the client is trusted (LastUser feature, not in OAuth2 spec), don't ask user.
+    # If the client is trusted (Lastuser feature, not in OAuth2 spec), don't ask user.
     # The client does not get access to any data here -- they still have to authenticate to /token.
     if request.method == 'GET' and client.trusted:
         # Return auth token. No need for user confirmation

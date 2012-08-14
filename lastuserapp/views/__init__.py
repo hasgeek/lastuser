@@ -8,7 +8,6 @@ import lastuserapp.views.oauthclient
 import lastuserapp.views.openidclient
 import lastuserapp.views.oauth
 import lastuserapp.views.client
-import lastuserapp.views.httperror
 import lastuserapp.views.sms
 import lastuserapp.views.resource
 import lastuserapp.views.org

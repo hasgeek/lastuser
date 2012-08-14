@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from flask import g, request, render_template, url_for, flash, abort
+from baseframe.forms import render_form, render_redirect, render_delete_sqla
 
 from lastuserapp import app
-from lastuserapp.views.helpers import render_form, render_redirect, render_delete, requires_login
 from lastuserapp.models import (db, User, Client, Organization, Team, Permission,
     UserClientPermissions, TeamClientPermissions, Resource, ResourceAction, ClientTeamAccess,
     CLIENT_TEAM_ACCESS)
 from lastuserapp.forms import (RegisterClientForm, PermissionForm, UserPermissionAssignForm,
     TeamPermissionAssignForm, PermissionEditForm, ResourceForm, ResourceActionForm, ClientTeamAccessForm)
+from lastuserapp.views.helpers import requires_login
 
 # --- Routes: client apps -----------------------------------------------------
 
@@ -119,7 +120,7 @@ def client_delete(key):
     client = Client.query.filter_by(key=key).first_or_404()
     if not client.owner_is(g.user):
         abort(403)
-    return render_delete(client, title="Confirm delete", message="Delete application '%s'? " % client.title,
+    return render_delete_sqla(client, db, title="Confirm delete", message="Delete application '%s'? " % client.title,
         success="You have deleted application '%s' and all its associated permissions and resources" % client.title,
         next=url_for('client_list'))
 
@@ -190,7 +191,7 @@ def permission_delete(id):
     perm = Permission.query.get_or_404(id)
     if not perm.owner_is(g.user):
         abort(403)
-    return render_delete(perm, title="Confirm delete", message="Delete permission %s?" % perm.name,
+    return render_delete_sqla(perm, db, title="Confirm delete", message="Delete permission %s?" % perm.name,
         success="Your permission has been deleted",
         next=url_for('permission_list'))
 
@@ -300,14 +301,14 @@ def permission_user_delete(key, userid):
     if client.user:
         user = User.query.filter_by(userid=userid).first_or_404()
         permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
-        return render_delete(permassign, title="Confirm delete", message="Remove all permissions assigned to user %s for app '%s'?" % (
+        return render_delete_sqla(permassign, db, title="Confirm delete", message="Remove all permissions assigned to user %s for app '%s'?" % (
             (user.pickername), client.title),
             success="You have revoked permisions for user %s" % user.pickername,
             next=url_for('client_info', key=client.key))
     else:
         team = Team.query.filter_by(userid=userid).first_or_404()
         permassign = TeamClientPermissions.query.filter_by(team=team, client=client).first_or_404()
-        return render_delete(permassign, title="Confirm delete", message="Remove all permissions assigned to team '%s' for app '%s'?" % (
+        return render_delete_sqla(permassign, db, title="Confirm delete", message="Remove all permissions assigned to team '%s' for app '%s'?" % (
             (team.title), client.title),
             success="You have revoked permisions for team '%s'" % team.title,
             next=url_for('client_info', key=client.key))
@@ -366,7 +367,7 @@ def resource_delete(key, idr):
     resource = Resource.query.get_or_404(idr)
     if resource.client != client:
         abort(403)
-    return render_delete(resource, title="Confirm delete", message="Delete resource '%s' from app '%s'?" % (
+    return render_delete_sqla(resource, db, title="Confirm delete", message="Delete resource '%s' from app '%s'?" % (
         resource.title, client.title),
         success="You have deleted resource '%s' on app '%s'" % (resource.title, client.title),
         next=url_for('client_info', key=client.key))
@@ -435,7 +436,8 @@ def resource_action_delete(key, idr, ida):
     action = ResourceAction.query.get_or_404(ida)
     if action.resource != resource:
         abort(403)
-    return render_delete(action, title="Confirm delete", message="Delete action '%s' from resource '%s' of app '%s'?" % (
+    return render_delete_sqla(action, db, title="Confirm delete",
+        message="Delete action '%s' from resource '%s' of app '%s'?" % (
         action.title, resource.title, client.title),
         success="You have deleted action '%s' on resource '%s' of app '%s'" % (action.title, resource.title, client.title),
         next=url_for('client_info', key=client.key))

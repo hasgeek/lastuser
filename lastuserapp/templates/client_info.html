@@ -1,4 +1,4 @@
-{% extends "inc/layout.html" %}
+{% extends "layout.html" %}
 {% block title %}Client application information{% endblock %}
 {% block content %}
 <dl class="infobox">
@@ -38,7 +38,7 @@
 <p>
   This app provides the following resources and actions on resources.
 </p>
-<table class="listing">
+<table class="table table-condensed table-bordered">
   <thead>
     <tr>
       <th>#</th>
@@ -100,7 +100,7 @@
   <p>
     The following {% if client.user %}users{% else %}teams{% endif %} have permissions to this app.
   </p>
-  <table class="listing">
+  <table class="table table-condensed table-bordered">
     <thead>
       <tr>
         <th>#</th>
@@ -136,7 +136,7 @@
   <p>
     This application can manage access permissions per team. Select the organizations whose teams it has access to.
   </p>
-  <table class="listing">
+  <table class="table table-condensed table-bordered">
     <thead>
       <tr>
         <th>#</th>

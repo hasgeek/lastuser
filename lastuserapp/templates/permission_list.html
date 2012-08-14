@@ -1,19 +1,22 @@
-{% extends "inc/layout.html" %}
+{% extends "layout.html" %}
 {% block title %}List of permissions{% endblock %}
 
 {% block content %}
 <p>
-  LastUser can manage access permissions for client applications. Users can be assigned one or more permissions for each application. These
-  permissions are then passed on to the application when the user logs in. If you manage multiple applications, this is a useful way to define
-  access rights from a central location. LastUser can only manage site-level permissions at this time. Support for specifying access to a
-  specific context within each application is forthcoming.
+  Lastuser can manage access permissions for client applications. Users can be
+  assigned one or more permissions for each application. These permissions are
+  then passed on to the application when the user logs in. If you manage multiple
+  applications, this is a useful way to define access rights from a central
+  location. Lastuser can only manage site-level permissions at this time. Support
+  for specifying access to a specific context within each application is forthcoming.
 </p>
 <p>
-  This page lists the available permission <em>terms</em>. Some terms are generic enough to be pre-defined for all users. Others may be
-  specific to your applications and are therefore listed for you alone.
+  This page lists the available permission <em>terms</em>. Some terms are generic
+  enough to be pre-defined for all users. Others may be specific to your applications
+  and are therefore listed for you alone.
 </p>
 <h2>Global permissions</h2>
-<table class="listing">
+<table class="table">
   <thead>
     <tr>
       <th>#</th>
@@ -39,7 +42,7 @@
 </table>
 
 <h2>Your permissions</h2>
-<table class="listing">
+<table class="table">
   <thead>
     <tr>
       <th>#</th>

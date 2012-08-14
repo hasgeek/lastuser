@@ -1,0 +1,26 @@
+// Application stylesheets
+
+@import "compass"
+$color-outline: #b7b7b7 !default
+
+a.loginbutton
+  +inline-block
+  text-indent: -119988px
+  overflow: hidden
+  text-align: left
+  background-repeat: no-repeat
+  background-position: 50% 50%
+  width: 100px
+  height: 40px
+  border: 1px solid $color-outline
+  padding: 5px
+  +border-radius(3px)
+  +single-box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px)
+
+a.loginbutton:hover
+  +single-box-shadow(rgba(0, 0, 0, 0.3), 0, 1px, 5px)
+
+input[name="openid"]
+  background: image-url("openid.png") 4px no-repeat
+  width: 230px
+  padding-left: 25px

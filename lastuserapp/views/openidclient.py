@@ -2,11 +2,12 @@
 
 from flask import redirect, session, flash, url_for
 from flask.ext.openid import OpenID
+from coaster.views import get_next_url
 
 from lastuserapp import app
 from lastuserapp.mailclient import send_email_verify_link
 from lastuserapp.models import db, UserExternalId, UserEmail, UserEmailClaim
-from lastuserapp.views.helpers import login_internal, register_internal, get_next_url
+from lastuserapp.views.helpers import login_internal, register_internal
 
 oid = OpenID(app)
 

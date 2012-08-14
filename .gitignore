@@ -13,3 +13,7 @@ error.log
 .webassets-cache
 instance/development.py
 instance/production.py
+packed.css
+packed.js
+baseframe-packed.css
+baseframe-packed.js
