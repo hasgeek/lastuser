@@ -35,3 +35,9 @@ input[name="openid"] {
   width: 230px;
   padding-left: 25px;
 }
+
+.form-horizontal {
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
