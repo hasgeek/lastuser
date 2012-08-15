@@ -12,7 +12,7 @@ __all__ = ['User', 'UserEmail', 'UserEmailClaim', 'PasswordResetRequest', 'UserE
            'UserPhone', 'UserPhoneClaim', 'Team', 'Organization']
 
 
-class User(db.Model, BaseMixin):
+class User(BaseMixin, db.Model):
     __tablename__ = 'user'
     userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
     fullname = db.Column(db.Unicode(80), default=u'', nullable=False)
@@ -141,7 +141,7 @@ class User(db.Model, BaseMixin):
         return url_for('profile')
 
 
-class UserEmail(db.Model, BaseMixin):
+class UserEmail(BaseMixin, db.Model):
     __tablename__ = 'useremail'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
@@ -172,7 +172,7 @@ class UserEmail(db.Model, BaseMixin):
         return str(self.__unicode__())
 
 
-class UserEmailClaim(db.Model, BaseMixin):
+class UserEmailClaim(BaseMixin, db.Model):
     __tablename__ = 'useremailclaim'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
@@ -204,7 +204,7 @@ class UserEmailClaim(db.Model, BaseMixin):
         return str(self.__unicode__())
 
 
-class UserPhone(db.Model, BaseMixin):
+class UserPhone(BaseMixin, db.Model):
     __tablename__ = 'userphone'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
@@ -233,7 +233,7 @@ class UserPhone(db.Model, BaseMixin):
         return str(self.__unicode__())
 
 
-class UserPhoneClaim(db.Model, BaseMixin):
+class UserPhoneClaim(BaseMixin, db.Model):
     __tablename__ = 'userphoneclaim'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
@@ -263,7 +263,7 @@ class UserPhoneClaim(db.Model, BaseMixin):
         return str(self.__unicode__())
 
 
-class PasswordResetRequest(db.Model, BaseMixin):
+class PasswordResetRequest(BaseMixin, db.Model):
     __tablename__ = 'passwordresetrequest'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id)
@@ -274,7 +274,7 @@ class PasswordResetRequest(db.Model, BaseMixin):
         self.reset_code = newsecret()
 
 
-class UserExternalId(db.Model, BaseMixin):
+class UserExternalId(BaseMixin, db.Model):
     __tablename__ = 'userexternalid'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
@@ -299,7 +299,7 @@ team_membership = db.Table(
     )
 
 
-class Organization(db.Model, BaseMixin):
+class Organization(BaseMixin, db.Model):
     __tablename__ = 'organization'
     # owners_id cannot be null, but must be declared with nullable=True since there is
     # a circular dependency. The post_update flag on the relationship tackles the circular
@@ -354,7 +354,7 @@ class Organization(db.Model, BaseMixin):
         return [cta.client for cta in self.client_team_access if cta.access_level == CLIENT_TEAM_ACCESS.ALL]
 
 
-class Team(db.Model, BaseMixin):
+class Team(BaseMixin, db.Model):
     __tablename__ = 'team'
     #: Unique and non-changing id
     userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)

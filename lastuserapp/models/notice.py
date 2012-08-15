@@ -54,7 +54,7 @@ class ChannelSMS(Channel):
 
 # --- Models ------------------------------------------------------------------
 
-class SMSMessage(db.Model, BaseMixin):
+class SMSMessage(BaseMixin, db.Model):
     __tablename__ = 'smsmessage'
     # Phone number that the message was sent to
     phone_number = db.Column(db.String(15), nullable=False)

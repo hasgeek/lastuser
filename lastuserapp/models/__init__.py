@@ -1,25 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from flask.ext.sqlalchemy import SQLAlchemy
+from coaster.sqlalchemy import BaseMixin
 from lastuserapp import app
 
 db = SQLAlchemy(app)
-
-
-class IdMixin(object):
-    id = db.Column(db.Integer, primary_key=True)
-
-
-class TimestampMixin(object):
-    created_at = db.Column(db.DateTime, default=db.func.now(), nullable=False)
-    updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now(), nullable=False)
-
-
-class BaseMixin(IdMixin, TimestampMixin):
-    """
-    Base mixin class for all tables that adds id and timestamp columns
-    """
-    pass
 
 
 from lastuserapp.models.user import *

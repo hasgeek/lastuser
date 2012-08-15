@@ -5,7 +5,7 @@ from lastuserapp.models import db, BaseMixin
 from lastuserapp.models.user import User, Organization, Team
 
 
-class Client(db.Model, BaseMixin):
+class Client(BaseMixin, db.Model):
     """OAuth client applications"""
     __tablename__ = 'client'
     #: User who owns this client
@@ -74,7 +74,7 @@ class Client(db.Model, BaseMixin):
         return [cta.org for cta in self.org_team_access if cta.access_level == CLIENT_TEAM_ACCESS.ALL]
 
 
-class UserFlashMessage(db.Model, BaseMixin):
+class UserFlashMessage(BaseMixin, db.Model):
     """
     Saved messages for a user, to be relayed to trusted clients.
     """
@@ -87,7 +87,7 @@ class UserFlashMessage(db.Model, BaseMixin):
     message = db.Column(db.Unicode(250), nullable=False)
 
 
-class Resource(db.Model, BaseMixin):
+class Resource(BaseMixin, db.Model):
     """
     Resources are provided by client applications. Other client applications
     can request access to user data at resource servers by providing the
@@ -105,7 +105,7 @@ class Resource(db.Model, BaseMixin):
     trusted = db.Column(db.Boolean, default=False, nullable=False)
 
 
-class ResourceAction(db.Model, BaseMixin):
+class ResourceAction(BaseMixin, db.Model):
     """
     Actions that can be performed on resources. There should always be at minimum
     a 'read' action.
@@ -122,7 +122,7 @@ class ResourceAction(db.Model, BaseMixin):
     __table_args__ = (db.UniqueConstraint("name", "resource_id"), {})
 
 
-class AuthCode(db.Model, BaseMixin):
+class AuthCode(BaseMixin, db.Model):
     """Short-lived authorization tokens."""
     __tablename__ = 'authcode'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -151,7 +151,7 @@ class AuthCode(db.Model, BaseMixin):
         self.scope = list(set(self.scope).union(set(additional)))
 
 
-class AuthToken(db.Model, BaseMixin):
+class AuthToken(BaseMixin, db.Model):
     """Access tokens for access to data."""
     __tablename__ = 'authtoken'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Null for client-only tokens
@@ -217,7 +217,7 @@ class AuthToken(db.Model, BaseMixin):
     algorithm = db.synonym('_algorithm', descriptor=algorithm)
 
 
-class Permission(db.Model, BaseMixin):
+class Permission(BaseMixin, db.Model):
     __tablename__ = 'permission'
     #: User who created this permission
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
@@ -247,7 +247,7 @@ class Permission(db.Model, BaseMixin):
 
 
 # This model's name is in plural because it defines multiple permissions within each instance
-class UserClientPermissions(db.Model, BaseMixin):
+class UserClientPermissions(BaseMixin, db.Model):
     __tablename__ = 'userclientpermissions'
     #: User who has these permissions
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -278,7 +278,7 @@ class UserClientPermissions(db.Model, BaseMixin):
 
 
 # This model's name is in plural because it defines multiple permissions within each instance
-class TeamClientPermissions(db.Model, BaseMixin):
+class TeamClientPermissions(BaseMixin, db.Model):
     __tablename__ = 'teamclientpermissions'
     #: Team which has these permissions
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
@@ -314,7 +314,7 @@ class CLIENT_TEAM_ACCESS:
     PARTIAL = 2  # TODO: Not supported yet
 
 
-class ClientTeamAccess(db.Model, BaseMixin):
+class ClientTeamAccess(BaseMixin, db.Model):
     __tablename__ = 'clientteamaccess'
     #: Organization whose teams are exposed to the client app
     org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
@@ -327,7 +327,7 @@ class ClientTeamAccess(db.Model, BaseMixin):
     access_level = db.Column(db.Integer, default=CLIENT_TEAM_ACCESS.NONE, nullable=False)
 
 
-class NoticeType(db.Model, BaseMixin):
+class NoticeType(BaseMixin, db.Model):
     __tablename__ = 'noticetype'
     #: User who created this notice type
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
