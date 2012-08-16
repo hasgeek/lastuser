@@ -1,12 +1,8 @@
 {% extends "layout.html" %}
 {% block titletags -%}
-  <title>{{ config['SITE_TITLE'] }}</title>
+  <title>{% block title %}{{ config['SITE_TITLE'] }}{% endblock %}</title>
   <meta name="DC.title" content="{{ config['SITE_TITLE'] }}"/>
 {%- endblock %}
-
-{% block heading %}
-<h1>{{ config['SITE_TITLE'] }}</h1>
-{% endblock %}
 
 {% block content %}
 <p>
