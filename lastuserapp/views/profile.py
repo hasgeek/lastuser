@@ -28,10 +28,6 @@ def profile_edit():
     form.username.description = app.config.get('USERNAME_REASON')
     form.description.description = app.config.get('BIO_REASON')
     if form.validate_on_submit():
-        print form
-        print form.fullname.data
-        print form.username.data
-        print form.description.data
         form.populate_obj(g.user)
         db.session.commit()
 
