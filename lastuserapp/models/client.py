@@ -73,6 +73,16 @@ class Client(BaseMixin, db.Model):
         """
         return [cta.org for cta in self.org_team_access if cta.access_level == CLIENT_TEAM_ACCESS.ALL]
 
+    def permissions(self, user, inherited=None):
+        perms = super(Client, self).permissions(user, inherited)
+        perms.add('view')
+        if user and self.owner_is(user):
+            perms.add('edit')
+            perms.add('delete')
+            perms.add('assign-permissions')
+            perms.add('new-resource')
+        return perms
+
 
 class UserFlashMessage(BaseMixin, db.Model):
     """
@@ -104,6 +114,14 @@ class Resource(BaseMixin, db.Model):
     siteresource = db.Column(db.Boolean, default=False, nullable=False)
     trusted = db.Column(db.Boolean, default=False, nullable=False)
 
+    def permissions(self, user, inherited=None):
+        perms = super(Resource, self).permissions(user, inherited)
+        if user and self.client.owner_is(user):
+            perms.add('edit')
+            perms.add('delete')
+            perms.add('new-action')
+        return perms
+
 
 class ResourceAction(BaseMixin, db.Model):
     """
@@ -120,6 +138,13 @@ class ResourceAction(BaseMixin, db.Model):
 
     # Action names are unique per client app
     __table_args__ = (db.UniqueConstraint("name", "resource_id"), {})
+
+    def permissions(self, user, inherited=None):
+        perms = super(ResourceAction, self).permissions(user, inherited)
+        if user and self.resource.client.owner_is(user):
+            perms.add('edit')
+            perms.add('delete')
+        return perms
 
 
 class AuthCode(BaseMixin, db.Model):
@@ -244,6 +269,13 @@ class Permission(BaseMixin, db.Model):
             return self.user.pickername
         else:
             return self.org.pickername
+
+    def permissions(self, user, inherited=None):
+        perms = super(Permission, self).permissions(user, inherited)
+        if user and self.owner_is(user):
+            perms.add('edit')
+            perms.add('delete')
+        return perms
 
 
 # This model's name is in plural because it defines multiple permissions within each instance

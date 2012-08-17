@@ -2,8 +2,8 @@
 
 from datetime import datetime, timedelta
 import urlparse
-from flask import g, redirect, request, session, flash, render_template, url_for, abort, Markup, escape
-from coaster.views import get_next_url
+from flask import g, redirect, request, session, flash, render_template, url_for, Markup, escape
+from coaster.views import get_next_url, load_model
 from baseframe.forms import render_form, render_message, render_redirect
 
 from lastuserapp import app
@@ -11,7 +11,7 @@ from lastuserapp.views.openidclient import oid
 from lastuserapp.mailclient import send_email_verify_link, send_password_reset_link
 from lastuserapp.models import db, User, UserEmailClaim, PasswordResetRequest, Client
 from lastuserapp.forms import LoginForm, OpenIdForm, RegisterForm, PasswordResetForm, PasswordResetRequestForm
-from lastuserapp.views.helpers import login_internal, logout_internal, register_internal, requires_login
+from lastuserapp.views.helpers import login_internal, logout_internal, register_internal
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -22,7 +22,7 @@ def login():
         return redirect(get_next_url(referrer=True), code=303)
 
     loginform = LoginForm()
-    openidform = OpenIdForm(csrf_session_key='csrf_openid')
+    openidform = OpenIdForm()
 
     if request.method == 'GET':
         openidform.openid.data = 'http://'
@@ -40,7 +40,7 @@ def login():
                 session.permanent = True
             else:
                 session.permanent = False
-            flash('You are now logged in', category='info')
+            flash('You are now logged in', category='success')
             return render_redirect(get_next_url(), code=303)
     if request.is_xhr and formid == 'login':
         return render_template('forms/loginform.html', loginform=loginform, Markup=Markup)
@@ -64,7 +64,7 @@ def logout_user():
         return redirect(url_for('index'))
     else:
         logout_internal()
-        flash('You are now logged out', category='info')
+        flash('You are now logged out', category='success')
         return redirect(get_next_url())
 
 
@@ -124,41 +124,12 @@ def register():
         db.session.commit()
         send_email_verify_link(useremail)
         login_internal(user)
-        flash("You are now one of us. Welcome aboard!", category='info')
+        flash("You are now one of us. Welcome aboard!", category='success')
         if 'next' in request.args:
             return redirect(request.args['next'], code=303)
         else:
             return redirect(url_for('index'), code=303)
     return render_form(form=form, title='Register an account', formid='register', submit='Register')
-
-
-# FIXME: This should not be a GET request. Make it a POST. Autosubmit with JS to simplify UX
-@app.route('/confirm/<md5sum>/<secret>')
-@requires_login
-def confirm_email(md5sum, secret):
-    emailclaim = UserEmailClaim.query.filter_by(md5sum=md5sum).first()
-    if emailclaim is not None:
-        # Claim exists
-        if emailclaim.verification_code == secret:
-            # Verification code matches
-            if g.user == emailclaim.user:
-                # Not logged in as someone else
-                # Claim verified!
-                useremail = emailclaim.user.add_email(emailclaim.email, primary=emailclaim.user.email is None)
-                db.session.delete(emailclaim)
-                db.session.commit()
-                return render_message(title="Email address verified",
-                    message=Markup("Hello %s! Your email address <code>%s</code> has now been verified." % (
-                        escape(emailclaim.user.fullname), escape(useremail.email))))
-            else:
-                # Logged in as someone else. Abort
-                abort(403)
-        else:
-            # Verification code doesn't match
-            abort(403)
-    else:
-        # No such email claim
-        abort(404)
 
 
 @app.route('/reset', methods=['GET', 'POST'])
@@ -200,13 +171,12 @@ def reset():
     return render_form(form=form, title="Reset password", submit="Send reset code", ajax=True)
 
 
+# FIXME: Don't modify db on GET. Autosubmit via JS and process on POST
 @app.route('/reset/<userid>/<secret>', methods=['GET', 'POST'])
-def reset_email(userid, secret):
+@load_model(User, {'userid': 'userid'}, 'user', kwargs=True)
+def reset_email(user, kwargs):
     logout_internal()
-    user = User.query.filter_by(userid=userid).first()
-    if not user:
-        abort(404)
-    resetreq = PasswordResetRequest.query.filter_by(user=user, reset_code=secret).first()
+    resetreq = PasswordResetRequest.query.filter_by(user=user, reset_code=kwargs['secret']).first()
     if not resetreq:
         return render_message(title="Invalid reset link",
             message=Markup("The reset link you clicked on is invalid."))

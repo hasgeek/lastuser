@@ -64,3 +64,6 @@ SMS_SMSGUPSHUP_PASS = ''
 
 #: Messages (in markdown)
 MESSAGE_FOOTER = 'Copyright &copy; [HasGeek](http://hasgeek.com/). Powered by [Lastuser](https://github.com/hasgeek/lastuser "GitHub project page"), open source software from [HasGeek](https://github.com/hasgeek).'
+USERNAME_REASON = ''
+EMAIL_REASON = 'Please provide an email address to complete your profile'
+BIO_REASON = ''

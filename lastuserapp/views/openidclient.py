@@ -35,10 +35,12 @@ def login_openid_success(resp):
     if extid is not None:
         login_internal(extid.user)
         session['userid_external'] = {'service': service, 'userid': openid}
-        flash("You are now logged in", category='info')
-        return redirect(get_next_url())
+        flash("You are now logged in", category='success')
+        if not extid.user.email:
+            return redirect(url_for('profile_new', next=get_next_url()))
+        else:
+            return redirect(get_next_url())
     else:
-        firsttime = True
         username = None
         if resp.email:
             useremail = UserEmail.query.filter_by(email=resp.email).first()
@@ -48,7 +50,6 @@ def login_openid_success(resp):
                     # User logged in previously using a different Google OpenID endpoint
                     # Add this new endpoint to the existing user account
                     user = useremail.user
-                    firsttime = False
                 else:
                     # No previous record for email address, so register a new user
                     user = register_internal(None, resp.fullname or resp.nickname or openid, None)
@@ -92,9 +93,8 @@ def login_openid_success(resp):
         db.session.commit()
         login_internal(user)
         session['userid_external'] = {'service': service, 'userid': openid}
-        if firsttime:
-            flash("You are now logged in. This is your first time here, so please fill in a few details about yourself", category='info')
-            return redirect(url_for('profile_edit', _external=True, next=get_next_url()))
+        flash("You are now logged in.", category='success')
+        if not resp.email:
+            return redirect(url_for('profile_new', next=get_next_url()))
         else:
-            flash("You are now logged in.", category='info')
             return redirect(get_next_url())

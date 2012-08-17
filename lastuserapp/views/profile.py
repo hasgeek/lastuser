@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from flask import g, abort, flash, render_template, url_for, session
-from coaster.views import get_next_url
-from baseframe.forms import render_form, render_redirect, render_delete_sqla
+from flask import g, flash, render_template, url_for, session, Markup, escape
+from coaster.views import get_next_url, load_model
+from baseframe.forms import render_form, render_redirect, render_delete_sqla, render_message
 
 from lastuserapp import app
 from lastuserapp.models import db, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
@@ -10,7 +10,7 @@ from lastuserapp.mailclient import send_email_verify_link
 from lastuserapp.views.helpers import requires_login
 from lastuserapp.views.sms import send_phone_verify_code
 from lastuserapp.forms import (ProfileForm, PasswordResetForm, PasswordChangeForm, NewEmailAddressForm,
-    NewPhoneForm, VerifyPhoneForm)
+    NewPhoneForm, VerifyPhoneForm, ProfileNewForm)
 
 
 @app.route('/profile')
@@ -24,18 +24,49 @@ def profile():
 @requires_login
 def profile_edit():
     form = ProfileForm(obj=g.user)
-    form.edit_obj = g.user
+    form.fullname.description = app.config.get('FULLNAME_REASON')
+    form.username.description = app.config.get('USERNAME_REASON')
+    form.description.description = app.config.get('BIO_REASON')
     if form.validate_on_submit():
+        print form
+        print form.fullname.data
+        print form.username.data
+        print form.description.data
         form.populate_obj(g.user)
         db.session.commit()
 
-        next_url = get_next_url()
-        if next_url is not None:
-            return render_redirect(next_url)
-        else:
-            flash("Your profile was successfully edited.", category='info')
-            return render_redirect(url_for('profile'), code=303)
+        flash("Your profile was successfully edited.", category='success')
+        return render_redirect(url_for('profile'), code=303)
     return render_form(form, title="Edit profile", formid="profile_edit", submit="Save changes", ajax=True)
+
+
+@app.route('/profile/new', methods=['GET', 'POST'])
+@requires_login
+def profile_new():
+    form = ProfileNewForm(obj=g.user)
+    form.fullname.description = app.config.get('FULLNAME_REASON')
+    form.email.description = app.config.get('EMAIL_REASON')
+    form.username.description = app.config.get('USERNAME_REASON')
+    form.description.description = app.config.get('BIO_REASON')
+    if form.validate_on_submit():
+        # Can't auto-populate here because user.email is read-only
+        g.user.fullname = form.fullname.data
+        g.user.username = form.username.data
+        g.user.description = form.description.data
+        if form.existing_email is None:
+            useremail = UserEmailClaim(user=g.user, email=form.email.data)
+            db.session.add(useremail)
+            db.session.commit()
+            send_email_verify_link(useremail)
+            flash("Your profile was successfully updated. We sent you an email to confirm your address", category='success')
+        else:
+            db.session.commit()
+            flash("Your profile was successfully updated.", category='success')
+
+        return render_redirect(get_next_url(), code=303)
+    return render_form(form, title="Update profile", formid="profile_new", submit="Continue",
+        message=u"Hello, %s. Please spare a minute to fill out your profile." % g.user.fullname,
+        ajax=True)
 
 
 @app.route('/profile/password', methods=['GET', 'POST'])
@@ -48,7 +79,7 @@ def change_password():
     if form.validate_on_submit():
         g.user.password = form.password.data
         db.session.commit()
-        flash("Your new password has been saved.", category='info')
+        flash("Your new password has been saved.", category='success')
         return render_redirect(url_for('profile'), code=303)
     return render_form(form=form, title="Change password", formid="changepassword", submit="Change password", ajax=True)
 
@@ -62,7 +93,7 @@ def add_email():
         db.session.add(useremail)
         db.session.commit()
         send_email_verify_link(useremail)
-        flash("We sent you an email to confirm your address.", "info")
+        flash("We sent you an email to confirm your address.", 'success')
         return render_redirect(url_for('profile'), code=303)
     return render_form(form=form, title="Add an email address", formid="email_add", submit="Add email", ajax=True)
 
@@ -81,6 +112,34 @@ def remove_email(md5sum):
         next=url_for('profile'))
 
 
+@app.route('/confirm/<md5sum>/<secret>')
+@requires_login
+def confirm_email(md5sum, secret):
+    emailclaim = UserEmailClaim.query.filter_by(md5sum=md5sum, verification_code=secret).first()
+    if emailclaim is not None:
+        if 'verify' in emailclaim.permissions(g.user):
+            useremail = emailclaim.user.add_email(emailclaim.email, primary=emailclaim.user.email is None)
+            db.session.delete(emailclaim)
+            for claim in UserEmailClaim.query.filter_by(email=useremail.email).all():
+                db.session.delete(claim)
+            db.session.commit()
+            return render_message(title="Email address verified",
+                message=Markup("Hello %s! Your email address <code>%s</code> has now been verified." % (
+                    escape(emailclaim.user.fullname), escape(useremail.email))))
+        else:
+            return render_message(
+                title="That was not for you",
+                message=u"You’ve opened an email verification link that was meant for another user. "
+                    u"If you are managing multiple accounts, please login with the correct account "
+                    u"and open the link again.",
+                code=403)
+    else:
+        return render_message(
+            title="Expired confirmation link",
+            message="The confirmation link you clicked on is either invalid or has expired.",
+            code=404)
+
+
 @app.route('/profile/phone/new', methods=['GET', 'POST'])
 @requires_login
 def add_phone():
@@ -90,7 +149,7 @@ def add_phone():
         db.session.add(userphone)
         send_phone_verify_code(userphone)
         db.session.commit()
-        flash("We sent a verification code to your phone number.", "info")
+        flash("We sent a verification code to your phone number.", 'success')
         return render_redirect(url_for('verify_phone', number=userphone.phone), code=303)
     return render_form(form=form, title="Add a phone number", formid="phone_add", submit="Add phone", ajax=True)
 
@@ -108,10 +167,8 @@ def remove_phone(number):
 
 @app.route('/profile/phone/<number>/verify', methods=['GET', 'POST'])
 @requires_login
-def verify_phone(number):
-    phoneclaim = UserPhoneClaim.query.filter_by(phone=number).first_or_404()
-    if phoneclaim.user != g.user:
-        abort(403)
+@load_model(UserPhoneClaim, {'phone': 'number'}, 'phoneclaim', permission='verify')
+def verify_phone(phoneclaim):
     form = VerifyPhoneForm()
     form.phoneclaim = phoneclaim
     if form.validate_on_submit():
@@ -123,6 +180,6 @@ def verify_phone(number):
         db.session.add(userphone)
         db.session.delete(phoneclaim)
         db.session.commit()
-        flash("Your phone number has been verified.", "info")
+        flash("Your phone number has been verified.", 'success')
         return render_redirect(url_for('profile'), code=303)
     return render_form(form=form, title="Verify phone number", formid="phone_verify", submit="Verify", ajax=True)

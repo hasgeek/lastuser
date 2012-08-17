@@ -12,7 +12,7 @@ from lastuserapp.forms import AuthorizeForm
 from lastuserapp.utils import make_redirect_url
 from lastuserapp.views.helpers import requires_login, requires_client_login
 from lastuserapp.views.resource import get_userinfo
-from lastuserapp.views.registry import registry
+from lastuserapp.registry import registry
 
 
 class ScopeException(Exception):

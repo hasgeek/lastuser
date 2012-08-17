@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import g, request, render_template, url_for, flash, abort
+from coaster.views import load_model, load_models
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
 
 from lastuserapp import app
@@ -63,8 +64,8 @@ def client_new():
 
 
 @app.route('/apps/<key>')
-def client_info(key):
-    client = Client.query.filter_by(key=key).first_or_404()
+@load_model(Client, {'key': 'key'}, 'client', permission='view')
+def client_info(client):
     if client.user:
         permassignments = UserClientPermissions.query.filter_by(client=client).all()
     else:
@@ -77,13 +78,9 @@ def client_info(key):
 
 @app.route('/apps/<key>/edit', methods=['GET', 'POST'])
 @requires_login
-def client_edit(key):
-    client = Client.query.filter_by(key=key).first_or_404()
-    if not client.owner_is(g.user):
-        abort(403)
-
+@load_model(Client, {'key': 'key'}, 'client', permission='edit')
+def client_edit(client):
     form = RegisterClientForm(obj=client)
-    form.edit_obj = client
     form.client_owner.choices = available_client_owners()
     if request.method == 'GET':
         if client.user:
@@ -116,10 +113,8 @@ def client_edit(key):
 
 @app.route('/apps/<key>/delete', methods=['GET', 'POST'])
 @requires_login
-def client_delete(key):
-    client = Client.query.filter_by(key=key).first_or_404()
-    if not client.owner_is(g.user):
-        abort(403)
+@load_model(Client, {'key': 'key'}, 'client', permission='delete')
+def client_delete(client):
     return render_delete_sqla(client, db, title="Confirm delete", message="Delete application '%s'? " % client.title,
         success="You have deleted application '%s' and all its associated permissions and resources" % client.title,
         next=url_for('client_list'))
@@ -154,7 +149,7 @@ def permission_new():
         perm.allusers = False
         db.session.add(perm)
         db.session.commit()
-        flash("Your new permission has been defined", "info")
+        flash("Your new permission has been defined", 'success')
         return render_redirect(url_for('permission_list'), code=303)
     return render_form(form=form, title="Define a new permission", formid="perm_new",
         submit="Define new permission", ajax=True)
@@ -162,13 +157,10 @@ def permission_new():
 
 @app.route('/perms/<int:id>/edit', methods=['GET', 'POST'])
 @requires_login
-def permission_edit(id):
-    perm = Permission.query.get_or_404(id)
-    if not perm.owner_is(g.user):
-        abort(403)
+@load_model(Permission, {'id': 'id'}, 'perm', permission='edit')
+def permission_edit(perm):
     form = PermissionForm(obj=perm)
     form.context.choices = available_client_owners()
-    form.edit_obj = perm
     if request.method == 'GET':
         if perm.user:
             form.context.data = perm.user.userid
@@ -179,7 +171,7 @@ def permission_edit(id):
         perm.user = form.user
         perm.org = form.org
         db.session.commit()
-        flash("Your permission has been saved", "info")
+        flash("Your permission has been saved", 'success')
         return render_redirect(url_for('permission_list'), code=303)
     return render_form(form=form, title="Edit permission", formid="perm_edit",
         submit="Save changes", ajax=True)
@@ -187,10 +179,8 @@ def permission_edit(id):
 
 @app.route('/perms/<int:id>/delete', methods=['GET', 'POST'])
 @requires_login
-def permission_delete(id):
-    perm = Permission.query.get_or_404(id)
-    if not perm.owner_is(g.user):
-        abort(403)
+@load_model(Permission, {'id': 'id'}, 'perm', permission='delete')
+def permission_delete(perm):
     return render_delete_sqla(perm, db, title="Confirm delete", message="Delete permission %s?" % perm.name,
         success="Your permission has been deleted",
         next=url_for('permission_list'))
@@ -201,10 +191,8 @@ def permission_delete(id):
 
 @app.route('/apps/<key>/perms/new', methods=['GET', 'POST'])
 @requires_login
-def permission_user_new(key):
-    client = Client.query.filter_by(key=key).first_or_404()
-    if not client.owner_is(g.user):
-        abort(403)
+@load_model(Client, {'key': 'key'}, 'client', permission='assign-permissions')
+def permission_user_new(client):
     if client.user:
         available_perms = Permission.query.filter(db.or_(
             Permission.allusers == True,
@@ -240,27 +228,25 @@ def permission_user_new(key):
         permassign.permissions = u' '.join(sorted(perms))
         db.session.commit()
         if client.user:
-            flash("Permissions have been assigned to user %s" % form.user.pickername, "info")
+            flash("Permissions have been assigned to user %s" % form.user.pickername, 'success')
         else:
-            flash("Permissions have been assigned to team '%s'" % permassign.team.pickername, "info")
-        return render_redirect(url_for('client_info', key=key), code=303)
+            flash("Permissions have been assigned to team '%s'" % permassign.team.pickername, 'success')
+        return render_redirect(url_for('client_info', key=client.key), code=303)
     return render_form(form=form, title="Assign permissions", formid="perm_assign", submit="Assign permissions", ajax=True)
 
 
 @app.route('/apps/<key>/perms/<userid>/edit', methods=['GET', 'POST'])
 @requires_login
-def permission_user_edit(key, userid):
-    client = Client.query.filter_by(key=key).first_or_404()
-    if not client.owner_is(g.user):
-        abort(403)
+@load_model(Client, {'key': 'key'}, 'client', permission='assign-permissions', kwargs=True)
+def permission_user_edit(client, kwargs):
     if client.user:
-        user = User.query.filter_by(userid=userid).first_or_404()
+        user = User.query.filter_by(userid=kwargs['userid']).first_or_404()
         available_perms = Permission.query.filter(db.or_(
             Permission.allusers == True,
             Permission.user == g.user)).order_by('name').all()
         permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
     elif client.org:
-        team = Team.query.filter_by(userid=userid).first_or_404()
+        team = Team.query.filter_by(userid=kwargs['userid']).first_or_404()
         available_perms = Permission.query.filter(db.or_(
             Permission.allusers == True,
             Permission.org == client.org)).order_by('name').all()
@@ -280,33 +266,31 @@ def permission_user_edit(key, userid):
         db.session.commit()
         if perms:
             if client.user:
-                flash("Permissions have been updated for user %s" % user.pickername, "info")
+                flash("Permissions have been updated for user %s" % user.pickername, 'success')
             else:
-                flash("Permissions have been updated for team '%s'" % team.title, "info")
+                flash("Permissions have been updated for team '%s'" % team.title, 'success')
         else:
             if client.user:
-                flash("All permissions have been revoked for user %s" % user.pickername, "info")
+                flash("All permissions have been revoked for user %s" % user.pickername, 'success')
             else:
-                flash("All permissions have been revoked for team '%s'" % team.title, "info")
-        return render_redirect(url_for('client_info', key=key), code=303)
+                flash("All permissions have been revoked for team '%s'" % team.title, 'success')
+        return render_redirect(url_for('client_info', key=client.key), code=303)
     return render_form(form=form, title="Edit permissions", formid="perm_edit", submit="Save changes", ajax=True)
 
 
 @app.route('/apps/<key>/perms/<userid>/delete', methods=['GET', 'POST'])
 @requires_login
-def permission_user_delete(key, userid):
-    client = Client.query.filter_by(key=key).first_or_404()
-    if not client.owner_is(g.user):
-        abort(403)
+@load_model(Client, {'key': 'key'}, 'client', permission='assign-permissions', kwargs=True)
+def permission_user_delete(client, kwargs):
     if client.user:
-        user = User.query.filter_by(userid=userid).first_or_404()
+        user = User.query.filter_by(userid=kwargs['userid']).first_or_404()
         permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
         return render_delete_sqla(permassign, db, title="Confirm delete", message="Remove all permissions assigned to user %s for app '%s'?" % (
             (user.pickername), client.title),
             success="You have revoked permisions for user %s" % user.pickername,
             next=url_for('client_info', key=client.key))
     else:
-        team = Team.query.filter_by(userid=userid).first_or_404()
+        team = Team.query.filter_by(userid=kwargs['userid']).first_or_404()
         permassign = TeamClientPermissions.query.filter_by(team=team, client=client).first_or_404()
         return render_delete_sqla(permassign, db, title="Confirm delete", message="Remove all permissions assigned to team '%s' for app '%s'?" % (
             (team.title), client.title),
@@ -318,10 +302,8 @@ def permission_user_delete(key, userid):
 
 @app.route('/apps/<key>/resources/new', methods=['GET', 'POST'])
 @requires_login
-def resource_new(key):
-    client = Client.query.filter_by(key=key).first_or_404()
-    if not client.owner_is(g.user):
-        abort(403)
+@load_model(Client, {'key': 'key'}, 'client', permission='new-resource')
+def resource_new(client):
     form = ResourceForm()
     form.edit_id = None
     if form.validate_on_submit():
@@ -329,44 +311,34 @@ def resource_new(key):
         form.populate_obj(resource)
         db.session.add(resource)
         db.session.commit()
-        flash("Your new resource has been saved", "info")
-        return render_redirect(url_for('client_info', key=key), code=303)
+        flash("Your new resource has been saved", 'success')
+        return render_redirect(url_for('client_info', key=client.key), code=303)
     return render_form(form=form, title="Define a resource", formid="resource_new", submit="Define resource", ajax=True)
 
 
 @app.route('/apps/<key>/resources/<int:idr>/edit', methods=['GET', 'POST'])
 @requires_login
-def resource_edit(key, idr):
-    client = Client.query.filter_by(key=key).first_or_404()
-    if not client.owner_is(g.user):
-        abort(403)
-    resource = Resource.query.get_or_404(idr)
-    if resource.client != client:
-        abort(403)
-    form = ResourceForm()
-    form.edit_id = idr
-    if request.method == 'GET':
-        form.name.data = resource.name
-        form.title.data = resource.title
-        form.description.data = resource.description
-        form.siteresource.data = resource.siteresource
+@load_models(
+    (Client, {'key': 'key'}, 'client'),
+    (Resource, {'id': 'idr', 'client': 'client'}, 'resource'),
+    permission='edit')
+def resource_edit(client, resource):
+    form = ResourceForm(obj=resource)
     if form.validate_on_submit():
         form.populate_obj(resource)
         db.session.commit()
-        flash("Your resource has been edited", "info")
-        return render_redirect(url_for('client_info', key=key), code=303)
+        flash("Your resource has been edited", 'success')
+        return render_redirect(url_for('client_info', key=client.key), code=303)
     return render_form(form=form, title="Edit resource", formid="resource_edit", submit="Save changes", ajax=True)
 
 
 @app.route('/apps/<key>/resources/<int:idr>/delete', methods=['GET', 'POST'])
 @requires_login
-def resource_delete(key, idr):
-    client = Client.query.filter_by(key=key).first_or_404()
-    if not client.owner_is(g.user):
-        abort(403)
-    resource = Resource.query.get_or_404(idr)
-    if resource.client != client:
-        abort(403)
+@load_models(
+    (Client, {'key': 'key'}, 'client'),
+    (Resource, {'id': 'idr', 'client': 'client'}, 'resource'),
+    permission='delete')
+def resource_delete(client, resource):
     return render_delete_sqla(resource, db, title="Confirm delete", message="Delete resource '%s' from app '%s'?" % (
         resource.title, client.title),
         success="You have deleted resource '%s' on app '%s'" % (resource.title, client.title),
@@ -377,13 +349,11 @@ def resource_delete(key, idr):
 
 @app.route('/apps/<key>/resources/<int:idr>/actions/new', methods=['GET', 'POST'])
 @requires_login
-def resource_action_new(key, idr):
-    client = Client.query.filter_by(key=key).first_or_404()
-    if not client.owner_is(g.user):
-        abort(403)
-    resource = Resource.query.get_or_404(idr)
-    if resource.client != client:
-        abort(403)
+@load_models(
+    (Client, {'key': 'key'}, 'client'),
+    (Resource, {'id': 'idr', 'client': 'client'}, 'resource'),
+    permission='new-action')
+def resource_action_new(client, resource):
     form = ResourceActionForm()
     form.edit_id = None
     form.edit_resource = resource
@@ -392,50 +362,37 @@ def resource_action_new(key, idr):
         form.populate_obj(action)
         db.session.add(action)
         db.session.commit()
-        flash("Your new action has been saved", "info")
-        return render_redirect(url_for('client_info', key=key), code=303)
+        flash("Your new action has been saved", 'success')
+        return render_redirect(url_for('client_info', key=client.key), code=303)
     return render_form(form=form, title="Define an action", formid="action_new", submit="Define action", ajax=True)
 
 
 @app.route('/apps/<key>/resources/<int:idr>/actions/<int:ida>/edit', methods=['GET', 'POST'])
 @requires_login
-def resource_action_edit(key, idr, ida):
-    client = Client.query.filter_by(key=key).first_or_404()
-    if not client.owner_is(g.user):
-        abort(403)
-    resource = Resource.query.get_or_404(idr)
-    if resource.client != client:
-        abort(404)
-    action = ResourceAction.query.get_or_404(ida)
-    if action.resource != resource:
-        abort(404)
-    form = ResourceActionForm()
-    form.edit_id = ida
+@load_models(
+    (Client, {'key': 'key'}, 'client'),
+    (Resource, {'id': 'idr', 'client': 'client'}, 'resource'),
+    (ResourceAction, {'id': 'ida', 'resource': 'resource'}, 'action'),
+    permission='edit')
+def resource_action_edit(client, resource, action):
+    form = ResourceActionForm(obj=action)
     form.edit_resource = resource
-    if request.method == 'GET':
-        form.name.data = action.name
-        form.title.data = action.title
-        form.description.data = action.description
     if form.validate_on_submit():
         form.populate_obj(action)
         db.session.commit()
-        flash("Your action has been edited", "info")
-        return render_redirect(url_for('client_info', key=key), code=303)
+        flash("Your action has been edited", 'success')
+        return render_redirect(url_for('client_info', key=client.key), code=303)
     return render_form(form=form, title="Edit action", formid="action_edit", submit="Save changes", ajax=True)
 
 
 @app.route('/apps/<key>/resources/<int:idr>/actions/<int:ida>/delete', methods=['GET', 'POST'])
 @requires_login
-def resource_action_delete(key, idr, ida):
-    client = Client.query.filter_by(key=key).first_or_404()
-    if not client.owner_is(g.user):
-        abort(403)
-    resource = Resource.query.get_or_404(idr)
-    if resource.client != client:
-        abort(403)
-    action = ResourceAction.query.get_or_404(ida)
-    if action.resource != resource:
-        abort(403)
+@load_models(
+    (Client, {'key': 'key'}, 'client'),
+    (Resource, {'id': 'idr', 'client': 'client'}, 'resource'),
+    (ResourceAction, {'id': 'ida', 'resource': 'resource'}, 'action'),
+    permission='delete')
+def resource_action_delete(client, resource, action):
     return render_delete_sqla(action, db, title="Confirm delete",
         message="Delete action '%s' from resource '%s' of app '%s'?" % (
         action.title, resource.title, client.title),
@@ -447,8 +404,8 @@ def resource_action_delete(key, idr, ida):
 
 @app.route('/apps/<key>/teams', methods=['GET', 'POST'])
 @requires_login
-def client_team_access(key):
-    client = Client.query.filter_by(key=key).first_or_404()
+@load_model(Client, {'key': 'key'}, 'client')
+def client_team_access(client):
     form = ClientTeamAccessForm()
     user_orgs = g.user.organizations_owned()
     form.organizations.choices = [(org.userid, org.title) for org in user_orgs]
@@ -468,6 +425,6 @@ def client_team_access(key):
             cta = ClientTeamAccess(org=org, client=client, access_level=CLIENT_TEAM_ACCESS.ALL)
             db.session.add(cta)
         db.session.commit()
-        flash("You have assigned access to teams in your organizations for this app.", "info")
-        return render_redirect(url_for('client_info', key=key), code=303)
+        flash("You have assigned access to teams in your organizations for this app.", 'success')
+        return render_redirect(url_for('client_info', key=client.key), code=303)
     return render_form(form=form, title="Select organizations", submit="Save", ajax=True)

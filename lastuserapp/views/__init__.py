@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import lastuserapp.views.registry
 import lastuserapp.views.helpers
 import lastuserapp.views.index
 import lastuserapp.views.login

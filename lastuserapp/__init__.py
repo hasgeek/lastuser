@@ -47,6 +47,7 @@ for msg in __MESSAGES:
     app.config[msg] = Markup(markdown(app.config.get(msg, '')))
 
 
+import lastuserapp.registry
 import lastuserapp.mailclient
 import lastuserapp.models
 import lastuserapp.forms

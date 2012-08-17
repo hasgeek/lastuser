@@ -2,6 +2,7 @@
 
 from flask import g, render_template, url_for, abort, redirect
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
+from coaster.views import load_model, load_models
 
 from lastuserapp import app
 from lastuserapp.views.helpers import requires_login
@@ -21,7 +22,6 @@ def org_list():
 @requires_login
 def org_new():
     form = OrganizationForm()
-    form.edit_obj = None
     if form.validate_on_submit():
         org = Organization()
         form.populate_obj(org)
@@ -34,21 +34,16 @@ def org_new():
 
 @app.route('/organizations/<name>')
 @requires_login
-def org_info(name):
-    org = Organization.query.filter_by(name=name).first_or_404()
-    if g.user not in org.owners.users:
-        abort(403)
+@load_model(Organization, {'name': 'name'}, 'org', permission='view')
+def org_info(org):
     return render_template('org_info.html', org=org)
 
 
 @app.route('/organizations/<name>/edit', methods=['GET', 'POST'])
 @requires_login
-def org_edit(name):
-    org = Organization.query.filter_by(name=name).first_or_404()
-    if g.user not in org.owners.users:
-        abort(403)
+@load_model(Organization, {'name': 'name'}, 'org', permission='edit')
+def org_edit(org):
     form = OrganizationForm(obj=org)
-    form.edit_obj = org
     if form.validate_on_submit():
         form.populate_obj(org)
         db.session.commit()
@@ -58,10 +53,8 @@ def org_edit(name):
 
 @app.route('/organizations/<name>/delete', methods=['GET', 'POST'])
 @requires_login
-def org_delete(name):
-    org = Organization.query.filter_by(name=name).first_or_404()
-    if g.user not in org.owners.users:
-        abort(403)
+@load_model(Organization, {'name': 'name'}, 'org', permission='delete')
+def org_delete(org):
     return render_delete_sqla(org, db, title="Confirm delete", message="Delete organization '%s'? " % org.title,
         success="You have deleted organization '%s' and all its associated teams." % org.title,
         next=url_for('org_list'))
@@ -69,20 +62,16 @@ def org_delete(name):
 
 @app.route('/organizations/<name>/teams')
 @requires_login
-def team_list(name):
-    org = Organization.query.filter_by(name=name).first_or_404()
-    if g.user not in org.owners.users:
-        abort(403)
+@load_model(Organization, {'name': 'name'}, 'org', permission='view-teams')
+def team_list(org):
     # There's no separate teams page at the moment
     return redirect(url_for('org_info', name=org.name))
 
 
 @app.route('/organizations/<name>/teams/new', methods=['GET', 'POST'])
 @requires_login
-def team_new(name):
-    org = Organization.query.filter_by(name=name).first_or_404()
-    if g.user not in org.owners.users:
-        abort(403)
+@load_model(Organization, {'name': 'name'}, 'org', permission='new-team')
+def team_new(org):
     form = TeamForm()
     if form.validate_on_submit():
         team = Team(org=org)
@@ -95,13 +84,13 @@ def team_new(name):
 
 @app.route('/organizations/<name>/teams/<userid>', methods=['GET', 'POST'])
 @requires_login
-def team_edit(name, userid):
-    org = Organization.query.filter_by(name=name).first_or_404()
-    if g.user not in org.owners.users:
-        abort(403)
-    team = Team.query.filter_by(org=org, userid=userid).first_or_404()
+@load_models(
+    (Organization, {'name': 'name'}, 'org'),
+    (Team, {'org': 'org', 'userid': 'userid'}, 'team'),
+    permission='edit'
+    )
+def team_edit(org, team):
     form = TeamForm(obj=team)
-    form.edit_obj = team
     if form.validate_on_submit():
         form.populate_obj(team)
         db.session.commit()
@@ -111,11 +100,12 @@ def team_edit(name, userid):
 
 @app.route('/organizations/<name>/teams/<userid>/delete', methods=['GET', 'POST'])
 @requires_login
-def team_delete(name, userid):
-    org = Organization.query.filter_by(name=name).first_or_404()
-    if g.user not in org.owners.users:
-        abort(403)
-    team = Team.query.filter_by(org=org, userid=userid).first_or_404()
+@load_models(
+    (Organization, {'name': 'name'}, 'org'),
+    (Team, {'org': 'org', 'userid': 'userid'}, 'team'),
+    permission='delete'
+    )
+def team_delete(org, team):
     if team == org.owners:
         abort(403)
     return render_delete_sqla(team, db, title=u"Confirm delete", message=u"Delete team '%s'?" % team.title,

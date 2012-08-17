@@ -38,7 +38,9 @@ class User(BaseMixin, db.Model):
 
     @username.setter
     def username(self, value):
-        if self.valid_username(value):
+        if value is None:
+            self._username = None
+        elif self.valid_username(value):
             self._username = value
 
     def valid_username(self, value):
@@ -203,6 +205,12 @@ class UserEmailClaim(BaseMixin, db.Model):
     def __str__(self):
         return str(self.__unicode__())
 
+    def permissions(self, user, inherited=None):
+        perms = super(UserEmailClaim, self).permissions(user, inherited)
+        if user and user == self.user:
+            perms.add('verify')
+        return perms
+
 
 class UserPhone(BaseMixin, db.Model):
     __tablename__ = 'userphone'
@@ -261,6 +269,12 @@ class UserPhoneClaim(BaseMixin, db.Model):
 
     def __str__(self):
         return str(self.__unicode__())
+
+    def permissions(self, user, inherited=None):
+        perms = super(UserPhoneClaim, self).permissions(user, inherited)
+        if user and user == self.user:
+            perms.add('verify')
+        return perms
 
 
 class PasswordResetRequest(BaseMixin, db.Model):
@@ -353,6 +367,23 @@ class Organization(BaseMixin, db.Model):
         from lastuserapp.models.client import CLIENT_TEAM_ACCESS
         return [cta.client for cta in self.client_team_access if cta.access_level == CLIENT_TEAM_ACCESS.ALL]
 
+    def permissions(self, user, inherited=None):
+        perms = super(Organization, self).permissions(user, inherited)
+        if user and user in self.owners.users:
+            perms.add('view')
+            perms.add('edit')
+            perms.add('delete')
+            perms.add('view-teams')
+            perms.add('new-team')
+        else:
+            if 'view' in perms:
+                perms.remove('view')
+            if 'edit' in perms:
+                perms.remove('edit')
+            if 'delete' in perms:
+                perms.remove('delete')
+        return perms
+
 
 class Team(BaseMixin, db.Model):
     __tablename__ = 'team'
@@ -373,3 +404,10 @@ class Team(BaseMixin, db.Model):
     @property
     def pickername(self):
         return self.title
+
+    def permissions(self, user, inherited=None):
+        perms = super(Team, self).permissions(user, inherited)
+        if user and user in self.org.owners.users:
+            perms.add('edit')
+            perms.add('delete')
+        return perms

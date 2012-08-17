@@ -1,19 +1,21 @@
 # -*- coding: utf-8 -*-
 from flask import g
 import flask.ext.wtf as wtf
+from baseframe.forms import Form
 from coaster import valid_username
 
 from lastuserapp.models import Permission, Resource, ResourceAction, getuser, Organization
+from lastuserapp.registry import registry
 
 
-class AuthorizeForm(wtf.Form):
+class AuthorizeForm(Form):
     """
     OAuth authorization form. Has no fields and is only used for CSRF protection.
     """
     pass
 
 
-class ConfirmDeleteForm(wtf.Form):
+class ConfirmDeleteForm(Form):
     """
     Confirm a delete operation
     """
@@ -21,7 +23,7 @@ class ConfirmDeleteForm(wtf.Form):
     cancel = wtf.SubmitField('Cancel')
 
 
-class RegisterClientForm(wtf.Form):
+class RegisterClientForm(Form):
     """
     Register a new OAuth client application
     """
@@ -66,7 +68,7 @@ class RegisterClientForm(wtf.Form):
             self.org = orgs[0]
 
 
-class PermissionForm(wtf.Form):
+class PermissionForm(Form):
     """
     Create or edit a permission
     """
@@ -90,14 +92,8 @@ class PermissionForm(wtf.Form):
         if not valid_username(self.name.data):
             raise wtf.ValidationError("Name contains invalid characters")
 
-        edit_obj = getattr(self, 'edit_obj', None)
-        if edit_obj:
-            edit_id = edit_obj.id
-        else:
-            edit_id = None
-
         existing = Permission.query.filter_by(name=self.name.data, allusers=True).first()
-        if existing and existing.id != edit_id:
+        if existing and existing.id != self.edit_id:
             self.name.errors.append("A global permission with that name already exists")
             return False
 
@@ -109,7 +105,7 @@ class PermissionForm(wtf.Form):
                 existing = Permission.query.filter_by(name=self.name.data, org=org).first()
             else:
                 existing = None
-        if existing and existing.id != edit_id:
+        if existing and existing.id != self.edit_id:
             self.name.errors.append("You have another permission with the same name")
             return False
 
@@ -127,7 +123,7 @@ class PermissionForm(wtf.Form):
             self.org = orgs[0]
 
 
-class UserPermissionAssignForm(wtf.Form):
+class UserPermissionAssignForm(Form):
     """
     Assign permissions to a user
     """
@@ -142,7 +138,7 @@ class UserPermissionAssignForm(wtf.Form):
         self.user = existing
 
 
-class TeamPermissionAssignForm(wtf.Form):
+class TeamPermissionAssignForm(Form):
     """
     Assign permissions to a team
     """
@@ -157,14 +153,14 @@ class TeamPermissionAssignForm(wtf.Form):
         self.team = teams[0]
 
 
-class PermissionEditForm(wtf.Form):
+class PermissionEditForm(Form):
     """
     Edit a user or team's permissions
     """
     perms = wtf.SelectMultipleField("Permissions", validators=[wtf.Required()])
 
 
-class ResourceForm(wtf.Form):
+class ResourceForm(Form):
     """
     Edit a resource provided by an application
     """
@@ -186,12 +182,15 @@ class ResourceForm(wtf.Form):
         if not valid_username(field.data):
             raise wtf.ValidationError("Name contains invalid characters.")
 
+        if field.data in registry:
+            raise wtf.ValidationError("This name is reserved for internal use")
+
         existing = Resource.query.filter_by(name=field.data).first()
         if existing and existing.id != self.edit_id:
             raise wtf.ValidationError("A resource with that name already exists")
 
 
-class ResourceActionForm(wtf.Form):
+class ResourceActionForm(Form):
     """
     Edit an action associated with a resource
     """
@@ -215,7 +214,7 @@ class ResourceActionForm(wtf.Form):
             raise wtf.ValidationError("An action with that name already exists for this resource")
 
 
-class ClientTeamAccessForm(wtf.Form):
+class ClientTeamAccessForm(Form):
     """
     Select organizations that the client has access to the teams of
     """

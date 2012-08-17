@@ -7,7 +7,7 @@ from lastuserapp import app
 from lastuserapp.models import (getuser, User, Organization, AuthToken, Resource, ResourceAction,
     UserClientPermissions, TeamClientPermissions)
 from lastuserapp.views.helpers import requires_client_login
-from lastuserapp.views.registry import registry
+from lastuserapp.registry import registry
 
 
 def get_userinfo(user, client, scope=[], get_permissions=True):
