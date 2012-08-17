@@ -2,7 +2,6 @@
 
 __version__ = '0.1'
 
-from os import environ
 from flask import Flask, Markup
 from flask.ext.assets import Environment, Bundle
 from markdown import markdown
