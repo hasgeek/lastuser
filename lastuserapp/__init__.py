@@ -52,5 +52,3 @@ import lastuserapp.mailclient
 import lastuserapp.models
 import lastuserapp.forms
 import lastuserapp.views
-if environ['LASTUSER_ENV'] == 'production':
-    import lastuserapp.loghandler
