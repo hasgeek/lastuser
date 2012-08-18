@@ -37,9 +37,9 @@ def login_openid_success(resp):
         session['userid_external'] = {'service': service, 'userid': openid}
         flash("You are now logged in", category='success')
         if not extid.user.email:
-            return redirect(url_for('profile_new', next=get_next_url()))
+            return redirect(url_for('profile_new', next=get_next_url(session=True)))
         else:
-            return redirect(get_next_url())
+            return redirect(get_next_url(session=True))
     else:
         username = None
         if resp.email:
@@ -95,6 +95,6 @@ def login_openid_success(resp):
         session['userid_external'] = {'service': service, 'userid': openid}
         flash("You are now logged in.", category='success')
         if not resp.email:
-            return redirect(url_for('profile_new', next=get_next_url()))
+            return redirect(url_for('profile_new', next=get_next_url(session=True)))
         else:
-            return redirect(get_next_url())
+            return redirect(get_next_url(session=True))

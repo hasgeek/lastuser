@@ -75,7 +75,7 @@ def login_twitter_authorized(resp):
     if resp is None:
         flash(u'You denied the request to login via Twitter.', 'error')
         return redirect(url_for('login'))
-    next_url = get_next_url()
+    next_url = get_next_url(session=True)
 
     # Try to read more from the user's Twitter profile
     try:
@@ -124,7 +124,7 @@ def login_github():
 
 @app.route('/login/github/callback')
 def login_github_authorized():
-    next_url = get_next_url()
+    next_url = get_next_url(session=True)
 
     if request.args.get('error'):
         if request.args['error'] == 'user_denied':

@@ -2,12 +2,13 @@ Flask
 markdown
 Flask-Assets
 Flask-Mail
-Flask-Sqlalchemy
+Flask-SQLAlchemy
 jsmin
-Flask-Wtf
+Flask-WTF
 Flask-OpenID
 Flask-Oauth
 pytz
 ordereddict
 https://github.com/hasgeek/coaster/zipball/master
 https://github.com/hasgeek/baseframe/zipball/master
+requests

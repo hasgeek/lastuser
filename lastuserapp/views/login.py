@@ -41,7 +41,7 @@ def login():
             else:
                 session.permanent = False
             flash('You are now logged in', category='success')
-            return render_redirect(get_next_url(), code=303)
+            return render_redirect(get_next_url(session=True), code=303)
     if request.is_xhr and formid == 'login':
         return render_template('forms/loginform.html', loginform=loginform, Markup=Markup)
     else:

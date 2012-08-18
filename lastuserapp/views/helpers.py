@@ -1,14 +1,11 @@
 import os
 from functools import wraps
-import urlparse
 from urllib2 import urlopen, URLError
 
-from flask import (g, request, session, flash, redirect, url_for, render_template,
-    Markup, escape, json, abort, Response)
-
+from flask import g, request, session, flash, redirect, url_for, json, Response
+from coaster.views import get_current_url
 from lastuserapp import app
 from lastuserapp.models import db, User, Client
-from lastuserapp.forms import ConfirmDeleteForm
 
 
 @app.before_request
@@ -73,7 +70,7 @@ def requires_login(f):
     def decorated_function(*args, **kwargs):
         if g.user is None:
             flash(u"You need to be logged in for that page", "info")
-            session['next'] = request.url
+            session['next'] = get_current_url()
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
