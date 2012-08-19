@@ -116,6 +116,9 @@ def logout():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
+    form.fullname.description = app.config.get('FULLNAME_REASON')
+    form.email.description = app.config.get('EMAIL_REASON')
+    form.username.description = app.config.get('USERNAME_REASON')
     if form.validate_on_submit():
         user = register_internal(None, form.fullname.data, form.password.data)
         user.username = form.username.data or None
