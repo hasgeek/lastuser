@@ -114,7 +114,7 @@
       <tr>
         <td>{{ loop.index }}</td>
         <td>{{ pa.pickername }}</td>
-        <td>{{ pa.permissions }}</td>
+        <td>{{ pa.access_permissions }}</td>
         <td><a href="{{ url_for('permission_user_edit', key=client.key, userid=pa.userid) }}">Edit</a></td>
         <td><a href="{{ url_for('permission_user_delete', key=client.key, userid=pa.userid) }}">Delete</a></td>
       {% else %}

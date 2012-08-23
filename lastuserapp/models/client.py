@@ -284,20 +284,15 @@ class UserClientPermissions(BaseMixin, db.Model):
     #: User who has these permissions
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref=db.backref('permissions', cascade='all, delete-orphan'))
+        backref=db.backref('client_permissions', cascade='all, delete-orphan'))
     #: Client app they are assigned on
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
-        backref=db.backref('permissions_users', cascade="all, delete-orphan"))
+        backref=db.backref('user_permissions', cascade="all, delete-orphan"))
     #: The permissions as a string of tokens
-    permissions = db.Column(db.Unicode(250), default=u'', nullable=False)
+    access_permissions = db.Column('permissions', db.Unicode(250), default=u'', nullable=False)
 
     # Only one assignment per user and client
-    # TODO: Also define context for permission:
-    # a. User1 has permissions x, y (without context) in app1
-    # b. User1 has permissions a, b, c in context p in app1
-    # Contexts could be defined with a separator, suffixed to the permission
-    # such as permission:context/subpath.
     __table_args__ = (db.UniqueConstraint("user_id", "client_id"), {})
 
     @property
@@ -315,20 +310,15 @@ class TeamClientPermissions(BaseMixin, db.Model):
     #: Team which has these permissions
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     team = db.relationship(Team, primaryjoin=team_id == Team.id,
-        backref=db.backref('permissions', cascade='all, delete-orphan'))
+        backref=db.backref('client_permissions', cascade='all, delete-orphan'))
     #: Client app they are assigned on
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
-        backref=db.backref('permissions_teams', cascade="all, delete-orphan"))
+        backref=db.backref('team_permissions', cascade="all, delete-orphan"))
     #: The permissions as a string of tokens
-    permissions = db.Column(db.Unicode(250), default=u'', nullable=False)
+    access_permissions = db.Column('permissions', db.Unicode(250), default=u'', nullable=False)
 
     # Only one assignment per team and client
-    # TODO: Also define context for permission:
-    # a. User1 has permissions x, y (without context) in app1
-    # b. User1 has permissions a, b, c in context p in app1
-    # Contexts could be defined with a separator, suffixed to the permission
-    # such as permission:context/subpath.
     __table_args__ = (db.UniqueConstraint("team_id", "client_id"), {})
 
     @property

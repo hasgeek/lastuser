@@ -29,13 +29,13 @@ def get_userinfo(user, client, scope=[], get_permissions=True):
         if client.user:
             perms = UserClientPermissions.query.filter_by(user=user, client=client).first()
             if perms:
-                userinfo['permissions'] = perms.permissions.split(u' ')
+                userinfo['permissions'] = perms.access_permissions.split(u' ')
         else:
             perms = TeamClientPermissions.query.filter_by(client=client).filter(
                 TeamClientPermissions.team_id.in_([team.id for team in user.teams])).all()
             permsset = set()
             for permob in perms:
-                permsset.update(permob.permissions.split(u' '))
+                permsset.update(permob.access_permissions.split(u' '))
             userinfo['permissions'] = sorted(permsset)
     return userinfo
 

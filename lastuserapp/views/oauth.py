@@ -164,11 +164,11 @@ def oauth_authorize():
     # Validation 1.4: Client allows login for this user
     if not client.allow_any_login:
         if client.user:
-            permissions = UserClientPermissions.query.filter_by(user=g.user, client=client).first()
+            perms = UserClientPermissions.query.filter_by(user=g.user, client=client).first()
         else:
-            permissions = TeamClientPermissions.query.filter_by(client=client).filter(
+            perms = TeamClientPermissions.query.filter_by(client=client).filter(
                 TeamClientPermissions.team_id.in_([team.id for team in g.user.teams])).first()
-        if not permissions:
+        if not perms:
             return oauth_auth_error(client.redirect_uri, state, 'invalid_scope', u"You do not have access to this application")
 
     # Validation 2.1: Is response_type present?

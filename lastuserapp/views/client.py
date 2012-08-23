@@ -213,19 +213,19 @@ def permission_user_new(client):
         if client.user:
             permassign = UserClientPermissions.query.filter_by(user=form.user, client=client).first()
             if permassign:
-                perms.update(permassign.permissions.split(u' '))
+                perms.update(permassign.access_permissions.split(u' '))
             else:
                 permassign = UserClientPermissions(user=form.user, client=client)
                 db.session.add(permassign)
         else:
             permassign = TeamClientPermissions.query.filter_by(team=form.team, client=client).first()
             if permassign:
-                perms.update(permassign.permissions.split(u' '))
+                perms.update(permassign.access_permissions.split(u' '))
             else:
                 permassign = TeamClientPermissions(team=form.team, client=client)
                 db.session.add(permassign)
         perms.update(form.perms.data)
-        permassign.permissions = u' '.join(sorted(perms))
+        permassign.access_permissions = u' '.join(sorted(perms))
         db.session.commit()
         if client.user:
             flash("Permissions have been assigned to user %s" % form.user.pickername, 'success')
@@ -255,14 +255,14 @@ def permission_user_edit(client, kwargs):
     form.perms.choices = [(ap.name, u"%s – %s" % (ap.name, ap.title)) for ap in available_perms]
     if request.method == 'GET':
         if permassign:
-            form.perms.data = permassign.permissions.split(u' ')
+            form.perms.data = permassign.access_permissions.split(u' ')
     if form.validate_on_submit():
         form.perms.data.sort()
         perms = u' '.join(form.perms.data)
         if not perms:
             db.session.delete(permassign)
         else:
-            permassign.permissions = perms
+            permassign.access_permissions = perms
         db.session.commit()
         if perms:
             if client.user:
