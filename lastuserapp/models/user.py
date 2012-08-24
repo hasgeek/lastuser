@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from hashlib import md5
-from werkzeug import generate_password_hash, check_password_hash
+from werkzeug import check_password_hash
+import bcrypt
 from sqlalchemy.ext.hybrid import hybrid_property
 from flask import url_for
 from coaster import newid, newsecret, newpin
@@ -28,7 +29,7 @@ class User(BaseMixin, db.Model):
         if password is None:
             self.pw_hash = None
         else:
-            self.pw_hash = generate_password_hash(password)
+            self.pw_hash = bcrypt.hashpw(password, bcrypt.gensalt())
 
     password = property(fset=_set_password)
 
@@ -55,7 +56,10 @@ class User(BaseMixin, db.Model):
     def password_is(self, password):
         if self.pw_hash is None:
             return False
-        return check_password_hash(self.pw_hash, password)
+        if self.pw_hash.startswith('sha1$'):
+            return check_password_hash(self.pw_hash, password)
+        else:
+            return bcrypt.hashpw(password, self.pw_hash) == self.pw_hash
 
     def __repr__(self):
         return '<User %s "%s">' % (self.username or self.userid, self.fullname)
