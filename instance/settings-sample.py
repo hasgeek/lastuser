@@ -67,3 +67,6 @@ MESSAGE_FOOTER = 'Copyright &copy; [HasGeek](http://hasgeek.com/). Powered by [L
 USERNAME_REASON = ''
 EMAIL_REASON = 'Please provide an email address to complete your profile'
 BIO_REASON = ''
+ORG_NAME_REASON = u"Your company’s name as it will appear in the URL. Letters, numbers and dashes only"
+ORG_TITLE_REASON = u"Your organization’s given name, preferably without legal suffixes"
+ORG_DESCRIPTION_REASON = u"A few words about your organization (optional). Plain text only"

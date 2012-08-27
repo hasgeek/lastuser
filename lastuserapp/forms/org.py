@@ -9,8 +9,8 @@ from lastuserapp.models import User, Organization
 
 
 class OrganizationForm(Form):
-    name = wtf.TextField('URL name', validators=[wtf.Required()])
     title = wtf.TextField('Organization name', validators=[wtf.Required()])
+    name = wtf.TextField('URL name', validators=[wtf.Required()])
     description = wtf.TextAreaField('Description')
 
     def validate_name(self, field):

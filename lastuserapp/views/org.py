@@ -22,6 +22,9 @@ def org_list():
 @requires_login
 def org_new():
     form = OrganizationForm()
+    form.name.description = app.config.get('ORG_NAME_REASON')
+    form.title.description = app.config.get('ORG_TITLE_REASON')
+    form.description.description = app.config.get('ORG_DESCRIPTION_REASON')
     if form.validate_on_submit():
         org = Organization()
         form.populate_obj(org)
@@ -44,6 +47,9 @@ def org_info(org):
 @load_model(Organization, {'name': 'name'}, 'org', permission='edit')
 def org_edit(org):
     form = OrganizationForm(obj=org)
+    form.name.description = app.config.get('ORG_NAME_REASON')
+    form.title.description = app.config.get('ORG_TITLE_REASON')
+    form.description.description = app.config.get('ORG_DESCRIPTION_REASON')
     if form.validate_on_submit():
         form.populate_obj(org)
         db.session.commit()
