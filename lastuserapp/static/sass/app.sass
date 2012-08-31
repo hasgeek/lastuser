@@ -2,9 +2,11 @@
 
 @import "compass"
 $color-outline: #b7b7b7 !default
+$color-outline-dark: #969696 !default
 
 a.loginbutton
-  +inline-block
+  display: block
+  float: left
   text-indent: -119988px
   overflow: hidden
   text-align: left
@@ -14,11 +16,13 @@ a.loginbutton
   height: 40px
   border: 1px solid $color-outline
   padding: 5px
+  margin-right: 4px
   +border-radius(3px)
   +single-box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px)
 
 a.loginbutton:hover
   +single-box-shadow(rgba(0, 0, 0, 0.3), 0, 1px, 5px)
+  border-color: $color-outline-dark
 
 input[name="openid"]
   background: image-url("openid.png") 4px no-repeat

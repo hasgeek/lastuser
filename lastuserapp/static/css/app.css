@@ -1,10 +1,6 @@
 a.loginbutton {
-  display: -moz-inline-stack;
-  display: inline-block;
-  vertical-align: middle;
-  *vertical-align: auto;
-  zoom: 1;
-  *display: inline;
+  display: block;
+  float: left;
   text-indent: -119988px;
   overflow: hidden;
   text-align: left;
@@ -14,6 +10,7 @@ a.loginbutton {
   height: 40px;
   border: 1px solid #b7b7b7;
   padding: 5px;
+  margin-right: 4px;
   -webkit-border-radius: 3px;
   -moz-border-radius: 3px;
   -ms-border-radius: 3px;
@@ -28,6 +25,7 @@ a.loginbutton:hover {
   -webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
   -moz-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+  border-color: #969696;
 }
 
 input[name="openid"] {
