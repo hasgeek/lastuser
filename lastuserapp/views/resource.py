@@ -24,7 +24,10 @@ def get_userinfo(user, client, scope=[], get_permissions=True):
             'owner': [{'userid': org.userid, 'name': org.name, 'title': org.title} for org in user.organizations_owned()],
             'member': [{'userid': org.userid, 'name': org.name, 'title': org.title} for org in user.organizations()],
             }
-        userinfo['teams'] = [{'userid': team.userid, 'title': team.title, 'org': team.org.userid} for team in user.teams]
+        userinfo['teams'] = [{'userid': team.userid,
+                              'title': team.title,
+                              'org': team.org.userid,
+                              'owners': team is team.org.owners} for team in user.teams]
     if get_permissions:
         if client.user:
             perms = UserClientPermissions.query.filter_by(user=user, client=client).first()
@@ -187,7 +190,10 @@ def org_team_get():
         # on login to HasGeek websites as that would have been very confusing to users.
         # XXX: Return user list here?
         if g.client in org.clients_with_team_access():
-            orgteams[org.userid] = [{'userid': team.userid, 'title': team.title} for team in org.teams]
+            orgteams[org.userid] = [{'userid': team.userid,
+                                     'org': org.userid,
+                                     'title': team.title,
+                                     'owners': team is org.owners} for team in org.teams]
     return api_result('ok', org_teams=orgteams)
 
 
