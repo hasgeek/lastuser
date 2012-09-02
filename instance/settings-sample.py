@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from flask import Markup
 
 #: The title of this site
 SITE_TITLE = 'Lastuser'
@@ -62,8 +63,8 @@ SMS_SMSGUPSHUP_MASK = ''
 SMS_SMSGUPSHUP_USER = ''
 SMS_SMSGUPSHUP_PASS = ''
 
-#: Messages (in markdown)
-MESSAGE_FOOTER = 'Copyright &copy; [HasGeek](http://hasgeek.com/). Powered by [Lastuser](https://github.com/hasgeek/lastuser "GitHub project page"), open source software from [HasGeek](https://github.com/hasgeek).'
+#: Messages (text or HTML)
+MESSAGE_FOOTER = Markup('Copyright &copy; <a href="http://hasgeek.com/">HasGeek</a>. Powered by <a href="https://github.com/hasgeek/lastuser" title="GitHub project page">Lastuser</a>, open source software from <a href="https://github.com/hasgeek">HasGeek</a>.')
 USERNAME_REASON = ''
 EMAIL_REASON = 'Please provide an email address to complete your profile'
 BIO_REASON = ''

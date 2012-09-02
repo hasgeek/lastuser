@@ -4,12 +4,9 @@ __version__ = '0.1'
 
 from flask import Flask, Markup
 from flask.ext.assets import Environment, Bundle
-from markdown import markdown
 from coaster.app import configure
 from baseframe import baseframe, baseframe_js, baseframe_css
 
-
-__MESSAGES = ['MESSAGE_FOOTER']
 
 # These names are unavailable for use as usernames
 RESERVED_USERNAMES = set([
@@ -41,9 +38,6 @@ css = Bundle(baseframe_css, 'css/app.css',
 
 assets.register('js_all', js)
 assets.register('css_all', css)
-
-for msg in __MESSAGES:
-    app.config[msg] = Markup(markdown(app.config.get(msg, '')))
 
 
 import lastuserapp.registry
