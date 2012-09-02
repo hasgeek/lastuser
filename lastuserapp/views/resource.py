@@ -27,7 +27,7 @@ def get_userinfo(user, client, scope=[], get_permissions=True):
         userinfo['teams'] = [{'userid': team.userid,
                               'title': team.title,
                               'org': team.org.userid,
-                              'owners': team is team.org.owners} for team in user.teams]
+                              'owners': team == team.org.owners} for team in user.teams]
     if get_permissions:
         if client.user:
             perms = UserClientPermissions.query.filter_by(user=user, client=client).first()
@@ -193,7 +193,7 @@ def org_team_get():
             orgteams[org.userid] = [{'userid': team.userid,
                                      'org': org.userid,
                                      'title': team.title,
-                                     'owners': team is org.owners} for team in org.teams]
+                                     'owners': team == org.owners} for team in org.teams]
     return api_result('ok', org_teams=orgteams)
 
 
