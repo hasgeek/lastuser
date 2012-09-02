@@ -144,32 +144,35 @@ def login_github_authorized():
     try:
         response = urlopen(github['token_url'], params).read()
         respdict = parse_qs(response)
-        access_token = respdict['access_token'][0]
-        token_type = respdict['token_type'][0]
-        ghinfo = json.loads(urlopen(github['user_info'] % access_token).read())
-        md5sum = get_gravatar_md5sum(ghinfo['avatar_url'])
-        user = None
-        if md5sum:
-            # Look for an existing user account
-            useremail = UserEmail.query.filter_by(md5sum=md5sum).first()
-            if useremail:
-                user = useremail.user
-        return_url = config_external_id(service='github',
-                                        service_name='GitHub',
-                                        user=user,
-                                        userid=ghinfo.get('login'),
-                                        username=ghinfo.get('login'),
-                                        fullname=ghinfo.get('name'),
-                                        avatar=ghinfo.get('avatar_url'),
-                                        access_token=access_token,
-                                        secret=github['secret'],
-                                        token_type=token_type,
-                                        next_url=next_url)
-        if return_url is not None:
-            next_url = return_url
+        if 'error' in respdict:
+            flash(u"GitHub login failed: " % respdict['error'], 'error')
+        else:
+            access_token = respdict['access_token'][0]
+            token_type = respdict['token_type'][0]
+            ghinfo = json.loads(urlopen(github['user_info'] % access_token).read())
+            md5sum = get_gravatar_md5sum(ghinfo['avatar_url'])
+            user = None
+            if md5sum:
+                # Look for an existing user account
+                useremail = UserEmail.query.filter_by(md5sum=md5sum).first()
+                if useremail:
+                    user = useremail.user
+            return_url = config_external_id(service='github',
+                                            service_name='GitHub',
+                                            user=user,
+                                            userid=ghinfo.get('login'),
+                                            username=ghinfo.get('login'),
+                                            fullname=ghinfo.get('name'),
+                                            avatar=ghinfo.get('avatar_url'),
+                                            access_token=access_token,
+                                            secret=github['secret'],
+                                            token_type=token_type,
+                                            next_url=next_url)
+            if return_url is not None:
+                next_url = return_url
     except URLError, e:
         ghinfo = {}
-        flash(u"GitHub login failed" % unicode(e), category="error")
+        flash(u"GitHub login failed: " % unicode(e), category="error")
 
     # As with Twitter, redirect with code 303
     return redirect(next_url, code=303)
