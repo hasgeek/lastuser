@@ -107,7 +107,7 @@ def token_verify():
     # TODO: Don't return validity. Set the HTTP cache headers instead.
     params = {'validity': 120}  # Period (in seconds) for which this assertion may be cached.
     if authtoken.user:
-        params['userinfo'] = get_userinfo(authtoken.user, g.client)
+        params['userinfo'] = get_userinfo(authtoken.user, g.client, scope=authtoken.scope)
     params['clientinfo'] = {
         'title': authtoken.client.title,
         'userid': authtoken.client.user.userid,
