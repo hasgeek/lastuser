@@ -145,7 +145,7 @@ def login_github_authorized():
         response = urlopen(github['token_url'], params).read()
         respdict = parse_qs(response)
         if 'error' in respdict:
-            flash(u"GitHub login failed: " % respdict['error'], 'error')
+            flash(u"GitHub login failed: %s" % respdict['error'], 'error')
         else:
             access_token = respdict['access_token'][0]
             token_type = respdict['token_type'][0]
@@ -172,7 +172,7 @@ def login_github_authorized():
                 next_url = return_url
     except URLError, e:
         ghinfo = {}
-        flash(u"GitHub login failed: " % unicode(e), category="error")
+        flash(u"GitHub login failed: %s" % unicode(e), category="error")
 
     # As with Twitter, redirect with code 303
     return redirect(next_url, code=303)
