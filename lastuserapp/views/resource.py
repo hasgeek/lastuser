@@ -175,13 +175,13 @@ def org_team_get():
     Returns a list of teams in the given organization.
     """
     if not g.client.team_access:
-        return api_result('error', 'no_team_access')
+        return api_result('error', error='no_team_access')
     org_userids = request.form.getlist('org')
     if not org_userids:
-        return api_result('error', 'no_org_provided')
+        return api_result('error', error='no_org_provided')
     organizations = Organization.query.filter(Organization.userid.in_(org_userids)).all()
     if not organizations:
-        return api_result('error', 'no_such_organization')
+        return api_result('error', error='no_such_organization')
     orgteams = {}
     for org in organizations:
         # If client has access to team information, make a list of teams.
