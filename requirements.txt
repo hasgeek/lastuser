@@ -6,7 +6,7 @@ Flask-SQLAlchemy
 jsmin
 Flask-WTF
 Flask-OpenID
-Flask-Oauth
+Flask-OAuth
 pytz
 py-bcrypt
 ordereddict
