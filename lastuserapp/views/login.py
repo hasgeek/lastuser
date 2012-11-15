@@ -116,6 +116,9 @@ def logout():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
+    # Make Recaptcha optional
+    if not (app.config.get('RECAPTCHA_PUBLIC_KEY') and app.config.get('RECAPTCHA_PRIVATE_KEY')):
+        del form.recaptcha
     form.fullname.description = app.config.get('FULLNAME_REASON')
     form.email.description = app.config.get('EMAIL_REASON')
     form.username.description = app.config.get('USERNAME_REASON')
