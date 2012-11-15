@@ -16,7 +16,7 @@ Here is how you make a test deployment::
 
     $ git clone https://github.com/hasgeek/lastuser
     $ cd lastuser
-    $ cp lastuserapp/settings-sample.py lastuserapp/settings.py
-    $ open lastuserapp/settings.py # Customize this file as needed
-    $ python setup.py develop
+    $ cp instance/settings-sample.py instance/settings.py
+    $ open instance/settings.py # Customize this file as needed
+    $ pip install -r requirements.txt
     $ python runserver.py
