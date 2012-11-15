@@ -4,12 +4,12 @@ Flask-Assets
 Flask-Mail
 Flask-SQLAlchemy
 jsmin
-Flask-WTF
 Flask-OpenID
 Flask-OAuth
 pytz
 py-bcrypt
 ordereddict
+https://github.com/jace/flask-wtf/zipball/master
 https://github.com/hasgeek/coaster/zipball/master
 https://github.com/hasgeek/baseframe/zipball/master
 requests
