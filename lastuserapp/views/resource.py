@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from flask import jsonify, request, g
+from sqlalchemy import or_
+from flask import request, g
 from coaster import getbool
+from coaster.views import jsonp
 
 from lastuserapp import app
-from lastuserapp.models import (getuser, User, Organization, AuthToken, Resource, ResourceAction,
-    UserClientPermissions, TeamClientPermissions)
-from lastuserapp.views.helpers import requires_client_login
+from lastuserapp.models import (db, getuser, User, Organization, AuthToken, Resource,
+    ResourceAction, UserClientPermissions, TeamClientPermissions)
+from lastuserapp.views.helpers import requires_client_login, requires_user_or_client_login
 from lastuserapp.registry import registry
 
 
@@ -50,7 +52,7 @@ def resource_error(error, description=None, uri=None):
     if uri:
         params['error_uri'] = uri
 
-    response = jsonify(params)
+    response = jsonp(params)
     response.headers['Cache-Control'] = 'no-store'
     response.headers['Pragma'] = 'no-cache'
     response.status_code = 400
@@ -59,7 +61,7 @@ def resource_error(error, description=None, uri=None):
 
 def api_result(status, **params):
     params['status'] = status
-    response = jsonify(params)
+    response = jsonp(params)
     response.headers['Cache-Control'] = 'no-store'
     response.headers['Pragma'] = 'no-cache'
     return response
@@ -165,6 +167,33 @@ def user_get():
             title=user.fullname)
     else:
         return api_result('error', error='not_found')
+
+
+@app.route('/api/1/user/autocomplete')
+@requires_user_or_client_login
+def user_autocomplete():
+    """
+    Returns users (id and name only) matching the search term.
+    """
+    # Don't allow a % anywhere but at the end
+    q = request.args.get('q', '').replace('%', '')
+    if not q:
+        return api_result('error', error='no_query_provided')
+    q += '%'
+    # Use User._username since 'username' is a hybrid property that checks for validity
+    # before passing on to _username, the actual column name on the model
+    users = db.session.query(User.userid, User.fullname, User._username).filter(
+        or_(
+            User.fullname.like(q),
+            User._username.like(q)
+            )
+        ).limit(10).all()
+    result = [{
+            'userid': u.userid,
+            'buid': u.userid,
+            'name': '%s (~%s)' % (u.fullname, u._username) if u._username else u.fullname}
+        for u in users]
+    return api_result('ok', users=result)
 
 
 # This is org/* instead of organizations/* because it's a client resource. TODO: Reconsider

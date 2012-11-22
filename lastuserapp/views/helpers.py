@@ -76,21 +76,46 @@ def requires_login(f):
     return decorated_function
 
 
+def _client_login_inner():
+    if request.authorization is None:
+        return Response(u"Client credentials required.", 401,
+            {'WWW-Authenticate': 'Basic realm="Client credentials"'})
+    client = Client.query.filter_by(key=request.authorization.username).first()
+    if client is None or not client.active or not client.secret_is(request.authorization.password):
+        return Response(u"Invalid client credentials.", 401,
+            {'WWW-Authenticate': 'Basic realm="Client credentials"'})
+    g.client = client
+
+
 def requires_client_login(f):
     """
     Decorator to require a client login via HTTP Basic Authorization.
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if request.authorization is None:
-            return Response(u"Client credentials required.", 401,
-                {'WWW-Authenticate': 'Basic realm="Client credentials"'})
-        client = Client.query.filter_by(key=request.authorization.username).first()
-        if client is None or not client.active or not client.secret_is(request.authorization.password):
-            return Response(u"Invalid client credentials.", 401,
-                {'WWW-Authenticate': 'Basic realm="Client credentials"'})
-        g.client = client
-        return f(*args, **kwargs)
+        result = _client_login_inner()
+        if result is None:
+            return f(*args, **kwargs)
+        else:
+            return result
+    return decorated_function
+
+
+def requires_user_or_client_login(f):
+    """
+    Decorator to require a user or client login (user by cookie, client by HTTP Basic).
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Check for user first:
+        if g.user is not None:
+            return f(*args, **kwargs)
+        # If user is not logged in, check for client
+        result = _client_login_inner()
+        if result is None:
+            return f(*args, **kwargs)
+        else:
+            return result
     return decorated_function
 
 
