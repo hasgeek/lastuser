@@ -34,9 +34,10 @@ def login_openid_success(resp):
 
     if extid is not None:
         login_internal(extid.user)
+        db.session.commit()
         session['userid_external'] = {'service': service, 'userid': openid}
         flash("You are now logged in", category='success')
-        if not extid.user.email:
+        if not extid.user.is_profile_complete():
             return redirect(url_for('profile_new', next=get_next_url(session=True)))
         else:
             return redirect(get_next_url(session=True))
@@ -90,11 +91,11 @@ def login_openid_success(resp):
                                oauth_token=None,
                                oauth_token_secret=None)
         db.session.add(extid)
-        db.session.commit()
         login_internal(user)
+        db.session.commit()
         session['userid_external'] = {'service': service, 'userid': openid}
         flash("You are now logged in.", category='success')
-        if not resp.email:
+        if not user.is_profile_complete():
             return redirect(url_for('profile_new', next=get_next_url(session=True)))
         else:
             return redirect(get_next_url(session=True))

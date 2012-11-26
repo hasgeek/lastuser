@@ -19,6 +19,14 @@ $(function() {
       $(this).attr('href', decoded);
       $(this).removeAttr('data-href');
       $(this).removeClass('rot13');
-    };
+    }
   });
+});
+
+
+// Detect timezone
+$(function() {
+  if ($.cookie('timezone') === null) {
+    $.cookie('timezone', jstz.determine().name(), {path: '/'});
+  }
 });

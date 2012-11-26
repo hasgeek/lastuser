@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from pytz import common_timezones
 from flask import g
 import flask.ext.wtf as wtf
 from coaster import valid_username
@@ -8,6 +9,8 @@ from baseframe.forms import Form
 from lastuserapp import RESERVED_USERNAMES
 from lastuserapp.utils import strip_phone, valid_phone
 from lastuserapp.models import User, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim, Organization, getuser
+
+timezones = [(tz, tz) for tz in common_timezones]
 
 
 class PasswordResetRequestForm(Form):
@@ -39,11 +42,22 @@ class PasswordChangeForm(Form):
             raise wtf.ValidationError, "Incorrect password"
 
 
-class ProfileFormBase(object):
+class ProfileForm(Form):
+    fullname = wtf.TextField('Full name', validators=[wtf.Required()])
+    email = wtf.html5.EmailField('Email address', validators=[wtf.Required(), wtf.Email()])
+    username = wtf.TextField('Username', validators=[wtf.Required()])
+    description = wtf.TextAreaField('Bio')
+    timezone = wtf.SelectField('Timezone', validators=[wtf.Required()], choices=timezones)
+
+    def __init__(self, *args, **kwargs):
+        super(ProfileForm, self).__init__(*args, **kwargs)
+        self.existing_email = None
+
     def validate_username(self, field):
-        if not field.data:
-            field.data = None
-            return
+        ## Usernames are now mandatory. This should be commented out:
+        # if not field.data:
+        #     field.data = None
+        #     return
         if not valid_username(field.data):
             raise wtf.ValidationError("Invalid characters in username")
         if field.data in RESERVED_USERNAMES:
@@ -55,22 +69,8 @@ class ProfileFormBase(object):
         if existing is not None:
             raise wtf.ValidationError("That username is taken")
 
-
-class ProfileForm(ProfileFormBase, Form):
-    fullname = wtf.TextField('Full name', validators=[wtf.Required()])
-    username = wtf.TextField('Username (optional)')
-    description = wtf.TextAreaField('Bio')
-
-
-class ProfileNewForm(ProfileFormBase, Form):
-    fullname = wtf.TextField('Full name', validators=[wtf.Required()])
-    email = wtf.html5.EmailField('Email address', validators=[wtf.Required(), wtf.Email()])
-    username = wtf.TextField('Username (optional)')
-    description = wtf.TextAreaField('Bio')
-
     def validate_email(self, field):
         existing = UserEmail.query.filter_by(email=field.data).first()
-        self.existing_email = existing  # Save for later
         if existing is not None and existing.user != self.edit_obj:
             raise wtf.ValidationError("This email address has been claimed by another user.")
 

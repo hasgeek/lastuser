@@ -16,7 +16,8 @@ def get_userinfo(user, client, scope=[], get_permissions=True):
     if 'id' in scope:
         userinfo = {'userid': user.userid,
                     'username': user.username,
-                    'fullname': user.fullname}
+                    'fullname': user.fullname,
+                    'timezone': user.timezone}
     else:
         userinfo = {}
     if 'email' in scope:

@@ -1,11 +1,14 @@
 import os
 from functools import wraps
+from urllib import unquote
 from urllib2 import urlopen, URLError
-
+from pytz import common_timezones
 from flask import g, request, session, flash, redirect, url_for, json, Response
 from coaster.views import get_current_url
 from lastuserapp import app
 from lastuserapp.models import db, User, Client
+
+valid_timezones = set(common_timezones)
 
 
 @app.before_request
@@ -146,6 +149,16 @@ def avatar_url_github(githubid):
 def login_internal(user):
     g.user = user
     session['userid'] = user.userid
+    autoset_timezone(user)
+
+
+def autoset_timezone(user):
+    # Set the user's timezone automatically if available
+    if user.timezone is None or user.timezone not in valid_timezones:
+        if request.cookies.get('timezone'):
+            timezone = unquote(request.cookies.get('timezone'))
+            if timezone in valid_timezones:
+                user.timezone = timezone
 
 
 def logout_internal():

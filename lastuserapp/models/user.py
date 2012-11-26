@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from hashlib import md5
-from werkzeug import check_password_hash
+from werkzeug import check_password_hash, cached_property
 import bcrypt
 from sqlalchemy.ext.hybrid import hybrid_property
 from flask import url_for
@@ -19,6 +19,7 @@ class User(BaseMixin, db.Model):
     fullname = db.Column(db.Unicode(80), default=u'', nullable=False)
     _username = db.Column('username', db.Unicode(80), unique=True, nullable=True)
     pw_hash = db.Column(db.String(80), nullable=True)
+    timezone = db.Column(db.Unicode(40), nullable=True)
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
 
     def __init__(self, password=None, **kwargs):
@@ -102,7 +103,7 @@ class User(BaseMixin, db.Model):
                     emailob.primary = True
                     break
 
-    @property
+    @cached_property
     def email(self):
         """
         Returns primary email address for user.
@@ -141,6 +142,13 @@ class User(BaseMixin, db.Model):
         for database queries.
         """
         return list(set([team.org.id for team in self.teams if team.org.owners == team]))
+
+    def is_profile_complete(self):
+        """
+        Return True if profile is complete (fullname, username and email are present), False
+        otherwise.
+        """
+        return bool(self.fullname and self.username and self.email)
 
     @property
     def profile_url(self):

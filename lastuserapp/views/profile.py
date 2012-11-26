@@ -10,7 +10,7 @@ from lastuserapp.mailclient import send_email_verify_link
 from lastuserapp.views.helpers import requires_login
 from lastuserapp.views.sms import send_phone_verify_code
 from lastuserapp.forms import (ProfileForm, PasswordResetForm, PasswordChangeForm, NewEmailAddressForm,
-    NewPhoneForm, VerifyPhoneForm, ProfileNewForm)
+    NewPhoneForm, VerifyPhoneForm)
 
 
 @app.route('/profile')
@@ -20,36 +20,65 @@ def profile():
     return render_template('profile.html', avatar=session['avatar_url'])
 
 
-@app.route('/profile/edit', methods=['GET', 'POST'])
+@app.route('/profile/edit', methods=['GET', 'POST'], defaults={'newprofile': False}, endpoint='profile_edit')
+@app.route('/profile/new', methods=['GET', 'POST'], defaults={'newprofile': True}, endpoint='profile_new')
 @requires_login
-def profile_edit():
+def profile_edit(newprofile=False):
     form = ProfileForm(obj=g.user)
-    form.fullname.description = app.config.get('FULLNAME_REASON')
-    form.username.description = app.config.get('USERNAME_REASON')
-    form.description.description = app.config.get('BIO_REASON')
-    if form.validate_on_submit():
-        form.populate_obj(g.user)
-        db.session.commit()
-
-        flash("Your profile was successfully edited.", category='success')
-        return render_redirect(url_for('profile'), code=303)
-    return render_form(form, title="Edit profile", formid="profile_edit", submit="Save changes", ajax=True)
-
-
-@app.route('/profile/new', methods=['GET', 'POST'])
-@requires_login
-def profile_new():
-    form = ProfileNewForm(obj=g.user)
     form.fullname.description = app.config.get('FULLNAME_REASON')
     form.email.description = app.config.get('EMAIL_REASON')
     form.username.description = app.config.get('USERNAME_REASON')
     form.description.description = app.config.get('BIO_REASON')
+    form.timezone.description = app.config.get('TIMEZONE_REASON')
+    if g.user.email or newprofile is False:
+        del form.email
+
     if form.validate_on_submit():
         # Can't auto-populate here because user.email is read-only
         g.user.fullname = form.fullname.data
         g.user.username = form.username.data
         g.user.description = form.description.data
-        if form.existing_email is None:
+        g.user.timezone = form.timezone.data
+
+        if newprofile and not g.user.email:
+            useremail = UserEmailClaim(user=g.user, email=form.email.data)
+            db.session.add(useremail)
+            send_email_verify_link(useremail)
+            db.session.commit()
+            flash("Your profile has been updated. We sent you an email to confirm your address", category='success')
+        else:
+            db.session.commit()
+            flash("Your profile has been updated.", category='success')
+
+        if newprofile:
+            return render_redirect(get_next_url(), code=303)
+        else:
+            return render_redirect(url_for('profile'), code=303)
+    if newprofile:
+        return render_form(form, title="Update profile", formid="profile_new", submit="Continue",
+            message=u"Hello, %s. Please spare a minute to fill out your profile." % g.user.fullname,
+            ajax=True)
+    else:
+        return render_form(form, title="Edit profile", formid="profile_edit", submit="Save changes", ajax=True)
+
+
+@requires_login
+def profile_new():
+    form = ProfileForm(obj=g.user)
+    form.fullname.description = app.config.get('FULLNAME_REASON')
+    form.email.description = app.config.get('EMAIL_REASON')
+    form.username.description = app.config.get('USERNAME_REASON')
+    form.description.description = app.config.get('BIO_REASON')
+    form.timezone.description = app.config.get('TIMEZONE_REASON')
+    if g.user.email:
+        del form.email
+    if form.validate_on_submit():
+        # Can't auto-populate here because user.email is read-only
+        g.user.fullname = form.fullname.data
+        g.user.username = form.username.data
+        g.user.description = form.description.data
+        g.user.timezone = form.timezone.data
+        if not g.user.email:
             useremail = UserEmailClaim(user=g.user, email=form.email.data)
             db.session.add(useremail)
             db.session.commit()

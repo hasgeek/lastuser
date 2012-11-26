@@ -40,6 +40,7 @@ def login():
                 session.permanent = True
             else:
                 session.permanent = False
+            db.session.commit()
             flash('You are now logged in', category='success')
             return render_redirect(get_next_url(session=True), code=303)
     if request.is_xhr and formid == 'login':
@@ -127,9 +128,9 @@ def register():
         user.username = form.username.data or None
         useremail = UserEmailClaim(user=user, email=form.email.data)
         db.session.add(useremail)
-        db.session.commit()
         send_email_verify_link(useremail)
         login_internal(user)
+        db.session.commit()
         flash("You are now one of us. Welcome aboard!", category='success')
         if 'next' in request.args:
             return redirect(request.args['next'], code=303)

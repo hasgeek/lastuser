@@ -191,7 +191,7 @@ def config_external_id(service, service_name, user, userid, username, fullname, 
         login_internal(extid.user)
         db.session.commit()
         flash('You have logged in as %s via %s' % (username, service_name), 'success')
-        if not extid.user.email:
+        if not extid.user.is_profile_complete():
             return url_for('profile_new', next=next_url)
         else:
             return
@@ -213,7 +213,7 @@ def config_external_id(service, service_name, user, userid, username, fullname, 
             if User.query.filter_by(username=username).first() is None:
                 user.username = username
         db.session.add(extid)
-        db.session.commit()
         login_internal(user)
+        db.session.commit()
         # redirect the user to profile edit page to fill in more details
         return url_for('profile_new', next=next_url)

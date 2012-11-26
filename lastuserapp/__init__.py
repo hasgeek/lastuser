@@ -2,10 +2,10 @@
 
 __version__ = '0.1'
 
-from flask import Flask, Markup
+from flask import Flask
 from flask.ext.assets import Environment, Bundle
 from coaster.app import configure
-from baseframe import baseframe, baseframe_js, baseframe_css
+from baseframe import baseframe, baseframe_js, baseframe_css, cookie_js, timezone_js
 
 
 # These names are unavailable for use as usernames
@@ -30,7 +30,7 @@ configure(app, 'LASTUSER_ENV')
 app.register_blueprint(baseframe)
 assets = Environment(app)
 
-js = Bundle(baseframe_js, 'js/app.js',
+js = Bundle(baseframe_js, cookie_js, timezone_js, 'js/app.js',
     filters='jsmin', output='js/packed.js')
 
 css = Bundle(baseframe_css, 'css/app.css',
