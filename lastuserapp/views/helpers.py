@@ -20,6 +20,10 @@ def lookup_current_user():
     g.user = None
     if 'userid' in session:
         g.user = User.query.filter_by(userid=session['userid']).first()
+        if not g.user:
+            session.pop('userid')
+            g.avatar_url = None
+            return
         if not 'avatar_url' in session:
             if g.user.email:
                 session['avatar_url'] = avatar_url_email(g.user.email)
