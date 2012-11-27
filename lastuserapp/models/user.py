@@ -23,6 +23,7 @@ class User(BaseMixin, db.Model):
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
 
     def __init__(self, password=None, **kwargs):
+        self.userid = newid()
         self.password = password
         super(User, self).__init__(**kwargs)
 
