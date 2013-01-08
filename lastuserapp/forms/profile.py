@@ -59,15 +59,15 @@ class ProfileForm(Form):
         #     field.data = None
         #     return
         if not valid_username(field.data):
-            raise wtf.ValidationError("Invalid characters in username")
+            raise wtf.ValidationError("Usernames can only have alphabets, numbers and dashes (except at the ends)")
         if field.data in RESERVED_USERNAMES:
-            raise wtf.ValidationError("That name is reserved")
+            raise wtf.ValidationError("This name is reserved")
         existing = User.query.filter_by(username=field.data).first()
         if existing is not None and existing.id != self.edit_id:
-            raise wtf.ValidationError("That username is taken")
+            raise wtf.ValidationError("This username is taken")
         existing = Organization.query.filter_by(name=field.data).first()
         if existing is not None:
-            raise wtf.ValidationError("That username is taken")
+            raise wtf.ValidationError("This username is taken")
 
     def validate_email(self, field):
         existing = UserEmail.query.filter_by(email=field.data).first()
