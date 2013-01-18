@@ -65,6 +65,8 @@ class Client(BaseMixin, db.Model):
             raise AttributeError("This client has no owner")
 
     def owner_is(self, user):
+        if not user:
+            return False
         return self.user == user or (self.org and self.org in user.organizations_owned())
 
     def orgs_with_team_access(self):
