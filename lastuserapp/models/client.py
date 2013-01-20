@@ -159,7 +159,7 @@ class AuthCode(BaseMixin, db.Model):
         backref=db.backref("authcodes", cascade="all, delete-orphan"))
     code = db.Column(db.String(44), default=newsecret, nullable=False)
     _scope = db.Column('scope', db.Unicode(250), nullable=False)
-    redirect_uri = db.Column(db.Unicode(250), nullable=False)
+    redirect_uri = db.Column(db.Unicode(1024), nullable=False)
     used = db.Column(db.Boolean, default=False, nullable=False)
 
     @property
