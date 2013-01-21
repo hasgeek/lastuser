@@ -143,7 +143,7 @@ def confirm_email(md5sum, secret):
     emailclaim = UserEmailClaim.query.filter_by(md5sum=md5sum, verification_code=secret).first()
     if emailclaim is not None:
         if 'verify' in emailclaim.permissions(g.user):
-            existing = UserEmail.query.filter_by(email=emailclaim.email).first()
+            existing = UserEmail.query.filter(UserEmail.email.in_([emailclaim.email, emailclaim.email.lower()])).first()
             if existing is not None:
                 claimed_email = emailclaim.email
                 claimed_user = emailclaim.user
@@ -160,7 +160,7 @@ def confirm_email(md5sum, secret):
 
             useremail = emailclaim.user.add_email(emailclaim.email.lower(), primary=emailclaim.user.email is None)
             db.session.delete(emailclaim)
-            for claim in UserEmailClaim.query.filter_by(email=useremail.email).all():
+            for claim in UserEmailClaim.query.filter(UserEmailClaim.email.in_([useremail.email, useremail.email.lower()])).all():
                 db.session.delete(claim)
             db.session.commit()
             return render_message(title="Email address verified",
