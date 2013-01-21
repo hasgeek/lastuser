@@ -143,7 +143,22 @@ def confirm_email(md5sum, secret):
     emailclaim = UserEmailClaim.query.filter_by(md5sum=md5sum, verification_code=secret).first()
     if emailclaim is not None:
         if 'verify' in emailclaim.permissions(g.user):
-            useremail = emailclaim.user.add_email(emailclaim.email, primary=emailclaim.user.email is None)
+            existing = UserEmail.query.filter_by(email=emailclaim.email).first()
+            if existing is not None:
+                claimed_email = emailclaim.email
+                claimed_user = emailclaim.user
+                db.session.delete(emailclaim)
+                db.session.commit()
+                if claimed_user != g.user:
+                    return render_message(title="Email address already claimed",
+                        message=Markup(
+                            "The email address <code>%s</code> has already been verified by another user." % escape(claimed_email)))
+                else:
+                    return render_message(title="Email address already verified",
+                        message=Markup("Hello %s! Your email address <code>%s</code> has already been verified." % (
+                            escape(claimed_user.fullname), escape(claimed_email))))
+
+            useremail = emailclaim.user.add_email(emailclaim.email.lower(), primary=emailclaim.user.email is None)
             db.session.delete(emailclaim)
             for claim in UserEmailClaim.query.filter_by(email=useremail.email).all():
                 db.session.delete(claim)

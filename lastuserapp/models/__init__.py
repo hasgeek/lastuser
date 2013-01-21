@@ -21,11 +21,11 @@ def getuser(name):
             else:
                 return None
         else:
-            useremail = UserEmail.query.filter_by(email=name).first()
+            useremail = UserEmail.query.filter(UserEmail.email.in_([name, name.lower()])).first()
             if useremail:
                 return useremail.user
             # No verified email id. Look for an unverified id; return first found
-            useremail = UserEmailClaim.query.filter_by(email=name).first()
+            useremail = UserEmailClaim.query.filter(UserEmailClaim.email.in_([name, name.lower()])).first()
             if useremail:
                 return useremail.user
             return None
