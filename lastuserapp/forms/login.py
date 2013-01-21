@@ -34,7 +34,7 @@ class OpenIdForm(Form):
 class RegisterForm(Form):
     fullname = wtf.TextField('Full name', validators=[wtf.Required()])
     email = wtf.html5.EmailField('Email address', validators=[wtf.Required(), wtf.Email()])
-    username = wtf.TextField('Username (optional)', validators=[wtf.Optional()])
+    username = wtf.TextField('Username (optional)', validators=[wtf.Required()])
     password = wtf.PasswordField('Password', validators=[wtf.Required()])
     confirm_password = wtf.PasswordField('Confirm password',
                           validators=[wtf.Required(), wtf.EqualTo('password')])
@@ -51,6 +51,7 @@ class RegisterForm(Form):
             raise wtf.ValidationError("That username is taken")
 
     def validate_email(self, field):
+        field.data = field.data.lower()  # Convert to lowercase
         existing = UserEmail.query.filter_by(email=field.data).first()
         if existing is not None:
             raise wtf.ValidationError(Markup(

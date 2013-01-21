@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from flask.ext.sqlalchemy import SQLAlchemy
-from coaster.sqlalchemy import BaseMixin
+from coaster.sqlalchemy import BaseMixin  # Imported from here by other models
 from lastuserapp import app
 
 db = SQLAlchemy(app)

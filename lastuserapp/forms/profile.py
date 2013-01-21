@@ -70,6 +70,7 @@ class ProfileForm(Form):
             raise wtf.ValidationError("This username is taken")
 
     def validate_email(self, field):
+        field.data = field.data.lower()  # Convert to lowercase
         existing = UserEmail.query.filter_by(email=field.data).first()
         if existing is not None and existing.user != self.edit_obj:
             raise wtf.ValidationError("This email address has been claimed by another user.")
@@ -79,6 +80,7 @@ class NewEmailAddressForm(Form):
     email = wtf.html5.EmailField('Email address', validators=[wtf.Required(), wtf.Email()])
 
     def validate_email(self, field):
+        field.data = field.data.lower()  # Convert to lowercase
         existing = UserEmail.query.filter_by(email=field.data).first()
         if existing is not None:
             if existing.user == g.user:
