@@ -9,7 +9,13 @@
   </div>
 </div>
 <div class="cookies-required form-horizontal">
-  <h2>Login with your existing account at any of these <small>(pick one)</small></h2>
+  <h2>
+    {%- if config['LOGIN_MESSAGE_1'] -%}
+      {{ config['LOGIN_MESSAGE_1'] }}
+    {%- else -%}
+      Login with your existing account at any of these <small>(pick one)</small>
+    {%- endif -%}
+  </h2>
   <div class="control-group">
     <a class="loginbutton {%- if lastused=='twitter' %} lastused{% endif %}" href="{{ url_for('login_twitter', next=request.args.get('next')) }}"
         style="background-image: url({{ url_for('static', filename='img/login/twitter.png') }});">Twitter</a>
@@ -33,7 +39,13 @@
     {{ renderfield(openidform.openid, "small") }}
     {{ rendersubmit([(None, "Login", 'btn-primary')], "small") }}
   </form>
-  <h2>Or, login with a password</h2>
+  <h2>
+    {%- if config['LOGIN_MESSAGE_2'] -%}
+      {{ config['LOGIN_MESSAGE_2'] }}
+    {%- else -%}
+      Or, login with a password
+    {%- endif -%}
+  </h2>
   {% include "forms/loginform.html" %}
 </div>
 {% endblock %}
