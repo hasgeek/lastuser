@@ -24,9 +24,17 @@ class PasswordResetRequestForm(Form):
 
 
 class PasswordResetForm(Form):
+    username = wtf.TextField('Username or Email', validators=[wtf.Required()],
+        description="Please reconfirm your username or email address")
     password = wtf.PasswordField('New password', validators=[wtf.Required()])
     confirm_password = wtf.PasswordField('Confirm password',
                           validators=[wtf.Required(), wtf.EqualTo('password')])
+
+    def validate_username(self, field):
+        user = getuser(field.data)
+        if user is None or user != self.user:
+            raise wtf.ValidationError(
+                "This username or email does not match the user the reset code is for")
 
 
 class PasswordChangeForm(Form):

@@ -182,7 +182,6 @@ def reset():
 @app.route('/reset/<userid>/<secret>', methods=['GET', 'POST'])
 @load_model(User, {'userid': 'userid'}, 'user', kwargs=True)
 def reset_email(user, kwargs):
-    logout_internal()
     resetreq = PasswordResetRequest.query.filter_by(user=user, reset_code=kwargs['secret']).first()
     if not resetreq:
         return render_message(title="Invalid reset link",
@@ -194,8 +193,11 @@ def reset_email(user, kwargs):
         return render_message(title="Expired reset link",
             message=Markup("The reset link you clicked on has expired."))
 
+    # Logout *after* validating the reset request to prevent DoS attacks on the user
+    logout_internal()
     # Reset code is valid. Now ask user to choose a new password
     form = PasswordResetForm()
+    form.user = user
     if form.validate_on_submit():
         user.password = form.password.data
         db.session.delete(resetreq)
