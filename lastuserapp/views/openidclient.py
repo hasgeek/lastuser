@@ -2,6 +2,8 @@
 
 from flask import redirect, session, flash, url_for
 from flask.ext.openid import OpenID
+from openid import oidutil
+
 from coaster.views import get_next_url
 
 from lastuserapp import app
@@ -10,6 +12,14 @@ from lastuserapp.models import db, UserExternalId, UserEmail, UserEmailClaim
 from lastuserapp.views.helpers import login_internal, register_internal, set_loginmethod_cookie
 
 oid = OpenID(app)
+
+
+def openid_log(message, level=0):
+    if app.debug:
+        import sys
+        print >> sys.stderr, message
+
+oidutil.log = openid_log
 
 
 @app.route('/login/google')
