@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% from "baseframe/forms.html" import renderfield, rendersubmit, ajaxform %}
 {% block title %}Login{% endblock %}
-
+{% block headline %}{% endblock %}
 {% block content %}
 <div class="flash cookies-required-alert">
   <div class="flashmessage">
@@ -9,22 +9,19 @@
   </div>
 </div>
 <div class="cookies-required form-horizontal">
+  <h2>Login with your existing account at any of these <small>(pick one)</small></h2>
   <div class="control-group">
-    <div class="control-label">
-      Login with your existing account at:
-    </div>
-    <div class="controls">
-      <a class="loginbutton" href="{{ url_for('login_twitter', next=request.args.get('next')) }}"
-          style="background-image: url({{ url_for('static', filename='img/login/twitter.png') }});">Twitter</a>
-      <a class="loginbutton" href="{{ url_for('login_google', next=request.args.get('next')) }}"
-          style="background-image: url({{ url_for('static', filename='img/login/google.png') }});">Google</a>
-      <a class="loginbutton" href="{{ url_for('login_github', next=request.args.get('next')) }}"
-          style="background-image: url({{ url_for('static', filename='img/login/github.png') }});">GitHub</a>
-      <a class="loginbutton" id="openidbutton" href="#openidform"
-          style="background-image: url({{ url_for('static', filename='img/login/openid.png') }});">OpenID</a>
-    </div>
+    <a class="loginbutton {%- if lastused=='twitter' %} lastused{% endif %}" href="{{ url_for('login_twitter', next=request.args.get('next')) }}"
+        style="background-image: url({{ url_for('static', filename='img/login/twitter.png') }});">Twitter</a>
+    <a class="loginbutton {%- if lastused=='google' %} lastused{% endif %}" href="{{ url_for('login_google', next=request.args.get('next')) }}"
+        style="background-image: url({{ url_for('static', filename='img/login/google.png') }});">Google</a>
+    <a class="loginbutton {%- if lastused=='github' %} lastused{% else %} optional hidden{% endif %}" href="{{ url_for('login_github', next=request.args.get('next')) }}"
+        style="background-image: url({{ url_for('static', filename='img/login/github.png') }});">GitHub</a>
+    <a class="loginbutton {%- if lastused=='openid' %} lastused{% else %} optional hidden{% endif %}" id="openidbutton" href="#openidform"
+        style="background-image: url({{ url_for('static', filename='img/login/openid.png') }});">OpenID</a>
+    <a class="loginbutton caption" id="showmore" href="">Show more...</a>
   </div>
-  <form id="openidform" method="POST">
+  <form id="openidform" method="POST" class="hidden">
     <input type="hidden" name="_charset_"/>
     <input type="hidden" name="form.id" value="openid"/>
     <input type="hidden" name="next" value="{{ oidnext }}"/>
@@ -46,13 +43,19 @@
 <script type="text/javascript">
   $(function() {
     {% if oiderror -%}
-      $("#openid").focus();
+      $("#openid").removeClass('hidden').focus();
     {% else -%}
-      $("#openidform").hide()
+      $("#openidform").hide().removeClass('hidden');
     {% endif -%}
+    $(".loginbutton.optional").hide().removeClass('hidden');
     $("#openidbutton").click(function() {
       $("#openidform").fadeToggle();
       $("#openid").focus();
+      return false;
+    });
+    $("#showmore").click(function() {
+      $("#showmore").hide();
+      $(".loginbutton.optional").fadeToggle();
       return false;
     });
   });

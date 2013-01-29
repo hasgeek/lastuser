@@ -11,7 +11,7 @@ from lastuserapp.views.openidclient import oid
 from lastuserapp.mailclient import send_email_verify_link, send_password_reset_link
 from lastuserapp.models import db, User, UserEmailClaim, PasswordResetRequest, Client
 from lastuserapp.forms import LoginForm, OpenIdForm, RegisterForm, PasswordResetForm, PasswordResetRequestForm
-from lastuserapp.views.helpers import login_internal, logout_internal, register_internal
+from lastuserapp.views.helpers import login_internal, logout_internal, register_internal, set_loginmethod_cookie
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -23,15 +23,18 @@ def login():
 
     loginform = LoginForm()
     openidform = OpenIdForm()
+    loginmethod = None
 
     if request.method == 'GET':
         openidform.openid.data = 'http://'
+        loginmethod = request.cookies.get('login')
 
     formid = request.form.get('form.id')
     if request.method == 'POST' and formid == 'openid':
         if openidform.validate():
-            return oid.try_login(openidform.openid.data,
-                ask_for=['email', 'fullname', 'nickname'])
+            return set_loginmethod_cookie(oid.try_login(openidform.openid.data,
+                    ask_for=['email', 'fullname', 'nickname']),
+                'openid')
     elif request.method == 'POST' and formid == 'login':
         if loginform.validate():
             user = loginform.user
@@ -42,11 +45,12 @@ def login():
                 session.permanent = False
             db.session.commit()
             flash('You are now logged in', category='success')
-            return render_redirect(get_next_url(session=True), code=303)
+            return set_loginmethod_cookie(render_redirect(get_next_url(session=True), code=303),
+                'password')
     if request.is_xhr and formid == 'login':
         return render_template('forms/loginform.html', loginform=loginform, Markup=Markup)
     else:
-        return render_template('login.html', openidform=openidform, loginform=loginform,
+        return render_template('login.html', openidform=openidform, loginform=loginform, lastused=loginmethod,
             oiderror=oid.fetch_error(), oidnext=oid.get_next_url(), Markup=Markup)
 
 
@@ -136,7 +140,7 @@ def register():
             return redirect(request.args['next'], code=303)
         else:
             return redirect(url_for('index'), code=303)
-    return render_form(form=form, title='Register an account', formid='register', submit='Register')
+    return render_form(form=form, title='Create an account', formid='register', submit='Register')
 
 
 @app.route('/reset', methods=['GET', 'POST'])

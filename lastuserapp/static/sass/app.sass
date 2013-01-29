@@ -9,20 +9,33 @@ a.loginbutton
   float: left
   text-indent: -119988px
   overflow: hidden
-  text-align: left
+  text-align: center
   background-repeat: no-repeat
   background-position: 50% 50%
   width: 100px
   height: 40px
   border: 1px solid $color-outline
+  line-height: 40px
   padding: 5px
-  margin-right: 4px
+  margin: 0 4px 4px 0
   +border-radius(3px)
   +single-box-shadow(rgba(0, 0, 0, 0.1), 0, 1px, 2px)
+
+a.loginbutton.hidden
+  display: none
+  visibility: hidden
+
+a.loginbutton.lastused, a.loginbutton.lastused:hover
+  border: 1px solid rgba(82,168,236,0.8)
+  +single-box-shadow(rgba(82,168,236,0.6), 0, 1px, 5px)
+
+a.loginbutton.caption
+  text-indent: 0
 
 a.loginbutton:hover
   +single-box-shadow(rgba(0, 0, 0, 0.3), 0, 1px, 5px)
   border-color: $color-outline-dark
+  text-decoration: none
 
 input[name="openid"]
   background: image-url("openid.png") 4px no-repeat

@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timedelta
 from functools import wraps
 from urllib import unquote
 from urllib2 import urlopen, URLError
@@ -174,3 +175,9 @@ def register_internal(username, fullname, password):
         user.username = None
     db.session.add(user)
     return user
+
+
+def set_loginmethod_cookie(response, value):
+    response.set_cookie('login', value, max_age=31557600,  # Keep this cookie for a year
+        expires=datetime.utcnow() + timedelta(days=365))   # Expire one year from now
+    return response

@@ -34,12 +34,13 @@ class OpenIdForm(Form):
 class RegisterForm(Form):
     fullname = wtf.TextField('Full name', validators=[wtf.Required()])
     email = wtf.html5.EmailField('Email address', validators=[wtf.Required(), wtf.Email()])
-    username = wtf.TextField('Username (optional)', validators=[wtf.Required()])
+    username = wtf.TextField('Username', validators=[wtf.Required()],
+        description="Single word that can contain letters, numbers and dashes")
     password = wtf.PasswordField('Password', validators=[wtf.Required()])
     confirm_password = wtf.PasswordField('Confirm password',
                           validators=[wtf.Required(), wtf.EqualTo('password')])
     recaptcha = wtf.RecaptchaField('Are you human?',
-        description="Type both words into the text box")
+        description="Type both words into the text box to prove that you are a human and not a computer program")
 
     def validate_username(self, field):
         if field.data in RESERVED_USERNAMES:

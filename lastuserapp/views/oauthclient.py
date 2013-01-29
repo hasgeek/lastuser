@@ -14,7 +14,7 @@ from coaster.views import get_next_url
 
 from lastuserapp import app
 from lastuserapp.models import db, UserExternalId, UserEmail, User
-from lastuserapp.views.helpers import login_internal, register_internal
+from lastuserapp.views.helpers import login_internal, register_internal, set_loginmethod_cookie
 from lastuserapp.utils import get_gravatar_md5sum
 
 # OAuth 1.0a handlers
@@ -98,7 +98,7 @@ def login_twitter_authorized(resp):
 
     # Redirect with 303 because users hitting the back button
     # cause invalid/expired token errors from Twitter
-    return redirect(next_url, code=303)
+    return set_loginmethod_cookie(redirect(next_url, code=303), 'twitter')
 
 
 # FIXME: Don't place config at module scope
@@ -175,7 +175,7 @@ def login_github_authorized():
         flash(u"GitHub login failed: %s" % unicode(e), category="error")
 
     # As with Twitter, redirect with code 303
-    return redirect(next_url, code=303)
+    return set_loginmethod_cookie(redirect(next_url, code=303), 'github')
 
 
 def config_external_id(service, service_name, user, userid, username, fullname, avatar, access_token, secret, token_type, next_url):

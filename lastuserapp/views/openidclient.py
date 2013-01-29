@@ -7,7 +7,7 @@ from coaster.views import get_next_url
 from lastuserapp import app
 from lastuserapp.mailclient import send_email_verify_link
 from lastuserapp.models import db, UserExternalId, UserEmail, UserEmailClaim
-from lastuserapp.views.helpers import login_internal, register_internal
+from lastuserapp.views.helpers import login_internal, register_internal, set_loginmethod_cookie
 
 oid = OpenID(app)
 
@@ -38,14 +38,14 @@ def login_openid_success(resp):
         session['userid_external'] = {'service': service, 'userid': openid}
         flash("You are now logged in", category='success')
         if not extid.user.is_profile_complete():
-            return redirect(url_for('profile_new', next=get_next_url(session=True)))
+            return set_loginmethod_cookie(redirect(url_for('profile_new', next=get_next_url(session=True))), service)
         else:
-            return redirect(get_next_url(session=True))
+            return set_loginmethod_cookie(redirect(get_next_url(session=True)), service)
     else:
         username = None
         if resp.email:
             useremail = UserEmail.query.filter_by(email=resp.email).first()
-            if openid.startswith('https://profiles.google.com/') or openid.startswith('https://www.google.com/accounts/o8/id?id='):
+            if service == 'google':
                 # Google id. Trust the email address.
                 if useremail:
                     # User logged in previously using a different Google OpenID endpoint
@@ -96,6 +96,6 @@ def login_openid_success(resp):
         session['userid_external'] = {'service': service, 'userid': openid}
         flash("You are now logged in.", category='success')
         if not user.is_profile_complete():
-            return redirect(url_for('profile_new', next=get_next_url(session=True)))
+            return set_loginmethod_cookie(redirect(url_for('profile_new', next=get_next_url(session=True))), service)
         else:
-            return redirect(get_next_url(session=True))
+            return set_loginmethod_cookie(redirect(get_next_url(session=True)), service)
