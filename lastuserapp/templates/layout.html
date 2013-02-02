@@ -3,15 +3,39 @@
 {% block networkbar %}{{ networkbar(siteid='home', login=true) }}{% endblock %}
 
 {% block baseheadline -%}
-  {% block headline -%}
-    <div class="page-header">
-      <h1>{{ self.title()|e }}</h1>
-    </div>
-  {%- endblock %}
 {%- endblock %}
 
 {% block basecontent -%}
-  {% block content %}{% endblock %}
+  {# Show a sidebar only if the user is logged in -#}
+  {%- if g.user %}
+  <div class="row">
+    <div class="span9">
+  {%- endif %}
+      {% block headline -%}
+        <div class="page-header">
+          <h1>{{ self.title()|e }}</h1>
+        </div>
+      {%- endblock %}
+      {% block content %}{% endblock %}
+  {%- if g.user %}
+    </div>
+    <div class="span3">
+      <ul class="well nav nav-list">
+        <li class="nav-header">Account</li>
+        <li{% if request.endpoint=='profile' %} class="active"{% endif %}><a href="{{ url_for('profile') }}"><span class="icon-user">Profile</span></a></li>
+        <li class="nav-header">Applications</li>
+        <li{% if request.endpoint=='client_list' %} class="active"{% endif %}><a href="{{ url_for('client_list') }}"><span class="icon-cog">My applications</span></a></li>
+        <li{% if request.endpoint=='client_list_all' %} class="active"{% endif %}><a href="{{ url_for('client_list_all') }}"><span class="icon-cogs">All applications</span></a></li>
+        <li{% if request.endpoint=='permission_list' %} class="active"{% endif %}><a href="{{ url_for('permission_list') }}"><span class="icon-lock">Permissions</span></a></li>
+        <li class="nav-header">Organizations</li>
+        {%- for org in g.user.organizations() %}
+          <li{% if request.endpoint=='org_info' and request.view_args['name']==org.name %} class="active"{% endif %}><a href="{{ url_for('org_info', name=org.name) }}"><span class="icon-group">{{ org.title }}</span></a></li>
+        {%- endfor %}
+        <li{% if request.endpoint=='org_new' %} class="active"{% endif %}><a href="{{ url_for('org_new') }}"><span class="icon-plus">New organization...</span></a></li>
+      </ul>
+    </div>
+  </div>
+  {%- endif %}
 {%- endblock %}
 
 {% block footer %}{{ config['MESSAGE_FOOTER'] }}{% endblock %}

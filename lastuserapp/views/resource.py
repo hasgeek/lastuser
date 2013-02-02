@@ -9,7 +9,7 @@ from lastuserapp import app
 from lastuserapp.models import (db, getuser, User, Organization, AuthToken, Resource,
     ResourceAction, UserClientPermissions, TeamClientPermissions)
 from lastuserapp.views.helpers import requires_client_login, requires_user_or_client_login
-from lastuserapp.registry import registry
+from lastuserapp.registry import resource_registry
 
 
 def get_userinfo(user, client, scope=[], get_permissions=True):
@@ -230,7 +230,7 @@ def org_team_get():
 # --- Token-based resource endpoints ------------------------------------------
 
 @app.route('/api/1/id')
-@registry.resource('id', u'Read your name and username')
+@resource_registry.resource('id', u'Read your name and username')
 def resource_id(authtoken, args, files=None):
     """
     Return user's id
@@ -239,7 +239,7 @@ def resource_id(authtoken, args, files=None):
 
 
 @app.route('/api/1/email')
-@registry.resource('email', u'Read your email address')
+@resource_registry.resource('email', u'Read your email address')
 def resource_email(authtoken, args, files=None):
     """
     Return user's email addresses.
@@ -252,7 +252,7 @@ def resource_email(authtoken, args, files=None):
 
 
 @app.route('/api/1/email/add', methods=['POST'])
-@registry.resource('email/add', u'Add an email address to your profile')
+@resource_registry.resource('email/add', u'Add an email address to your profile')
 def resource_email_add(authtoken, args, files=None):
     """
     Add an email address to the user's profile.
@@ -262,7 +262,7 @@ def resource_email_add(authtoken, args, files=None):
 
 
 @app.route('/api/1/organizations')
-@registry.resource('organizations', u'Read the organizations you are a member of')
+@resource_registry.resource('organizations', u'Read the organizations you are a member of')
 def resource_organizations(authtoken, args, files=None):
     """
     Return user's organizations and teams.
@@ -271,6 +271,6 @@ def resource_organizations(authtoken, args, files=None):
 
 
 @app.route('/api/1/notice/send')
-@registry.resource('notice/send', u'Send you notifications')
+@resource_registry.resource('notice/send', u'Send you notifications')
 def resource_notice_send(authtoken, args, files=None):
     pass

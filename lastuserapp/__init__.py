@@ -45,3 +45,4 @@ import lastuserapp.mailclient
 import lastuserapp.models
 import lastuserapp.forms
 import lastuserapp.views
+import lastuserapp.providers

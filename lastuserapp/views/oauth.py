@@ -12,7 +12,7 @@ from lastuserapp.forms import AuthorizeForm
 from lastuserapp.utils import make_redirect_url
 from lastuserapp.views.helpers import requires_login, requires_client_login
 from lastuserapp.views.resource import get_userinfo
-from lastuserapp.registry import registry
+from lastuserapp.registry import resource_registry
 
 
 class ScopeException(Exception):
@@ -26,7 +26,7 @@ def verifyscope(scope, client):
     resources = {}  # resource_object: [action_object, ...]
 
     for item in scope:
-        if item not in registry:  # These are internal resources
+        if item not in resource_registry:  # Validation is only required for non-internal resources
             # Validation 1: resource/action is properly formatted
             if '/' in item:
                 parts = item.split('/')
@@ -217,7 +217,7 @@ def oauth_authorize():
         redirect_uri=redirect_uri,
         scope=scope,
         resources=resources,
-        registry=registry,
+        resource_registry=resource_registry,
         )
 
 

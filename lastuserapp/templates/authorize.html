@@ -17,9 +17,9 @@
   <dt>Access scope</dt>
   <dd>
     <ol>
-      {% for key in registry -%}
+      {% for key in resource_registry -%}
         {% if key in scope -%}
-          <li>{{ registry[key]['description'] }}</li>
+          <li>{{ resource_registry[key]['description'] }}</li>
         {%- endif %}
       {%- endfor %}
       {% for resource in resources %}

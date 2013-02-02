@@ -5,7 +5,7 @@ from baseframe.forms import Form
 from coaster import valid_username
 
 from lastuserapp.models import Permission, Resource, ResourceAction, getuser, Organization
-from lastuserapp.registry import registry
+from lastuserapp.registry import resource_registry
 
 
 class AuthorizeForm(Form):
@@ -182,7 +182,7 @@ class ResourceForm(Form):
         if not valid_username(field.data):
             raise wtf.ValidationError("Name contains invalid characters.")
 
-        if field.data in registry:
+        if field.data in resource_registry:
             raise wtf.ValidationError("This name is reserved for internal use")
 
         existing = Resource.query.filter_by(name=field.data).first()

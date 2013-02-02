@@ -79,5 +79,38 @@ class ResourceRegistry(OrderedDict):
             return decorated_function
         return wrapper
 
+
+class LoginProvider(object):
+    """
+    Base class for login providers. Each implementation provides
+    two methods: :meth:`do` and :meth:`callback`. :meth:`do` is called
+    when the user chooses to login with the specified provider.
+    :meth:`callback` is called with the response from the provider.
+
+    Both :meth:`do` and :meth:`callback` are called as part of a Flask
+    view and have full access to the view infrastructure. However, while
+    :meth:`do` is expected to return a Response to the user,
+    :meth:`callback` only returns information on the user back to Lastuser.
+    """
+
+    name = None
+    title = None
+    icon = None
+    form = None
+
+    def do(self, **kwargs):
+        raise NotImplementedError
+
+    def callback(self, **kwargs):
+        raise NotImplementedError
+
+
+class LoginProviderRegistry(OrderedDict):
+    """
+    Dictionary of login providers.
+    """
+    pass
+
 #: Global resource registry
-registry = ResourceRegistry()
+resource_registry = ResourceRegistry()
+login_registry = LoginProviderRegistry()

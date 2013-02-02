@@ -129,7 +129,7 @@ class User(BaseMixin, db.Model):
         """
         Return the organizations this user is a member of.
         """
-        return list(set([team.org for team in self.teams]))
+        return sorted(set([team.org for team in self.teams]), key=lambda o: o.title)
 
     def organizations_owned(self):
         """
