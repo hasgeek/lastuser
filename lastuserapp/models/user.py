@@ -135,7 +135,8 @@ class User(BaseMixin, db.Model):
         """
         Return the organizations this user is an owner of.
         """
-        return list(set([team.org for team in self.teams if team.org.owners == team]))
+        return sorted(set([team.org for team in self.teams if team.org.owners == team]),
+            key=lambda o: o.title)
 
     def organizations_owned_ids(self):
         """

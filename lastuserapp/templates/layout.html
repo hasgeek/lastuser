@@ -28,7 +28,7 @@
         <li{% if request.endpoint=='client_list_all' %} class="active"{% endif %}><a href="{{ url_for('client_list_all') }}"><span class="icon-cogs">All applications</span></a></li>
         <li{% if request.endpoint=='permission_list' %} class="active"{% endif %}><a href="{{ url_for('permission_list') }}"><span class="icon-lock">Permissions</span></a></li>
         <li class="nav-header">Organizations</li>
-        {%- for org in g.user.organizations() %}
+        {%- for org in g.user.organizations_owned() %}
           <li{% if request.endpoint=='org_info' and request.view_args['name']==org.name %} class="active"{% endif %}><a href="{{ url_for('org_info', name=org.name) }}"><span class="icon-group">{{ org.title }}</span></a></li>
         {%- endfor %}
         <li{% if request.endpoint=='org_new' %} class="active"{% endif %}><a href="{{ url_for('org_new') }}"><span class="icon-plus">New organization...</span></a></li>
