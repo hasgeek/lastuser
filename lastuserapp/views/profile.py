@@ -99,6 +99,7 @@ def profile_new():
 def change_password():
     if g.user.pw_hash is None:
         form = PasswordResetForm()
+        del form.username
     else:
         form = PasswordChangeForm()
     if form.validate_on_submit():
