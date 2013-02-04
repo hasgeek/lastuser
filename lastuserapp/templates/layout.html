@@ -25,7 +25,6 @@
         <li{% if request.endpoint=='profile' %} class="active"{% endif %}><a href="{{ url_for('profile') }}"><span class="icon-user">Profile</span></a></li>
         <li class="nav-header">Applications</li>
         <li{% if request.endpoint=='client_list' %} class="active"{% endif %}><a href="{{ url_for('client_list') }}"><span class="icon-cog">My applications</span></a></li>
-        <li{% if request.endpoint=='client_list_all' %} class="active"{% endif %}><a href="{{ url_for('client_list_all') }}"><span class="icon-cogs">All applications</span></a></li>
         <li{% if request.endpoint=='permission_list' %} class="active"{% endif %}><a href="{{ url_for('permission_list') }}"><span class="icon-lock">Permissions</span></a></li>
         <li class="nav-header">Organizations</li>
         {%- for org in g.user.organizations_owned() %}
