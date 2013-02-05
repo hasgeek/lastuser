@@ -12,7 +12,6 @@ from lastuserapp.models import User, UserEmail, getuser
 class LoginForm(Form):
     username = wtf.TextField('Username or Email', validators=[wtf.Required()])
     password = wtf.PasswordField('Password', validators=[wtf.Required()])
-    remember = wtf.BooleanField('Remember me')
 
     def validate_username(self, field):
         existing = getuser(field.data)

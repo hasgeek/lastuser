@@ -8,7 +8,6 @@
   {% endif %}
   {{ renderfield(loginform.username, "small", tabindex='1', autofocus=True, sidetext=Markup('<a href="' + url_for('register', next=request.args.get('next', request.url)) + '">Create a new account?</a>')) }}
   {{ renderfield(loginform.password, "small", tabindex='2', sidetext=Markup('<a href="' + url_for('reset') + '">Forgot password?</a>')) }}
-  {{ renderfield(loginform.remember, "small", tabindex='3') }}
-  {{ rendersubmit([(None, "Login", 'btn-primary')], "small", tabindex='4') }}
+  {{ rendersubmit([(None, "Login", 'btn-primary')], "small", tabindex='3') }}
 </form>
 {{ ajaxform('login', request) }}

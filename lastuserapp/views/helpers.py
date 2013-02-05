@@ -150,6 +150,7 @@ def avatar_url_github(githubid):
 def login_internal(user):
     g.user = user
     session['userid'] = user.userid
+    session.permanent = True
     autoset_timezone(user)
 
 

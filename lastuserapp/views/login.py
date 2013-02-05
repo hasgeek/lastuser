@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 import urlparse
-from flask import g, redirect, request, session, flash, render_template, url_for, Markup, escape
+from flask import g, redirect, request, flash, render_template, url_for, Markup, escape
 from coaster.views import get_next_url, load_model
 from baseframe.forms import render_form, render_message, render_redirect
 
@@ -39,10 +39,6 @@ def login():
         if loginform.validate():
             user = loginform.user
             login_internal(user)
-            if loginform.remember.data:
-                session.permanent = True
-            else:
-                session.permanent = False
             db.session.commit()
             flash('You are now logged in', category='success')
             return set_loginmethod_cookie(render_redirect(get_next_url(session=True), code=303),
