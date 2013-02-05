@@ -66,6 +66,7 @@ class ProfileForm(Form):
         # if not field.data:
         #     field.data = None
         #     return
+        field.data = field.data.lower()  # Usernames can only be lowercase
         if not valid_username(field.data):
             raise wtf.ValidationError("Usernames can only have alphabets, numbers and dashes (except at the ends)")
         if field.data in RESERVED_USERNAMES:
