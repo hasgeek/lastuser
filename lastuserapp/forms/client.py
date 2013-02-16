@@ -90,7 +90,8 @@ class PermissionForm(Form):
             return False
 
         if not valid_username(self.name.data):
-            raise wtf.ValidationError("Name contains invalid characters")
+            self.name.errors.append("Name contains invalid characters")
+            return False
 
         existing = Permission.query.filter_by(name=self.name.data, allusers=True).first()
         if existing and existing.id != self.edit_id:
