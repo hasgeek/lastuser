@@ -32,13 +32,16 @@ def profile_edit(newprofile=False):
     form.timezone.description = app.config.get('TIMEZONE_REASON')
     if g.user.email or newprofile is False:
         del form.email
+    if newprofile:
+        del form.description
 
     if form.validate_on_submit():
         # Can't auto-populate here because user.email is read-only
         g.user.fullname = form.fullname.data
         g.user.username = form.username.data
-        g.user.description = form.description.data
         g.user.timezone = form.timezone.data
+        if not newprofile:
+            g.user.description = form.description.data
 
         if newprofile and not g.user.email:
             useremail = UserEmailClaim(user=g.user, email=form.email.data)
@@ -56,7 +59,7 @@ def profile_edit(newprofile=False):
             return render_redirect(url_for('profile'), code=303)
     if newprofile:
         return render_form(form, title="Update profile", formid="profile_new", submit="Continue",
-            message=u"Hello, %s. Please spare a minute to fill out your profile." % g.user.fullname,
+            message=u"Hello, %s. Please spare a minute to complete your profile." % g.user.fullname,
             ajax=True)
     else:
         return render_form(form, title="Edit profile", formid="profile_edit", submit="Save changes", ajax=True)
