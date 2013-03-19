@@ -4,45 +4,55 @@ __version__ = '0.1'
 
 from flask import Flask
 from flask.ext.assets import Environment, Bundle
-from coaster.app import configure
+from coaster.app import init_app
 from baseframe import baseframe, baseframe_js, baseframe_css, cookie_js, timezone_js
 
-
-# These names are unavailable for use as usernames
-RESERVED_USERNAMES = set([
-    'app',
-    'apps',
-    'auth',
-    'client',
-    'confirm',
-    'login',
-    'logout',
-    'new',
-    'profile',
-    'reset',
-    'register',
-    'token',
-    'organizations',
-    ])
+import lastuser_core, lastuser_oauth, lastuser_ui
+from lastuser_core import login_registry
+from lastuser_oauth import providers
 
 app = Flask(__name__, instance_relative_config=True)
-configure(app, 'LASTUSER_ENV')
+
 app.register_blueprint(baseframe)
+app.register_blueprint(lastuser_core.lastuser_core)
+app.register_blueprint(lastuser_oauth.lastuser_oauth)
+app.register_blueprint(lastuser_ui.lastuser_ui)
+
+import lastuserapp.views
+
 assets = Environment(app)
 
-js = Bundle(baseframe_js, cookie_js, timezone_js, 'js/app.js',
+# FIXME: app.js has moved to lastuser_oauth
+js = Bundle(baseframe_js, cookie_js, timezone_js, lastuser_oauth.lastuser_oauth_js,
     filters='jsmin', output='js/packed.js')
 
-css = Bundle(baseframe_css, 'css/app.css',
+# FIXME: CSS has moved to lastuser_oauth
+css = Bundle(baseframe_css, lastuser_oauth.lastuser_oauth_css,
     filters='cssmin', output='css/packed.css')
 
 assets.register('js_all', js)
 assets.register('css_all', css)
 
 
-import lastuserapp.registry
-import lastuserapp.mailclient
-import lastuserapp.models
-import lastuserapp.forms
-import lastuserapp.views
-import lastuserapp.providers
+def init_for(env):
+    init_app(app, env)
+    lastuser_core.models.db.init_app(app)
+    lastuser_core.models.db.app = app  # To make it work without an app context
+    lastuser_oauth.mailclient.mail.init_app(app)
+    lastuser_oauth.views.login.oid.init_app(app)
+
+    # Register some login providers
+    if app.config.get('OAUTH_TWITTER_KEY') and app.config.get('OAUTH_TWITTER_SECRET'):
+        login_registry['twitter'] = providers.TwitterProvider('twitter', 'Twitter',
+            at_login=True, priority=True,
+            key=app.config['OAUTH_TWITTER_KEY'],
+            secret=app.config['OAUTH_TWITTER_SECRET'])
+    login_registry['google'] = providers.GoogleProvider('google', 'Google',
+        at_login=True, priority=True)
+    if app.config.get('OAUTH_GITHUB_KEY') and app.config.get('OAUTH_GITHUB_SECRET'):
+        login_registry['github'] = providers.GitHubProvider('github', 'GitHub',
+            at_login=True, priority=False,
+            key=app.config['OAUTH_GITHUB_KEY'],
+            secret=app.config['OAUTH_GITHUB_SECRET'])
+    login_registry['openid'] = providers.OpenIdProvider('openid', 'OpenID',
+        at_login=True, priority=False)

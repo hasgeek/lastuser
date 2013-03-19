@@ -1,0 +1,69 @@
+# -*- coding: utf-8 -*-
+
+from inspect import isclass
+from flask.ext.sqlalchemy import SQLAlchemy
+from coaster.sqlalchemy import TimestampMixin, BaseMixin  # Imported from here by other models
+
+db = SQLAlchemy()
+
+
+from lastuser_core.models.user import *
+from lastuser_core.models.client import *
+from lastuser_core.models.notice import *
+
+
+def getuser(name):
+    if '@' in name:
+        # TODO: This should be handled by the LoginProvider registry, not here
+        if name.startswith('@'):
+            extid = UserExternalId.query.filter_by(service='twitter', username=name[1:]).first()
+            if extid:
+                return extid.user
+            else:
+                return None
+        else:
+            useremail = UserEmail.query.filter(UserEmail.email.in_([name, name.lower()])).first()
+            if useremail:
+                return useremail.user
+            # No verified email id. Look for an unverified id; return first found
+            useremail = UserEmailClaim.query.filter(UserEmailClaim.email.in_([name, name.lower()])).first()
+            if useremail:
+                return useremail.user
+            return None
+    else:
+        return User.query.filter_by(username=name).first()
+
+
+def getextid(service, userid):
+    return UserExternalId.query.filter_by(service=service, userid=userid).first()
+
+
+def merge_users(user1, user2):
+    """
+    Merge two user accounts and return the new user account.
+    """
+    # Always keep the older account and merge from the newer account
+    if user1.created_at < user2.created_at:
+        keep_user, merge_user = user1, user2
+    else:
+        keep_user, merge_user = user2, user1
+
+    # 1. Inspect all tables for foreign key references to merge_user and switch to keep_user.
+    for model in globals().values():
+        if isclass(model) and issubclass(model, db.Model) and model != User:
+            # a. This is a model and it's not the User model. Does it have a migrate_user classmethod?
+            if hasattr(model, 'migrate_user'):
+                model.migrate_user(olduser=merge_user, newuser=keep_user)
+            # b. No migrate_user? Does it have a user_id column?
+            elif hasattr(model, 'user_id') and hasattr(model, 'query'):
+                for row in model.query.filter_by(user_id=merge_user.id).all():
+                    row.user_id = keep_user.id
+    # 2. Add merge_user's userid to olduserids. Commit session.
+    db.session.add(UserOldId(user=keep_user, userid=merge_user.userid))
+    db.session.commit()
+    # 3. Delete merge_user. Commit session.
+    db.session.delete(merge_user)
+    db.session.commit()
+
+    # 4. Return keep_user.
+    return keep_user

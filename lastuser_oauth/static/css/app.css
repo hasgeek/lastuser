@@ -1,0 +1,53 @@
+a.loginbutton {
+  display: block;
+  float: left;
+  text-indent: -119988px;
+  overflow: hidden;
+  text-align: center;
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+  width: 100px;
+  height: 40px;
+  border: 1px solid #b7b7b7;
+  line-height: 40px;
+  padding: 5px;
+  margin: 0 4px 4px 0;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  -ms-border-radius: 3px;
+  -o-border-radius: 3px;
+  border-radius: 3px;
+  -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+a.loginbutton.hidden, .js a.loginbutton.jshidden, .no-js a.loginbutton.no-jshidden {
+  display: none;
+  visibility: hidden;
+}
+
+a.loginbutton.lastused, a.loginbutton.lastused:hover {
+  border: 1px solid rgba(82, 168, 236, 0.8);
+  -webkit-box-shadow: 0 0 8px rgba(82, 168, 236, 0.6);
+  -moz-box-shadow: 0 0 8px rgba(82, 168, 236, 0.6);
+  box-shadow: 0 0 8px rgba(82, 168, 236, 0.6);
+}
+
+a.loginbutton.caption {
+  text-indent: 0;
+}
+
+a.loginbutton:hover {
+  -webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+  -moz-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+  border-color: #969696;
+  text-decoration: none;
+}
+
+input[name="field-openid"] {
+  background: url('../img/openid.png?1360059169') 4px no-repeat;
+  width: 230px;
+  padding-left: 25px;
+}

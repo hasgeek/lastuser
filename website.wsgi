@@ -1,5 +1,5 @@
 import sys
-import os, os.path
+import os.path
 sys.path.insert(0, os.path.dirname(__file__))
-os.environ['LASTUSER_ENV'] = 'production'
-from lastuserapp import app as application
+from lastuserapp import app as application, init_for
+init_for('production')

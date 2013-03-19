@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block title %}Organizations{% endblock %}
+{% block content %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Title</th>
+      <th>Owners</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for org in organizations %}
+      {%- set link = url_for('.org_info', name=org.name)|e %}
+      <tr class="link">
+        <td><a href="{{ link }}">{{ loop.index }}</a></td>
+        <td><a href="{{ link }}">{{ org.title }}</a></td>
+        <td><a href="{{ link }}">
+          {%- for user in org.owners.users %}
+            {%- if not loop.first %}, {% endif -%}
+            {{ user.displayname() }}
+          {%- endfor -%}
+        </a></td>
+      </tr>
+    {% else %}
+      <tr>
+        <td colspan="3">No organizations have been created</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p>
+  <a href="{{ url_for('.org_new') }}">Create a new organization &rarr;</a>
+</p>
+
+{% endblock %}

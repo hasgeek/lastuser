@@ -1,13 +1,29 @@
 # -*- coding: utf-8 -*-
 
-import lastuserapp.views.helpers
-import lastuserapp.views.index
-import lastuserapp.views.login
-import lastuserapp.views.oauthclient
-import lastuserapp.views.openidclient
-import lastuserapp.views.oauth
-import lastuserapp.views.client
-import lastuserapp.views.sms
-import lastuserapp.views.resource
-import lastuserapp.views.org
-import lastuserapp.views.profile
+# Handle top-level views for url routing
+
+from lastuserapp import app
+import lastuser_oauth.views
+import lastuser_ui.views
+
+
+# These endpoints are replicated here so that Baseframe's routing does not choke
+
+@app.route('/profile')
+def profile():
+    return lastuser_ui.views.profile.profile()
+
+
+@app.route('/login')
+def login():
+    return lastuser_oauth.views.login.login()
+
+
+@app.route('/logout')
+def logout():
+    return lastuser_oauth.views.login.logout()
+
+
+@app.route('/')
+def index():
+    return lastuser_ui.views.index.index()

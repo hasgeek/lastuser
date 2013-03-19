@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+{% from "baseframe/forms.html" import renderfield, renderform_inner, rendersubmit, ajaxform %}
+{% block title %}Merge accounts{% endblock %}
+
+{% macro accountinfo(user) %}
+  <ul>
+    <li><strong>Name:</strong> {{ user.fullname }}</li>
+    <li><strong>Username:</strong> {{ user.username or ''}}</li>
+    <li><strong>Bio:</strong> {{ user.description }}</li>
+    <li><strong>Email addresses:</strong>
+      <ul>
+        {%- for useremail in user.emails %}
+          <li>{{ useremail.email }}</li>
+        {%- else %}
+          <li><em>(none)</em></li>
+        {%- endfor %}
+      </ul>
+    </li>
+    <li><strong>External ids:</strong>
+      <ul>
+        {%- for extid in user.externalids %}
+          <li><strong>{{ login_registry[extid.service].title }}:</strong> {{ extid.username }}</li>
+        {%- else %}
+          <li><em>(none)</em></li>
+        {%- endfor %}
+      </ul>
+    </li>
+  </ul>
+{% endmacro %}
+
+{% block content %}
+  <div class="flash cookies-required-alert">
+    <div class="flashmessage">
+      Cookies are required to perform this operation. Please enable cookies in your browser’s settings and reload this page.
+    </div>
+  </div>
+  <p class="cookies-required">
+    You appear to have two accounts. Would you like to merge them?
+  </p>
+  <div class="cookies-required row">
+    <div class="span4">
+      <h2 class="htile">Logged in account</h2>
+      {{ accountinfo(user) }}
+    </div>
+    <div class="span4">
+      <h2 class="htile">Other account</h2>
+      {{ accountinfo(other_user) }}
+    </div>
+  </div>
+  <form class="cookies-required" id="merge-accounts" method="POST">
+    <input type="hidden" name="_charset_"/>
+    <input type="hidden" name="form.id" value="authorize"/>
+    {{ form.hidden_tag() }}
+    {% if form.csrf_token.errors %}
+      {% for error in form.csrf_token.errors %}<div class="error">{{ error }}</div>{% endfor %}
+    {% endif %}
+    <div class="form-actions">
+      <input class="btn btn-primary" type="submit" name="merge" value="Merge accounts"/>
+      <input class="btn" type="submit" name="skip" value="Skip"/>
+    </div>
+  </form>
+{% endblock %}
