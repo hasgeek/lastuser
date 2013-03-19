@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
+from functools import wraps
+
 from flask import redirect, session, flash, url_for
 from flask.ext.openid import OpenID
 from openid import oidutil
+from openid.fetchers import HTTPFetchingError
 
 from coaster.views import get_next_url
 
@@ -22,7 +25,21 @@ def openid_log(message, level=0):
 oidutil.log = openid_log
 
 
+def openid_exception_handler(service):
+    def inner(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except HTTPFetchingError, e:
+                flash("%s login failed: %s" % (service, unicode(e)), category="error")
+                return redirect(url_for('login'))
+        return decorated_function
+    return inner
+
+
 @app.route('/login/google')
+@openid_exception_handler(u"Google")
 @oid.loginhandler
 def login_google():
     return oid.try_login('https://www.google.com/accounts/o8/id',

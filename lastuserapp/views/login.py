@@ -5,6 +5,7 @@ import urlparse
 from flask import g, redirect, request, flash, render_template, url_for, Markup, escape
 from coaster.views import get_next_url, load_model
 from baseframe.forms import render_form, render_message, render_redirect
+from openid.fetchers import HTTPFetchingError
 
 from lastuserapp import app
 from lastuserapp.views.openidclient import oid
@@ -32,9 +33,14 @@ def login():
     formid = request.form.get('form.id')
     if request.method == 'POST' and formid == 'openid':
         if openidform.validate():
-            return set_loginmethod_cookie(oid.try_login(openidform.openid.data,
-                    ask_for=['email', 'fullname', 'nickname']),
-                'openid')
+            try:
+                return set_loginmethod_cookie(oid.try_login(openidform.openid.data,
+                        ask_for=['email', 'fullname', 'nickname']),
+                    'openid')
+            except HTTPFetchingError, e:
+                flash("OpenID login failed: %s" % unicode(e), category="error")
+                return redirect(url_for('login'))
+
     elif request.method == 'POST' and formid == 'login':
         if loginform.validate():
             user = loginform.user
