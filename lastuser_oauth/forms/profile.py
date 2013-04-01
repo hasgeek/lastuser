@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from pytz import common_timezones
 from flask import g, current_app
 import flask.ext.wtf as wtf
-from coaster import valid_username
+from coaster import valid_username, sorted_timezones
 from baseframe.forms import Form
 
 from lastuser_core.models import User, UserEmail, Organization, getuser
 
-timezones = [(tz, tz) for tz in common_timezones]
+timezones = sorted_timezones()
 
 
 class PasswordResetRequestForm(Form):
