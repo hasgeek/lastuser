@@ -62,7 +62,10 @@ def merge_users(user1, user2):
     db.session.add(UserOldId(user=keep_user, userid=merge_user.userid))
     # 3. Mark merge_user as merged. Commit session.
     merge_user.status = USER_STATUS.MERGED
+    # 4. Release the username
+    merge_user.username = None
+    # 5. Commit all of this
     db.session.commit()
 
-    # 4. Return keep_user.
+    # 6. Return keep_user.
     return keep_user

@@ -4,6 +4,10 @@ from coaster import newid, newsecret
 from lastuser_core.models import db, BaseMixin
 from lastuser_core.models.user import User, Organization, Team
 
+__all__ = ['Client', 'UserFlashMessage', 'Resource', 'ResourceAction', 'AuthCode', 'AuthToken',
+    'Permission', 'UserClientPermissions', 'TeamClientPermissions', 'NoticeType',
+    'CLIENT_TEAM_ACCESS', 'ClientTeamAccess']
+
 
 class Client(BaseMixin, db.Model):
     """OAuth client applications"""
@@ -262,7 +266,7 @@ class AuthToken(BaseMixin, db.Model):
                     db.session.delete(token)
                     merge_performed = True
                     break
-            if merge_performed == False:
+            if merge_performed is False:
                 token.user = newuser  # Reassign this token to newuser
 
 
@@ -404,8 +408,3 @@ class NoticeType(BaseMixin, db.Model):
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
     #: Is this notice type available to all users and client apps?
     allusers = db.Column(db.Boolean, default=False, nullable=False)
-
-
-__all__ = ['Client', 'UserFlashMessage', 'Resource', 'ResourceAction', 'AuthCode', 'AuthToken',
-    'Permission', 'UserClientPermissions', 'TeamClientPermissions', 'NoticeType',
-    'CLIENT_TEAM_ACCESS', 'ClientTeamAccess']
