@@ -115,7 +115,7 @@ def login_service_postcallback(service, userdata):
             user = register_internal(None, userdata.get('fullname'), None)
             extid.user = user
             if userdata.get('username'):
-                if user.valid_username(userdata['username']):
+                if user.is_valid_username(userdata['username']):
                     # Set a username for this user if it's available
                     user.username = userdata['username']
     else:  # This id is attached to a user

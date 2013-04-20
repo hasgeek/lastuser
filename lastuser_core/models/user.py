@@ -48,12 +48,12 @@ class User(BaseMixin, db.Model):
 
     @username.setter
     def username(self, value):
-        if value is None:
+        if not value:
             self._username = None
-        elif self.valid_username(value):
+        elif self.is_valid_username(value):
             self._username = value
 
-    def valid_username(self, value):
+    def is_valid_username(self, value):
         existing = User.query.filter_by(username=value).first()
         if existing and existing.id != self.id:
             return False
