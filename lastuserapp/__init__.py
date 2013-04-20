@@ -9,6 +9,7 @@ from baseframe import baseframe, baseframe_js, baseframe_css, cookie_js, timezon
 
 import lastuser_core, lastuser_oauth, lastuser_ui
 from lastuser_core import login_registry
+from lastuser_core.models import db
 from lastuser_oauth import providers
 
 app = Flask(__name__, instance_relative_config=True)
@@ -36,8 +37,8 @@ assets.register('css_all', css)
 
 def init_for(env):
     init_app(app, env)
-    lastuser_core.models.db.init_app(app)
-    lastuser_core.models.db.app = app  # To make it work without an app context
+    db.init_app(app)
+    db.app = app  # To make it work without an app context
     lastuser_oauth.mailclient.mail.init_app(app)
     lastuser_oauth.views.login.oid.init_app(app)
 

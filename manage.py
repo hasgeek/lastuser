@@ -4,9 +4,9 @@ from flask.ext.script import Manager, Server, Option, prompt_bool
 from flask.ext.script.commands import Clean, ShowUrls
 from flask.ext.alembic import ManageMigrations
 
-from lastuserapp import app, init_for
 from lastuser_core import models
 from lastuser_core.models import db
+from lastuserapp import app, init_for
 
 
 manager = Manager(app)
@@ -16,8 +16,8 @@ database = Manager(usage="Perform database operations")
 class InitedServer(Server):
     def get_options(self):
         return super(InitedServer, self).get_options() + (
-        Option('-e', dest='env', default='dev', help="run server for this environment [default 'dev']"),
-        )
+            Option('-e', dest='env', default='dev', help="run server for this environment [default 'dev']"),
+            )
 
     def handle(self, *args, **kwargs):
         if 'env' in kwargs:
