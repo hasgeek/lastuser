@@ -77,4 +77,4 @@ def login_openid_success(resp):
         # Use email address as username
         response['username'] = resp.email
 
-    return login_service_postcallback(session.pop('openid_service'), response)
+    return login_service_postcallback(session.pop('openid_service', service), response)
