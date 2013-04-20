@@ -4,11 +4,9 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-from os import environ
-environ['LASTUSER_ENV'] = 'dev'
+from lastuserapp import app, init_for
+from lastuser_core.models import db
 
-from lastuserapp import app
-from lastuserapp.models import db
-
+init_for('dev')
 db.create_all()
 app.run('0.0.0.0', port=7000, debug=True)

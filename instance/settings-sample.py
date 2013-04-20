@@ -22,6 +22,25 @@ SECRET_KEY = 'make this something random'
 #: Timezone
 TIMEZONE = 'Asia/Calcutta'
 
+#: Reserved usernames
+#: Add to this list but do not remove any unless you want to break
+#: the website
+RESERVED_USERNAMES = set([
+    'app',
+    'apps',
+    'auth',
+    'client',
+    'confirm',
+    'login',
+    'logout',
+    'new',
+    'profile',
+    'reset',
+    'register',
+    'token',
+    'organizations',
+    ])
+
 #: Mail settings
 #: MAIL_FAIL_SILENTLY : default True
 #: MAIL_SERVER : default 'localhost'

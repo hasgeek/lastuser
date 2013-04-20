@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+{% from "baseframe/forms.html" import renderfield, renderform_inner, rendersubmit, ajaxform %}
+{% block title %}Login{% endblock %}
+{% block headline %}{% endblock %}
+{% block content %}
+  <div class="flash cookies-required-alert">
+    <div class="flashmessage">
+      Cookies are required to login. Please enable cookies in your browser’s settings and reload this page.
+    </div>
+  </div>
+  <div class="cookies-required form-horizontal">
+    <h2>
+      {%- if config['LOGIN_MESSAGE_1'] -%}
+        {{ config['LOGIN_MESSAGE_1'] }}
+      {%- else -%}
+        Login with your existing account at any of these <small>(pick one)</small>
+      {%- endif -%}
+    </h2>
+    <div class="control-group">
+      {# TODO: Replace hardcoded buttons by iterated list from login_registry #}
+      <a class="loginbutton {%- if lastused=='twitter' %} lastused{% endif %}" href="{{ url_for('.login_service', service='twitter', next=request.args.get('next')) }}"
+          style="background-image: url({{ url_for('.static', filename='img/login/twitter.png') }});">Twitter</a>
+      <a class="loginbutton {%- if lastused=='google' %} lastused{% endif %}" href="{{ url_for('.login_service', service='google', next=request.args.get('next')) }}"
+          style="background-image: url({{ url_for('.static', filename='img/login/google.png') }});">Google</a>
+      <a class="loginbutton {%- if lastused=='github' %} lastused{% else %} optional jshidden{% endif %}" href="{{ url_for('.login_service', service='github', next=request.args.get('next')) }}"
+          style="background-image: url({{ url_for('.static', filename='img/login/github.png') }});">GitHub</a>
+      <a class="loginbutton {%- if lastused=='openid' %} lastused{% else %} optional jshidden{% endif %}" id="openidbutton" href="#openidform"
+          style="background-image: url({{ url_for('.static', filename='img/login/openid.png') }});">OpenID</a>
+      <a class="loginbutton caption no-jshidden" id="showmore" href="">Show more...</a>
+    </div>
+    {%- for service, formdata in service_forms.items() %}{% with form = formdata['form'] %}
+      <form id="form-{{ service }}" method="POST" class="jshidden">
+        <input type="hidden" name="_charset_"/>
+        <input type="hidden" name="next" value="{{ formdata['next'] }}"/>
+        {% if formdata['error'] %}<div class=error>{{ formdata['error'] }}</div>{% endif %}
+        {{ renderform_inner(form, service) }}
+        {{ rendersubmit([(None, "Login", 'btn-primary')], "small") }}
+      </form>
+    {%- endwith %}{% endfor %}
+    <div id="passwordform" {%- if lastused != 'password' %} class="jshidden"{% endif %}>
+      <h2>
+        {%- if config['LOGIN_MESSAGE_2'] -%}
+          {{ config['LOGIN_MESSAGE_2'] }}
+        {%- else -%}
+          Or, login with a password
+        {%- endif -%}
+      </h2>
+      {% include "forms/loginform.html" %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block footerscripts %}
+  {{ ajaxform('passwordlogin', request, True) }}
+  <script type="text/javascript">
+    $(function() {
+      {% if oiderror -%}
+        $("#openid").removeClass('jshidden').focus();
+      {% else -%}
+        $("#form-openid").hide().removeClass('jshidden');
+      {% endif -%}
+      {% if lastused != 'password' %}$("#passwordform").removeClass('jshidden').hide();{% endif %}
+      $(".loginbutton.optional").hide().removeClass('jshidden');
+      $("#openidbutton").click(function() {
+        $("#form-openid").fadeToggle();
+        $("#openid").focus();
+        return false;
+      });
+      $("#showmore").click(function() {
+        $("#showmore").hide();
+        $(".loginbutton.optional").fadeToggle();
+        $("#passwordform").fadeIn();
+        $("#username").focus();
+        return false;
+      });
+    });
+  </script>
+{% endblock %}
