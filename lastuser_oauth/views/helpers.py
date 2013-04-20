@@ -6,7 +6,7 @@ from urllib2 import urlopen, URLError
 from pytz import common_timezones
 from flask import g, current_app, request, session, flash, redirect, url_for, json, Response
 from coaster.views import get_current_url
-from lastuser_core.models import db, User, Client
+from lastuser_core.models import db, User, Client, USER_STATUS
 from lastuser_oauth import lastuser_oauth
 
 valid_timezones = set(common_timezones)
@@ -20,7 +20,7 @@ def lookup_current_user():
     """
     g.user = None
     if 'userid' in session:
-        g.user = User.query.filter_by(userid=session['userid']).first()
+        g.user = User.query.filter_by(userid=session['userid'], status=USER_STATUS.ACTIVE).first()
         if not 'avatar_url' in session:
             if g.user and g.user.email:
                 session['avatar_url'] = avatar_url_email(g.user.email)

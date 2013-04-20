@@ -17,21 +17,21 @@ def getuser(name):
         # TODO: This should be handled by the LoginProvider registry, not here
         if name.startswith('@'):
             extid = UserExternalId.query.filter_by(service='twitter', username=name[1:]).first()
-            if extid:
+            if extid and extid.user.status == USER_STATUS.ACTIVE:
                 return extid.user
             else:
                 return None
         else:
             useremail = UserEmail.query.filter(UserEmail.email.in_([name, name.lower()])).first()
-            if useremail:
+            if useremail and useremail.user.status == USER_STATUS.ACTIVE:
                 return useremail.user
             # No verified email id. Look for an unverified id; return first found
             useremail = UserEmailClaim.query.filter(UserEmailClaim.email.in_([name, name.lower()])).first()
-            if useremail:
+            if useremail and useremail.user.status == USER_STATUS.ACTIVE:
                 return useremail.user
             return None
     else:
-        return User.query.filter_by(username=name).first()
+        return User.query.filter_by(username=name, status=USER_STATUS.ACTIVE).first()
 
 
 def getextid(service, userid):
@@ -60,9 +60,8 @@ def merge_users(user1, user2):
                     row.user_id = keep_user.id
     # 2. Add merge_user's userid to olduserids. Commit session.
     db.session.add(UserOldId(user=keep_user, userid=merge_user.userid))
-    db.session.commit()
-    # 3. Delete merge_user. Commit session.
-    db.session.delete(merge_user)
+    # 3. Mark merge_user as merged. Commit session.
+    merge_user.status = USER_STATUS.MERGED
     db.session.commit()
 
     # 4. Return keep_user.

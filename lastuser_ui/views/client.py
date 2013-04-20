@@ -7,7 +7,7 @@ from baseframe.forms import render_form, render_redirect, render_delete_sqla
 from lastuser_ui import lastuser_ui
 from lastuser_core.models import (db, User, Client, Organization, Team, Permission,
     UserClientPermissions, TeamClientPermissions, Resource, ResourceAction, ClientTeamAccess,
-    CLIENT_TEAM_ACCESS)
+    CLIENT_TEAM_ACCESS, USER_STATUS)
 from lastuser_ui.forms import (RegisterClientForm, PermissionForm, UserPermissionAssignForm,
     TeamPermissionAssignForm, PermissionEditForm, ResourceForm, ResourceActionForm, ClientTeamAccessForm)
 from lastuser_oauth.views.helpers import requires_login
@@ -240,7 +240,7 @@ def permission_user_new(client):
 @load_model(Client, {'key': 'key'}, 'client', permission='assign-permissions', kwargs=True)
 def permission_user_edit(client, kwargs):
     if client.user:
-        user = User.query.filter_by(userid=kwargs['userid']).first_or_404()
+        user = User.query.filter_by(userid=kwargs['userid'], status=USER_STATUS.ACTIVE).first_or_404()
         available_perms = Permission.query.filter(db.or_(
             Permission.allusers == True,
             Permission.user == g.user)).order_by('name').all()
@@ -283,7 +283,7 @@ def permission_user_edit(client, kwargs):
 @load_model(Client, {'key': 'key'}, 'client', permission='assign-permissions', kwargs=True)
 def permission_user_delete(client, kwargs):
     if client.user:
-        user = User.query.filter_by(userid=kwargs['userid']).first_or_404()
+        user = User.query.filter_by(userid=kwargs['userid'], status=USER_STATUS.ACTIVE).first_or_404()
         permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
         return render_delete_sqla(permassign, db, title="Confirm delete", message="Remove all permissions assigned to user %s for app '%s'?" % (
             (user.pickername), client.title),

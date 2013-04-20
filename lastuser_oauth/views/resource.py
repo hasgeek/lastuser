@@ -7,7 +7,7 @@ from coaster.views import jsonp
 
 from lastuser_oauth import lastuser_oauth
 from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Resource,
-    ResourceAction, UserClientPermissions, TeamClientPermissions)
+    ResourceAction, UserClientPermissions, TeamClientPermissions, USER_STATUS)
 from lastuser_oauth.views.helpers import requires_client_login, requires_user_or_client_login
 from lastuser_core import resource_registry
 
@@ -132,7 +132,7 @@ def user_get_by_userid():
     userid = request.form.get('userid')
     if not userid:
         return api_result('error', error='no_userid_provided')
-    user = User.query.filter_by(userid=userid).first()
+    user = User.query.filter_by(userid=userid, status=USER_STATUS.ACTIVE).first()
     if user:
         return api_result('ok',
             type='user',

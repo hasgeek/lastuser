@@ -10,7 +10,13 @@ from coaster import newid, newsecret, newpin
 from lastuser_core.models import db, TimestampMixin, BaseMixin
 
 __all__ = ['User', 'UserEmail', 'UserEmailClaim', 'PasswordResetRequest', 'UserExternalId',
-           'UserPhone', 'UserPhoneClaim', 'Team', 'Organization', 'UserOldId']
+           'UserPhone', 'UserPhoneClaim', 'Team', 'Organization', 'UserOldId', 'USER_STATUS']
+
+
+class USER_STATUS:
+    ACTIVE = 0
+    SUSPENDED = 1
+    MERGED = 2
 
 
 class User(BaseMixin, db.Model):
@@ -21,6 +27,7 @@ class User(BaseMixin, db.Model):
     pw_hash = db.Column(db.String(80), nullable=True)
     timezone = db.Column(db.Unicode(40), nullable=True)
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
+    status = db.Column(db.SmallInteger, nullable=False, default=USER_STATUS.ACTIVE)
 
     def __init__(self, password=None, **kwargs):
         self.userid = newid()

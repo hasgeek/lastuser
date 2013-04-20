@@ -5,7 +5,7 @@ import flask.ext.wtf as wtf
 from coaster import valid_username
 from baseframe.forms import Form
 
-from lastuser_core.models import User, Organization
+from lastuser_core.models import User, Organization, USER_STATUS
 
 
 class OrganizationForm(Form):
@@ -28,7 +28,7 @@ class OrganizationForm(Form):
 
 # FIXME: This will have too many users in production. Use some form of lookup instead
 def sorted_users():
-    return User.query.order_by('fullname')
+    return User.query.filter_by(status=USER_STATUS.ACTIVE).order_by('fullname')
 
 
 class TeamForm(Form):
