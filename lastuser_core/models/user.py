@@ -159,10 +159,6 @@ class User(BaseMixin, db.Model):
         """
         return bool(self.fullname and self.username and self.email)
 
-    @property
-    def profile_url(self):
-        return url_for('profile')
-
 
 class UserOldId(TimestampMixin, db.Model):
     __tablename__ = 'useroldid'
