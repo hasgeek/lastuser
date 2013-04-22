@@ -75,7 +75,7 @@ def requires_login(f):
         if g.user is None:
             flash(u"You need to be logged in for that page", "info")
             session['next'] = get_current_url()
-            return redirect(url_for('.login'))
+            return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
 
