@@ -30,6 +30,10 @@ def organization_links(self):
 User.profile_url = property(profile_url)
 User.organization_links = organization_links
 
+@app.route('/profile')
+def profile():
+    return lastuser_ui.views.profile.profile()
+
 
 @app.route('/login')
 def login():
