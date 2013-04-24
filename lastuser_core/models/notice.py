@@ -56,6 +56,7 @@ class ChannelSMS(Channel):
 
 class SMSMessage(BaseMixin, db.Model):
     __tablename__ = 'smsmessage'
+    __bind_key__ = 'lastuser'
     # Phone number that the message was sent to
     phone_number = db.Column(db.String(15), nullable=False)
     transaction_id = db.Column(db.Unicode(40), unique=True, nullable=True)

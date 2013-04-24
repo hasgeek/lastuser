@@ -14,7 +14,9 @@ TYPEKIT_CODE = ''
 GA_CODE = ''
 
 #: Database backend
-SQLALCHEMY_DATABASE_URI = 'sqlite:///test.db'
+SQLALCHEMY_BINDS = {
+    'lastuser': 'sqlite:///test.db',
+    }
 
 #: Secret key
 SECRET_KEY = 'make this something random'
