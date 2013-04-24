@@ -103,7 +103,7 @@ def oauth_auth_success(client, redirect_uri, state, code):
         response = redirect(make_redirect_url(redirect_uri, code=code), code=302)
     else:
         response = redirect(make_redirect_url(redirect_uri, code=code, state=state), code=302)
-    response.headers['Cache-Control'] = 'no-store'
+    response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     return response
 
@@ -121,7 +121,7 @@ def oauth_auth_error(redirect_uri, state, error, error_description=None, error_u
         params['error_uri'] = error_uri
     clear_flashed_messages()
     response = redirect(make_redirect_url(redirect_uri, **params), code=302)
-    response.headers['Cache-Control'] = 'no-store'
+    response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     return response
 
@@ -228,7 +228,7 @@ def oauth_token_error(error, error_description=None, error_uri=None):
     if error_uri is not None:
         params['error_uri'] = error_uri
     response = jsonify(**params)
-    response.headers['Cache-Control'] = 'no-store'
+    response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     response.status_code = 400
     return response
@@ -265,7 +265,7 @@ def oauth_token_success(token, **params):
         if token.user is not None:
             params['refresh_token'] = token.refresh_token
     response = jsonify(**params)
-    response.headers['Cache-Control'] = 'no-store'
+    response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     db.session.commit()
     return response

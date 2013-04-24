@@ -67,7 +67,7 @@ class ResourceRegistry(OrderedDict):
                                         'error_description': unicode(exception)
                                         })
                 # XXX: Let resources control how they return?
-                response.headers['Cache-Control'] = 'no-store'
+                response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
                 response.headers['Pragma'] = 'no-cache'
                 return response
 

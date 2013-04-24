@@ -36,6 +36,20 @@ def lookup_current_user():
         g.avatar_url = None
 
 
+@lastuser_oauth.after_app_request
+def cache_expiry_headers(response):
+    if 'Expires' not in response.headers:
+        response.headers['Expires'] = 'Fri, 01 Jan 1990 00:00:00 GMT'
+    if 'Cache-Control' in response.headers:
+        if 'max-age' not in response.headers['Cache-Control']:
+            response.headers['Cache-Control'] = 'max-age=86400, ' + response.headers['Cache-Control']
+        if 'private' not in response.headers['Cache-Control']:
+            response.headers['Cache-Control'] = 'private, ' + response.headers['Cache-Control']
+    else:
+        response.headers['Cache-Control'] = 'private, max-age=86400'
+    return response
+
+
 @lastuser_oauth.app_template_filter('usessl')
 def usessl(url):
     """

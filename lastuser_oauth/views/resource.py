@@ -55,7 +55,7 @@ def resource_error(error, description=None, uri=None):
         params['error_uri'] = uri
 
     response = jsonp(params)
-    response.headers['Cache-Control'] = 'no-store'
+    response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     response.status_code = 400
     return response
@@ -64,7 +64,7 @@ def resource_error(error, description=None, uri=None):
 def api_result(status, **params):
     params['status'] = status
     response = jsonp(params)
-    response.headers['Cache-Control'] = 'no-store'
+    response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     return response
 
