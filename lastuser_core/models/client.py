@@ -264,14 +264,15 @@ class AuthToken(BaseMixin, db.Model):
 
         for token in oldtokens:
             merge_performed = False
-            for newtoken in newtokens[token.client_id]:
-                if newtoken.user == newuser:
-                    # There's another token for  newuser with the same client.
-                    # Just extend the scope there
-                    newtoken.scope = set(newtoken.scope) | set(token.scope)
-                    db.session.delete(token)
-                    merge_performed = True
-                    break
+            if token.client_id in newtokens:
+                for newtoken in newtokens[token.client_id]:
+                    if newtoken.user == newuser:
+                        # There's another token for  newuser with the same client.
+                        # Just extend the scope there
+                        newtoken.scope = set(newtoken.scope) | set(token.scope)
+                        db.session.delete(token)
+                        merge_performed = True
+                        break
             if merge_performed is False:
                 token.user = newuser  # Reassign this token to newuser
 
