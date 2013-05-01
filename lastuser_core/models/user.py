@@ -4,7 +4,6 @@ from hashlib import md5
 from werkzeug import check_password_hash, cached_property
 import bcrypt
 from sqlalchemy.ext.hybrid import hybrid_property
-from flask import url_for
 from coaster import newid, newsecret, newpin
 
 from lastuser_core.models import db, TimestampMixin, BaseMixin
