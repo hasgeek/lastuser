@@ -10,7 +10,7 @@ from lastuser_core.models import (db, Client, AuthCode, AuthToken, UserFlashMess
     UserClientPermissions, TeamClientPermissions, getuser, Resource, ResourceAction)
 from lastuser_oauth.forms import AuthorizeForm
 from lastuser_core.utils import make_redirect_url
-from lastuser_oauth.views.helpers import requires_login, requires_client_login
+from lastuser_oauth.views.helpers import requires_login_no_message, requires_client_login
 from lastuser_oauth.views.resource import get_userinfo
 from lastuser_core import resource_registry
 
@@ -127,7 +127,7 @@ def oauth_auth_error(redirect_uri, state, error, error_description=None, error_u
 
 
 @lastuser_oauth.route('/auth', methods=['GET', 'POST'])
-@requires_login
+@requires_login_no_message
 def oauth_authorize():
     """
     OAuth2 server -- authorization endpoint

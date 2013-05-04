@@ -92,6 +92,19 @@ def requires_login(f):
     return decorated_function
 
 
+def requires_login_no_message(f):
+    """
+    Decorator to require a login for the given view.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if g.user is None:
+            session['next'] = get_current_url()
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 def _client_login_inner():
     if request.authorization is None:
         return Response(u"Client credentials required.", 401,
