@@ -123,13 +123,13 @@ def token_verify():
     return api_result('ok', **params)
 
 
-@lastuser_oauth.route('/api/1/user/get_by_userid', methods=['POST'])
+@lastuser_oauth.route('/api/1/user/get_by_userid', methods=['GET', 'POST'])
 @requires_client_login
 def user_get_by_userid():
     """
     Returns user or organization with the given userid (Lastuser internal userid)
     """
-    userid = request.form.get('userid')
+    userid = request.values.get('userid')
     if not userid:
         return api_result('error', error='no_userid_provided')
     user = User.query.filter_by(userid=userid, status=USER_STATUS.ACTIVE).first()
@@ -151,13 +151,43 @@ def user_get_by_userid():
             return api_result('error', error='not_found')
 
 
-@lastuser_oauth.route('/api/1/user/get', methods=['POST'])
+@lastuser_oauth.route('/api/1/user/get_by_userids', methods=['GET', 'POST'])
+@requires_client_login
+def user_get_by_userids():
+    """
+    Returns users and organizations with the given userid (Lastuser internal userid).
+    This is identical to get_by_userid but accepts multiple userids and returns a list
+    of matching users and organizations
+    """
+    userids = request.values.getlist('userid')
+    if not userids:
+        return api_result('error', error='no_userid_provided')
+    users = User.query.filter(User.userid.in_(userids), User.status == USER_STATUS.ACTIVE).all()
+    orgs = Organization.query.filter(Organization.userid.in_(userids)).all()
+    return api_result('ok',
+        results=[
+            {'type': 'user',
+             'buid': u.userid,
+             'userid': u.userid,
+             'name': u.username,
+             'title': u.fullname,
+             'label': u.pickername} for u in users] + [
+            {'type': 'organization',
+             'buid': o.userid,
+             'userid': o.userid,
+             'name': o.name,
+             'title': o.fullname,
+             'label': o.pickername} for o in orgs]
+        )
+
+
+@lastuser_oauth.route('/api/1/user/get', methods=['GET', 'POST'])
 @requires_client_login
 def user_get():
     """
     Returns user with the given username, email address or Twitter id
     """
-    name = request.form.get('name')
+    name = request.values.get('name')
     if not name:
         return api_result('error', error='no_name_provided')
     user = getuser(name)
@@ -171,14 +201,14 @@ def user_get():
         return api_result('error', error='not_found')
 
 
-@lastuser_oauth.route('/api/1/user/autocomplete')
+@lastuser_oauth.route('/api/1/user/autocomplete', methods=['GET', 'POST'])
 @requires_user_or_client_login
 def user_autocomplete():
     """
     Returns users (id and name only) matching the search term.
     """
     # Don't allow a % anywhere but at the end
-    q = request.args.get('q', '').replace('%', '')
+    q = request.values.get('q', '').replace('%', '')
     if not q:
         return api_result('error', error='no_query_provided')
     q += '%'
@@ -191,15 +221,16 @@ def user_autocomplete():
             )
         ).limit(10).all()
     result = [{
-            'userid': u.userid,
-            'buid': u.userid,
-            'name': '%s (~%s)' % (u.fullname, u._username) if u._username else u.fullname}
-        for u in users]
+        'userid': u.userid,
+        'buid': u.userid,
+        'name': u.username,
+        'title': u.fullname,
+        'label': u.pickername} for u in users]
     return api_result('ok', users=result)
 
 
 # This is org/* instead of organizations/* because it's a client resource. TODO: Reconsider
-@lastuser_oauth.route('/api/1/org/get_teams', methods=['POST'])
+@lastuser_oauth.route('/api/1/org/get_teams', methods=['GET', 'POST'])
 @requires_client_login
 def org_team_get():
     """
@@ -207,7 +238,7 @@ def org_team_get():
     """
     if not g.client.team_access:
         return api_result('error', error='no_team_access')
-    org_userids = request.form.getlist('org')
+    org_userids = request.values.getlist('org')
     if not org_userids:
         return api_result('error', error='no_org_provided')
     organizations = Organization.query.filter(Organization.userid.in_(org_userids)).all()
