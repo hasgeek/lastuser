@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from sqlalchemy import or_
+from sqlalchemy.orm import defer
 from flask import request, g
 from coaster import getbool
 from coaster.views import jsonp
@@ -207,19 +208,25 @@ def user_autocomplete():
     """
     Returns users (id and name only) matching the search term.
     """
-    # Don't allow a % anywhere but at the end
-    q = request.values.get('q', '').replace('%', '')
+    # Don't allow a % anywhere but at the end; no _ too
+    q = request.values.get('q', '').replace('%', '').replace('_', '')
     if not q:
         return api_result('error', error='no_query_provided')
     q += '%'
     # Use User._username since 'username' is a hybrid property that checks for validity
     # before passing on to _username, the actual column name on the model
-    users = db.session.query(User.userid, User.fullname, User._username).filter(
-        or_(
-            User.fullname.like(q),
-            User._username.like(q)
+    users = User.query.filter(User.status == USER_STATUS.ACTIVE,
+        or_(  # Match against fullname or username, case insensitive
+            db.func.lower(User.fullname).like(db.func.lower(q)),
+            db.func.lower(User._username).like(db.func.lower(q))
             )
-        ).limit(10).all()
+        ).options(  # Don't load columns we don't need
+            defer('created_at'),
+            defer('updated_at'),
+            defer('pw_hash'),
+            defer('timezone'),
+            defer('description'),
+        ).limit(10).all()  # Limit to 10 results
     result = [{
         'userid': u.userid,
         'buid': u.userid,
