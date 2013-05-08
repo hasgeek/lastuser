@@ -4,13 +4,28 @@ from sqlalchemy import or_
 from sqlalchemy.orm import defer
 from flask import request, g
 from coaster import getbool
-from coaster.views import jsonp
+from coaster.views import jsonp, requestargs
 
 from lastuser_oauth import lastuser_oauth
 from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Resource,
     ResourceAction, UserClientPermissions, TeamClientPermissions, USER_STATUS)
 from lastuser_oauth.views.helpers import requires_client_login, requires_user_or_client_login
 from lastuser_core import resource_registry
+
+
+defer_cols_user = (
+    defer('created_at'),
+    defer('updated_at'),
+    defer('pw_hash'),
+    defer('timezone'),
+    defer('description'),
+    )
+
+defer_cols_org = (
+    defer('created_at'),
+    defer('updated_at'),
+    defer('description'),
+    )
 
 
 def get_userinfo(user, client, scope=[], get_permissions=True):
@@ -63,8 +78,13 @@ def resource_error(error, description=None, uri=None):
 
 
 def api_result(status, **params):
+    status_code = 200
+    if status in (200, 201):
+        status_code = status
+        status = 'ok'
     params['status'] = status
     response = jsonp(params)
+    response.status_code = status_code
     response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     return response
@@ -116,6 +136,7 @@ def token_verify():
     params['clientinfo'] = {
         'title': authtoken.client.title,
         'userid': authtoken.client.user.userid,
+        'buid': authtoken.client.user.userid,
         'owner': authtoken.client.owner,
         'website': authtoken.client.website,
         'key': authtoken.client.key,
@@ -125,7 +146,7 @@ def token_verify():
 
 
 @lastuser_oauth.route('/api/1/user/get_by_userid', methods=['GET', 'POST'])
-@requires_client_login
+@requires_user_or_client_login
 def user_get_by_userid():
     """
     Returns user or organization with the given userid (Lastuser internal userid)
@@ -133,19 +154,21 @@ def user_get_by_userid():
     userid = request.values.get('userid')
     if not userid:
         return api_result('error', error='no_userid_provided')
-    user = User.query.filter_by(userid=userid, status=USER_STATUS.ACTIVE).first()
+    user = User.query.filter_by(userid=userid, status=USER_STATUS.ACTIVE).options(*defer_cols_user).first()
     if user:
         return api_result('ok',
             type='user',
             userid=user.userid,
+            buid=user.userid,
             name=user.username,
             title=user.fullname)
     else:
-        org = Organization.query.filter_by(userid=userid).first()
+        org = Organization.query.filter_by(userid=userid).options(*defer_cols_org).first()
         if org:
             return api_result('ok',
                 type='organization',
                 userid=org.userid,
+                buid=org.userid,
                 name=org.name,
                 title=org.title)
         else:
@@ -153,18 +176,19 @@ def user_get_by_userid():
 
 
 @lastuser_oauth.route('/api/1/user/get_by_userids', methods=['GET', 'POST'])
-@requires_client_login
-def user_get_by_userids():
+@requires_user_or_client_login
+@requestargs('userid[]')
+def user_get_by_userids(userid):
     """
-    Returns users and organizations with the given userid (Lastuser internal userid).
+    Returns users and organizations with the given userids (Lastuser internal userid).
     This is identical to get_by_userid but accepts multiple userids and returns a list
     of matching users and organizations
     """
-    userids = request.values.getlist('userid')
-    if not userids:
+    if not userid:
         return api_result('error', error='no_userid_provided')
-    users = User.query.filter(User.userid.in_(userids), User.status == USER_STATUS.ACTIVE).all()
-    orgs = Organization.query.filter(Organization.userid.in_(userids)).all()
+    users = User.query.filter(User.userid.in_(userid),
+        User.status == USER_STATUS.ACTIVE).options(*defer_cols_user).all()
+    orgs = Organization.query.filter(Organization.userid.in_(userid)).options(*defer_cols_org).all()
     return api_result('ok',
         results=[
             {'type': 'user',
@@ -183,7 +207,7 @@ def user_get_by_userids():
 
 
 @lastuser_oauth.route('/api/1/user/get', methods=['GET', 'POST'])
-@requires_client_login
+@requires_user_or_client_login
 def user_get():
     """
     Returns user with the given username, email address or Twitter id
@@ -220,13 +244,7 @@ def user_autocomplete():
             db.func.lower(User.fullname).like(db.func.lower(q)),
             db.func.lower(User._username).like(db.func.lower(q))
             )
-        ).options(  # Don't load columns we don't need
-            defer('created_at'),
-            defer('updated_at'),
-            defer('pw_hash'),
-            defer('timezone'),
-            defer('description'),
-        ).limit(10).all()  # Limit to 10 results
+        ).options(*defer_cols_user).limit(10).all()  # Limit to 10 results
     result = [{
         'userid': u.userid,
         'buid': u.userid,
@@ -248,7 +266,7 @@ def org_team_get():
     org_userids = request.values.getlist('org')
     if not org_userids:
         return api_result('error', error='no_org_provided')
-    organizations = Organization.query.filter(Organization.userid.in_(org_userids)).all()
+    organizations = Organization.query.filter(Organization.userid.in_(org_userids)).options(*defer_cols_org).all()
     if not organizations:
         return api_result('error', error='no_such_organization')
     orgteams = {}
