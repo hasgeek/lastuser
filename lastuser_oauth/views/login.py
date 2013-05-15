@@ -58,7 +58,7 @@ def login():
             return set_loginmethod_cookie(login_registry[formid].do(form=form), formid)
     elif request.method == 'POST':
         abort(500)
-    if request.is_xhr and formid == 'password':
+    if request.is_xhr and formid == 'passwordlogin':
         return render_template('forms/loginform.html', loginform=loginform, Markup=Markup)
     else:
         return render_template('login.html', loginform=loginform, lastused=loginmethod,
