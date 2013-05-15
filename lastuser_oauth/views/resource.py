@@ -234,12 +234,13 @@ def user_getall(name):
     Returns users with the given username, email address or Twitter id
     """
     names = name
+    userids = set()  # Dupe checker
     if not names:
         return api_result('error', error='no_name_provided')
     results = []
     for name in names:
         user = getuser(name)
-        if user:
+        if user and user.userid not in userids:
             results.append({
                 'type': 'user',
                 'userid': user.userid,
@@ -248,6 +249,7 @@ def user_getall(name):
                 'title': user.fullname,
                 'label': user.pickername,
                 })
+            userids.add(user.userid)
     if not results:
         return api_result('error', error='not_found')
     else:
