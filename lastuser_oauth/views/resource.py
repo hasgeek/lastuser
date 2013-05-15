@@ -208,11 +208,11 @@ def user_get_by_userids(userid):
 
 @lastuser_oauth.route('/api/1/user/get', methods=['GET', 'POST'])
 @requires_user_or_client_login
-def user_get():
+@requestargs('name')
+def user_get(name):
     """
     Returns user with the given username, email address or Twitter id
     """
-    name = request.values.get('name')
     if not name:
         return api_result('error', error='no_name_provided')
     user = getuser(name)
@@ -224,6 +224,34 @@ def user_get():
             title=user.fullname)
     else:
         return api_result('error', error='not_found')
+
+
+@lastuser_oauth.route('/api/1/user/getusers', methods=['GET', 'POST'])
+@requires_user_or_client_login
+@requestargs('name[]')
+def user_getall(name):
+    """
+    Returns users with the given username, email address or Twitter id
+    """
+    names = name
+    if not names:
+        return api_result('error', error='no_name_provided')
+    results = []
+    for name in names:
+        user = getuser(name)
+        if user:
+            results.append({
+                'type': 'user',
+                'userid': user.userid,
+                'buid': user.userid,
+                'name': user.username,
+                'title': user.fullname,
+                'label': user.pickername,
+                })
+    if not results:
+        return api_result('error', error='not_found')
+    else:
+        return api_result('ok', results=results)
 
 
 @lastuser_oauth.route('/api/1/user/autocomplete', methods=['GET', 'POST'])
