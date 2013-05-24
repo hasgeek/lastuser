@@ -1,44 +1,35 @@
 # -*- coding: utf-8 -*-
 
-__version__ = '0.1'
-
 from flask import Flask
-from flask.ext.assets import Environment, Bundle
-from coaster.app import init_app
-from baseframe import baseframe, baseframe_js, baseframe_css, cookie_js, timezone_js
+import coaster.app
+from baseframe import baseframe, assets, Version
 
 import lastuser_core, lastuser_oauth, lastuser_ui
 from lastuser_core import login_registry
 from lastuser_core.models import db
 from lastuser_oauth import providers
+from ._version import __version__
 
+version = Version(__version__)
 app = Flask(__name__, instance_relative_config=True)
 
-app.register_blueprint(baseframe)
 app.register_blueprint(lastuser_core.lastuser_core)
 app.register_blueprint(lastuser_oauth.lastuser_oauth)
 app.register_blueprint(lastuser_ui.lastuser_ui)
 
-import lastuserapp.views
 
-assets = Environment(app)
+from . import views
 
-# FIXME: app.js has moved to lastuser_oauth
-js = Bundle(baseframe_js, cookie_js, timezone_js, lastuser_oauth.lastuser_oauth_js,
-    filters='jsmin', output='js/packed.js')
-
-# FIXME: CSS has moved to lastuser_oauth
-css = Bundle(baseframe_css, lastuser_oauth.lastuser_oauth_css,
-    filters='cssmin', output='css/packed.css')
-
-assets.register('js_all', js)
-assets.register('css_all', css)
+assets['lastuser-oauth.js'][version] = lastuser_oauth.lastuser_oauth_js,
+assets['lastuser-oauth.css'][version] = lastuser_oauth.lastuser_oauth_css
 
 
 def init_for(env):
-    init_app(app, env)
+    coaster.app.init_app(app, env)
     db.init_app(app)
     db.app = app  # To make it work without an app context
+    baseframe.init_app(app, requires=['baseframe', 'cookie', 'timezone', 'lastuser-oauth'])
+
     lastuser_oauth.mailclient.mail.init_app(app)
     lastuser_oauth.views.login.oid.init_app(app)
 
