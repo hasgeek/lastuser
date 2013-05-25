@@ -28,7 +28,7 @@ def init_for(env):
     coaster.app.init_app(app, env)
     db.init_app(app)
     db.app = app  # To make it work without an app context
-    baseframe.init_app(app, requires=['baseframe', 'cookie', 'timezone', 'lastuser-oauth'])
+    baseframe.init_app(app, requires=['baseframe', 'jquery.cookie', 'timezone', 'lastuser-oauth'])
 
     lastuser_oauth.mailclient.mail.init_app(app)
     lastuser_oauth.views.login.oid.init_app(app)
