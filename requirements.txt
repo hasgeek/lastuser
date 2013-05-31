@@ -9,7 +9,8 @@ Flask-OAuth
 pytz
 py-bcrypt
 ordereddict
-https://github.com/jace/flask-wtf/zipball/master
+Flask-WTF
+requests
+blinker
 https://github.com/hasgeek/coaster/zipball/master
 https://github.com/hasgeek/baseframe/zipball/master
-requests
