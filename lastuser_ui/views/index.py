@@ -2,7 +2,7 @@
 
 from flask import render_template
 
-from lastuser_ui import lastuser_ui
+from .. import lastuser_ui
 
 
 @lastuser_ui.route('/')

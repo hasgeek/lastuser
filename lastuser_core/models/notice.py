@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from lastuser_core.models import db, BaseMixin
+from . import db, BaseMixin
 
 __all__ = ['SMSMessage', 'SMS_STATUS']
 

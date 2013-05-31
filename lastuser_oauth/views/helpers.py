@@ -7,7 +7,7 @@ from pytz import common_timezones
 from flask import g, current_app, request, session, flash, redirect, url_for, json, Response
 from coaster.views import get_current_url
 from lastuser_core.models import db, User, Client, USER_STATUS
-from lastuser_oauth import lastuser_oauth
+from .. import lastuser_oauth
 
 valid_timezones = set(common_timezones)
 

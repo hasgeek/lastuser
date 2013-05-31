@@ -5,10 +5,10 @@ from coaster.views import get_next_url
 from lastuser_core import login_registry
 from lastuser_core.models import db, getextid, merge_users, User, UserEmail, UserExternalId, UserEmailClaim
 from lastuser_core.registry import LoginInitError, LoginCallbackError
-from lastuser_oauth import lastuser_oauth
-from lastuser_oauth.forms.profile import ProfileMergeForm
-from lastuser_oauth.mailclient import send_email_verify_link
-from lastuser_oauth.views.helpers import login_internal, register_internal, set_loginmethod_cookie, requires_login
+from .. import lastuser_oauth
+from ..forms.profile import ProfileMergeForm
+from ..mailclient import send_email_verify_link
+from ..views.helpers import login_internal, register_internal, set_loginmethod_cookie, requires_login
 
 
 @lastuser_oauth.route('/login/<service>', methods=['GET', 'POST'])

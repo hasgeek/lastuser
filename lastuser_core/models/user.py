@@ -6,7 +6,7 @@ import bcrypt
 from sqlalchemy.ext.hybrid import hybrid_property
 from coaster import newid, newsecret, newpin
 
-from lastuser_core.models import db, TimestampMixin, BaseMixin
+from . import db, TimestampMixin, BaseMixin
 
 __all__ = ['User', 'UserEmail', 'UserEmailClaim', 'PasswordResetRequest', 'UserExternalId',
            'UserPhone', 'UserPhoneClaim', 'Team', 'Organization', 'UserOldId', 'USER_STATUS']

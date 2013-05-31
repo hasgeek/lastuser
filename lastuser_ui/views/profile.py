@@ -4,13 +4,13 @@ from flask import g, flash, render_template, url_for, session
 from coaster.views import load_model
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
 
-from lastuser_ui import lastuser_ui
 from lastuser_core.models import db, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
 from lastuser_oauth.mailclient import send_email_verify_link
 from lastuser_oauth.views.helpers import requires_login
-from lastuser_ui.views.sms import send_phone_verify_code
 from lastuser_oauth.forms import PasswordResetForm, PasswordChangeForm
-from lastuser_ui.forms import NewEmailAddressForm, NewPhoneForm, VerifyPhoneForm
+from .. import lastuser_ui
+from ..forms import NewEmailAddressForm, NewPhoneForm, VerifyPhoneForm
+from .sms import send_phone_verify_code
 
 
 @lastuser_ui.route('/profile')

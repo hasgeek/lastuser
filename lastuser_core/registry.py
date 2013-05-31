@@ -11,7 +11,7 @@ try:
 except ImportError:
     from ordereddict import OrderedDict
 from flask import Response, request, jsonify, abort
-from lastuser_core.models import AuthToken
+from .models import AuthToken
 
 # Bearer token, as per http://tools.ietf.org/html/draft-ietf-oauth-v2-bearer-15#section-2.1
 auth_bearer_re = re.compile("^Bearer ([a-zA-Z0-9_.~+/-]+=*)$")

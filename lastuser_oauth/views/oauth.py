@@ -5,14 +5,14 @@ import urlparse
 from flask import g, render_template, redirect, request, jsonify, get_flashed_messages
 from coaster import newsecret
 
-from lastuser_oauth import lastuser_oauth
+from lastuser_core.utils import make_redirect_url
+from lastuser_core import resource_registry
 from lastuser_core.models import (db, Client, AuthCode, AuthToken, UserFlashMessage,
     UserClientPermissions, TeamClientPermissions, getuser, Resource, ResourceAction)
-from lastuser_oauth.forms import AuthorizeForm
-from lastuser_core.utils import make_redirect_url
-from lastuser_oauth.views.helpers import requires_login_no_message, requires_client_login
-from lastuser_oauth.views.resource import get_userinfo
-from lastuser_core import resource_registry
+from .. import lastuser_oauth
+from ..forms import AuthorizeForm
+from .helpers import requires_login_no_message, requires_client_login
+from .resource import get_userinfo
 
 
 class ScopeException(Exception):

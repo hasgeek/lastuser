@@ -4,13 +4,13 @@ from flask import g, request, render_template, url_for, flash, abort
 from coaster.views import load_model, load_models
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
 
-from lastuser_ui import lastuser_ui
 from lastuser_core.models import (db, User, Client, Organization, Team, Permission,
     UserClientPermissions, TeamClientPermissions, Resource, ResourceAction, ClientTeamAccess,
     CLIENT_TEAM_ACCESS, USER_STATUS)
-from lastuser_ui.forms import (RegisterClientForm, PermissionForm, UserPermissionAssignForm,
-    TeamPermissionAssignForm, PermissionEditForm, ResourceForm, ResourceActionForm, ClientTeamAccessForm)
 from lastuser_oauth.views.helpers import requires_login
+from .. import lastuser_ui
+from ..forms import (RegisterClientForm, PermissionForm, UserPermissionAssignForm,
+    TeamPermissionAssignForm, PermissionEditForm, ResourceForm, ResourceActionForm, ClientTeamAccessForm)
 
 # --- Routes: client apps -----------------------------------------------------
 

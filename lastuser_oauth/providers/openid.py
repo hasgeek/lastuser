@@ -6,8 +6,8 @@ from flask import Markup, session
 import flask.ext.wtf as wtf
 from baseframe.forms import Form
 from lastuser_core.registry import LoginProvider
-from lastuser_oauth.views.login import oid
-from lastuser_oauth.views.account import login_service_postcallback
+from ..views.login import oid
+from ..views.account import login_service_postcallback
 
 __all__ = ['OpenIdProvider']
 

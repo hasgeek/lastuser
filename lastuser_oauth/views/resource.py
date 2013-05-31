@@ -6,11 +6,11 @@ from flask import request, g
 from coaster import getbool
 from coaster.views import jsonp, requestargs
 
-from lastuser_oauth import lastuser_oauth
 from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Resource,
     ResourceAction, UserClientPermissions, TeamClientPermissions, USER_STATUS)
-from lastuser_oauth.views.helpers import requires_client_login, requires_user_or_client_login
 from lastuser_core import resource_registry
+from .. import lastuser_oauth
+from .helpers import requires_client_login, requires_user_or_client_login
 
 
 defer_cols_user = (

@@ -9,11 +9,11 @@ from coaster.views import get_next_url, load_model
 from baseframe.forms import render_form, render_message, render_redirect
 
 from lastuser_core import login_registry
-from lastuser_oauth import lastuser_oauth
-from lastuser_oauth.mailclient import send_email_verify_link, send_password_reset_link
+from .. import lastuser_oauth
+from ..mailclient import send_email_verify_link, send_password_reset_link
 from lastuser_core.models import db, User, UserEmailClaim, PasswordResetRequest, Client
-from lastuser_oauth.forms import LoginForm, RegisterForm, PasswordResetForm, PasswordResetRequestForm
-from lastuser_oauth.views.helpers import login_internal, logout_internal, register_internal, set_loginmethod_cookie
+from ..forms import LoginForm, RegisterForm, PasswordResetForm, PasswordResetRequestForm
+from .helpers import login_internal, logout_internal, register_internal, set_loginmethod_cookie
 
 oid = OpenID()
 

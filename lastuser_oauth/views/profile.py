@@ -5,10 +5,10 @@ from coaster.views import get_next_url
 from baseframe.forms import render_form, render_redirect, render_message
 
 from lastuser_core.models import db, UserEmail, UserEmailClaim
-from lastuser_oauth import lastuser_oauth
-from lastuser_oauth.mailclient import send_email_verify_link
-from lastuser_oauth.forms import ProfileForm
-from lastuser_oauth.views.helpers import requires_login
+from .. import lastuser_oauth
+from ..mailclient import send_email_verify_link
+from ..forms import ProfileForm
+from .helpers import requires_login
 
 
 @lastuser_oauth.route('/profile/edit', methods=['GET', 'POST'], defaults={'newprofile': False}, endpoint='profile_edit')

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import Blueprint
-from lastuser_core.registry import ResourceRegistry, LoginProviderRegistry
+from .registry import ResourceRegistry, LoginProviderRegistry
 
 lastuser_core = Blueprint('lastuser_core', __name__)
 

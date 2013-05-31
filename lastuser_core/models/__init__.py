@@ -7,9 +7,9 @@ from coaster.sqlalchemy import TimestampMixin, BaseMixin  # Imported from here b
 db = SQLAlchemy()
 
 
-from lastuser_core.models.user import *
-from lastuser_core.models.client import *
-from lastuser_core.models.notice import *
+from .user import *
+from .client import *
+from .notice import *
 
 
 def getuser(name):

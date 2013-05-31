@@ -3,7 +3,7 @@
 # Handle top-level views for url routing
 
 from flask import url_for
-from lastuserapp import app
+from .. import app
 from lastuser_core.models import User
 import lastuser_oauth.views
 import lastuser_ui.views
@@ -29,6 +29,7 @@ def organization_links(self):
 
 User.profile_url = property(profile_url)
 User.organization_links = organization_links
+
 
 @app.route('/profile')
 def profile():

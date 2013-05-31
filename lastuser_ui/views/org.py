@@ -4,10 +4,10 @@ from flask import g, current_app, render_template, url_for, abort, redirect, mak
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
 from coaster.views import load_model, load_models
 
-from lastuser_ui import lastuser_ui
-from lastuser_oauth.views.helpers import requires_login
-from lastuser_ui.forms.org import OrganizationForm, TeamForm
 from lastuser_core.models import db, Organization, Team, User
+from lastuser_oauth.views.helpers import requires_login
+from .. import lastuser_ui
+from ..forms.org import OrganizationForm, TeamForm
 
 # --- Routes: Organizations ---------------------------------------------------
 

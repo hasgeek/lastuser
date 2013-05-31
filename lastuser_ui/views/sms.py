@@ -10,8 +10,8 @@ from urllib import urlencode
 from datetime import datetime
 
 from flask import current_app, flash, request
-from lastuser_ui import lastuser_ui
 from lastuser_core.models import db, SMSMessage, SMS_STATUS
+from .. import lastuser_ui
 
 # SMS GupShup sends delivery reports with this timezone
 SMSGUPSHUP_TIMEZONE = timezone('Asia/Calcutta')

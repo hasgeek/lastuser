@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from coaster import newid, newsecret
 
-from lastuser_core.models import db, BaseMixin
-from lastuser_core.models.user import User, Organization, Team
+from . import db, BaseMixin
+from .user import User, Organization, Team
 
 __all__ = ['Client', 'UserFlashMessage', 'Resource', 'ResourceAction', 'AuthCode', 'AuthToken',
     'Permission', 'UserClientPermissions', 'TeamClientPermissions', 'NoticeType',
