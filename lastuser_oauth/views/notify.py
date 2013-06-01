@@ -78,6 +78,6 @@ def notify_team_data_changed(team, user, changes):
     notify_org_data_changed(team.org, user=user, changes=['team-' + c for c in changes], team=team)
 
 
-@job
+@job("lastuser")
 def send_notice(url, params=None, data=None, method='POST'):
     requests.request(method, url, params=params, data=data)
