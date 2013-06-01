@@ -5,6 +5,7 @@ from coaster.views import get_next_url
 from baseframe.forms import render_form, render_redirect, render_message
 
 from lastuser_core.models import db, UserEmail, UserEmailClaim
+from lastuser_core.signals import user_data_changed
 from .. import lastuser_oauth
 from ..mailclient import send_email_verify_link
 from ..forms import ProfileForm
@@ -36,9 +37,11 @@ def profile_edit(newprofile=False):
             db.session.add(useremail)
             send_email_verify_link(useremail)
             db.session.commit()
+            user_data_changed.send(g.user, changes=['profile', 'email-claim'])
             flash("Your profile has been updated. We sent you an email to confirm your address", category='success')
         else:
             db.session.commit()
+            user_data_changed.send(g.user, changes=['profile'])
             flash("Your profile has been updated.", category='success')
 
         if newprofile:
@@ -79,6 +82,7 @@ def confirm_email(md5sum, secret):
             for claim in UserEmailClaim.query.filter(UserEmailClaim.email.in_([useremail.email, useremail.email.lower()])).all():
                 db.session.delete(claim)
             db.session.commit()
+            user_data_changed.send(g.user, changes=['email'])
             return render_message(title="Email address verified",
                 message=Markup("Hello %s! Your email address <code>%s</code> has now been verified." % (
                     escape(emailclaim.user.fullname), escape(useremail.email))))
@@ -86,8 +90,8 @@ def confirm_email(md5sum, secret):
             return render_message(
                 title="That was not for you",
                 message=u"You’ve opened an email verification link that was meant for another user. "
-                    u"If you are managing multiple accounts, please login with the correct account "
-                    u"and open the link again.",
+                        u"If you are managing multiple accounts, please login with the correct account "
+                        u"and open the link again.",
                 code=403)
     else:
         return render_message(

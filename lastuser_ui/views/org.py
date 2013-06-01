@@ -5,6 +5,7 @@ from baseframe.forms import render_form, render_redirect, render_delete_sqla
 from coaster.views import load_model, load_models
 
 from lastuser_core.models import db, Organization, Team, User
+from lastuser_core.signals import user_data_changed, org_data_changed, team_data_changed
 from lastuser_oauth.views.helpers import requires_login
 from .. import lastuser_ui
 from ..forms.org import OrganizationForm, TeamForm
@@ -31,6 +32,7 @@ def org_new():
         org.owners.users.append(g.user)
         db.session.add(org)
         db.session.commit()
+        org_data_changed.send(org, changes=['new'], user=g.user)
         return render_redirect(url_for('.org_info', name=org.name), code=303)
     return render_form(form=form, title="New Organization", formid="org_new", submit="Create", ajax=False)
 
@@ -53,6 +55,7 @@ def org_edit(org):
     if form.validate_on_submit():
         form.populate_obj(org)
         db.session.commit()
+        org_data_changed.send(org, changes=['edit'], user=g.user)
         return render_redirect(url_for('.org_info', name=org.name), code=303)
     return render_form(form=form, title="New Organization", formid="org_edit", submit="Save", ajax=False)
 
@@ -61,6 +64,9 @@ def org_edit(org):
 @requires_login
 @load_model(Organization, {'name': 'name'}, 'org', permission='delete')
 def org_delete(org):
+    if request.method == 'POST':
+        # FIXME: Find a better way to do this
+        org_data_changed.send(org, changes=['delete'], user=g.user)
     return render_delete_sqla(org, db, title="Confirm delete", message="Delete organization '%s'? " % org.title,
         success="You have deleted organization '%s' and all its associated teams." % org.title,
         next=url_for('.org_list'))
@@ -86,6 +92,7 @@ def team_new(org):
             team.users = User.query.filter(User.userid.in_(form.users.data)).all()
         db.session.add(team)
         db.session.commit()
+        team_data_changed.send(team, changes=['new'], user=g.user)
         return render_redirect(url_for('.org_info', name=org.name), code=303)
     return make_response(render_template('edit_team.html', form=form, title=u"Create new team",
         formid='team_new', submit="Create"))
@@ -109,6 +116,7 @@ def team_edit(org, team):
         if form.users.data:
             team.users = User.query.filter(User.userid.in_(form.users.data)).all()
         db.session.commit()
+        team_data_changed.send(team, changes=['edit'], user=g.user)
         return render_redirect(url_for('.org_info', name=org.name), code=303)
     return make_response(render_template('edit_team.html', form=form, title=u"Edit team: %s" % team.title, formid='team_edit', submit="Save", ajax=False))
 
@@ -123,6 +131,8 @@ def team_edit(org, team):
 def team_delete(org, team):
     if team == org.owners:
         abort(403)
+    if request.method == 'POST':
+        team_data_changed.send(team, changes=['delete'], user=g.user)
     return render_delete_sqla(team, db, title=u"Confirm delete", message=u"Delete team '%s'?" % team.title,
         success=u"You have deleted team '%s' from organization '%s'." % (team.title, org.title),
         next=url_for('.org_info', name=org.name))

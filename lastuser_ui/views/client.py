@@ -195,12 +195,12 @@ def permission_delete(perm):
 def permission_user_new(client):
     if client.user:
         available_perms = Permission.query.filter(db.or_(
-            Permission.allusers == True,
+            Permission.allusers is True,
             Permission.user == g.user)).order_by('name').all()
         form = UserPermissionAssignForm()
     elif client.org:
         available_perms = Permission.query.filter(db.or_(
-            Permission.allusers == True,
+            Permission.allusers is True,
             Permission.org == client.org)).order_by('name').all()
         form = TeamPermissionAssignForm()
         form.org = client.org
@@ -242,13 +242,13 @@ def permission_user_edit(client, kwargs):
     if client.user:
         user = User.query.filter_by(userid=kwargs['userid'], status=USER_STATUS.ACTIVE).first_or_404()
         available_perms = Permission.query.filter(db.or_(
-            Permission.allusers == True,
+            Permission.allusers is True,
             Permission.user == g.user)).order_by('name').all()
         permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
     elif client.org:
         team = Team.query.filter_by(userid=kwargs['userid']).first_or_404()
         available_perms = Permission.query.filter(db.or_(
-            Permission.allusers == True,
+            Permission.allusers is True,
             Permission.org == client.org)).order_by('name').all()
         permassign = TeamClientPermissions.query.filter_by(team=team, client=client).first_or_404()
     form = PermissionEditForm()
@@ -395,7 +395,7 @@ def resource_action_edit(client, resource, action):
 def resource_action_delete(client, resource, action):
     return render_delete_sqla(action, db, title="Confirm delete",
         message="Delete action '%s' from resource '%s' of app '%s'?" % (
-        action.title, resource.title, client.title),
+            action.title, resource.title, client.title),
         success="You have deleted action '%s' on resource '%s' of app '%s'" % (action.title, resource.title, client.title),
         next=url_for('.client_info', key=client.key))
 

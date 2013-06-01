@@ -7,6 +7,7 @@ from pytz import common_timezones
 from flask import g, current_app, request, session, flash, redirect, url_for, json, Response
 from coaster.views import get_current_url
 from lastuser_core.models import db, User, Client, USER_STATUS
+from lastuser_core.signals import user_login, user_logout, user_registered
 from .. import lastuser_oauth
 
 valid_timezones = set(common_timezones)
@@ -177,6 +178,7 @@ def login_internal(user):
     session['userid'] = user.userid
     session.permanent = True
     autoset_timezone(user)
+    user_login.send(user)
 
 
 def autoset_timezone(user):
@@ -189,12 +191,15 @@ def autoset_timezone(user):
 
 
 def logout_internal():
+    user = g.user
     g.user = None
     session.pop('userid', None)
     session.pop('merge_userid', None)
     session.pop('userid_external', None)
     session.pop('avatar_url', None)
     session.permanent = False
+    if user is not None:
+        user_logout.send(user)
 
 
 def register_internal(username, fullname, password):
@@ -202,6 +207,7 @@ def register_internal(username, fullname, password):
     if not username:
         user.username = None
     db.session.add(user)
+    user_registered.send(user)
     return user
 
 

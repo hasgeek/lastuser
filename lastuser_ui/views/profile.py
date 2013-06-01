@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from flask import g, flash, render_template, url_for, session
+from flask import g, flash, render_template, url_for, session, request
 from coaster.views import load_model
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
 
 from lastuser_core.models import db, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
+from lastuser_core.signals import user_data_changed
 from lastuser_oauth.mailclient import send_email_verify_link
 from lastuser_oauth.views.helpers import requires_login
 from lastuser_oauth.forms import PasswordResetForm, PasswordChangeForm
@@ -46,6 +47,7 @@ def add_email():
         db.session.commit()
         send_email_verify_link(useremail)
         flash("We sent you an email to confirm your address.", 'success')
+        user_data_changed.send(g.user, changes=['email-claim'])
         return render_redirect(url_for('.profile'), code=303)
     return render_form(form=form, title="Add an email address", formid="email_add", submit="Add email", ajax=True)
 
@@ -59,6 +61,8 @@ def remove_email(md5sum):
     if isinstance(useremail, UserEmail) and useremail.primary:
         flash("You cannot remove your primary email address", "error")
         return render_redirect(url_for('.profile'), code=303)
+    if request.method == 'POST':
+        user_data_changed.send(g.user, changes=['email-delete'])
     return render_delete_sqla(useremail, db, title="Confirm removal", message="Remove email address %s?" % useremail,
         success="You have removed your email address %s." % useremail,
         next=url_for('.profile'))
@@ -74,6 +78,7 @@ def add_phone():
         send_phone_verify_code(userphone)
         db.session.commit()
         flash("We sent a verification code to your phone number.", 'success')
+        user_data_changed.send(g.user, changes=['phone-claim'])
         return render_redirect(url_for('.verify_phone', number=userphone.phone), code=303)
     return render_form(form=form, title="Add a phone number", formid="phone_add", submit="Add phone", ajax=True)
 
@@ -84,6 +89,8 @@ def remove_phone(number):
     userphone = UserPhone.query.filter_by(phone=number, user=g.user).first()
     if userphone is None:
         userphone = UserPhoneClaim.query.filter_by(phone=number, user=g.user).first_or_404()
+    if request.method == 'POST':
+        user_data_changed.send(g.user, changes=['phone-delete'])
     return render_delete_sqla(userphone, db, title="Confirm removal", message="Remove phone number %s?" % userphone,
         success="You have removed your number %s." % userphone,
         next=url_for('.profile'))
@@ -105,5 +112,6 @@ def verify_phone(phoneclaim):
         db.session.delete(phoneclaim)
         db.session.commit()
         flash("Your phone number has been verified.", 'success')
+        user_data_changed.send(g.user, 'phone')
         return render_redirect(url_for('.profile'), code=303)
     return render_form(form=form, title="Verify phone number", formid="phone_verify", submit="Verify", ajax=True)

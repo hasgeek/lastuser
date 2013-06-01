@@ -12,5 +12,6 @@ ordereddict
 Flask-WTF
 requests
 blinker
+Flask-RQ
 https://github.com/hasgeek/coaster/zipball/master
 https://github.com/hasgeek/baseframe/zipball/master

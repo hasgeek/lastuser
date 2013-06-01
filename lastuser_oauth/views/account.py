@@ -5,6 +5,7 @@ from coaster.views import get_next_url
 from lastuser_core import login_registry
 from lastuser_core.models import db, getextid, merge_users, User, UserEmail, UserExternalId, UserEmailClaim
 from lastuser_core.registry import LoginInitError, LoginCallbackError
+from lastuser_core.signals import user_data_changed
 from .. import lastuser_oauth
 from ..forms.profile import ProfileMergeForm
 from ..mailclient import send_email_verify_link
@@ -166,6 +167,7 @@ def profile_merge():
         if 'merge' in request.form:
             new_user = merge_users(g.user, other_user)
             login_internal(new_user)
+            user_data_changed.send(new_user, changes=['merge'])
             flash("Your accounts have been merged.", 'success')
             session.pop('merge_userid', None)
             return redirect(get_next_url(), code=303)
