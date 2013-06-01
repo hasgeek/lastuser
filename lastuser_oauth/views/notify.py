@@ -32,7 +32,7 @@ def notify_user_data_changed(user, changes):
                         if 'phone' in token.scope:
                             notify_changes.append(change)
                 if notify_changes:
-                    send_notice(token.client.notification_uri, data=
+                    send_notice.delay(token.client.notification_uri, data=
                         {'userid': user.userid,
                         'type': 'user',
                         'changes': notify_changes})
@@ -61,7 +61,7 @@ def notify_org_data_changed(org, user, changes, team=None):
             notify_user = user
         else:
             notify_user = users[0]  # First user available
-        send_notice(client.notification_uri, data=
+        send_notice.delay(client.notification_uri, data=
             {'userid': notify_user.userid,
             'type': 'org' if team is None else 'team',
             'org': org.userid,
