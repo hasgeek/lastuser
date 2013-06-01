@@ -322,7 +322,10 @@ def resource_id(authtoken, args, files=None):
     """
     Return user's id
     """
-    return get_userinfo(authtoken.user, authtoken.client, scope=['id'], get_permissions=False)
+    if 'all' in args and getbool(args['all']):
+        return get_userinfo(authtoken.user, authtoken.client, scope=authtoken.scope, get_permissions=True)
+    else:
+        return get_userinfo(authtoken.user, authtoken.client, scope=['id'], get_permissions=False)
 
 
 @lastuser_oauth.route('/api/1/email')

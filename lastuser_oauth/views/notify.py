@@ -64,8 +64,8 @@ def notify_org_data_changed(org, user, changes, team=None):
         send_notice.delay(client.notification_uri, data=
             {'userid': notify_user.userid,
             'type': 'org' if team is None else 'team',
-            'org': org.userid,
-            'team': team.userid if team is not None else None,
+            'orgid': org.userid,
+            'teamid': team.userid if team is not None else None,
             'changes': changes,
             })
 
