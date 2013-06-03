@@ -195,12 +195,12 @@ def permission_delete(perm):
 def permission_user_new(client):
     if client.user:
         available_perms = Permission.query.filter(db.or_(
-            Permission.allusers is True,
+            Permission.allusers == True,
             Permission.user == g.user)).order_by('name').all()
         form = UserPermissionAssignForm()
     elif client.org:
         available_perms = Permission.query.filter(db.or_(
-            Permission.allusers is True,
+            Permission.allusers == True,
             Permission.org == client.org)).order_by('name').all()
         form = TeamPermissionAssignForm()
         form.org = client.org
@@ -242,13 +242,13 @@ def permission_user_edit(client, kwargs):
     if client.user:
         user = User.query.filter_by(userid=kwargs['userid'], status=USER_STATUS.ACTIVE).first_or_404()
         available_perms = Permission.query.filter(db.or_(
-            Permission.allusers is True,
+            Permission.allusers == True,
             Permission.user == g.user)).order_by('name').all()
         permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
     elif client.org:
         team = Team.query.filter_by(userid=kwargs['userid']).first_or_404()
         available_perms = Permission.query.filter(db.or_(
-            Permission.allusers is True,
+            Permission.allusers == True,
             Permission.org == client.org)).order_by('name').all()
         permassign = TeamClientPermissions.query.filter_by(team=team, client=client).first_or_404()
     form = PermissionEditForm()
