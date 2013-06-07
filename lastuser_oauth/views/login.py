@@ -183,13 +183,13 @@ def reset():
         db.session.add(resetreq)
         send_password_reset_link(email=email, user=user, secret=resetreq.reset_code)
         db.session.commit()
-        return render_message(title="Reset password", message=Markup(
+        return render_message(title="Reset password", message=
             u"""
-            You were sent an email at <code>%s</code> with a link to reset your password.
+            We sent you an email with a link to reset your password.
             Please check your email. If it doesn’t arrive in a few minutes,
             it may have landed in your spam or junk folder.
             The reset link is valid for 24 hours.
-            """ % escape(email)))
+            """)
 
     return render_form(form=form, title="Reset password", submit="Send reset code", ajax=True)
 
