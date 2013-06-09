@@ -2,7 +2,8 @@
 
 from flask.ext.script import Manager, Server, Option, prompt_bool
 from flask.ext.script.commands import Clean, ShowUrls
-from flask.ext.alembic import ManageMigrations
+from flask.ext.alembic import ManageMigrations, FlaskAlembicConfig
+from alembic import command
 
 from lastuser_core import models
 from lastuser_core.models import db
@@ -17,7 +18,7 @@ class InitedServer(Server):
     def get_options(self):
         return super(InitedServer, self).get_options() + (
             Option('-e', dest='env', default='dev', help="run server for this environment [default 'dev']"),
-            )
+        )
 
     def handle(self, *args, **kwargs):
         if 'env' in kwargs:
@@ -50,6 +51,20 @@ def create(env):
     "Creates database tables from sqlalchemy models"
     init_for(env)
     db.create_all()
+    config = FlaskAlembicConfig("alembic.ini")
+    command.stamp(config, "head")
+
+
+@database.option('-e', '--env', default='dev', help="runtime environment [default 'dev']")
+def setversion(env):
+    '''
+    Manually set the alembic version of the
+    database to the provided value.
+    '''
+    init_for(env)
+    config = FlaskAlembicConfig("alembic.ini")
+    version = raw_input("Enter the alembic version to be set:")
+    command.stamp(config, version)
 
 
 manager.add_command("db", database)

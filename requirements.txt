@@ -13,5 +13,7 @@ Flask-WTF
 requests
 blinker
 Flask-RQ
-https://github.com/hasgeek/coaster/zipball/master
-https://github.com/hasgeek/baseframe/zipball/master
+Flask-Script
+https://github.com/hasgeek/coaster/archive/master.zip
+https://github.com/hasgeek/baseframe/archive/master.zip
+https://github.com/jace/flask-alembic/archive/master.zip
