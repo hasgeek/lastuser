@@ -5,7 +5,9 @@ from pprint import pprint
 
 os.environ['LASTUSER_ENV'] = 'dev'
 
-from flask import *
 from lastuserapp import *
+from lastuser_core import models
+from lastuser_core.models import db
+
 
 os.environ['PYTHONINSPECT'] = 'True'
