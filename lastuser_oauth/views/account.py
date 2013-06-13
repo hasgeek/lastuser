@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import abort, url_for, flash, redirect, g, session, render_template, request
 
+from coaster import valid_username
 from coaster.views import get_next_url
 from lastuser_core import login_registry
 from lastuser_core.models import db, getextid, merge_users, User, UserEmail, UserExternalId, UserEmailClaim
@@ -116,7 +117,7 @@ def login_service_postcallback(service, userdata):
             user = register_internal(None, userdata.get('fullname'), None)
             extid.user = user
             if userdata.get('username'):
-                if user.is_valid_username(userdata['username']):
+                if valid_username(userdata['username']) and user.is_valid_username(userdata['username']):
                     # Set a username for this user if it's available
                     user.username = userdata['username']
     else:  # This id is attached to a user
