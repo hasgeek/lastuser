@@ -3,7 +3,7 @@
 from flask import g, current_app
 import flask.ext.wtf as wtf
 from coaster import valid_username, sorted_timezones
-from baseframe.forms import Form
+from baseframe.forms import Form, ValidEmailDomain
 
 from lastuser_core.models import User, UserEmail, Organization, getuser
 
@@ -49,7 +49,7 @@ class PasswordChangeForm(Form):
 
 class ProfileForm(Form):
     fullname = wtf.TextField('Full name', validators=[wtf.Required()])
-    email = wtf.html5.EmailField('Email address', validators=[wtf.Required(), wtf.Email()])
+    email = wtf.html5.EmailField('Email address', validators=[wtf.Required(), wtf.Email(), ValidEmailDomain()])
     username = wtf.TextField('Username', validators=[wtf.Required()])
     description = wtf.TextAreaField('Bio')
     timezone = wtf.SelectField('Timezone', validators=[wtf.Required()], choices=timezones)
@@ -75,6 +75,7 @@ class ProfileForm(Form):
         if existing is not None:
             raise wtf.ValidationError("This username is taken")
 
+    # TODO: Move to function and place before ValidEmailDomain()
     def validate_email(self, field):
         field.data = field.data.lower()  # Convert to lowercase
         existing = UserEmail.query.filter_by(email=field.data).first()

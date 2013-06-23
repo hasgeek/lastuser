@@ -2,15 +2,16 @@
 
 from flask import g
 import flask.ext.wtf as wtf
-from baseframe.forms import Form
+from baseframe.forms import Form, ValidEmailDomain
 
 from lastuser_core.utils import strip_phone, valid_phone
 from lastuser_core.models import UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
 
 
 class NewEmailAddressForm(Form):
-    email = wtf.html5.EmailField('Email address', validators=[wtf.Required(), wtf.Email()])
+    email = wtf.html5.EmailField('Email address', validators=[wtf.Required(), wtf.Email(), ValidEmailDomain()])
 
+    # TODO: Move to function and place before ValidEmailDomain()
     def validate_email(self, field):
         field.data = field.data.lower()  # Convert to lowercase
         existing = UserEmail.query.filter_by(email=field.data).first()
