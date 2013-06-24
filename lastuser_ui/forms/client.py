@@ -29,18 +29,16 @@ class RegisterClientForm(Form):
             "will revoke all currently assigned permissions for this app")
     website = wtf.html5.URLField('Application website', validators=[wtf.Required(), wtf.URL()],
         description="Website where users may access this application")
-    redirect_uri = wtf.html5.URLField('Redirect URI', validators=[wtf.Optional(), wtf.URL()],
-        description="OAuth2 Redirect URI")
-    notification_uri = wtf.html5.URLField('Notification URI', validators=[wtf.Optional(), wtf.URL()],
-        description="Lastuser resource provider Notification URI. When another application requests access to "
-            "resources provided by this app, Lastuser will post a notice to this URI with a copy of the access "
-            "token that was provided to the other application. Other notices may be posted too "
-            "(not yet implemented)")
-    iframe_uri = wtf.html5.URLField('IFrame URI', validators=[wtf.Optional(), wtf.URL()],
+    redirect_uri = wtf.html5.URLField('Redirect URL', validators=[wtf.Optional(), wtf.URL()],
+        description="OAuth2 Redirect URL")
+    notification_uri = wtf.html5.URLField('Notification URL', validators=[wtf.Optional(), wtf.URL()],
+        description="When the user's data changes, Lastuser will POST a notice to this URL. "
+            "Other notices may be posted too")
+    iframe_uri = wtf.html5.URLField('IFrame URL', validators=[wtf.Optional(), wtf.URL()],
         description="Front-end notifications URL. This is loaded in a hidden iframe to notify the app that the "
             "user updated their profile in some way (not yet implemented)")
-    resource_uri = wtf.html5.URLField('Resource URI', validators=[wtf.Optional(), wtf.URL()],
-        description="URI at which this application provides resources as per the Lastuser Resource API "
+    resource_uri = wtf.html5.URLField('Resource URL', validators=[wtf.Optional(), wtf.URL()],
+        description="URL at which this application provides resources as per the Lastuser Resource API "
             "(not yet implemented)")
     allow_any_login = wtf.BooleanField('Allow anyone to login', default=True,
         description="If your application requires access to be restricted to specific users, uncheck this, "
