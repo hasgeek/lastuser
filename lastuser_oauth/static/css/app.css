@@ -47,7 +47,25 @@ a.loginbutton:hover {
 }
 
 input[name="field-openid"] {
-  background: url('../img/openid.png?1360059169') 4px no-repeat;
+  background: url('../img/openid.png?1366451008') 4px no-repeat;
   width: 230px;
   padding-left: 25px;
+}
+
+#logo {
+  text-indent: -119988px;
+  overflow: hidden;
+  text-align: left;
+  background-image: url('../img/logo.png?1372854153');
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+  width: 113px;
+  height: 75px;
+}
+
+@media only screen and (-webkit-min-device-pixel-ratio: 2) {
+  #logo {
+    background-image: url('../img/logo@2x.png?1372854195');
+    -webkit-background-size: 113px 75px;
+  }
 }
