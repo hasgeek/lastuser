@@ -7,7 +7,8 @@ from coaster import getbool
 from coaster.views import jsonp, requestargs
 
 from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Resource,
-    ResourceAction, UserClientPermissions, TeamClientPermissions, USER_STATUS)
+    ResourceAction, UserClientPermissions, TeamClientPermissions, USER_STATUS,
+    UserExternalId, UserEmail)
 from lastuser_core import resource_registry
 from .. import lastuser_oauth
 from .helpers import requires_client_login, requires_user_or_client_login
@@ -260,21 +261,36 @@ def user_getall(name):
 @requires_user_or_client_login
 def user_autocomplete():
     """
-    Returns users (id and name only) matching the search term.
+    Returns users (userid, username, fullname, twitter, github or email) matching the search term.
     """
-    # Don't allow a % anywhere but at the end; no _ too
-    q = request.values.get('q', '').replace('%', '').replace('_', '')
+    # Escape the '%' and '_' wildcards in SQL LIKE clauses.
+    # Some SQL dialects respond to '[' and ']', so remove them.
+    q = request.values.get('q', '').replace('%', '\\%').replace('_', '\\_').replace('[', '').replace(']', '')
     if not q:
         return api_result('error', error='no_query_provided')
     q += '%'
     # Use User._username since 'username' is a hybrid property that checks for validity
     # before passing on to _username, the actual column name on the model
     users = User.query.filter(User.status == USER_STATUS.ACTIVE,
-        or_(  # Match against fullname or username, case insensitive
+        or_(  # Match against userid (exact value only), fullname or username, case insensitive
+            User.userid == q[:-1],
             db.func.lower(User.fullname).like(db.func.lower(q)),
             db.func.lower(User._username).like(db.func.lower(q))
             )
         ).options(*defer_cols_user).limit(100).all()  # Limit to 100 results
+    if q.startswith('@'):
+        # Add Twitter/GitHub accounts to the head of results
+        # TODO: Move this query to a login provider class method
+        users = User.query.filter(User.id.in_(
+            db.session.query(UserExternalId.user_id).filter(
+                UserExternalId.service.in_([u'twitter', u'github']),
+                db.func.lower(UserExternalId.username).like(db.func.lower(q[1:]))
+            ).subquery())).options(*defer_cols_user).limit(100).all() + users
+    elif '@' in q:
+        users = User.query.filter(User.id.in_(
+            db.session.query(UserEmail.user_id).filter(
+                db.func.lower(UserEmail.email).like(db.func.lower(q))
+            ).subquery())).options(*defer_cols_user).limit(100).all() + users
     result = [{
         'userid': u.userid,
         'buid': u.userid,
