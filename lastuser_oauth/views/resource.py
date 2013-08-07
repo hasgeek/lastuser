@@ -274,7 +274,7 @@ def user_autocomplete():
             db.func.lower(User.fullname).like(db.func.lower(q)),
             db.func.lower(User._username).like(db.func.lower(q))
             )
-        ).options(*defer_cols_user).limit(10).all()  # Limit to 10 results
+        ).options(*defer_cols_user).limit(100).all()  # Limit to 100 results
     result = [{
         'userid': u.userid,
         'buid': u.userid,
