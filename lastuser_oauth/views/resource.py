@@ -281,13 +281,13 @@ def user_autocomplete():
     if q.startswith('@'):
         # Add Twitter/GitHub accounts to the head of results
         # TODO: Move this query to a login provider class method
-        users = User.query.filter(User.id.in_(
+        users = User.query.filter(User.status == USER_STATUS.ACTIVE, User.id.in_(
             db.session.query(UserExternalId.user_id).filter(
                 UserExternalId.service.in_([u'twitter', u'github']),
                 db.func.lower(UserExternalId.username).like(db.func.lower(q[1:]))
             ).subquery())).options(*defer_cols_user).limit(100).all() + users
     elif '@' in q:
-        users = User.query.filter(User.id.in_(
+        users = User.query.filter(User.status == USER_STATUS.ACTIVE, User.id.in_(
             db.session.query(UserEmail.user_id).filter(
                 db.func.lower(UserEmail.email).like(db.func.lower(q))
             ).subquery())).options(*defer_cols_user).limit(100).all() + users
