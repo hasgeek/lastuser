@@ -111,8 +111,6 @@ def team_edit(org, team):
         form.users.data = [u.userid for u in team.users]
     if form.validate_on_submit():
         team.title = form.title.data
-        print form.users.data
-        print "\n" * 20
         if form.users.data:
             team.users = User.query.filter(User.userid.in_(form.users.data)).all()
         db.session.commit()

@@ -24,7 +24,6 @@ class GitHubProvider(LoginProvider):
         self.secret = secret
 
     def do(self, callback_url):
-        print callback_url
         return redirect(self.auth_url % (self.key, quote(callback_url)))
 
     def callback(self):
