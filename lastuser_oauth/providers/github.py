@@ -4,15 +4,15 @@ from urllib import quote
 import requests
 from flask import redirect, request
 from lastuser_core.registry import LoginProvider, LoginCallbackError
-from lastuser_core.utils import get_gravatar_md5sum
 
 __all__ = ['GitHubProvider']
 
 
 class GitHubProvider(LoginProvider):
-    auth_url = "https://github.com/login/oauth/authorize?client_id=%s&redirect_uri=%s"
+    auth_url = "https://github.com/login/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}"
     token_url = "https://github.com/login/oauth/access_token"
     user_info = "https://api.github.com/user"
+    user_emails = "https://api.github.com/user/emails"
 
     def __init__(self, name, title, key, secret, at_login=True, priority=False):
         self.name = name
@@ -24,7 +24,10 @@ class GitHubProvider(LoginProvider):
         self.secret = secret
 
     def do(self, callback_url):
-        return redirect(self.auth_url % (self.key, quote(callback_url)))
+        return redirect(self.auth_url.format(
+            client_id=self.key,
+            redirect_uri=quote(callback_url),
+            scope='user:email'))
 
     def callback(self):
         if request.args.get('error'):
@@ -45,9 +48,19 @@ class GitHubProvider(LoginProvider):
             ).json()
         if 'error' in response:
             raise LoginCallbackError(response['error'])
-        ghinfo = requests.get(self.user_info, params={'access_token': response['access_token']}).json()
-        md5sum = get_gravatar_md5sum(ghinfo['avatar_url'])
-        return {'email_md5sum': md5sum,
+        ghinfo = requests.get(self.user_info,
+            params={'access_token': response['access_token']}).json()
+        ghemails = requests.get(self.user_emails,
+            params={'access_token': response['access_token']},
+            headers={'Accept': 'application/vnd.github.v3+json'}).json()
+
+        email = None
+        if ghemails:
+            for result in ghemails:
+                if result.get('verified'):
+                    email = result['email']
+                    break  # TODO: Support multiple emails in login providers
+        return {'email': email,
                 'userid': ghinfo['login'],
                 'username': ghinfo['login'],
                 'fullname': ghinfo.get('name'),

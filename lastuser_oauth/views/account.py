@@ -59,8 +59,6 @@ def get_user_extid(service, userdata):
     useremail = None
     if 'email' in userdata:
         useremail = UserEmail.query.filter_by(email=userdata['email']).first()
-    elif 'email_md5sum' in userdata:
-        useremail = UserEmail.query.filter_by(md5sum=userdata['email_md5sum']).first()
 
     user = None
     if extid is not None:
