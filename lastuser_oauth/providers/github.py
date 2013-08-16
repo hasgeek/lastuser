@@ -55,7 +55,7 @@ class GitHubProvider(LoginProvider):
             headers={'Accept': 'application/vnd.github.v3+json'}).json()
 
         email = None
-        if ghemails:
+        if ghemails and isinstance(ghemails, (list, tuple)):
             for result in ghemails:
                 if result.get('verified'):
                     email = result['email']
