@@ -26,3 +26,5 @@ def make_fixtures():
 
 	action = ResourceAction(name=u"read", title=u"Read", resource=resource)
 	db.session.add(action)
+
+	db.session.commit()
