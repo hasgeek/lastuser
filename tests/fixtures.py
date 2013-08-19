@@ -18,7 +18,7 @@ def make_fixtures():
 	org.owners.users.append(user1)
 	db.session.add(org)
 
-	client = Client(title=u"Test Application", org=org, user=user1)
+	client = Client(title=u"Test Application", org=org, user=user1, website=u"http://example.com")
 	db.session.add(client)
 
 	resource = Resource(name=u"test_resource", title=u"Test Resource", client=client)

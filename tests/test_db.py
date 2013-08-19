@@ -6,12 +6,12 @@ from .fixtures import make_fixtures
 
 class LastuserTest(unittest.TestCase):
     def setUp(self):
-        with app.test_request_context():
-            init_for('testing')
-            app.config['TESTING'] = True
-            db.create_all()
-            self.db = db
-            make_fixtures()
+        init_for('testing')
+        app.config['TESTING'] = True
+        db.app = app
+        db.create_all()
+        self.db = db
+        make_fixtures()
 
     def test_noop(self):
         pass
