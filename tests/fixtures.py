@@ -7,6 +7,7 @@ from lastuser_core.models import *
 def make_fixtures():
 	user1 = User(username=u"user1", fullname=u"User 1")
 	user2 = User(username=u"user2", fullname=u"User 2")
+	db.session.add_all([user1, user2])
 	
 	email1 = UserEmail(email=u"user1@example.com", user=user1)
 	phone1 = UserPhone(phone=u"1234567890", user=user1)
