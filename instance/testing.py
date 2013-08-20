@@ -15,8 +15,8 @@ GA_CODE = ''
 
 #: Database backend
 SQLALCHEMY_BINDS = {
-    'lastuser': 'postgresql://postgres@localhost/myapp_test',
-    }
+    'lastuser': 'postgres://:@localhost:5432/lastuser_test_app',
+}
 
 #: Cache type
 CACHE_TYPE = 'redis'
