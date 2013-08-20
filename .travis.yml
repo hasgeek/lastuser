@@ -6,7 +6,7 @@ install:
   - pip --default-timeout=180 install -r requirements.txt --use-mirrors
   - pip --default-timeout=180 install -r test_requirements.txt --use-mirrors
 before_script:
-  - psql -c 'create database coaster;' -U postgres
+  - psql -c 'create database lastuser_test_app;' -U postgres
 script:
   - nosetests tests --with-coverage
 notifications:
