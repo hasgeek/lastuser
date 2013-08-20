@@ -159,6 +159,44 @@ class User(BaseMixin, db.Model):
         """
         return bool(self.fullname and self.username and self.email)
 
+    @classmethod
+    def _construct_query(cls, **kwargs):
+        """Construct base query depending on the options.
+        Accepts order_by and other parameters for filter_by and filter.
+        """
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter_by(**kwargs).order_by(order_by)
+        return cls.query.filter_by(**kwargs)
+
+    @classmethod
+    def _construct_query_with_expression(cls, expression, **kwargs):
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter(expression, **kwargs).order_by(order_by)
+        return cls.query.filter(expression, **kwargs)
+
+    @classmethod
+    def order_by_title(cls):
+        return cls._construct_query(order_by=cls.title).all()
+
+    @classmethod
+    def find(cls, **kwargs):
+        first_or_404 = kwargs.get('first_or_404') and kwargs.pop('first_or_404')
+        if 'expression' in kwargs:
+            if first_or_404:
+                return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first_or_404()
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
+        if first_or_404:
+            return cls._construct_query(**kwargs).first_or_404()
+        return cls._construct_query(**kwargs).first()
+
+    @classmethod
+    def find_all(cls, **kwargs):
+        if 'expression' in kwargs:
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
+        return cls._construct_query(**kwargs).all()
+
 
 class UserOldId(TimestampMixin, db.Model):
     __tablename__ = 'useroldid'
@@ -418,6 +456,44 @@ class Organization(BaseMixin, db.Model):
                 perms.remove('delete')
         return perms
 
+    @classmethod
+    def _construct_query(cls, **kwargs):
+        """Construct base query depending on the options.
+        Accepts order_by and other parameters for filter_by and filter.
+        """
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter_by(**kwargs).order_by(order_by)
+        return cls.query.filter_by(**kwargs)
+
+    @classmethod
+    def _construct_query_with_expression(cls, expression, **kwargs):
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter(expression, **kwargs).order_by(order_by)
+        return cls.query.filter(expression, **kwargs)
+
+    @classmethod
+    def order_by_title(cls):
+        return cls._construct_query(order_by=cls.title).all()
+
+    @classmethod
+    def find(cls, **kwargs):
+        first_or_404 = kwargs.get('first_or_404') and kwargs.pop('first_or_404')
+        if 'expression' in kwargs:
+            if first_or_404:
+                return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first_or_404()
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
+        if first_or_404:
+            return cls._construct_query(**kwargs).first_or_404()
+        return cls._construct_query(**kwargs).first()
+
+    @classmethod
+    def find_all(cls, **kwargs):
+        if 'expression' in kwargs:
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
+        return cls._construct_query(**kwargs).all()
+
 
 class Team(BaseMixin, db.Model):
     __tablename__ = 'team'
@@ -453,3 +529,41 @@ class Team(BaseMixin, db.Model):
             if team not in newuser.teams:
                 newuser.teams.append(team)
         olduser.teams = []
+
+    @classmethod
+    def _construct_query(cls, **kwargs):
+        """Construct base query depending on the options.
+        Accepts order_by and other parameters for filter_by and filter.
+        """
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter_by(**kwargs).order_by(order_by)
+        return cls.query.filter_by(**kwargs)
+
+    @classmethod
+    def _construct_query_with_expression(cls, expression, **kwargs):
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter(expression, **kwargs).order_by(order_by)
+        return cls.query.filter(expression, **kwargs)
+
+    @classmethod
+    def order_by_title(cls):
+        return cls._construct_query(order_by=cls.title).all()
+
+    @classmethod
+    def find(cls, **kwargs):
+        first_or_404 = kwargs.get('first_or_404') and kwargs.pop('first_or_404')
+        if 'expression' in kwargs:
+            if first_or_404:
+                return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first_or_404()
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
+        if first_or_404:
+            return cls._construct_query(**kwargs).first_or_404()
+        return cls._construct_query(**kwargs).first()
+
+    @classmethod
+    def find_all(cls, **kwargs):
+        if 'expression' in kwargs:
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
+        return cls._construct_query(**kwargs).all()

@@ -66,3 +66,19 @@ class SMSMessage(BaseMixin, db.Model):
     status = db.Column(db.Integer, default=0, nullable=False)
     status_at = db.Column(db.DateTime, nullable=True)
     fail_reason = db.Column(db.Unicode(25), nullable=True)
+
+    @classmethod
+    def _find(cls, **kwargs):
+        return cls.query.filter_by(**kwargs).first()
+
+    @classmethod
+    def _find_all(cls, **kwargs):
+        return cls.query.filter_by(**kwargs).all()
+
+    @classmethod
+    def find_by_transaction_id(cls, transaction_id):
+        return cls._find(transaction_id=transaction_id)
+
+    @classmethod
+    def find_all_messages(cls, phone_number):
+        return cls._find_all(phone_number=phone_number)

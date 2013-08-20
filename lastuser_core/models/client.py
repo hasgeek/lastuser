@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from coaster import newid, newsecret
 
 from . import db, BaseMixin
@@ -90,6 +91,39 @@ class Client(BaseMixin, db.Model):
             perms.add('new-resource')
         return perms
 
+    @classmethod
+    def _construct_query(cls, **kwargs):
+        """Construct base query depending on the options.
+        Accepts order_by and other parameters for filter_by and filter.
+        """
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter_by(**kwargs).order_by(order_by)
+        return cls.query.filter_by(**kwargs)
+
+    @classmethod
+    def _construct_query_with_expression(cls, expression, **kwargs):
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter(expression, **kwargs).order_by(order_by)
+        return cls.query.filter(expression, **kwargs)
+
+    @classmethod
+    def order_by_title(cls):
+        return cls._construct_query(order_by=cls.title).all()
+
+    @classmethod
+    def find(cls, **kwargs):
+        if 'expression' in kwargs:
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
+        return cls._construct_query(**kwargs).first()
+
+    @classmethod
+    def find_all(cls, **kwargs):
+        if 'expression' in kwargs:
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
+        return cls._construct_query(**kwargs).all()
+
 
 class UserFlashMessage(BaseMixin, db.Model):
     """
@@ -130,6 +164,39 @@ class Resource(BaseMixin, db.Model):
             perms.add('delete')
             perms.add('new-action')
         return perms
+
+    @classmethod
+    def _construct_query(cls, **kwargs):
+        """Construct base query depending on the options.
+        Accepts order_by and other parameters for filter_by and filter.
+        """
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter_by(**kwargs).order_by(order_by)
+        return cls.query.filter_by(**kwargs)
+
+    @classmethod
+    def _construct_query_with_expression(cls, expression, **kwargs):
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter(expression, **kwargs).order_by(order_by)
+        return cls.query.filter(expression, **kwargs)
+
+    @classmethod
+    def order_by_title(cls):
+        return cls._construct_query(order_by=cls.title).all()
+
+    @classmethod
+    def find(cls, **kwargs):
+        if 'expression' in kwargs:
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
+        return cls._construct_query(**kwargs).first()
+
+    @classmethod
+    def find_all(cls, **kwargs):
+        if 'expression' in kwargs:
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
+        return cls._construct_query(**kwargs).all()
 
 
 class ResourceAction(BaseMixin, db.Model):
@@ -313,6 +380,39 @@ class Permission(BaseMixin, db.Model):
             perms.add('delete')
         return perms
 
+    @classmethod
+    def _construct_query(cls, **kwargs):
+        """Construct base query depending on the options.
+        Accepts order_by and other parameters for filter_by and filter.
+        """
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter_by(**kwargs).order_by(order_by)
+        return cls.query.filter_by(**kwargs)
+
+    @classmethod
+    def _construct_query_with_expression(cls, expression, **kwargs):
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter(expression, **kwargs).order_by(order_by)
+        return cls.query.filter(expression, **kwargs)
+
+    @classmethod
+    def order_by_title(cls):
+        return cls._construct_query(order_by=cls.title).all()
+
+    @classmethod
+    def find(cls, **kwargs):
+        if 'expression' in kwargs:
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
+        return cls._construct_query(**kwargs).first()
+
+    @classmethod
+    def find_all(cls, **kwargs):
+        if 'expression' in kwargs:
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
+        return cls._construct_query(**kwargs).all()
+
 
 # This model's name is in plural because it defines multiple permissions within each instance
 class UserClientPermissions(BaseMixin, db.Model):
@@ -357,6 +457,44 @@ class UserClientPermissions(BaseMixin, db.Model):
             if not merge_performed:
                 operm.user = newuser
 
+    @classmethod
+    def _construct_query(cls, **kwargs):
+        """Construct base query depending on the options.
+        Accepts order_by and other parameters for filter_by and filter.
+        """
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter_by(**kwargs).order_by(order_by)
+        return cls.query.filter_by(**kwargs)
+
+    @classmethod
+    def _construct_query_with_expression(cls, expression, **kwargs):
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter(expression, **kwargs).order_by(order_by)
+        return cls.query.filter(expression, **kwargs)
+
+    @classmethod
+    def order_by_title(cls):
+        return cls._construct_query(order_by=cls.title).all()
+
+    @classmethod
+    def find(cls, **kwargs):
+        first_or_404 = kwargs.get('first_or_404') and kwargs.pop('first_or_404')
+        if 'expression' in kwargs:
+            if first_or_404:
+                return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first_or_404()
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
+        if first_or_404:
+            return cls._construct_query(**kwargs).first_or_404()
+        return cls._construct_query(**kwargs).first()
+
+    @classmethod
+    def find_all(cls, **kwargs):
+        if 'expression' in kwargs:
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
+        return cls._construct_query(**kwargs).all()
+
 
 # This model's name is in plural because it defines multiple permissions within each instance
 class TeamClientPermissions(BaseMixin, db.Model):
@@ -384,6 +522,39 @@ class TeamClientPermissions(BaseMixin, db.Model):
     def userid(self):
         return self.team.userid
 
+    @classmethod
+    def _construct_query(cls, **kwargs):
+        """Construct base query depending on the options.
+        Accepts order_by and other parameters for filter_by and filter.
+        """
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter_by(**kwargs).order_by(order_by)
+        return cls.query.filter_by(**kwargs)
+
+    @classmethod
+    def _construct_query_with_expression(cls, expression, **kwargs):
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter(expression, **kwargs).order_by(order_by)
+        return cls.query.filter(expression, **kwargs)
+
+    @classmethod
+    def order_by_title(cls):
+        return cls._construct_query(order_by=cls.title).all()
+
+    @classmethod
+    def find(cls, **kwargs):
+        if 'expression' in kwargs:
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
+        return cls._construct_query(**kwargs).first()
+
+    @classmethod
+    def find_all(cls, **kwargs):
+        if 'expression' in kwargs:
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
+        return cls._construct_query(**kwargs).all()
+
 
 class CLIENT_TEAM_ACCESS:
     NONE = 0     # The default if there's no connecting object
@@ -403,6 +574,45 @@ class ClientTeamAccess(BaseMixin, db.Model):
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('org_team_access', cascade="all, delete-orphan"))
     access_level = db.Column(db.Integer, default=CLIENT_TEAM_ACCESS.NONE, nullable=False)
+
+    @classmethod
+    def _find(cls, **kwargs):
+        if kwargs.get('404') is True:
+            return cls.query.filter_by(**kwargs).first_or_404()
+        return cls.query.filter_by(**kwargs)
+
+    @classmethod
+    def _construct_query(cls, **kwargs):
+        """Construct base query depending on the options.
+        Accepts order_by and other parameters for filter_by and filter.
+        """
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter_by(**kwargs).order_by(order_by)
+        return cls.query.filter_by(**kwargs)
+
+    @classmethod
+    def _construct_query_with_expression(cls, expression, **kwargs):
+        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
+        if order_by:
+            return cls.query.filter(expression, **kwargs).order_by(order_by)
+        return cls.query.filter(expression, **kwargs)
+
+    @classmethod
+    def order_by_title(cls):
+        return cls._construct_query(order_by=cls.title).all()
+
+    @classmethod
+    def find(cls, **kwargs):
+        if 'expression' in kwargs:
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
+        return cls._construct_query(**kwargs).first()
+
+    @classmethod
+    def find_all(cls, **kwargs):
+        if 'expression' in kwargs:
+            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
+        return cls._construct_query(**kwargs).all()
 
 
 class NoticeType(BaseMixin, db.Model):
