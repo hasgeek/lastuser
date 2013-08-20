@@ -4,7 +4,7 @@ import unittest
 from lastuserapp import app, db, init_for
 from .fixtures import make_fixtures
 
-class LastuserTest(unittest.TestCase):
+class TestDatabaseFixture(unittest.TestCase):
     def setUp(self):
         init_for('testing')
         app.config['TESTING'] = True
