@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from coaster import buid
-from lastuserapp import db, app
+from lastuserapp import db
 from lastuser_core.models import *
+
 
 def make_fixtures():
     user1 = User(username=u"user1", fullname=u"User 1")
@@ -27,5 +27,8 @@ def make_fixtures():
 
     action = ResourceAction(name=u"read", title=u"Read", resource=resource)
     db.session.add(action)
+
+    message = SMSMessage(phone_number=phone1.phone, transaction_id='1' * 40, message='Test message')
+    db.session.add(message)
 
     db.session.commit()
