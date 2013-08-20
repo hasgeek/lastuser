@@ -3,7 +3,8 @@
 from __future__ import absolute_import
 
 from flask import Markup, session
-import flask.ext.wtf as wtf
+import wtforms
+import wtforms.fields.html5
 from baseframe.forms import Form
 from lastuser_core.registry import LoginProvider
 from ..views.login import oid
@@ -13,7 +14,7 @@ __all__ = ['OpenIdProvider']
 
 
 class OpenIdForm(Form):
-    openid = wtf.html5.URLField('Login with OpenID', validators=[wtf.Required()], default='http://',
+    openid = wtforms.fields.html5.URLField('Login with OpenID', validators=[wtforms.validators.Required()], default='http://',
         description=Markup("Don't forget the <code>http://</code> or <code>https://</code> prefix"))
 
 

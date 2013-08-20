@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import current_app
-import flask.ext.wtf as wtf
+import wtforms
 from coaster import valid_username
 from baseframe.forms import Form, HiddenMultiField
 
@@ -9,9 +9,9 @@ from lastuser_core.models import User, Organization
 
 
 class OrganizationForm(Form):
-    title = wtf.TextField('Organization name', validators=[wtf.Required()])
-    name = wtf.TextField('URL name', validators=[wtf.Required()])
-    description = wtf.TextAreaField('Description')
+    title = wtforms.TextField('Organization name', validators=[wtforms.validators.Required()])
+    name = wtforms.TextField('URL name', validators=[wtforms.validators.Required()])
+    description = wtforms.TextAreaField('Description')
 
     def validate_name(self, field):
         if not valid_username(field.data):
@@ -27,5 +27,5 @@ class OrganizationForm(Form):
 
 
 class TeamForm(Form):
-    title = wtf.TextField('Team name', validators=[wtf.Required()])
-    users = HiddenMultiField('Users', validators=[wtf.Required()])
+    title = wtforms.TextField('Team name', validators=[wtforms.validators.Required()])
+    users = HiddenMultiField('Users', validators=[wtforms.validators.Required()])
