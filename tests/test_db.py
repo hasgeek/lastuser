@@ -14,8 +14,5 @@ class TestDatabaseFixture(unittest.TestCase):
         self.db = db
         make_fixtures()
 
-    def test_noop(self):
-        pass
-
     def tearDown(self):
         self.db.drop_all()
