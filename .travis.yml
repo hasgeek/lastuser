@@ -5,6 +5,8 @@ python:
 install:
   - pip install -r requirements.txt --use-mirrors
   - pip install -r test_requirements.txt --use-mirrors
+before_script:
+  - psql -c 'create database coaster;' -U postgres
 script:
   - nosetests tests --with-coverage
 notifications:
