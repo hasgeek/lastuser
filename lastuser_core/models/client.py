@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from flask import g
 from coaster import newid, newsecret
 
 from . import db, BaseMixin
@@ -109,10 +110,6 @@ class Client(BaseMixin, db.Model):
         return cls.query.filter(expression, **kwargs)
 
     @classmethod
-    def order_by_title(cls):
-        return cls._construct_query(order_by=cls.title).all()
-
-    @classmethod
     def find(cls, **kwargs):
         if 'expression' in kwargs:
             return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
@@ -123,6 +120,17 @@ class Client(BaseMixin, db.Model):
         if 'expression' in kwargs:
             return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
         return cls._construct_query(**kwargs).all()
+
+    @classmethod
+    def get_all_clients(cls, user):
+        expression = db.or_(Client.user == user,
+            Client.org_id.in_(user.organizations_owned_ids()))
+        return cls.find_all(expression=expression, order_by='title')
+
+    @classmethod
+    def get_all_lastuser_clients(cls):
+        return cls.find_all(order_by='title')
+
 
 
 class UserFlashMessage(BaseMixin, db.Model):

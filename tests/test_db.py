@@ -9,7 +9,6 @@ class TestDatabaseFixture(unittest.TestCase):
         init_for('testing')
         app.config['TESTING'] = True
         db.app = app
-        db.drop_all()
         db.create_all()
         self.db = db
         make_fixtures()
