@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from flask import g
 from coaster import newid, newsecret
 
 from . import db, BaseMixin

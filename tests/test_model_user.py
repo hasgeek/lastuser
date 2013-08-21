@@ -6,23 +6,45 @@ import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
 
 
-class TestSMSModel(TestDatabaseFixture):
+"""class TestSMS(TestDatabaseFixture):
     def setUp(self):
-        super(TestSMSModel, self).setUp()
+        super(TestSMS, self).setUp()
+        print "TestSMSModel - setup"
         
     def test_transaction_id(self):
+        val = '1' * 40
         msg = models.SMSMessage.find_by_transaction_id('1' * 40)
-        self.assetTrue(msg != None)
+        self.assetEquals(msg.transaction_id, val)
 
     def tearDown(self):
-        super(TestClientModel, self).tearDown()
+        super(TestSMS, self).tearDown()
 
 
-class TestClientModel(TestDatabaseFixture):
+class TestClient(TestDatabaseFixture):
     def setUp(self):
-        super(TestClientModel, self).setUp()
+        super(TestClient, self).setUp()
+        self.user = models.User.find(username=u"user1")
+        print "TestClientModel - setup"
+
+    def test_get_all_clients(self):
+        print "all clients"
+        clients = models.Client.get_all_clients(user=self.user)
+        self.assertTrue(len(clients) == 1)
+        print "exit all clients"
+
+    def test_get_all_lastuser_clients(self):
+        print "all lastuser"
+        self.assertTrue(len(models.Client.get_all_lastuser_clients()) == 1)
+
+    def tearDown(self):
+        super(TestClient, self).tearDown()
+"""
+class TestUserClientPermissions(TestDatabaseFixture):
+    def setUp(self):
+        super(TestUserClientPermissions, self).setUp()
         self.user = models.User.find(username=u"user1")
         self.create_fixtures()
+        print "TestUserClientPermissionsModel - setup"
 
     def create_fixtures(self):
         # Add permission to the client
@@ -31,13 +53,11 @@ class TestClientModel(TestDatabaseFixture):
         permission.permissions = u"admin"
         db.session.add(client)
         db.session.commit()
-        
-    def test_get_all_clients(self):
-        clients = models.Client.get_all_clients(user=self.user)
-        self.assertTrue(len(clients) == 1)
 
-    def test_get_all_lastuser_clients(self):
-        self.assertTrue(len(models.Client.get_all_lastuser_clients()) == 1)
+    def test_get_all_user_permissions(self):
+        client = models.Client.find(user=self.user)
+        perms = models.UserClientPermissions.find_all(client=client)
+        self.assertEquals(len(perms), 1)
 
     def tearDown(self):
-        super(TestClientModel, self).tearDown()
+        super(TestUserClientPermissions, self).tearDown()

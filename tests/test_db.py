@@ -4,6 +4,7 @@ import unittest
 from lastuserapp import app, db, init_for
 from .fixtures import make_fixtures
 
+
 class TestDatabaseFixture(unittest.TestCase):
     def setUp(self):
         init_for('testing')
@@ -12,6 +13,7 @@ class TestDatabaseFixture(unittest.TestCase):
         db.create_all()
         self.db = db
         make_fixtures()
+        print "TestDatabaseFixture - setup"
 
     def tearDown(self):
         self.db.drop_all()
