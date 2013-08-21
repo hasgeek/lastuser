@@ -28,7 +28,7 @@ def make_fixtures():
     action = ResourceAction(name=u"read", title=u"Read", resource=resource)
     db.session.add(action)
 
-    message = SMSMessage(phone_number=phone1.phone, transaction_id='1' * 40, message='Test message')
+    message = SMSMessage(phone_number=phone1.phone, transaction_id=u"1" * 40, message=u"Test message")
     db.session.add(message)
 
     db.session.commit()

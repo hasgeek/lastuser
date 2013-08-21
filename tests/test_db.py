@@ -13,7 +13,8 @@ class TestDatabaseFixture(unittest.TestCase):
         db.create_all()
         self.db = db
         make_fixtures()
-        print "TestDatabaseFixture - setup"
 
     def tearDown(self):
+        # http://stackoverflow.com/questions/12014824/sql-alchemy-relationship-loader-leaves-a-lock-on-table
+        self.db.session.commit()
         self.db.drop_all()
