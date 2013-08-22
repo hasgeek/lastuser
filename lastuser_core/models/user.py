@@ -494,6 +494,18 @@ class Organization(BaseMixin, db.Model):
             return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
         return cls._construct_query(**kwargs).all()
 
+    @classmethod
+    def exclude(cls, user, client, org_userids):
+        """Get organizations other than mentioned ones.
+        :param user: User(object) who owns organization.
+        :parma client: Client(object) for which access need to granted.
+        :param org_userids: userids of organization to exclude which can be list.
+        """
+        user_orgs = user.organizations_owned()
+        org_selected = [org.userid for org in user_orgs if client in org.clients_with_team_access()]
+        expression = cls.userid.in_(set(org_selected) - set(org_userids))
+        return cls.find_all(expression=expression)
+        
 
 class Team(BaseMixin, db.Model):
     __tablename__ = 'team'

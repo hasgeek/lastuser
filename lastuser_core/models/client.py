@@ -405,10 +405,6 @@ class Permission(BaseMixin, db.Model):
         return cls.query.filter(expression, **kwargs)
 
     @classmethod
-    def order_by_title(cls):
-        return cls._construct_query(order_by=cls.title).all()
-
-    @classmethod
     def find(cls, **kwargs):
         if 'expression' in kwargs:
             return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
@@ -419,6 +415,24 @@ class Permission(BaseMixin, db.Model):
         if 'expression' in kwargs:
             return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
         return cls._construct_query(**kwargs).all()
+
+    @classmethod
+    def get_all_permissions_for_user(cls, user):
+        expression = db.or_(cls.allusers == True,
+               cls.user == user)
+        return cls.find_all(expression=expression, order_by=u'name')
+
+    @classmethod
+    def get_all_permissions(cls, user):
+        expression = db.or_(cls.user_id == user.id,
+               cls.org_id.in_(user.organizations_owned_ids()))
+        return cls.find_all(expression=expression, order_by=u'name')
+
+    @classmethod
+    def get_all_permissions_for_org(cls, org):
+        expression = db.or_(cls.allusers == True,
+               cls.org == org)
+        return cls.find_all(expression=expression, order_by=u'name')
 
 
 # This model's name is in plural because it defines multiple permissions within each instance
@@ -552,8 +566,13 @@ class TeamClientPermissions(BaseMixin, db.Model):
 
     @classmethod
     def find(cls, **kwargs):
+        first_or_404 = kwargs.get('first_or_404') and kwargs.pop('first_or_404')
         if 'expression' in kwargs:
+            if first_or_404:
+                return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first_or_404()
             return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
+        if first_or_404:
+            return cls._construct_query(**kwargs).first_or_404()
         return cls._construct_query(**kwargs).first()
 
     @classmethod
