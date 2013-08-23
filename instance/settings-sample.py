@@ -44,6 +44,10 @@ RESERVED_USERNAMES = set([
     'register',
     'token',
     'organizations',
+    'embed',
+    'api',
+    'static',
+    '_baseframe',
     ])
 
 #: Mail settings
