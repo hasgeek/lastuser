@@ -146,13 +146,13 @@ class Client(BaseMixin, db.Model):
         """
         expression = db.or_(Client.user == user,
             Client.org_id.in_(user.organizations_owned_ids()))
-        return cls.find_all(expression=expression, order_by='title')
+        return cls.query.filter(expression=expression, order_by='title').all()
 
     @classmethod
     def get_all_lastuser_clients(cls):
         """Returns all clients in the database.
         """
-        return cls.find_all(order_by='title')
+        return cls.query.order_by('title').all()
 
 
 class UserFlashMessage(BaseMixin, db.Model):
@@ -478,7 +478,7 @@ class Permission(BaseMixin, db.Model):
         :param user: User instance.
         """
         expression = db.or_(cls.allusers == True, cls.user == user)
-        return cls.find_all(expression=expression, order_by=u'name')
+        return cls.query.filter(expression=expression, order_by=u'name').all()
 
     @classmethod
     def get_all_permissions(cls, user):
@@ -487,7 +487,7 @@ class Permission(BaseMixin, db.Model):
         :param user: User instance.
         """
         expression = db.or_(cls.user_id == user.id, cls.org_id.in_(user.organizations_owned_ids()))
-        return cls.find_all(expression=expression, order_by=u'name')
+        return cls.query.filter(expression=expression, order_by=u'name').all()
 
     @classmethod
     def get_all_permissions_for_org(cls, org):
@@ -496,7 +496,7 @@ class Permission(BaseMixin, db.Model):
         :param org: Organization instance for which permissions to be returned.
         """
         expression = db.or_(cls.allusers == True, cls.org == org)
-        return cls.find_all(expression=expression, order_by=u'name')
+        return cls.query.filter(expression=expression, order_by=u'name').all()
 
 
 # This model's name is in plural because it defines multiple permissions within each instance
@@ -763,4 +763,5 @@ class NoticeType(BaseMixin, db.Model):
     #: Description of what this notice type is about
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
     #: Is this notice type available to all users and client apps?
+
     allusers = db.Column(db.Boolean, default=False, nullable=False)
