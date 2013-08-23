@@ -534,7 +534,7 @@ class Organization(BaseMixin, db.Model):
         user_orgs = user.organizations_owned()
         org_selected = [org.userid for org in user_orgs if client in org.clients_with_team_access()]
         expression = cls.userid.in_(set(org_selected) - set(org_userids))
-        return cls.find_all(expression=expression)
+        return cls.query.filter(expression=expression).all()
         
 
 class Team(BaseMixin, db.Model):
