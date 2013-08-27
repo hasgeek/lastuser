@@ -36,14 +36,14 @@ def send_message(msg):
             mask=current_app.config['SMS_SMSGUPSHUP_MASK']
             ))
         try:
-            response = urlopen('https://enterprise.smsgupshup.com/GatewayAPI/rest?%s' % params).read()
+            response = urlopen('https://enterprise.smsgupshup.com/GatewayAPI/rest?{}'.format(params)).read()
             r_status, r_phone, r_id = [item.strip() for item in response.split('|')]
             if r_status == 'success':
                 msg.status = SMS_STATUS.PENDING
                 msg.transaction_id = r_id
         except URLError, e:
             # FIXME: This function should not be sending messages to the UI
-            flash("Message could not be sent. Error: %s" % e)
+            flash("Message could not be sent. Error: {}".format(e))
     else:
         # Unsupported at this time
         raise ValueError("Unsupported phone number")
@@ -51,7 +51,7 @@ def send_message(msg):
 
 def send_phone_verify_code(phoneclaim):
     msg = SMSMessage(phone_number=phoneclaim.phone,
-        message="Verification code: %s. If you did not request this, please report to us at %s." % (
+        message="Verification code: {}. If you did not request this, please report to us at {}.".format(
             phoneclaim.verification_code, current_app.config['SITE_SUPPORT_EMAIL']))
     # Now send this
     send_message(msg)

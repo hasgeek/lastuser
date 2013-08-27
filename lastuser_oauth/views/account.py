@@ -26,7 +26,7 @@ def login_service(service):
     try:
         return provider.do(callback_url=callback_url)
     except LoginInitError, e:
-        flash("%s login failed: %s" % (provider.title, unicode(e)), category='error')
+        flash("{} login failed: {}".format(provider.title, unicode(e)), category='error')
         return redirect(next_url or get_next_url(referrer=True))
 
 
@@ -41,7 +41,7 @@ def login_service_callback(service):
     try:
         userdata = provider.callback()
     except LoginCallbackError, e:
-        flash("%s login failed: %s" % (provider.title, unicode(e)), category='error')
+        flash("{} login failed: {}".format(provider.title, unicode(e)), category='error')
         if g.user:
             return redirect(get_next_url(referrer=False))
         else:
@@ -135,7 +135,7 @@ def login_service_postcallback(service, userdata):
 
     if not g.user:  # If a user isn't already logged in, login now.
         login_internal(user)
-        flash(u"You have logged in via %s." % login_registry[service].title, 'success')
+        flash(u"You have logged in via {}.".format(login_registry[service].title), 'success')
     next_url = get_next_url(session=True)
 
     db.session.commit()

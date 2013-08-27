@@ -151,15 +151,15 @@ def requires_user_or_client_login(f):
 
 def avatar_url_email(useremail):
     if request.url.startswith('https:'):
-        return 'https://secure.gravatar.com/avatar/%s?s=80&d=mm' % useremail.md5sum
+        return 'https://secure.gravatar.com/avatar/{}?s=80&d=mm'.format(useremail.md5sum)
     else:
-        return 'http://www.gravatar.com/avatar/%s?s=80&d=mm' % useremail.md5sum
+        return 'http://www.gravatar.com/avatar/{}?s=80&d=mm'.format(useremail.md5sum)
 
 
 def avatar_url_twitter(twitterid):
     if twitterid:
         try:
-            return urlopen('http://api.twitter.com/1/users/profile_image/%s' % twitterid).geturl()
+            return urlopen('http://api.twitter.com/1/users/profile_image/{}'.format(twitterid)).geturl()
         except URLError:
             return None
 
@@ -167,7 +167,7 @@ def avatar_url_twitter(twitterid):
 def avatar_url_github(githubid):
     if githubid:
         try:
-            ghinfo = json.loads(urlopen('https://api.github.com/users/%s' % githubid).read())
+            ghinfo = json.loads(urlopen('https://api.github.com/users/{}'.format(githubid)).read())
             return ghinfo.get('avatar_url')
         except URLError:
             return None

@@ -71,7 +71,7 @@ class User(BaseMixin, db.Model):
             return bcrypt.hashpw(password, self.pw_hash) == self.pw_hash
 
     def __repr__(self):
-        return '<User %s "%s">' % (self.username or self.userid, self.fullname)
+        return '<User {} "{}">'.format(self.username or self.userid, self.fullname)
 
     def profileid(self):
         if self.username:
@@ -85,7 +85,7 @@ class User(BaseMixin, db.Model):
     @property
     def pickername(self):
         if self.username:
-            return '%s (~%s)' % (self.fullname, self.username)
+            return '{} (~{})'.format(self.fullname, self.username)
         else:
             return self.fullname
 
@@ -192,7 +192,7 @@ class UserEmail(BaseMixin, db.Model):
     email = db.synonym('_email', descriptor=email)
 
     def __repr__(self):
-        return u'<UserEmail %s of user %s>' % (self.email, repr(self.user))
+        return u'<UserEmail {} of user {}>'.format(self.email, repr(self.user))
 
     def __unicode__(self):
         return unicode(self.email)
@@ -225,7 +225,7 @@ class UserEmailClaim(BaseMixin, db.Model):
     email = db.synonym('_email', descriptor=email)
 
     def __repr__(self):
-        return u'<UserEmailClaim %s of user %s>' % (self.email, repr(self.user))
+        return u'<UserEmailClaim {} of user {}>'.format(self.email, repr(self.user))
 
     def __unicode__(self):
         return unicode(self.email)
@@ -261,7 +261,7 @@ class UserPhone(BaseMixin, db.Model):
     phone = db.synonym('_phone', descriptor=phone)
 
     def __repr__(self):
-        return u'<UserPhone %s of user %s>' % (self.phone, repr(self.user))
+        return u'<UserPhone {} of user {}>'.format(self.phone, repr(self.user))
 
     def __unicode__(self):
         return unicode(self.phone)
@@ -292,7 +292,7 @@ class UserPhoneClaim(BaseMixin, db.Model):
     phone = db.synonym('_phone', descriptor=phone)
 
     def __repr__(self):
-        return u'<UserPhoneClaim %s of user %s>' % (self.phone, repr(self.user))
+        return u'<UserPhoneClaim {} of user {}>'.format(self.phone, repr(self.user))
 
     def __unicode__(self):
         return unicode(self.phone)
@@ -385,12 +385,12 @@ class Organization(BaseMixin, db.Model):
         return True
 
     def __repr__(self):
-        return '<Organization %s "%s">' % (self.name or self.userid, self.title)
+        return '<Organization {} "{}">'.format(self.name or self.userid, self.title)
 
     @property
     def pickername(self):
         if self.name:
-            return '%s (~%s)' % (self.title, self.name)
+            return '{} (~{})'.format(self.title, self.name)
         else:
             return self.title
 
@@ -434,7 +434,7 @@ class Team(BaseMixin, db.Model):
         backref='teams')  # No cascades here! Cascades will delete users
 
     def __repr__(self):
-        return '<Team %s of %s>' % (self.title, self.org.title)
+        return '<Team {} of {}>'.format(self.title, self.org.title)
 
     @property
     def pickername(self):
