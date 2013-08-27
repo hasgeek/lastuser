@@ -334,10 +334,12 @@ class UserClientPermissions(BaseMixin, db.Model):
     # Only one assignment per user and client
     __table_args__ = (db.UniqueConstraint("user_id", "client_id"), {})
 
+    # Used by lastuser_ui/client_info.html
     @property
     def pickername(self):
         return self.user.pickername
 
+    # Used by lastuser_ui/client_info.html for url_for
     @property
     def userid(self):
         return self.user.userid
@@ -378,10 +380,12 @@ class TeamClientPermissions(BaseMixin, db.Model):
     # Only one assignment per team and client
     __table_args__ = (db.UniqueConstraint("team_id", "client_id"), {})
 
+    # Used by lastuser_ui/client_info.html
     @property
     def pickername(self):
         return self.team.pickername
 
+    # Used by lastuser_ui/client_info.html for url_for
     @property
     def userid(self):
         return self.team.userid

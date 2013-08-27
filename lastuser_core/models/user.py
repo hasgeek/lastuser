@@ -41,8 +41,10 @@ class User(BaseMixin, db.Model):
         else:
             self.pw_hash = bcrypt.hashpw(password, bcrypt.gensalt())
 
+    #: Write-only property (passwords cannot be read back in plain text)
     password = property(fset=_set_password)
 
+    #: Username (may be null)
     @hybrid_property
     def username(self):
         return self._username
@@ -55,6 +57,8 @@ class User(BaseMixin, db.Model):
             self._username = value
 
     def is_valid_username(self, value):
+        if not valid_username(value):
+            return False
         existing = User.query.filter_by(username=value).first()
         if existing and existing.id != self.id:
             return False
@@ -387,6 +391,8 @@ class Organization(BaseMixin, db.Model):
             self._name = value
 
     def valid_name(self, value):
+        if not valid_username(value):
+            return False
         existing = Organization.query.filter_by(name=value).first()
         if existing and existing.id != self.id:
             return False
