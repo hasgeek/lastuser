@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from flask import abort
 from coaster import newid, newsecret
 
 from . import db, BaseMixin
@@ -92,54 +93,7 @@ class Client(BaseMixin, db.Model):
         return perms
 
     @classmethod
-    def _construct_query(cls, **kwargs):
-        """Construct base query depending on the options.
-        Accepts order_by and other parameters for filter_by.
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter_by(**kwargs).order_by(order_by)
-        return cls.query.filter_by(**kwargs)
-
-    @classmethod
-    def _construct_query_with_expression(cls, expression, **kwargs):
-        """construct query with sqlalchemy expression
-
-        :param expression: Any valid SQLAlchemy expression like
-            expression = db.or_(Client.user == user,
-                Client.org_id.in_(user.organizations_owned_ids()))
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter(expression, **kwargs).order_by(order_by)
-        return cls.query.filter(expression, **kwargs)
-
-    @classmethod
-    def find(cls, **kwargs):
-        """Returns single instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param expression: Valid SQLAlchemy expressions
-        """
-        if 'expression' in kwargs:
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
-        return cls._construct_query(**kwargs).first()
-
-    @classmethod
-    def find_all(cls, **kwargs):
-        """Returns all instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param expression: Valid SQLAlchemy expressions
-        """
-        if 'expression' in kwargs:
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
-        return cls._construct_query(**kwargs).all()
-
-    @classmethod
-    def get_all_clients(cls, user):
+    def all_clients(cls, user):
         """Returns all clients for given user.
 
         :param user: User instance.
@@ -147,7 +101,7 @@ class Client(BaseMixin, db.Model):
         return cls.query.filter(db.or_(Client.user == user, Client.org_id.in_(user.organizations_owned_ids()))).order_by('title').all()
 
     @classmethod
-    def get_all_lastuser_clients(cls):
+    def all_lastuser_clients(cls):
         """Returns all clients in the database.
         """
         return cls.query.order_by('title').all()
@@ -192,53 +146,6 @@ class Resource(BaseMixin, db.Model):
             perms.add('delete')
             perms.add('new-action')
         return perms
-
-    @classmethod
-    def _construct_query(cls, **kwargs):
-        """Construct base query depending on the options.
-        Accepts order_by and other parameters for filter_by.
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter_by(**kwargs).order_by(order_by)
-        return cls.query.filter_by(**kwargs)
-
-    @classmethod
-    def _construct_query_with_expression(cls, expression, **kwargs):
-        """construct query with sqlalchemy expression
-
-        :param expression: Any valid SQLAlchemy expression like
-            expression = db.or_(Client.user == user,
-                Client.org_id.in_(user.organizations_owned_ids()))
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter(expression, **kwargs).order_by(order_by)
-        return cls.query.filter(expression, **kwargs)
-
-    @classmethod
-    def find(cls, **kwargs):
-        """Returns single instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param expression: Valid SQLAlchemy expression.
-        """
-        if 'expression' in kwargs:
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
-        return cls._construct_query(**kwargs).first()
-
-    @classmethod
-    def find_all(cls, **kwargs):
-        """Returns all instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param expression: Valid SQLAlchemy expression.
-        """
-        if 'expression' in kwargs:
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
-        return cls._construct_query(**kwargs).all()
 
 
 class ResourceAction(BaseMixin, db.Model):
@@ -423,54 +330,7 @@ class Permission(BaseMixin, db.Model):
         return perms
 
     @classmethod
-    def _construct_query(cls, **kwargs):
-        """Construct base query depending on the options.
-        Accepts order_by and other parameters for filter_by.
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter_by(**kwargs).order_by(order_by)
-        return cls.query.filter_by(**kwargs)
-
-    @classmethod
-    def _construct_query_with_expression(cls, expression, **kwargs):
-        """construct query with sqlalchemy expression
-
-        :param expression: Any valid SQLAlchemy expression like
-            expression = db.or_(Client.user == user,
-                Client.org_id.in_(user.organizations_owned_ids()))
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter(expression, **kwargs).order_by(order_by)
-        return cls.query.filter(expression, **kwargs)
-
-    @classmethod
-    def find(cls, **kwargs):
-        """Returns single instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param expression: Valid SQLAlchemy expression.
-        """
-        if 'expression' in kwargs:
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
-        return cls._construct_query(**kwargs).first()
-
-    @classmethod
-    def find_all(cls, **kwargs):
-        """Returns all instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param expression: Valid SQLAlchemy expressions
-        """
-        if 'expression' in kwargs:
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
-        return cls._construct_query(**kwargs).all()
-
-    @classmethod
-    def get_all_permissions_for_user(cls, user):
+    def all_permissions_for_user(cls, user):
         """Returns all the permissions created by user.
 
         :param user: User instance.
@@ -478,7 +338,7 @@ class Permission(BaseMixin, db.Model):
         return cls.query.filter(db.or_(cls.allusers == True, cls.user == user)).order_by(u'name').all()
 
     @classmethod
-    def get_all_permissions(cls, user):
+    def all_permissions(cls, user):
         """Returns all the permissions created by the user.
 
         :param user: User instance.
@@ -486,7 +346,7 @@ class Permission(BaseMixin, db.Model):
         return cls.query.filter(db.or_(cls.user_id == user.id, cls.org_id.in_(user.organizations_owned_ids()))).order_by(u'name').all()
 
     @classmethod
-    def get_all_permissions_for_org(cls, org):
+    def all_permissions_for_org(cls, org):
         """Returns all permissions for the given organization.
 
         :param org: Organization instance for which permissions to be returned.
@@ -538,57 +398,12 @@ class UserClientPermissions(BaseMixin, db.Model):
                 operm.user = newuser
 
     @classmethod
-    def _construct_query(cls, **kwargs):
-        """Construct base query depending on the options.
-        Accepts order_by and other parameters for filter_by.
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter_by(**kwargs).order_by(order_by)
-        return cls.query.filter_by(**kwargs)
+    def all_permissions(cls, user, client):
+        return cls.query.filter_by(user=user, client=client).all()
 
     @classmethod
-    def _construct_query_with_expression(cls, expression, **kwargs):
-        """construct query with sqlalchemy expression
-
-        :param expression: Any valid SQLAlchemy expression like
-            expression = db.or_(Client.user == user,
-                Client.org_id.in_(user.organizations_owned_ids()))
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter(expression, **kwargs).order_by(order_by)
-        return cls.query.filter(expression, **kwargs)
-
-    @classmethod
-    def find(cls, **kwargs):
-        """Returns single instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param first_or_404: Accepts Boolean value. Similary to Flask-SQlAlchemy first_or_404 method.
-        :param expression: Valid SQLAlchemy expression.
-        """
-        first_or_404 = kwargs.get('first_or_404') and kwargs.pop('first_or_404')
-        if 'expression' in kwargs:
-            if first_or_404:
-                return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first_or_404()
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
-        if first_or_404:
-            return cls._construct_query(**kwargs).first_or_404()
-        return cls._construct_query(**kwargs).first()
-
-    @classmethod
-    def find_all(cls, **kwargs):
-        """Returns all instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param expression: Valid SQLAlchemy expression.
-        """
-        if 'expression' in kwargs:
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
-        return cls._construct_query(**kwargs).all()
+    def permission_or_404(cls, user, client):
+        return cls.query.filter_by(user=user, client=client).first_or_404()
 
 
 # This model's name is in plural because it defines multiple permissions within each instance
@@ -618,57 +433,19 @@ class TeamClientPermissions(BaseMixin, db.Model):
         return self.team.userid
 
     @classmethod
-    def _construct_query(cls, **kwargs):
-        """Construct base query depending on the options.
-        Accepts order_by and other parameters for filter_by.
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter_by(**kwargs).order_by(order_by)
-        return cls.query.filter_by(**kwargs)
+    def all_permissions(cls, client, team=None):
+        if team:
+            return cls.query.filter_by(client=client, team=team).all()
+        return client.team_permissions
 
     @classmethod
-    def _construct_query_with_expression(cls, expression, **kwargs):
-        """construct query with sqlalchemy expression
-
-        :param expression: Any valid SQLAlchemy expression like
-            expression = db.or_(Client.user == user,
-                Client.org_id.in_(user.organizations_owned_ids()))
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter(expression, **kwargs).order_by(order_by)
-        return cls.query.filter(expression, **kwargs)
-
-    @classmethod
-    def find(cls, **kwargs):
-        """Returns single instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param first_or_404: Accepts Boolean value. Similary to Flask-SQlAlchemy first_or_404 method.
-        :param expression: Valid SQLAlchemy expression.
-        """
-        first_or_404 = kwargs.get('first_or_404') and kwargs.pop('first_or_404')
-        if 'expression' in kwargs:
-            if first_or_404:
-                return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first_or_404()
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
-        if first_or_404:
-            return cls._construct_query(**kwargs).first_or_404()
-        return cls._construct_query(**kwargs).first()
-
-    @classmethod
-    def find_all(cls, **kwargs):
-        """Returns all instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param expression: Valid SQLAlchemy expression.
-        """
-        if 'expression' in kwargs:
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
-        return cls._construct_query(**kwargs).all()
+    def permission_or_404(cls, client, team=None):
+        if team:
+            return cls.query.filter_by(client=client, team=team).first_or_404()
+        perms = client.team_permissions
+        if perms:
+            return perms[0]
+        abort(404)
 
 
 class CLIENT_TEAM_ACCESS:
@@ -689,59 +466,6 @@ class ClientTeamAccess(BaseMixin, db.Model):
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('org_team_access', cascade="all, delete-orphan"))
     access_level = db.Column(db.Integer, default=CLIENT_TEAM_ACCESS.NONE, nullable=False)
-
-    @classmethod
-    def _find(cls, **kwargs):
-        if kwargs.get('404') is True:
-            return cls.query.filter_by(**kwargs).first_or_404()
-        return cls.query.filter_by(**kwargs)
-
-    @classmethod
-    def _construct_query(cls, **kwargs):
-        """Construct base query depending on the options.
-        Accepts order_by and other parameters for filter_by.
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter_by(**kwargs).order_by(order_by)
-        return cls.query.filter_by(**kwargs)
-
-    @classmethod
-    def _construct_query_with_expression(cls, expression, **kwargs):
-        """construct query with sqlalchemy expression
-
-        :param expression: Any valid SQLAlchemy expression like
-            expression = db.or_(Client.user == user,
-                Client.org_id.in_(user.organizations_owned_ids()))
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter(expression, **kwargs).order_by(order_by)
-        return cls.query.filter(expression, **kwargs)
-
-    @classmethod
-    def find(cls, **kwargs):
-        """Returns single instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param expression: Valid SQLAlchemy expression.
-        """
-        if 'expression' in kwargs:
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
-        return cls._construct_query(**kwargs).first()
-
-    @classmethod
-    def find_all(cls, **kwargs):
-        """Returns all instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param expression: Valid SQLAlchemy expression.
-        """
-        if 'expression' in kwargs:
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
-        return cls._construct_query(**kwargs).all()
 
 
 class NoticeType(BaseMixin, db.Model):

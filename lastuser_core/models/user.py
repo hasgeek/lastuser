@@ -2,6 +2,7 @@
 
 from hashlib import md5
 from werkzeug import check_password_hash, cached_property
+from flask import abort
 import bcrypt
 from sqlalchemy.ext.hybrid import hybrid_property
 from coaster import newid, newsecret, newpin
@@ -158,60 +159,7 @@ class User(BaseMixin, db.Model):
         otherwise.
         """
         return bool(self.fullname and self.username and self.email)
-
-    @classmethod
-    def _construct_query(cls, **kwargs):
-        """Construct base query depending on the options.
-        Accepts order_by and other parameters for filter_by.
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter_by(**kwargs).order_by(order_by)
-        return cls.query.filter_by(**kwargs)
-
-    @classmethod
-    def _construct_query_with_expression(cls, expression, **kwargs):
-        """construct query with sqlalchemy expression
-
-        :param expression: Any valid SQLAlchemy expression like
-            expression = db.or_(Client.user == user,
-                Client.org_id.in_(user.organizations_owned_ids()))
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter(expression, **kwargs).order_by(order_by)
-        return cls.query.filter(expression, **kwargs)
-
-    @classmethod
-    def find(cls, **kwargs):
-        """Returns single instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param first_or_404: Accepts Boolean value. Similary to Flask-SQlAlchemy first_or_404 method.
-        :param expression: Valid SQLAlchemy expression.
-        """
-        first_or_404 = kwargs.get('first_or_404') and kwargs.pop('first_or_404')
-        if 'expression' in kwargs:
-            if first_or_404:
-                return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first_or_404()
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
-        if first_or_404:
-            return cls._construct_query(**kwargs).first_or_404()
-        return cls._construct_query(**kwargs).first()
-
-    @classmethod
-    def find_all(cls, **kwargs):
-        """Returns all instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param expression: Valid SQLAlchemy expression.
-        """
-        if 'expression' in kwargs:
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
-        return cls._construct_query(**kwargs).all()
-
+    
 
 class UserOldId(TimestampMixin, db.Model):
     __tablename__ = 'useroldid'
@@ -472,59 +420,6 @@ class Organization(BaseMixin, db.Model):
         return perms
 
     @classmethod
-    def _construct_query(cls, **kwargs):
-        """Construct base query depending on the options.
-        Accepts order_by and other parameters for filter_by.
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter_by(**kwargs).order_by(order_by)
-        return cls.query.filter_by(**kwargs)
-
-    @classmethod
-    def _construct_query_with_expression(cls, expression, **kwargs):
-        """construct query with sqlalchemy expression
-
-        :param expression: Any valid SQLAlchemy expression like
-            expression = db.or_(Client.user == user,
-                Client.org_id.in_(user.organizations_owned_ids()))
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter(expression, **kwargs).order_by(order_by)
-        return cls.query.filter(expression, **kwargs)
-
-    @classmethod
-    def find(cls, **kwargs):
-        """Returns single instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param first_or_404: Accepts Boolean value. Similary to Flask-SQlAlchemy first_or_404 method.
-        :param expression: Valid SQLAlchemy expression.
-        """
-        first_or_404 = kwargs.get('first_or_404') and kwargs.pop('first_or_404')
-        if 'expression' in kwargs:
-            if first_or_404:
-                return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first_or_404()
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
-        if first_or_404:
-            return cls._construct_query(**kwargs).first_or_404()
-        return cls._construct_query(**kwargs).first()
-
-    @classmethod
-    def find_all(cls, **kwargs):
-        """Returns all instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param expression: Valid SQLAlchemy expression.
-        """
-        if 'expression' in kwargs:
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
-        return cls._construct_query(**kwargs).all()
-
-    @classmethod
     def exclude(cls, user, client, org_userids):
         """Get organizations other than mentioned ones.
         :param user: User(object) who owns organization.
@@ -572,54 +467,12 @@ class Team(BaseMixin, db.Model):
         olduser.teams = []
 
     @classmethod
-    def _construct_query(cls, **kwargs):
-        """Construct base query depending on the options.
-        Accepts order_by and other parameters for filter_by.
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter_by(**kwargs).order_by(order_by)
-        return cls.query.filter_by(**kwargs)
+    def all_teams(cls, user, org):
+        return set(user.teams).intersection(set(org.teams))
 
     @classmethod
-    def _construct_query_with_expression(cls, expression, **kwargs):
-        """construct query with sqlalchemy expression
-
-        :param expression: Any valid SQLAlchemy expression like
-            expression = db.or_(Client.user == user,
-                Client.org_id.in_(user.organizations_owned_ids()))
-        """
-        order_by = kwargs.get('order_by') and kwargs.pop('order_by')
-        if order_by:
-            return cls.query.filter(expression, **kwargs).order_by(order_by)
-        return cls.query.filter(expression, **kwargs)
-
-    @classmethod
-    def find(cls, **kwargs):
-        """Returns single instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param first_or_404: Accepts Boolean value. Similary to Flask-SQlAlchemy first_or_404 method.
-        :param expression: Valid SQLAlchemy expression.
-        """
-        first_or_404 = kwargs.get('first_or_404') and kwargs.pop('first_or_404')
-        if 'expression' in kwargs:
-            if first_or_404:
-                return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first_or_404()
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).first()
-        if first_or_404:
-            return cls._construct_query(**kwargs).first_or_404()
-        return cls._construct_query(**kwargs).first()
-
-    @classmethod
-    def find_all(cls, **kwargs):
-        """Returns all instance of matching condition.
-        Accepts all parameters which filter and filter_by accepts.
-
-        Special parameters
-        :param expression: Valid SQLAlchemy expression.
-        """
-        if 'expression' in kwargs:
-            return cls._construct_query_with_expression(expression=kwargs.pop('expression'), **kwargs).all()
-        return cls._construct_query(**kwargs).all()
+    def team_or_404(cls, user, org):
+        item = set(user.teams).intersection(set(org.teams)).pop()
+        if item:
+            return item
+        abort(404)

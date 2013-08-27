@@ -1,30 +1,26 @@
 # -*- coding: utf-8 -*-
 
-from werkzeug.exceptions import NotFound
 from lastuserapp import db
 import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
 
 
-class TestUser(TestDatabaseFixture):
+"""class TestUser(TestDatabaseFixture):
     def setUp(self):
         super(TestUser, self).setUp()
-        self.user = models.User.find(username=u"user1")
-        self.create_fixtures()
-
-    def create_fixtures(self):
-        pass
+        self.user = models.User.query.filter_by(username=u"user1").first()
 
     def test_find(self):
         #This should rise 404
         with self.assertRaises(NotFound):
             models.User.find(userid=u"s"*22, first_or_404=True)
+"""
 
 
 class TestTeam(TestDatabaseFixture):
     def setUp(self):
         super(TestTeam, self).setUp()
-        self.user = models.User.find(username=u"user1")
+        self.user = models.User.query.filter_by(username=u"user1").first()
         self.create_fixtures()
 
     def create_fixtures(self):
@@ -36,14 +32,14 @@ class TestTeam(TestDatabaseFixture):
         db.session.commit()
 
     def test_find(self):
-        self.assertIs(models.Team.find(userid=self.user.userid, org=self.org, first_or_404=True), self.team)
+        self.assertIsNotNone(models.Team.team_or_404(user=self.user, org=self.org))
 
 
 class TestOrganization(TestDatabaseFixture):
     def setUp(self):
         super(TestOrganization, self).setUp()
-        self.user = models.User.find(username=u"user1")
-        self.client = models.Client.find(user=self.user)
+        self.user = models.User.query.filter_by(username=u"user1").first()
+        self.client = models.Client.query.filter_by(user=self.user).first()
         self.create_fixtures()
 
     def create_fixtures(self):
