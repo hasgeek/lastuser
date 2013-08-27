@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import operator
-from flask import abort
 from coaster import newid, newsecret
 
 from . import db, BaseMixin
@@ -92,20 +90,6 @@ class Client(BaseMixin, db.Model):
             perms.add('assign-permissions')
             perms.add('new-resource')
         return perms
-
-    @classmethod
-    def all_clients(cls, user):
-        """Returns all clients for given user.
-
-        :param user: User instance.
-        """
-        return sorted((user.clients or user.organization.clients), key=operator.attrgetter('title'))
-
-    @classmethod
-    def all_lastuser_clients(cls):
-        """Returns all clients in the database.
-        """
-        return cls.query.order_by('title').all()
 
 
 class UserFlashMessage(BaseMixin, db.Model):
@@ -331,30 +315,6 @@ class Permission(BaseMixin, db.Model):
             perms.add('delete')
         return perms
 
-    @classmethod
-    def all_permissions_for_user(cls, user):
-        """Returns all the permissions created by user.
-
-        :param user: User instance.
-        """
-        return cls.query.filter(db.or_(cls.allusers == True, cls.user == user)).order_by(u'name').all()
-
-    @classmethod
-    def all_permissions(cls, user):
-        """Returns all the permissions created by the user.
-
-        :param user: User instance.
-        """
-        return sorted(user.permissions_created or [org.permissions_created for org in user.organizations_owned()], key=operator.attrgetter('name'))
-
-    @classmethod
-    def all_permissions_for_org(cls, org):
-        """Returns all permissions for the given organization.
-
-        :param org: Organization instance for which permissions to be returned.
-        """
-        return cls.query.filter(db.or_(cls.allusers == True, cls.org == org)).order_by(u'name').all()
-
 
 # This model's name is in plural because it defines multiple permissions within each instance
 class UserClientPermissions(BaseMixin, db.Model):
@@ -399,14 +359,6 @@ class UserClientPermissions(BaseMixin, db.Model):
             if not merge_performed:
                 operm.user = newuser
 
-    @classmethod
-    def all_permissions(cls, user, client):
-        return cls.query.filter_by(user=user, client=client).all()
-
-    @classmethod
-    def permission_or_404(cls, user, client):
-        return cls.query.filter_by(user=user, client=client).first_or_404()
-
 
 # This model's name is in plural because it defines multiple permissions within each instance
 class TeamClientPermissions(BaseMixin, db.Model):
@@ -433,24 +385,6 @@ class TeamClientPermissions(BaseMixin, db.Model):
     @property
     def userid(self):
         return self.team.userid
-
-    @classmethod
-    def all_permissions(cls, client, team=None):
-        if team:
-            return client.team_permissions and team.client_permissions
-        return client.team_permissions
-
-    @classmethod
-    def permission_or_404(cls, client, team=None):
-        if team:
-            perms = team.client_permissions and client.team_permissions
-            if perms:
-                return perms[0]
-            abort(404)
-        perms = client.team_permissions
-        if perms:
-            return perms[0]
-        abort(404)
 
 
 class CLIENT_TEAM_ACCESS:
@@ -487,5 +421,4 @@ class NoticeType(BaseMixin, db.Model):
     #: Description of what this notice type is about
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
     #: Is this notice type available to all users and client apps?
-
     allusers = db.Column(db.Boolean, default=False, nullable=False)

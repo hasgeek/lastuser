@@ -15,6 +15,6 @@ class TestDatabaseFixture(unittest.TestCase):
         make_fixtures()
 
     def tearDown(self):
-        # http://stackoverflow.com/questions/12014824/sql-alchemy-relationship-loader-leaves-a-lock-on-table
-        self.db.session.commit()
-        self.db.drop_all()
+        db.session.rollback()
+        db.drop_all()
+        db.session.remove()

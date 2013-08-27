@@ -2,12 +2,12 @@
 
 from hashlib import md5
 from werkzeug import check_password_hash, cached_property
-from flask import abort
 import bcrypt
 from sqlalchemy.ext.hybrid import hybrid_property
-from coaster import newid, newsecret, newpin
+from coaster import newid, newsecret, newpin, valid_username
 
 from . import db, TimestampMixin, BaseMixin
+
 
 __all__ = ['User', 'UserEmail', 'UserEmailClaim', 'PasswordResetRequest', 'UserExternalId',
            'UserPhone', 'UserPhoneClaim', 'Team', 'Organization', 'UserOldId', 'USER_STATUS']
@@ -159,7 +159,17 @@ class User(BaseMixin, db.Model):
         otherwise.
         """
         return bool(self.fullname and self.username and self.email)
-    
+
+    def available_permissions(self):
+        """
+        Return all permission objects available to this user
+        (either owned by user or available to all users).
+        """
+        from .client import Permission
+        return Permission.query.filter(
+            db.or_(Permission.allusers == True, Permission.user == self)
+            ).order_by(u'name').all()
+
 
 class UserOldId(TimestampMixin, db.Model):
     __tablename__ = 'useroldid'
@@ -419,17 +429,16 @@ class Organization(BaseMixin, db.Model):
                 perms.remove('delete')
         return perms
 
-    @classmethod
-    def exclude(cls, user, client, org_userids):
-        """Get organizations other than the mentioned ones.
-        :param user: User(object) who owns organization.
-        :parma client: Client(object) for which access need to granted.
-        :param org_userids: userids of organization to exclude which can be list.
+    def available_permissions(self):
         """
-        user_orgs = user.organizations_owned()
-        org_selected = [org.userid for org in user_orgs if client in org.clients_with_team_access()]
-        return cls.query.filter(cls.userid.in_(set(org_selected) - set(org_userids))).all()
-        
+        Return all permission objects available to this organization
+        (either owned by user or available to all users).
+        """
+        from .client import Permission
+        return Permission.query.filter(
+            db.or_(Permission.allusers == True, Permission.org == self)
+            ).order_by(u'name').all()
+
 
 class Team(BaseMixin, db.Model):
     __tablename__ = 'team'
@@ -465,14 +474,3 @@ class Team(BaseMixin, db.Model):
             if team not in newuser.teams:
                 newuser.teams.append(team)
         olduser.teams = []
-
-    @classmethod
-    def all_teams(cls, user, org):
-        return set(user.teams).intersection(set(org.teams))
-
-    @classmethod
-    def team_or_404(cls, user, org):
-        item = set(user.teams).intersection(set(org.teams)).pop()
-        if item:
-            return item
-        abort(404)

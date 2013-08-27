@@ -19,9 +19,6 @@ class TestTeam(TestDatabaseFixture):
         db.session.add(self.team)
         db.session.commit()
 
-    def test_find(self):
-        self.assertIsNotNone(models.Team.team_or_404(user=self.user, org=self.org))
-
 
 class TestOrganization(TestDatabaseFixture):
     def setUp(self):
@@ -39,6 +36,3 @@ class TestOrganization(TestDatabaseFixture):
         self.client_team_access1 = models.ClientTeamAccess(org=self.org1, client=self.client, access_level=models.CLIENT_TEAM_ACCESS.ALL)
         db.session.add_all([self.org, self.org1, self.client_team_access, self.client_team_access1])
         db.session.commit()
-
-    def test_exclude(self):
-        self.assertIs(models.Organization.exclude(user=self.user, client=self.client, org_userids=[self.org1.userid])[0], self.org)

@@ -10,13 +10,6 @@ class TestClient(TestDatabaseFixture):
         super(TestClient, self).setUp()
         self.user = models.User.query.filter_by(username=u"user1").first()
 
-    def test_all_clients(self):
-        clients = models.Client.all_clients(user=self.user)
-        self.assertIs(len(clients), 1)
-
-    def test_all_lastuser_clients(self):
-        self.assertIs(len(models.Client.all_lastuser_clients()), 1)
-
 
 class TestUserClientPermissions(TestDatabaseFixture):
     def setUp(self):
@@ -31,12 +24,6 @@ class TestUserClientPermissions(TestDatabaseFixture):
         self.permission.permissions = u"admin"
         db.session.add(self.permission)
         db.session.commit()
-
-    def test_all_permissions(self):
-        client = models.Client.query.filter_by(user=self.user).first()
-        perms = models.UserClientPermissions.all_permissions(client=client, user=self.user)
-        self.assertIs(perms[0], self.permission)
-        self.assertIs(models.UserClientPermissions.permission_or_404(client=client, user=self.user), self.permission)
 
 
 class TestTeamClientPermissions(TestDatabaseFixture):
@@ -55,13 +42,6 @@ class TestTeamClientPermissions(TestDatabaseFixture):
         self.team_client_permission = models.TeamClientPermissions(team=self.team, client=self.client, access_permissions=u"admin")
         db.session.add(self.team_client_permission)
         db.session.commit()
-
-    def test_permissions(self):
-        perms = self.client.team_permissions
-        self.assertIs(perms[0], self.team_client_permission)
-        perms = models.TeamClientPermissions.all_permissions(client=self.client, team=self.team)
-        self.assertIs(perms[0], self.team_client_permission)
-        self.assertIs(models.TeamClientPermissions.permission_or_404(client=self.client), self.team_client_permission)
 
 
 class TestResource(TestDatabaseFixture):
@@ -120,11 +100,3 @@ class TestPermission(TestDatabaseFixture):
         self.permission = models.Permission(user=self.user, org=self.org, name=u"admin", title=u"admin", allusers=True)
         db.session.add(self.permission)
         db.session.commit()
-
-    def test_get_all_permissions(self):
-        permissions = models.Permission.all_permissions(user=self.user)
-        self.assertIs(permissions[0].title, self.permission.title)
-        permissions = models.Permission.all_permissions_for_user(user=self.user)
-        self.assertIs(permissions[0].title, self.permission.title)
-        permissions = models.Permission.all_permissions_for_org(org=self.org)
-        self.assertIs(permissions[0].title, self.permission.title)
