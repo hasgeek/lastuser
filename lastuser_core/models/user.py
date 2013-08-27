@@ -421,7 +421,7 @@ class Organization(BaseMixin, db.Model):
 
     @classmethod
     def exclude(cls, user, client, org_userids):
-        """Get organizations other than mentioned ones.
+        """Get organizations other than the mentioned ones.
         :param user: User(object) who owns organization.
         :parma client: Client(object) for which access need to granted.
         :param org_userids: userids of organization to exclude which can be list.

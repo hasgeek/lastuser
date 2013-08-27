@@ -5,18 +5,6 @@ import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
 
 
-"""class TestUser(TestDatabaseFixture):
-    def setUp(self):
-        super(TestUser, self).setUp()
-        self.user = models.User.query.filter_by(username=u"user1").first()
-
-    def test_find(self):
-        #This should rise 404
-        with self.assertRaises(NotFound):
-            models.User.find(userid=u"s"*22, first_or_404=True)
-"""
-
-
 class TestTeam(TestDatabaseFixture):
     def setUp(self):
         super(TestTeam, self).setUp()
