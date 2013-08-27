@@ -58,7 +58,7 @@ class Client(BaseMixin, db.Model):
         return self.secret == candidate
 
     @property
-    def owner(self):
+    def owner_title(self):
         """
         Return human-readable owner name.
         """
@@ -300,7 +300,8 @@ class Permission(BaseMixin, db.Model):
     def owner_is(self, user):
         return user is not None and self.user == user or (self.org and self.org in user.organizations_owned())
 
-    def owner_name(self):
+    @property
+    def owner_title(self):
         if self.user:
             return self.user.pickername
         else:
