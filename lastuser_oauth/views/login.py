@@ -213,7 +213,7 @@ def reset_email(user, kwargs):
     logout_internal()
     # Reset code is valid. Now ask user to choose a new password
     form = PasswordResetForm()
-    form.user = user
+    form.edit_user = user
     if form.validate_on_submit():
         user.password = form.password.data
         db.session.delete(resetreq)

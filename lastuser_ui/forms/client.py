@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-from flask import g
+
 import wtforms
 import wtforms.fields.html5
 from baseframe.forms import Form
 from coaster import valid_username
 
-from lastuser_core.models import Permission, Resource, ResourceAction, getuser, Organization
+from lastuser_core.models import Permission, Resource, getuser, Organization
 from lastuser_core import resource_registry
 
 
@@ -49,11 +49,11 @@ class RegisterClientForm(Form):
             "Organization owners will then able to grant access to teams in their organizations")
 
     def validate_client_owner(self, field):
-        if field.data == g.user.userid:
-            self.user = g.user
+        if field.data == self.edit_user.userid:
+            self.user = self.edit_user
             self.org = None
         else:
-            orgs = [org for org in g.user.organizations_owned() if org.userid == field.data]
+            orgs = [org for org in self.edit_user.organizations_owned() if org.userid == field.data]
             if len(orgs) != 1:
                 raise wtforms.ValidationError("Invalid owner")
             self.user = None
@@ -85,17 +85,17 @@ class PermissionForm(Form):
             self.name.errors.append("Name contains invalid characters")
             return False
 
-        existing = Permission.query.filter_by(name=self.name.data, allusers=True).first()
+        existing = Permission.get(name=self.name.data, allusers=True)
         if existing and existing.id != self.edit_id:
             self.name.errors.append("A global permission with that name already exists")
             return False
 
-        if self.context.data == g.user.userid:
-            existing = Permission.query.filter_by(name=self.name.data, user=g.user).first()
+        if self.context.data == self.edit_user.userid:
+            existing = Permission.get(name=self.name.data, user=self.edit_user)
         else:
-            org = Organization.query.filter_by(userid=self.context.data).first()
+            org = Organization.get(userid=self.context.data)
             if org:
-                existing = Permission.query.filter_by(name=self.name.data, org=org).first()
+                existing = Permission.get(name=self.name.data, org=org)
             else:
                 existing = None
         if existing and existing.id != self.edit_id:
@@ -105,11 +105,11 @@ class PermissionForm(Form):
         return True
 
     def validate_context(self, field):
-        if field.data == g.user.userid:
-            self.user = g.user
+        if field.data == self.edit_user.userid:
+            self.user = self.edit_user
             self.org = None
         else:
-            orgs = [org for org in g.user.organizations_owned() if org.userid == field.data]
+            orgs = [org for org in self.edit_user.organizations_owned() if org.userid == field.data]
             if len(orgs) != 1:
                 raise wtforms.ValidationError("Invalid context")
             self.user = None
@@ -178,7 +178,7 @@ class ResourceForm(Form):
         if field.data in resource_registry:
             raise wtforms.ValidationError("This name is reserved for internal use")
 
-        existing = Resource.query.filter_by(name=field.data).first()
+        existing = Resource.get(name=field.data)
         if existing and existing.id != self.edit_id:
             raise wtforms.ValidationError("A resource with that name already exists")
 
@@ -202,7 +202,7 @@ class ResourceActionForm(Form):
         if not valid_username(field.data):
             raise wtforms.ValidationError("Name contains invalid characters.")
 
-        existing = ResourceAction.query.filter_by(name=field.data, resource=self.edit_resource).first()
+        existing = self.edit_resource.get_action(field.data)
         if existing and existing.id != self.edit_id:
             raise wtforms.ValidationError("An action with that name already exists for this resource")
 

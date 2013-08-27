@@ -17,6 +17,7 @@ from .helpers import requires_login
 @requires_login
 def profile_edit(newprofile=False):
     form = ProfileForm(obj=g.user)
+    form.edit_user = g.user
     form.fullname.description = current_app.config.get('FULLNAME_REASON')
     form.email.description = current_app.config.get('EMAIL_REASON')
     form.username.description = current_app.config.get('USERNAME_REASON')

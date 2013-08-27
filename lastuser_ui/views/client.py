@@ -45,6 +45,7 @@ def available_client_owners():
 @requires_login
 def client_new():
     form = RegisterClientForm()
+    form.edit_user = g.user
     form.client_owner.choices = available_client_owners()
     if request.method == 'GET':
         form.client_owner.data = g.user.userid
@@ -81,6 +82,7 @@ def client_info(client):
 @load_model(Client, {'key': 'key'}, 'client', permission='edit')
 def client_edit(client):
     form = RegisterClientForm(obj=client)
+    form.edit_user = g.user
     form.client_owner.choices = available_client_owners()
     if request.method == 'GET':
         if client.user:
@@ -138,6 +140,7 @@ def permission_list():
 @requires_login
 def permission_new():
     form = PermissionForm()
+    form.edit_user = g.user
     form.context.choices = available_client_owners()
     if request.method == 'GET':
         form.context.data = g.user.userid
@@ -160,6 +163,7 @@ def permission_new():
 @load_model(Permission, {'id': 'id'}, 'perm', permission='edit')
 def permission_edit(perm):
     form = PermissionForm(obj=perm)
+    form.edit_user = g.user
     form.context.choices = available_client_owners()
     if request.method == 'GET':
         if perm.user:

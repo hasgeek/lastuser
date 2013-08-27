@@ -132,6 +132,23 @@ class Resource(BaseMixin, db.Model):
             perms.add('new-action')
         return perms
 
+    @classmethod
+    def get(cls, name):
+        """
+        Return a Resource with the given name.
+
+        :param str name: Name of the resource.
+        """
+        return cls.query.filter_by(name=name).first()
+
+    def get_action(self, name):
+        """
+        Return a ResourceAction on this Resource with the given name.
+
+        :param str name: Name of the action
+        """
+        return ResourceAction.get(name=name, resource=self)
+
 
 class ResourceAction(BaseMixin, db.Model):
     """
@@ -156,6 +173,16 @@ class ResourceAction(BaseMixin, db.Model):
             perms.add('edit')
             perms.add('delete')
         return perms
+
+    @classmethod
+    def get(cls, name, resource):
+        """
+        Return a ResourceAction on the specified resource with the specified name.
+
+        :param str name: Name of the action
+        :param Resource resource: Resource on which this action exists
+        """
+        return cls.query.filter_by(name=name, resource=resource).first()
 
 
 class AuthCode(BaseMixin, db.Model):
@@ -314,6 +341,29 @@ class Permission(BaseMixin, db.Model):
             perms.add('edit')
             perms.add('delete')
         return perms
+
+    @classmethod
+    def get(cls, name, user=None, org=None, allusers=False):
+        """
+        Get a permission with the given name and owned by the given user or org,
+        or a permission available to all users.
+
+        :param str name: Name of the permission
+        :param User user: User who owns this permission
+        :param Organization org: Organization which owns this permission
+        :param bool allusers: Whether resources that belong to all users should be returned
+
+        One of ``user`` and ``org`` must be supplied, unless ``allusers`` is ``True``.
+        """
+        if allusers:
+            return cls.query.filter_by(name=name, allusers=True).first()
+        else:
+            if user is not None:
+                return cls.query.filter_by(name=name, user=user).first()
+            elif org is not None:
+                return cls.query.filter_by(name=name, org=org).first()
+            else:
+                raise ValueError("Either user or org should be supplied")
 
 
 # This model's name is in plural because it defines multiple permissions within each instance

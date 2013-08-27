@@ -18,10 +18,10 @@ class OrganizationForm(Form):
             raise wtforms.ValidationError("Invalid characters in name")
         if field.data in current_app.config['RESERVED_USERNAMES']:
             raise wtforms.ValidationError("That name is reserved")
-        existing = User.query.filter_by(username=field.data).first()
+        existing = User.get(username=field.data)
         if existing is not None:
             raise wtforms.ValidationError("That name is taken")
-        existing = Organization.query.filter_by(name=field.data).first()
+        existing = Organization.get(name=field.data)
         if existing is not None and existing.id != self.edit_id:
             raise wtforms.ValidationError("That name is taken")
 

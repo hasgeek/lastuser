@@ -26,9 +26,11 @@ def profile():
 def change_password():
     if g.user.pw_hash is None:
         form = PasswordResetForm()
+        form.edit_user = g.user
         del form.username
     else:
         form = PasswordChangeForm()
+        form.edit_user = g.user
     if form.validate_on_submit():
         g.user.password = form.password.data
         db.session.commit()

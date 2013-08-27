@@ -164,6 +164,19 @@ class User(BaseMixin, db.Model):
         """
         return bool(self.fullname and self.username and self.email)
 
+    @classmethod
+    def get(cls, username=None, userid=None):
+        """
+        Return a User with the given username or userid.
+
+        :param str username: Username to lookup
+        :param str userid: Userid to lookup
+        """
+        if userid:
+            return cls.query.filter_by(userid=userid).first()
+        else:
+            return cls.query.filter_by(username=username).first()
+
     def available_permissions(self):
         """
         Return all permission objects available to this user
@@ -199,7 +212,7 @@ class UserEmail(BaseMixin, db.Model):
         self._email = email
         self.md5sum = md5(self._email).hexdigest()
 
-    @property
+    @hybrid_property
     def email(self):
         return self._email
 
@@ -214,6 +227,19 @@ class UserEmail(BaseMixin, db.Model):
 
     def __str__(self):
         return str(self.__unicode__())
+
+    @classmethod
+    def get(cls, email=None, md5sum=None):
+        """
+        Return a UserEmail with matching email or md5sum.
+
+        :param str email: Email address to lookup
+        :param str md5sum: md5sum of email address to lookup
+        """
+        if md5sum:
+            return cls.query.filter_by(md5sum=md5sum).first()
+        else:
+            return cls.query.filter_by(email=email).first()
 
 
 class UserEmailClaim(BaseMixin, db.Model):
@@ -232,7 +258,7 @@ class UserEmailClaim(BaseMixin, db.Model):
         self._email = email
         self.md5sum = md5(self._email).hexdigest()
 
-    @property
+    @hybrid_property
     def email(self):
         return self._email
 
@@ -254,6 +280,16 @@ class UserEmailClaim(BaseMixin, db.Model):
             perms.add('verify')
         return perms
 
+    @classmethod
+    def get(cls, email, user):
+        """
+        Return a UserEmailClaim with matching email address for the given user.
+
+        :param str email: Email address to lookup
+        :param User user: User who claimed this email address
+        """
+        return cls.query.filter_by(email=email, user=user).first()
+
 
 class UserPhone(BaseMixin, db.Model):
     __tablename__ = 'userphone'
@@ -269,7 +305,7 @@ class UserPhone(BaseMixin, db.Model):
         super(UserPhone, self).__init__(**kwargs)
         self._phone = phone
 
-    @property
+    @hybrid_property
     def phone(self):
         return self._phone
 
@@ -283,6 +319,15 @@ class UserPhone(BaseMixin, db.Model):
 
     def __str__(self):
         return str(self.__unicode__())
+
+    @classmethod
+    def get(cls, phone):
+        """
+        Return a UserPhone with matching phone number.
+
+        :param str phone: Phone number to lookup (must be an exact match)
+        """
+        return cls.query.filter_by(phone=phone).first()
 
 
 class UserPhoneClaim(BaseMixin, db.Model):
@@ -300,7 +345,7 @@ class UserPhoneClaim(BaseMixin, db.Model):
         self.verification_code = newpin()
         self._phone = phone
 
-    @property
+    @hybrid_property
     def phone(self):
         return self._phone
 
@@ -320,6 +365,16 @@ class UserPhoneClaim(BaseMixin, db.Model):
         if user and user == self.user:
             perms.add('verify')
         return perms
+
+    @classmethod
+    def get(cls, phone, user):
+        """
+        Return a UserPhoneClaim with matching phone number for the given user.
+
+        :param str phone: Phone number to lookup (must be an exact match)
+        :param User user: User who claimed this phone number
+        """
+        return cls.query.filter_by(phone=phone, user=user).first()
 
 
 class PasswordResetRequest(BaseMixin, db.Model):
@@ -434,6 +489,19 @@ class Organization(BaseMixin, db.Model):
             if 'delete' in perms:
                 perms.remove('delete')
         return perms
+
+    @classmethod
+    def get(cls, name=None, userid=None):
+        """
+        Return an Organization with matching name or userid. Note that ``name`` is the username, not the title.
+
+        :param str name: Name of the organization
+        :param str userid: Userid of the organization
+        """
+        if userid:
+            return cls.query.filter_by(userid=userid).first()
+        else:
+            return cls.query.filter_by(name=name).first()
 
     def available_permissions(self):
         """

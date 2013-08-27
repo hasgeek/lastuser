@@ -42,13 +42,13 @@ class RegisterForm(Form):
             raise wtforms.ValidationError, "That name is reserved"
         if not valid_username(field.data):
             raise wtforms.ValidationError(u"Invalid characters in name. Names must be made of ‘a-z’, ‘0-9’ and ‘-’, without trailing dashes")
-        existing = User.query.filter_by(username=field.data).first()
+        existing = User.get(username=field.data)
         if existing is not None:
             raise wtforms.ValidationError("That username is taken")
 
     def validate_email(self, field):
         field.data = field.data.lower()  # Convert to lowercase
-        existing = UserEmail.query.filter_by(email=field.data).first()
+        existing = UserEmail.get(email=field.data)
         if existing is not None:
             raise wtforms.ValidationError(Markup(
                 'This email address is already registered. Do you want to <a href="%s">login</a> instead?'
