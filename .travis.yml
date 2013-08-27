@@ -8,7 +8,8 @@ install:
 before_script:
   - psql -c 'create database lastuser_test_app;' -U postgres
 script:
-  - nosetests tests --with-coverage
+  - 'if [[ "$TRAVIS_PYTHON_VERSION" != "pypy" ]]; then nosetests ; fi'
+  - 'if [[ "$TRAVIS_PYTHON_VERSION" == "pypy" ]]; then SQLALCHEMY_DATABASE_URI="sqlite://" nosetests ; fi'
 notifications:
   email: false
   irc: "irc.freenode.net#hasgeek-dev"
