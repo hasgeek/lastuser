@@ -138,7 +138,7 @@ def token_verify():
         'title': authtoken.client.title,
         'userid': authtoken.client.user.userid,
         'buid': authtoken.client.user.userid,
-        'owner': authtoken.client.owner,
+        'owner_title': authtoken.client.owner_title,
         'website': authtoken.client.website,
         'key': authtoken.client.key,
         'trusted': authtoken.client.trusted,

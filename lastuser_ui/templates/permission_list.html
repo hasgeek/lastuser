@@ -49,7 +49,7 @@
       <th>Name</th>
       <th>Title</th>
       <th>Description</th>
-      <th>Context</th>
+      <th>Owner</th>
       <th colspan="2">Action</th>
     </tr>
   </thead>
@@ -60,7 +60,7 @@
         <td>{{ perm.name }}</td>
         <td>{{ perm.title }}</td>
         <td>{{ perm.description }}</td>
-        <td>{{ perm.owner_name() }}</td>
+        <td>{{ perm.owner_title }}</td>
         <td><a href="{{ url_for('.permission_edit', id=perm.id) }}">Edit</a></td>
         <td><a href="{{ url_for('.permission_delete', id=perm.id) }}">Delete</a></td>
       </tr>

@@ -15,15 +15,15 @@ class OrganizationForm(Form):
 
     def validate_name(self, field):
         if not valid_username(field.data):
-            raise wtf.ValidationError("Invalid characters in name")
+            raise wtforms.ValidationError("Invalid characters in name")
         if field.data in current_app.config['RESERVED_USERNAMES']:
-            raise wtf.ValidationError("That name is reserved")
+            raise wtforms.ValidationError("That name is reserved")
         existing = User.query.filter_by(username=field.data).first()
         if existing is not None:
-            raise wtf.ValidationError("That name is taken")
+            raise wtforms.ValidationError("That name is taken")
         existing = Organization.query.filter_by(name=field.data).first()
         if existing is not None and existing.id != self.edit_id:
-            raise wtf.ValidationError("That name is taken")
+            raise wtforms.ValidationError("That name is taken")
 
 
 class TeamForm(Form):
