@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import operator
 from flask import abort
 from coaster import newid, newsecret
 
@@ -98,7 +99,7 @@ class Client(BaseMixin, db.Model):
 
         :param user: User instance.
         """
-        return cls.query.filter(db.or_(Client.user == user, Client.org_id.in_(user.organizations_owned_ids()))).order_by('title').all()
+        return sorted((user.clients or user.organization.clients), key=operator.attrgetter('title'))
 
     @classmethod
     def all_lastuser_clients(cls):
@@ -343,7 +344,7 @@ class Permission(BaseMixin, db.Model):
 
         :param user: User instance.
         """
-        return cls.query.filter(db.or_(cls.user_id == user.id, cls.org_id.in_(user.organizations_owned_ids()))).order_by(u'name').all()
+        return sorted(user.permissions_created or [org.permissions_created for org in user.organizations_owned()], key=operator.attrgetter('name'))
 
     @classmethod
     def all_permissions_for_org(cls, org):
