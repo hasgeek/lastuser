@@ -16,7 +16,7 @@ class TestUser(TestDatabaseFixture):
         pass
 
     def test_find(self):
-        #This shoudl rise 404
+        #This should rise 404
         with self.assertRaises(NotFound):
             models.User.find(userid=u"s"*22, first_or_404=True)
 

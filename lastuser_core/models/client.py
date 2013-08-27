@@ -144,9 +144,7 @@ class Client(BaseMixin, db.Model):
 
         :param user: User instance.
         """
-        expression = db.or_(Client.user == user,
-            Client.org_id.in_(user.organizations_owned_ids()))
-        return cls.query.filter(expression=expression).order_by('title').all()
+        return cls.query.filter(db.or_(Client.user == user, Client.org_id.in_(user.organizations_owned_ids()))).order_by('title').all()
 
     @classmethod
     def get_all_lastuser_clients(cls):
@@ -477,8 +475,7 @@ class Permission(BaseMixin, db.Model):
 
         :param user: User instance.
         """
-        expression = db.or_(cls.allusers == True, cls.user == user)
-        return cls.query.filter(expression=expression).order_by(u'name').all()
+        return cls.query.filter(db.or_(cls.allusers == True, cls.user == user)).order_by(u'name').all()
 
     @classmethod
     def get_all_permissions(cls, user):
@@ -486,8 +483,7 @@ class Permission(BaseMixin, db.Model):
 
         :param user: User instance.
         """
-        expression = db.or_(cls.user_id == user.id, cls.org_id.in_(user.organizations_owned_ids()))
-        return cls.query.filter(expression=expression).order_by(u'name').all()
+        return cls.query.filter(db.or_(cls.user_id == user.id, cls.org_id.in_(user.organizations_owned_ids()))).order_by(u'name').all()
 
     @classmethod
     def get_all_permissions_for_org(cls, org):
@@ -495,8 +491,7 @@ class Permission(BaseMixin, db.Model):
 
         :param org: Organization instance for which permissions to be returned.
         """
-        expression = db.or_(cls.allusers == True, cls.org == org)
-        return cls.query.filter(expression=expression).order_by(u'name').all()
+        return cls.query.filter(db.or_(cls.allusers == True, cls.org == org)).order_by(u'name').all()
 
 
 # This model's name is in plural because it defines multiple permissions within each instance
