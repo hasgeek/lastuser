@@ -442,7 +442,10 @@ class TeamClientPermissions(BaseMixin, db.Model):
     @classmethod
     def permission_or_404(cls, client, team=None):
         if team:
-            return cls.query.filter_by(client=client, team=team).first_or_404()
+            perms = team.client_permissions and client.team_permissions
+            if perms:
+                return perms[0]
+            abort(404)
         perms = client.team_permissions
         if perms:
             return perms[0]
