@@ -436,7 +436,7 @@ class TeamClientPermissions(BaseMixin, db.Model):
     @classmethod
     def all_permissions(cls, client, team=None):
         if team:
-            return cls.query.filter_by(client=client, team=team).all()
+            return client.team_permissions and team.client_permissions
         return client.team_permissions
 
     @classmethod
