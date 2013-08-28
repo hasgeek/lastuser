@@ -476,7 +476,7 @@ class Organization(BaseMixin, db.Model):
     def valid_name(self, value):
         if not valid_username(value):
             return False
-        existing = Organization.get(name=value).first()
+        existing = Organization.get(name=value)
         if existing and existing.id != self.id:
             return False
         existing = User.query.filter_by(username=value).first()  # Avoid User.get to skip status check
