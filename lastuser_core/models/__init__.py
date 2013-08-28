@@ -16,7 +16,7 @@ def getuser(name):
     if '@' in name:
         # TODO: This should be handled by the LoginProvider registry, not here
         if name.startswith('@'):
-            extid = UserExternalId.get(service='twitter', username=name[1:]).first()
+            extid = UserExternalId.get(service='twitter', username=name[1:])
             if extid and extid.user.status == USER_STATUS.ACTIVE:
                 return extid.user
             else:
