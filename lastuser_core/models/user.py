@@ -59,10 +59,12 @@ class User(BaseMixin, db.Model):
     def is_valid_username(self, value):
         if not valid_username(value):
             return False
-        existing = User.query.filter_by(username=value).first()
+        existing = User.query.filter(db.or_(
+            User.username == value,
+            User.userid == value)).first()  # Avoid User.get to skip status check
         if existing and existing.id != self.id:
             return False
-        existing = Organization.query.filter_by(name=value).first()
+        existing = Organization.get(name=value)
         if existing:
             return False
         return True
@@ -111,7 +113,7 @@ class User(BaseMixin, db.Model):
                 setprimary = True
             db.session.delete(useremail)
         if setprimary:
-            for emailob in UserEmail.query.filter_by(user_id=self.id).all():
+            for emailob in UserEmail.query.filter_by(user=self).all():
                 if emailob is not useremail:
                     emailob.primary = True
                     break
@@ -173,9 +175,11 @@ class User(BaseMixin, db.Model):
         :param str userid: Userid to lookup
         """
         if userid:
-            return cls.query.filter_by(userid=userid).first()
+            return cls.query.filter_by(userid=userid, status=USER_STATUS.ACTIVE).first()
+        elif username:
+            return cls.query.filter_by(username=username, status=USER_STATUS.ACTIVE).first()
         else:
-            return cls.query.filter_by(username=username).first()
+            raise TypeError("Either username or userid should be specified")
 
     def available_permissions(self):
         """
@@ -185,7 +189,7 @@ class User(BaseMixin, db.Model):
         from .client import Permission
         return Permission.query.filter(
             db.or_(Permission.allusers == True, Permission.user == self)
-            ).order_by(u'name').all()
+            ).order_by(Permission.name).all()
 
 
 class UserOldId(TimestampMixin, db.Model):
@@ -239,7 +243,7 @@ class UserEmail(BaseMixin, db.Model):
         if md5sum:
             return cls.query.filter_by(md5sum=md5sum).first()
         else:
-            return cls.query.filter_by(email=email).first()
+            return cls.query.filter(cls.email.in_([email, email.lower()])).first()
 
 
 class UserEmailClaim(BaseMixin, db.Model):
@@ -288,7 +292,11 @@ class UserEmailClaim(BaseMixin, db.Model):
         :param str email: Email address to lookup
         :param User user: User who claimed this email address
         """
-        return cls.query.filter_by(email=email, user=user).first()
+        query = cls.query.filter(UserEmailClaim.email.in_([email, email.lower()]))
+        if user is not None:
+            return query.filter_by(user=user).first()
+        else:
+            return query.first()
 
 
 class UserPhone(BaseMixin, db.Model):
@@ -404,6 +412,26 @@ class UserExternalId(BaseMixin, db.Model):
 
     __table_args__ = (db.UniqueConstraint("service", "userid"), {})
 
+    @classmethod
+    def get(cls, service, userid=None, username=None):
+        """
+        Return a UserExternalId with the given service and userid or username.
+
+        :param str service: Service to lookup
+        :param str userid: Userid to lookup
+        :param str username: Username to lookup (may be non-unique)
+
+        Usernames are not guaranteed to be unique within a service. An example is with Google,
+        where the userid is a directed OpenID URL, unique but subject to change if the Lastuser
+        site URL changes. The username is the email address, which will be the same despite
+        different userids.
+        """
+        if userid:
+            return cls.query.filter_by(service=service, userid=userid).first()
+        elif username:
+            return cls.query.filter_by(service=service, username=username).first()
+        else:
+            raise TypeError("Either userid or username should be specified")
 
 # --- Organizations and teams -------------------------------------------------
 
@@ -448,10 +476,10 @@ class Organization(BaseMixin, db.Model):
     def valid_name(self, value):
         if not valid_username(value):
             return False
-        existing = Organization.query.filter_by(name=value).first()
+        existing = Organization.get(name=value).first()
         if existing and existing.id != self.id:
             return False
-        existing = User.query.filter_by(username=value).first()
+        existing = User.query.filter_by(username=value).first()  # Avoid User.get to skip status check
         if existing:
             return False
         return True
@@ -506,12 +534,12 @@ class Organization(BaseMixin, db.Model):
     def available_permissions(self):
         """
         Return all permission objects available to this organization
-        (either owned by user or available to all users).
+        (either owned by this organization or available to all users).
         """
         from .client import Permission
         return Permission.query.filter(
             db.or_(Permission.allusers == True, Permission.org == self)
-            ).order_by(u'name').all()
+            ).order_by(Permission.name).all()
 
 
 class Team(BaseMixin, db.Model):

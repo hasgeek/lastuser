@@ -88,7 +88,7 @@ def logout_client():
     """
     Client-initiated logout
     """
-    client = Client.query.filter_by(key=request.args['client_id']).first()
+    client = Client.get(key=request.args['client_id'])
     if client is None:
         # No such client. Possible CSRF. Don't logout and don't send them back
         flash(logout_errormsg, 'error')

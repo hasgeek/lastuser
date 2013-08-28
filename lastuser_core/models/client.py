@@ -91,6 +91,15 @@ class Client(BaseMixin, db.Model):
             perms.add('new-resource')
         return perms
 
+    @classmethod
+    def get(cls, key):
+        """
+        Return a Client identified by its client key. Only returns active clients.
+
+        :param str key: Client key to lookup
+        """
+        return cls.query.filter_by(key=key, active=True).first()
+
 
 class UserFlashMessage(BaseMixin, db.Model):
     """
@@ -304,6 +313,15 @@ class AuthToken(BaseMixin, db.Model):
             if merge_performed is False:
                 token.user = newuser  # Reassign this token to newuser
 
+    @classmethod
+    def get(self, token):
+        """
+        Return an AuthToken with the matching token.
+
+        :param str token: Token to lookup
+        """
+        return cls.query.filter_by(token=token).first()
+
 
 class Permission(BaseMixin, db.Model):
     __tablename__ = 'permission'
@@ -353,7 +371,7 @@ class Permission(BaseMixin, db.Model):
         :param Organization org: Organization which owns this permission
         :param bool allusers: Whether resources that belong to all users should be returned
 
-        One of ``user`` and ``org`` must be supplied, unless ``allusers`` is ``True``.
+        One of ``user`` and ``org`` must be specified, unless ``allusers`` is ``True``.
         """
         if allusers:
             return cls.query.filter_by(name=name, allusers=True).first()
@@ -363,7 +381,7 @@ class Permission(BaseMixin, db.Model):
             elif org is not None:
                 return cls.query.filter_by(name=name, org=org).first()
             else:
-                raise ValueError("Either user or org should be supplied")
+                raise TypeError("Either user or org should be specified")
 
 
 # This model's name is in plural because it defines multiple permissions within each instance

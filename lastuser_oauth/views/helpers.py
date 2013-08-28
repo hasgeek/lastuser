@@ -21,7 +21,7 @@ def lookup_current_user():
     """
     g.user = None
     if 'userid' in session:
-        g.user = User.query.filter_by(userid=session['userid'], status=USER_STATUS.ACTIVE).first()
+        g.user = User.get(userid=session['userid'])
         if not 'avatar_url' in session:
             if g.user and g.user.email:
                 session['avatar_url'] = avatar_url_email(g.user.email)
@@ -110,8 +110,8 @@ def _client_login_inner():
     if request.authorization is None:
         return Response(u"Client credentials required.", 401,
             {'WWW-Authenticate': 'Basic realm="Client credentials"'})
-    client = Client.query.filter_by(key=request.authorization.username).first()
-    if client is None or not client.active or not client.secret_is(request.authorization.password):
+    client = Client.get(key=request.authorization.username)
+    if client is None or not client.secret_is(request.authorization.password):
         return Response(u"Invalid client credentials.", 401,
             {'WWW-Authenticate': 'Basic realm="Client credentials"'})
     g.client = client

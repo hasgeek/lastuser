@@ -58,7 +58,7 @@ def get_user_extid(service, userdata):
 
     useremail = None
     if 'email' in userdata:
-        useremail = UserEmail.query.filter_by(email=userdata['email']).first()
+        useremail = UserEmail.get(email=userdata['email'])
 
     user = None
     if extid is not None:
@@ -157,7 +157,7 @@ def login_service_postcallback(service, userdata):
 def profile_merge():
     if 'merge_userid' not in session:
         return redirect(get_next_url(), code=302)
-    other_user = User.query.filter_by(userid=session['merge_userid']).first()
+    other_user = User.get(userid=session['merge_userid'])
     if other_user is None:
         session.pop('merge_userid', None)
         return redirect(get_next_url(), code=302)
