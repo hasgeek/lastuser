@@ -9,7 +9,7 @@ from coaster import newid, newsecret, newpin
 from . import db, TimestampMixin, BaseMixin
 
 __all__ = ['User', 'UserEmail', 'UserEmailClaim', 'PasswordResetRequest', 'UserExternalId',
-           'UserPhone', 'UserPhoneClaim', 'Team', 'Organization', 'UserOldId', 'USER_STATUS']
+           'UserPhone', 'UserPhoneClaim', 'Team', 'Organization', 'UserOldId', 'USER_STATUS', 'UserPastEmail']
 
 
 class USER_STATUS:
@@ -199,6 +199,26 @@ class UserEmail(BaseMixin, db.Model):
 
     def __str__(self):
         return str(self.__unicode__())
+
+
+class UserPastEmail(BaseMixin, db.Model):
+    __tablename__ = 'userpastemail'
+    __bind_key__ = 'lastuser'
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship(User, primaryjoin=user_id == User.id,
+        backref=db.backref('pastemails', cascade="all, delete-orphan"))
+    _email = db.Column('email', db.Unicode(80), nullable=True)
+
+    def __init__(self, email, **kwargs):
+        super(UserPastEmail, self).__init__(**kwargs)
+        self._email = email
+
+    @property
+    def email(self):
+        return self._email
+
+    #: Make email immutable. There is no setter for email.
+    email = db.synonym('_email', descriptor=email)
 
 
 class UserEmailClaim(BaseMixin, db.Model):

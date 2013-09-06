@@ -4,7 +4,7 @@ from flask import g, flash, render_template, url_for, session, request
 from coaster.views import load_model
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
 
-from lastuser_core.models import db, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
+from lastuser_core.models import db, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim, UserPastEmail
 from lastuser_core.signals import user_data_changed
 from lastuser_oauth.mailclient import send_email_verify_link
 from lastuser_oauth.views.helpers import requires_login
@@ -62,6 +62,10 @@ def remove_email(md5sum):
         flash("You cannot remove your primary email address", "error")
         return render_redirect(url_for('.profile'), code=303)
     if request.method == 'POST':
+        if isinstance(useremail, UserEmail):
+            user_past_email = UserPastEmail(user=g.user, email=useremail.email)
+            db.session.add(user_past_email)
+            db.session.commit()
         user_data_changed.send(g.user, changes=['email-delete'])
     return render_delete_sqla(useremail, db, title="Confirm removal", message="Remove email address %s?" % useremail,
         success="You have removed your email address %s." % useremail,
