@@ -38,7 +38,9 @@ class User(BaseMixin, db.Model):
         if password is None:
             self.pw_hash = None
         else:
-            self.pw_hash = bcrypt.hashpw(password, bcrypt.gensalt())
+            self.pw_hash = bcrypt.hashpw(
+                password.encode('utf-8') if isinstance(password, unicode) else password,
+                bcrypt.gensalt())
 
     password = property(fset=_set_password)
 
@@ -68,7 +70,9 @@ class User(BaseMixin, db.Model):
         if self.pw_hash.startswith('sha1$'):
             return check_password_hash(self.pw_hash, password)
         else:
-            return bcrypt.hashpw(password, self.pw_hash) == self.pw_hash
+            return bcrypt.hashpw(
+                password.encode('utf-8') if isinstance(password, unicode) else password,
+                self.pw_hash) == self.pw_hash
 
     def __repr__(self):
         return '<User %s "%s">' % (self.username or self.userid, self.fullname)
