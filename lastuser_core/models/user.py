@@ -104,6 +104,8 @@ class User(BaseMixin, db.Model):
         if useremail:
             if useremail.primary:
                 setprimary = True
+            user_past_email = UserPastEmail(user=self, email=useremail.email)
+            db.session.add(user_past_email)
             db.session.delete(useremail)
         if setprimary:
             for emailob in UserEmail.query.filter_by(user_id=self.id).all():
@@ -202,12 +204,12 @@ class UserEmail(BaseMixin, db.Model):
 
 
 class UserPastEmail(BaseMixin, db.Model):
-    __tablename__ = 'userpastemail'
+    __tablename__ = 'user_past_email'
     __bind_key__ = 'lastuser'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref=db.backref('pastemails', cascade="all, delete-orphan"))
-    _email = db.Column('email', db.Unicode(80), nullable=True)
+        backref=db.backref('past_emails', cascade="all, delete-orphan"))
+    _email = db.Column('email', db.Unicode(80), nullable=False)
 
     def __init__(self, email, **kwargs):
         super(UserPastEmail, self).__init__(**kwargs)

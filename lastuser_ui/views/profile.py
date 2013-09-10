@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from flask import g, flash, render_template, url_for, session, request
+from flask import g, flash, render_template, url_for, session, request, make_response
 from coaster.views import load_model
-from baseframe.forms import render_form, render_redirect, render_delete_sqla
+from baseframe.forms import render_form, render_redirect, render_delete_sqla, ConfirmDeleteForm
 
 from lastuser_core.models import db, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim, UserPastEmail
 from lastuser_core.signals import user_data_changed
@@ -55,21 +55,24 @@ def add_email():
 @lastuser_ui.route('/profile/email/<md5sum>/remove', methods=['GET', 'POST'])
 @requires_login
 def remove_email(md5sum):
+    form = ConfirmDeleteForm()
     useremail = UserEmail.query.filter_by(md5sum=md5sum, user=g.user).first()
     if not useremail:
         useremail = UserEmailClaim.query.filter_by(md5sum=md5sum, user=g.user).first_or_404()
     if isinstance(useremail, UserEmail) and useremail.primary:
         flash("You cannot remove your primary email address", "error")
         return render_redirect(url_for('.profile'), code=303)
-    if request.method == 'POST':
+    if form.validate_on_submit():
         if isinstance(useremail, UserEmail):
             user_past_email = UserPastEmail(user=g.user, email=useremail.email)
             db.session.add(user_past_email)
-            db.session.commit()
+        db.session.delete(useremail)
+        db.session.commit()
+        flash("You have removed your email address %s." % useremail, u"success")
         user_data_changed.send(g.user, changes=['email-delete'])
-    return render_delete_sqla(useremail, db, title="Confirm removal", message="Remove email address %s?" % useremail,
-        success="You have removed your email address %s." % useremail,
-        next=url_for('.profile'))
+        return render_redirect(url_for('.profile'))
+    return make_response(render_template('baseframe/delete.html', form=form, title="Confirm removal",
+        message="Remove email address %s?" % useremail))
 
 
 @lastuser_ui.route('/profile/phone/new', methods=['GET', 'POST'])
