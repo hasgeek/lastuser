@@ -63,14 +63,17 @@ def remove_email(md5sum):
         flash("You cannot remove your primary email address", "error")
         return render_redirect(url_for('.profile'), code=303)
     if form.validate_on_submit():
-        if isinstance(useremail, UserEmail):
-            user_past_email = UserPastEmail(user=g.user, email=useremail.email)
-            db.session.add(user_past_email)
-        db.session.delete(useremail)
-        db.session.commit()
-        flash("You have removed your email address %s." % useremail, u"success")
-        user_data_changed.send(g.user, changes=['email-delete'])
-        return render_redirect(url_for('.profile'))
+        if u'delete' in request.form:
+            if isinstance(useremail, UserEmail):
+                user_past_email = UserPastEmail(user=g.user, email=useremail.email)
+                db.session.add(user_past_email)
+            db.session.delete(useremail)
+            db.session.commit()
+            flash("You have removed your email address %s." % useremail, u"success")
+            user_data_changed.send(g.user, changes=['email-delete'])
+            return render_redirect(url_for('.profile'))
+        else:
+            return render_redirect(url_for('.profile'))
     return make_response(render_template('baseframe/delete.html', form=form, title="Confirm removal",
         message="Remove email address %s?" % useremail))
 
