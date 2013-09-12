@@ -10,4 +10,4 @@
   {{ renderfield(loginform.password, "small", tabindex='2', sidetext=Markup('<a href="' + url_for('.reset') + '">Forgot password?</a>')) }}
   {{ rendersubmit([(None, "Login", 'btn-primary')], "small", tabindex='3') }}
 </form>
-{{ ajaxform('login', request) }}
+{{ ajaxform('passwordlogin', request) }}
