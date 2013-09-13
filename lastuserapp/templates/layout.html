@@ -7,17 +7,17 @@
 
 {% block basecontent -%}
   {# Show a sidebar only if the user is logged in -#}
-  {%- if g.user %}
+{#  {%- if g.user %}
   <div class="row">
     <div class="span9">
-  {%- endif %}
+  {%- endif %} #}
       {% block headline -%}
         <div class="page-header">
           <h1>{{ self.title()|e }}</h1>
         </div>
       {%- endblock %}
       {% block content %}{% endblock %}
-  {%- if g.user %}
+{#  {%- if g.user %}
     </div>
     <div class="span3">
       <ul class="well nav nav-list">
@@ -34,7 +34,7 @@
       </ul>
     </div>
   </div>
-  {%- endif %}
+  {%- endif %} #}
 {%- endblock %}
 
 {% block footer %}{{ config['MESSAGE_FOOTER'] }}{% endblock %}
