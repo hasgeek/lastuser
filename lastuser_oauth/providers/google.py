@@ -16,4 +16,4 @@ class GoogleProvider(OpenIdProvider):
     def unwrapped_do(self, callback_url=None, form=None):
         session['openid_service'] = self.name
         return oid.try_login('https://www.google.com/accounts/o8/id',
-            ask_for=['email', 'fullname', 'nickname'])
+            ask_for=['email', 'fullname'])

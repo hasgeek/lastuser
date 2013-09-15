@@ -50,7 +50,8 @@ class PasswordChangeForm(Form):
 
 class ProfileForm(Form):
     fullname = wtforms.TextField('Full name', validators=[wtforms.validators.Required()])
-    email = wtforms.fields.html5.EmailField('Email address', validators=[wtforms.validators.Required(), wtforms.validators.Email(), ValidEmailDomain()])
+    email = wtforms.fields.html5.EmailField('Email address',
+        validators=[wtforms.validators.Required(), wtforms.validators.Email(), ValidEmailDomain()])
     username = wtforms.TextField('Username', validators=[wtforms.validators.Required()])
     description = wtforms.TextAreaField('Bio')
     timezone = wtforms.SelectField('Timezone', validators=[wtforms.validators.Required()], choices=timezones)
@@ -68,20 +69,20 @@ class ProfileForm(Form):
         if not valid_username(field.data):
             raise wtforms.ValidationError("Usernames can only have alphabets, numbers and dashes (except at the ends)")
         if field.data in current_app.config['RESERVED_USERNAMES']:
-            raise wtforms.ValidationError("This name is reserved")
+            raise wtforms.ValidationError("That name is reserved")
         existing = User.query.filter_by(username=field.data).first()
         if existing is not None and existing.id != self.edit_id:
-            raise wtforms.ValidationError("This username is taken")
+            raise wtforms.ValidationError("That username is taken by {}".format(existing.fullname))
         existing = Organization.query.filter_by(name=field.data).first()
         if existing is not None:
-            raise wtforms.ValidationError("This username is taken")
+            raise wtforms.ValidationError("That username is taken by {}".format(existing.title))
 
     # TODO: Move to function and place before ValidEmailDomain()
     def validate_email(self, field):
         field.data = field.data.lower()  # Convert to lowercase
         existing = UserEmail.query.filter_by(email=field.data).first()
         if existing is not None and existing.user != self.edit_obj:
-            raise wtforms.ValidationError("This email address has been claimed by another user.")
+            raise wtforms.ValidationError("That email address has been claimed by another user.")
 
 
 class ProfileMergeForm(Form):

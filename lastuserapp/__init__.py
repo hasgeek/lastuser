@@ -40,7 +40,9 @@ def init_for(env):
         login_registry['twitter'] = providers.TwitterProvider('twitter', 'Twitter',
             at_login=True, priority=True,
             key=app.config['OAUTH_TWITTER_KEY'],
-            secret=app.config['OAUTH_TWITTER_SECRET'])
+            secret=app.config['OAUTH_TWITTER_SECRET'],
+            access_key=app.config.get('OAUTH_TWITTER_ACCESS_KEY'),
+            access_secret=app.config.get('OAUTH_TWITTER_ACCESS_SECRET'))
     login_registry['google'] = providers.GoogleProvider('google', 'Google',
         at_login=True, priority=True)
     if app.config.get('OAUTH_GITHUB_KEY') and app.config.get('OAUTH_GITHUB_SECRET'):

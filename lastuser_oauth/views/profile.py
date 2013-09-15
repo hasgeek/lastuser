@@ -25,11 +25,15 @@ def profile_edit(newprofile=False):
     if g.user.email or newprofile is False:
         del form.email
 
+    if newprofile is True:
+        del form.description
+
     if form.validate_on_submit():
         # Can't auto-populate here because user.email is read-only
         g.user.fullname = form.fullname.data
         g.user.username = form.username.data
-        g.user.description = form.description.data
+        if not newprofile:
+            g.user.description = form.description.data
         g.user.timezone = form.timezone.data
 
         if newprofile and not g.user.email:

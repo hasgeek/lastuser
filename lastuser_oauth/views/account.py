@@ -133,6 +133,10 @@ def login_service_postcallback(service, userdata):
         db.session.add(emailclaim)
         send_email_verify_link(emailclaim)
 
+    # Is the user's fullname missing? Populate it.
+    if not user.fullname and userdata.get('fullname'):
+        user.fullname = userdata['fullname']
+
     if not g.user:  # If a user isn't already logged in, login now.
         login_internal(user)
         flash(u"You have logged in via %s." % login_registry[service].title, 'success')
