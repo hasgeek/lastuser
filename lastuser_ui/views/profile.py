@@ -71,9 +71,7 @@ def remove_email(md5sum):
             db.session.commit()
             flash("You have removed your email address %s." % useremail, u"success")
             user_data_changed.send(g.user, changes=['email-delete'])
-            return render_redirect(url_for('.profile'))
-        else:
-            return render_redirect(url_for('.profile'))
+        return render_redirect(url_for('.profile'))
     return make_response(render_template('baseframe/delete.html', form=form, title="Confirm removal",
         message="Remove email address %s?" % useremail))
 
