@@ -112,6 +112,6 @@ def verify_phone(phoneclaim):
         db.session.delete(phoneclaim)
         db.session.commit()
         flash("Your phone number has been verified.", 'success')
-        user_data_changed.send(g.user, 'phone')
+        user_data_changed.send(g.user, changes=['phone'])
         return render_redirect(url_for('.profile'), code=303)
     return render_form(form=form, title="Verify phone number", formid="phone_verify", submit="Verify", ajax=True)

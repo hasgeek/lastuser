@@ -136,6 +136,27 @@ class User(BaseMixin, db.Model):
         # to get the email address as a string.
         return u''
 
+    @cached_property
+    def phone(self):
+        """
+        Returns primary phone number for user.
+        """
+        # Look for a primary address
+        userphone = UserPhone.query.filter_by(user=self, primary=True).first()
+        if userphone:
+            return userphone
+        # No primary? Maybe there's one that's not set as primary?
+        userphone = UserPhone.query.filter_by(user=self).first()
+        if userphone:
+            # XXX: Mark at primary. This may or may not be saved depending on
+            # whether the request ended in a database commit.
+            userphone.primary = True
+            return userphone
+        # This user has no phone number. Return a blank string instead of None
+        # to support the common use case, where the caller will use unicode(user.phone)
+        # to get the phone number as a string.
+        return u''
+
     def organizations(self):
         """
         Return the organizations this user is a member of.
