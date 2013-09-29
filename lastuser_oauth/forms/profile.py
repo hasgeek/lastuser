@@ -72,10 +72,10 @@ class ProfileForm(Form):
             raise wtforms.ValidationError("That name is reserved")
         existing = User.query.filter_by(username=field.data).first()
         if existing is not None and existing.id != self.edit_id:
-            raise wtforms.ValidationError("That username is taken by {}".format(existing.fullname))
+            raise wtforms.ValidationError(u"That username is taken by {}".format(existing.fullname))
         existing = Organization.query.filter_by(name=field.data).first()
         if existing is not None:
-            raise wtforms.ValidationError("That username is taken by {}".format(existing.title))
+            raise wtforms.ValidationError(u"That username is taken by {}".format(existing.title))
 
     # TODO: Move to function and place before ValidEmailDomain()
     def validate_email(self, field):

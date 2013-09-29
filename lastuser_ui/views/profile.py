@@ -62,8 +62,8 @@ def remove_email(md5sum):
         return render_redirect(url_for('.profile'), code=303)
     if request.method == 'POST':
         user_data_changed.send(g.user, changes=['email-delete'])
-    return render_delete_sqla(useremail, db, title="Confirm removal", message="Remove email address {}?".format(useremail),
-        success="You have removed your email address {}.".format(useremail),
+    return render_delete_sqla(useremail, db, title=u"Confirm removal", message="Remove email address {}?".format(useremail),
+        success=u"You have removed your email address {}.".format(useremail),
         next=url_for('.profile'))
 
 
@@ -90,8 +90,8 @@ def remove_phone(number):
         userphone = UserPhoneClaim.query.filter_by(phone=number, user=g.user).first_or_404()
     if request.method == 'POST':
         user_data_changed.send(g.user, changes=['phone-delete'])
-    return render_delete_sqla(userphone, db, title="Confirm removal", message="Remove phone number {}?".format(userphone),
-        success="You have removed your number {}.".format(userphone),
+    return render_delete_sqla(userphone, db, title=u"Confirm removal", message="Remove phone number {}?".format(userphone),
+        success=u"You have removed your number {}.".format(userphone),
         next=url_for('.profile'))
 
 

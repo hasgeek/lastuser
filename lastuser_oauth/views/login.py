@@ -219,7 +219,7 @@ def reset_email(user, kwargs):
         db.session.delete(resetreq)
         db.session.commit()
         return render_message(title="Password reset complete", message=Markup(
-            'Your password has been reset. You may now <a href="{}">login</a> with your new password.'.format(escape(url_for('.login')))))
+            u'Your password has been reset. You may now <a href="{}">login</a> with your new password.'.format(escape(url_for('.login')))))
     return render_form(form=form, title="Reset password", formid='reset', submit="Reset password",
-        message=Markup('Hello, <strong>{}</strong>. You may now choose a new password.'.format(user.fullname)),
+        message=Markup(u'Hello, <strong>{}</strong>. You may now choose a new password.'.format(user.fullname)),
         ajax=True)

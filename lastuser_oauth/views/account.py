@@ -26,7 +26,7 @@ def login_service(service):
     try:
         return provider.do(callback_url=callback_url)
     except LoginInitError, e:
-        flash("{} login failed: {}".format(provider.title, unicode(e)), category='error')
+        flash(u"{} login failed: {}".format(provider.title, unicode(e)), category='error')
         return redirect(next_url or get_next_url(referrer=True))
 
 
@@ -41,7 +41,7 @@ def login_service_callback(service):
     try:
         userdata = provider.callback()
     except LoginCallbackError, e:
-        flash("{} login failed: {}".format(provider.title, unicode(e)), category='error')
+        flash(u"{} login failed: {}".format(provider.title, unicode(e)), category='error')
         if g.user:
             return redirect(get_next_url(referrer=False))
         else:

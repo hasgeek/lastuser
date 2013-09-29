@@ -75,7 +75,7 @@ class User(BaseMixin, db.Model):
                 self.pw_hash) == self.pw_hash
 
     def __repr__(self):
-        return '<User {} "{}">'.format(self.username or self.userid, self.fullname)
+        return u'<User {} "{}">'.format(self.username or self.userid, self.fullname)
 
     def profileid(self):
         if self.username:
@@ -89,7 +89,7 @@ class User(BaseMixin, db.Model):
     @property
     def pickername(self):
         if self.username:
-            return '{} (~{})'.format(self.fullname, self.username)
+            return u'{} (~{})'.format(self.fullname, self.username)
         else:
             return self.fullname
 
@@ -410,12 +410,12 @@ class Organization(BaseMixin, db.Model):
         return True
 
     def __repr__(self):
-        return '<Organization {} "{}">'.format(self.name or self.userid, self.title)
+        return u'<Organization {} "{}">'.format(self.name or self.userid, self.title)
 
     @property
     def pickername(self):
         if self.name:
-            return '{} (~{})'.format(self.title, self.name)
+            return u'{} (~{})'.format(self.title, self.name)
         else:
             return self.title
 
@@ -459,7 +459,7 @@ class Team(BaseMixin, db.Model):
         backref='teams')  # No cascades here! Cascades will delete users
 
     def __repr__(self):
-        return '<Team {} of {}>'.format(self.title, self.org.title)
+        return u'<Team {} of {}>'.format(self.title, self.org.title)
 
     @property
     def pickername(self):

@@ -67,8 +67,8 @@ def org_delete(org):
     if request.method == 'POST':
         # FIXME: Find a better way to do this
         org_data_changed.send(org, changes=['delete'], user=g.user)
-    return render_delete_sqla(org, db, title="Confirm delete", message="Delete organization '{}'? ".format(org.title),
-        success="You have deleted organization '{}' and all its associated teams.".format(org.title),
+    return render_delete_sqla(org, db, title=u"Confirm delete", message="Delete organization '{}'? ".format(org.title),
+        success=u"You have deleted organization '{}' and all its associated teams.".format(org.title),
         next=url_for('.org_list'))
 
 
@@ -116,7 +116,7 @@ def team_edit(org, team):
         db.session.commit()
         team_data_changed.send(team, changes=['edit'], user=g.user)
         return render_redirect(url_for('.org_info', name=org.name), code=303)
-    return make_response(render_template('edit_team.html', form=form, title=u"Edit team: {}".format(team.title), formid='team_edit', submit="Save", ajax=False))
+    return make_response(render_template(u'edit_team.html', form=form, title=u"Edit team: {}".format(team.title), formid='team_edit', submit="Save", ajax=False))
 
 
 @lastuser_ui.route('/organizations/<name>/teams/<userid>/delete', methods=['GET', 'POST'])

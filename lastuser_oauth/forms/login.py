@@ -51,5 +51,5 @@ class RegisterForm(Form):
         existing = UserEmail.query.filter_by(email=field.data).first()
         if existing is not None:
             raise wtforms.ValidationError(Markup(
-                'This email address is already registered. Do you want to <a href="{}">login</a> instead?'.format(
+                u'This email address is already registered. Do you want to <a href="{}">login</a> instead?'.format(
                     url_for('.login'))))

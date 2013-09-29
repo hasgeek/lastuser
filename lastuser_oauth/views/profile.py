@@ -75,11 +75,11 @@ def confirm_email(md5sum, secret):
                 if claimed_user != g.user:
                     return render_message(title="Email address already claimed",
                         message=Markup(
-                            "The email address <code>{}</code> has already been verified by another user.".format(
+                            u"The email address <code>{}</code> has already been verified by another user.".format(
                                 escape(claimed_email))))
                 else:
                     return render_message(title="Email address already verified",
-                        message=Markup("Hello {}! Your email address <code>{}</code> has already been verified.".format(
+                        message=Markup(u"Hello {}! Your email address <code>{}</code> has already been verified.".format(
                             escape(claimed_user.fullname), escape(claimed_email))))
 
             useremail = emailclaim.user.add_email(emailclaim.email.lower(), primary=emailclaim.user.email is None)
@@ -89,7 +89,7 @@ def confirm_email(md5sum, secret):
             db.session.commit()
             user_data_changed.send(g.user, changes=['email'])
             return render_message(title="Email address verified",
-                message=Markup("Hello {}! Your email address <code>{}</code> has now been verified.".format(
+                message=Markup(u"Hello {}! Your email address <code>{}</code> has now been verified.".format(
                     escape(emailclaim.user.fullname), escape(useremail.email))))
         else:
             return render_message(
