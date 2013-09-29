@@ -50,6 +50,16 @@ input[name="field-openid"]
 #logo
   @include replace-text-with-dimensions('logo.png')
 
+#hg-networkbar.navbar .navbar-brand
+  padding: 0
+  display: block
+  @include replace-text-with-dimensions('logo@2x.png')
+  height: 48px
+  background-position: left center
+  background-size: auto 100%
+  background-repeat: none
+  text-indent: -1000px
+
 @media only screen and (-webkit-min-device-pixel-ratio: 2)
   #logo
     background-image: image-url('logo@2x.png')

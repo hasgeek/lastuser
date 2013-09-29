@@ -63,6 +63,24 @@ input[name="field-openid"] {
   height: 75px;
 }
 
+#hg-networkbar.navbar .navbar-brand {
+  padding: 0;
+  display: block;
+  text-indent: -119988px;
+  overflow: hidden;
+  text-align: left;
+  background-image: url('../img/logo@2x.png?1372854195');
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+  width: 225px;
+  height: 150px;
+  height: 48px;
+  background-position: left center;
+  background-size: auto 100%;
+  background-repeat: none;
+  text-indent: -1000px;
+}
+
 @media only screen and (-webkit-min-device-pixel-ratio: 2) {
   #logo {
     background-image: url('../img/logo@2x.png?1372854195');
