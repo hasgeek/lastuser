@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block title %}Application list{% endblock %}
 {% block content %}
-<table class="table table-condensed">
+<table class="table table-condensed table-hover table-responsive">
   <thead>
     <tr>
       <th>#</th>
@@ -27,6 +27,6 @@
   </tbody>
 </table>
 <p>
-  <a href="{{ url_for('.client_new') }}">Register a new application &rarr;</a>
+  <a class="btn btn-primary" href="{{ url_for('.client_new') }}">New application</a>
 </p>
 {% endblock %}
