@@ -39,13 +39,16 @@ class GitHubProvider(LoginProvider):
             else:
                 raise LoginCallbackError(u"Unknown failure")
         code = request.args.get('code', None)
-        response = requests.post(self.token_url, headers={'Accept': 'application/json'},
-            params={
-                'client_id': self.key,
-                'client_secret': self.secret,
-                'code': code
-                }
-            ).json()
+        try:
+            response = requests.post(self.token_url, headers={'Accept': 'application/json'},
+                params={
+                    'client_id': self.key,
+                    'client_secret': self.secret,
+                    'code': code
+                    }
+                ).json()
+        except requests.ConnectionError as e:
+            raise LoginCallbackError(u"Unable to authenticate via GitHub. Internal details: {error}".format(error=e))
         if 'error' in response:
             raise LoginCallbackError(response['error'])
         ghinfo = requests.get(self.user_info,
