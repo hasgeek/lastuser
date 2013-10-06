@@ -56,6 +56,7 @@ def login_openid_success(resp):
     response = {
         'userid': openid,
         'username': None,
+        'fullname': getattr(resp, 'fullname', None),
         'oauth_token': None,
         'oauth_token_secret': None,
         'oauth_token_type': None,

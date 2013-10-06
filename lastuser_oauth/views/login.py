@@ -176,8 +176,8 @@ def reset():
                 u"""
                 We do not have an email address for your account and therefore cannot
                 email you a reset link. Please contact
-                <a href="mailto:%s">%s</a> for assistance.
-                """ % (escape(current_app.config['SITE_SUPPORT_EMAIL']),
+                <a href="mailto:{}">{}</a> for assistance.
+                """.format(escape(current_app.config['SITE_SUPPORT_EMAIL']),
                     escape(current_app.config['SITE_SUPPORT_EMAIL']))))
         resetreq = PasswordResetRequest(user=user)
         db.session.add(resetreq)
@@ -219,7 +219,7 @@ def reset_email(user, kwargs):
         db.session.delete(resetreq)
         db.session.commit()
         return render_message(title="Password reset complete", message=Markup(
-            'Your password has been reset. You may now <a href="%s">login</a> with your new password.' % escape(url_for('.login'))))
+            u'Your password has been reset. You may now <a href="{}">login</a> with your new password.'.format(escape(url_for('.login')))))
     return render_form(form=form, title="Reset password", formid='reset', submit="Reset password",
-        message=Markup('Hello, <strong>%s</strong>. You may now choose a new password.' % user.fullname),
+        message=Markup(u'Hello, <strong>{}</strong>. You may now choose a new password.'.format(user.fullname)),
         ajax=True)

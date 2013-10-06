@@ -26,11 +26,15 @@ def profile_edit(newprofile=False):
     if g.user.email or newprofile is False:
         del form.email
 
+    if newprofile is True:
+        del form.description
+
     if form.validate_on_submit():
         # Can't auto-populate here because user.email is read-only
         g.user.fullname = form.fullname.data
         g.user.username = form.username.data
-        g.user.description = form.description.data
+        if not newprofile:
+            g.user.description = form.description.data
         g.user.timezone = form.timezone.data
 
         if newprofile and not g.user.email:
@@ -51,7 +55,7 @@ def profile_edit(newprofile=False):
             return render_redirect(url_for('profile'), code=303)
     if newprofile:
         return render_form(form, title="Update profile", formid="profile_new", submit="Continue",
-            message=u"Hello, %s. Please spare a minute to fill out your profile." % g.user.fullname,
+            message=u"Hello, {}. Please spare a minute to fill out your profile.".format(g.user.fullname),
             ajax=True)
     else:
         return render_form(form, title="Edit profile", formid="profile_edit", submit="Save changes", ajax=True)
@@ -72,10 +76,11 @@ def confirm_email(md5sum, secret):
                 if claimed_user != g.user:
                     return render_message(title="Email address already claimed",
                         message=Markup(
-                            "The email address <code>%s</code> has already been verified by another user." % escape(claimed_email)))
+                            u"The email address <code>{}</code> has already been verified by another user.".format(
+                                escape(claimed_email))))
                 else:
                     return render_message(title="Email address already verified",
-                        message=Markup("Hello %s! Your email address <code>%s</code> has already been verified." % (
+                        message=Markup(u"Hello {}! Your email address <code>{}</code> has already been verified.".format(
                             escape(claimed_user.fullname), escape(claimed_email))))
 
             useremail = emailclaim.user.add_email(emailclaim.email.lower(), primary=emailclaim.user.email is None)
@@ -85,7 +90,7 @@ def confirm_email(md5sum, secret):
             db.session.commit()
             user_data_changed.send(g.user, changes=['email'])
             return render_message(title="Email address verified",
-                message=Markup("Hello %s! Your email address <code>%s</code> has now been verified." % (
+                message=Markup(u"Hello {}! Your email address <code>{}</code> has now been verified.".format(
                     escape(emailclaim.user.fullname), escape(useremail.email))))
         else:
             return render_message(

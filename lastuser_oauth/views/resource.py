@@ -40,6 +40,8 @@ def get_userinfo(user, client, scope=[], get_permissions=True):
         userinfo = {}
     if 'email' in scope:
         userinfo['email'] = unicode(user.email)
+    if 'phone' in scope:
+        userinfo['phone'] = unicode(user.phone)
     if 'organizations' in scope:
         userinfo['organizations'] = {
             'owner': [{'userid': org.userid, 'name': org.name, 'title': org.title} for org in user.organizations_owned()],
@@ -361,10 +363,23 @@ def resource_email(authtoken, args, files=None):
 @resource_registry.resource('email/add', u'Add an email address to your profile')
 def resource_email_add(authtoken, args, files=None):
     """
-    Add an email address to the user's profile.
+    TODO: Add an email address to the user's profile.
     """
     email = args['email']
     return {'email': email}  # TODO
+
+
+@lastuser_oauth.route('/api/1/phone')
+@resource_registry.resource('phone', u'Read your phone number')
+def resource_phone(authtoken, args, files=None):
+    """
+    Return user's phone numbers.
+    """
+    if 'all' in args and getbool(args['all']):
+        return {'phone': unicode(authtoken.user.phone),
+                'all': [unicode(phone) for phone in authtoken.user.phones]}
+    else:
+        return {'phone': unicode(authtoken.user.phone)}
 
 
 @lastuser_oauth.route('/api/1/organizations')

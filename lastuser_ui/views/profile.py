@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import g, flash, render_template, url_for, session, request
+from flask import g, flash, render_template, url_for, request
 from coaster.views import load_model
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
 
@@ -17,8 +17,7 @@ from .sms import send_phone_verify_code
 @lastuser_ui.route('/profile')
 @requires_login
 def profile():
-    # TODO: move the avatar in the user model
-    return render_template('profile.html', avatar=session['avatar_url'])
+    return render_template('profile.html')
 
 
 @lastuser_ui.route('/profile/password', methods=['GET', 'POST'])
@@ -65,8 +64,8 @@ def remove_email(md5sum):
         return render_redirect(url_for('.profile'), code=303)
     if request.method == 'POST':
         user_data_changed.send(g.user, changes=['email-delete'])
-    return render_delete_sqla(useremail, db, title="Confirm removal", message="Remove email address %s?" % useremail,
-        success="You have removed your email address %s." % useremail,
+    return render_delete_sqla(useremail, db, title=u"Confirm removal", message="Remove email address {}?".format(useremail),
+        success=u"You have removed your email address {}.".format(useremail),
         next=url_for('.profile'))
 
 
@@ -93,8 +92,8 @@ def remove_phone(number):
         userphone = UserPhoneClaim.query.filter_by(phone=number, user=g.user).first_or_404()
     if request.method == 'POST':
         user_data_changed.send(g.user, changes=['phone-delete'])
-    return render_delete_sqla(userphone, db, title="Confirm removal", message="Remove phone number %s?" % userphone,
-        success="You have removed your number %s." % userphone,
+    return render_delete_sqla(userphone, db, title=u"Confirm removal", message="Remove phone number {}?".format(userphone),
+        success=u"You have removed your number {}.".format(userphone),
         next=url_for('.profile'))
 
 
@@ -114,6 +113,6 @@ def verify_phone(phoneclaim):
         db.session.delete(phoneclaim)
         db.session.commit()
         flash("Your phone number has been verified.", 'success')
-        user_data_changed.send(g.user, 'phone')
+        user_data_changed.send(g.user, changes=['phone'])
         return render_redirect(url_for('.profile'), code=303)
     return render_form(form=form, title="Verify phone number", formid="phone_verify", submit="Verify", ajax=True)

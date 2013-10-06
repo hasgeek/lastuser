@@ -39,7 +39,9 @@ class User(BaseMixin, db.Model):
         if password is None:
             self.pw_hash = None
         else:
-            self.pw_hash = bcrypt.hashpw(password, bcrypt.gensalt())
+            self.pw_hash = bcrypt.hashpw(
+                password.encode('utf-8') if isinstance(password, unicode) else password,
+                bcrypt.gensalt())
 
     #: Write-only property (passwords cannot be read back in plain text)
     password = property(fset=_set_password)
@@ -75,10 +77,12 @@ class User(BaseMixin, db.Model):
         if self.pw_hash.startswith('sha1$'):
             return check_password_hash(self.pw_hash, password)
         else:
-            return bcrypt.hashpw(password, self.pw_hash) == self.pw_hash
+            return bcrypt.hashpw(
+                password.encode('utf-8') if isinstance(password, unicode) else password,
+                self.pw_hash) == self.pw_hash
 
     def __repr__(self):
-        return '<User %s "%s">' % (self.username or self.userid, self.fullname)
+        return u'<User {} "{}">'.format(self.username or self.userid, self.fullname)
 
     def profileid(self):
         if self.username:
@@ -92,7 +96,7 @@ class User(BaseMixin, db.Model):
     @property
     def pickername(self):
         if self.username:
-            return '%s (~%s)' % (self.fullname, self.username)
+            return u'{} (~{})'.format(self.fullname, self.username)
         else:
             return self.fullname
 
@@ -137,6 +141,27 @@ class User(BaseMixin, db.Model):
         # This user has no email address. Return a blank string instead of None
         # to support the common use case, where the caller will use unicode(user.email)
         # to get the email address as a string.
+        return u''
+
+    @cached_property
+    def phone(self):
+        """
+        Returns primary phone number for user.
+        """
+        # Look for a primary address
+        userphone = UserPhone.query.filter_by(user=self, primary=True).first()
+        if userphone:
+            return userphone
+        # No primary? Maybe there's one that's not set as primary?
+        userphone = UserPhone.query.filter_by(user=self).first()
+        if userphone:
+            # XXX: Mark at primary. This may or may not be saved depending on
+            # whether the request ended in a database commit.
+            userphone.primary = True
+            return userphone
+        # This user has no phone number. Return a blank string instead of None
+        # to support the common use case, where the caller will use unicode(user.phone)
+        # to get the phone number as a string.
         return u''
 
     def organizations(self):
@@ -224,7 +249,7 @@ class UserEmail(BaseMixin, db.Model):
     email = db.synonym('_email', descriptor=email)
 
     def __repr__(self):
-        return u'<UserEmail %s of user %s>' % (self.email, repr(self.user))
+        return u'<UserEmail {} of user {}>'.format(self.email, repr(self.user))
 
     def __unicode__(self):
         return unicode(self.email)
@@ -270,7 +295,7 @@ class UserEmailClaim(BaseMixin, db.Model):
     email = db.synonym('_email', descriptor=email)
 
     def __repr__(self):
-        return u'<UserEmailClaim %s of user %s>' % (self.email, repr(self.user))
+        return u'<UserEmailClaim {} of user {}>'.format(self.email, repr(self.user))
 
     def __unicode__(self):
         return unicode(self.email)
@@ -320,7 +345,7 @@ class UserPhone(BaseMixin, db.Model):
     phone = db.synonym('_phone', descriptor=phone)
 
     def __repr__(self):
-        return u'<UserPhone %s of user %s>' % (self.phone, repr(self.user))
+        return u'<UserPhone {} of user {}>'.format(self.phone, repr(self.user))
 
     def __unicode__(self):
         return unicode(self.phone)
@@ -360,7 +385,7 @@ class UserPhoneClaim(BaseMixin, db.Model):
     phone = db.synonym('_phone', descriptor=phone)
 
     def __repr__(self):
-        return u'<UserPhoneClaim %s of user %s>' % (self.phone, repr(self.user))
+        return u'<UserPhoneClaim {} of user {}>'.format(self.phone, repr(self.user))
 
     def __unicode__(self):
         return unicode(self.phone)
@@ -485,12 +510,12 @@ class Organization(BaseMixin, db.Model):
         return True
 
     def __repr__(self):
-        return '<Organization %s "%s">' % (self.name or self.userid, self.title)
+        return u'<Organization {} "{}">'.format(self.name or self.userid, self.title)
 
     @property
     def pickername(self):
         if self.name:
-            return '%s (~%s)' % (self.title, self.name)
+            return u'{} (~{})'.format(self.title, self.name)
         else:
             return self.title
 
@@ -557,7 +582,7 @@ class Team(BaseMixin, db.Model):
         backref='teams')  # No cascades here! Cascades will delete users
 
     def __repr__(self):
-        return '<Team %s of %s>' % (self.title, self.org.title)
+        return u'<Team {} of {}>'.format(self.title, self.org.title)
 
     @property
     def pickername(self):

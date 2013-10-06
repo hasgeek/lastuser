@@ -6,7 +6,6 @@
 <p>
   This page is work-in-progress.
 </p>
-<img src="{{ avatar }}" />
 <dl class="infobox">
   <dt>My name</dt>
   <dd>{{ g.user.fullname }}</dd>
@@ -16,38 +15,39 @@
   <dd>{{ g.user.description }}</dd>
 </dl>
 <p>
-  <a href="{{ url_for('lastuser_oauth.profile_edit') }}">Edit this &rarr;</a><br/>
-  <a href="{{ url_for('.change_password') }}">Change password &rarr;</a>
+  <a class="btn btn-sm btn-info" href="{{ url_for('lastuser_oauth.profile_edit') }}">Edit this</a>
+  <a class="btn btn-sm btn-warning" href="{{ url_for('.change_password') }}">Change password</a>
 </p>
 <h2>My email addresses</h2>
 <ul>
   {% for useremail in g.user.emails %}
     <li>{{ useremail }} {% if useremail.primary %} <em>(primary)</em> {% endif -%}
-      <a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}">(delete)</a></li>
+      <a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}">(remove)</a></li>
   {% else %}
     <li><em>(no verified addresses)</em></li>
   {% endfor %}
   {% for useremail in g.user.emailclaims %}
     <li>{{ useremail }} <em>(pending verification)</em>
-      <a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}">(delete)</a></li>
+      <a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}">(remove)</a></li>
   {% endfor %}
   <li><a href="{{ url_for('.add_email') }}">Add another email address &rarr;</a></li>
 </ul>
-{#
+
 <h2>My mobile numbers</h2>
 <ul>
   {% for userphone in g.user.phones %}
     <li>{{ userphone }} {% if userphone.primary %} <em>(primary)</em> {% endif -%}
-      <a href="{{ url_for('.remove_phone', number=userphone.phone) }}">(delete)</a></li>
+      <a href="{{ url_for('.remove_phone', number=userphone.phone) }}">(remove)</a></li>
   {% else %}
     <li><em>(no verified numbers)</em></li>
   {% endfor %}
   {% for userphone in g.user.phoneclaims %}
-    <li>{{ userphone }} <em>(pending verification)</em></li>
+    <li>{{ userphone }} <em>(<a href="{{ url_for('.verify_phone', number=userphone) }}">pending verification</a>)</em>
+      <a href="{{ url_for('.remove_phone', number=userphone.phone) }}">(remove)</a></li>
   {% endfor %}
   <li><a href="{{ url_for('.add_phone') }}">Add a mobile number &rarr;</a></li>
 </ul>
-#}
+
 <h2>My external ids</h2>
 <ul>
   {% for extid in g.user.externalids %}

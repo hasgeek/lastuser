@@ -32,13 +32,16 @@
   {%- endif %}
 </dl>
 {% if client.owner_is(g.user) %}
-  <p><a href="{{ url_for('.client_edit', key=client.key) }}">Edit this application &rarr;</a></p>
+  <p>
+    <a class="btn btn-info" href="{{ url_for('.client_edit', key=client.key) }}">Edit this application</a>
+    <a class="btn btn-danger" href="{{ url_for('.client_edit', key=client.key) }}">Delete</a>
+  </p>
 {% endif %}
 <h2>Resources</h2>
 <p>
   This app provides the following resources and actions on resources.
 </p>
-<table class="table table-condensed table-bordered">
+<table class="table table-condensed table-responsive">
   <thead>
     <tr>
       <th>#</th>
@@ -58,8 +61,10 @@
         <td><strong>{{ resource.title }}</strong></td>
         <td><strong>{{ resource.description }}</strong></td>
         {% if client.owner_is(g.user) %}
-          <td><a href="{{ url_for('.resource_edit', key=client.key, idr=resource.id) }}">Edit</a></td>
-          <td><a href="{{ url_for('.resource_delete', key=client.key, idr=resource.id) }}">Delete</a></td>
+          <td>
+            <a class="btn btn-xs btn-info" href="{{ url_for('.resource_edit', key=client.key, idr=resource.id) }}">Edit</a>
+            <a class="btn btn-xs btn-danger" href="{{ url_for('.resource_delete', key=client.key, idr=resource.id) }}">Delete</a>
+          </td>
         {% endif %}
       </tr>
       {% set outer_loop_index = loop.index %}
@@ -70,37 +75,41 @@
           <td>{{ action.title }}</td>
           <td>{{ action.description }}</td>
           {% if client.owner_is(g.user) %}
-            <td><a href="{{ url_for('.resource_action_edit', key=client.key, idr=resource.id, ida=action.id) }}">Edit</a></td>
-            <td><a href="{{ url_for('.resource_action_delete', key=client.key, idr=resource.id, ida=action.id) }}">Delete</a></td>
+            <td>
+              <a class="btn btn-xs btn-info" href="{{ url_for('.resource_action_edit', key=client.key, idr=resource.id, ida=action.id) }}">Edit</a>
+              <a class="btn btn-xs btn-danger" href="{{ url_for('.resource_action_delete', key=client.key, idr=resource.id, ida=action.id) }}">Delete</a>
+            </td>
           {% endif %}
         </tr>
       {% endfor %}
       {% if client.owner_is(g.user) %}
         <tr>
           <td class="separator"></td>
-          <td colspan="5" class="separator"><a href="{{ url_for('.resource_action_new', key=client.key, idr=resource.id) }}">Define a new action &rarr;</a></td>
+          <td colspan="5" class="separator">
+            <a class="btn btn-sm btn-info" href="{{ url_for('.resource_action_new', key=client.key, idr=resource.id) }}">Add action</a>
+            <a class="btn btn-sm btn-info" href="{{ url_for('.resource_new', key=client.key) }}">Add resource</a>
+          </td>
         </tr>
       {% endif %}
     {% else %}
       <tr>
         <td colspan="6">
-          <em>(This application does not provide any resources)</em>
+          {%- if client.owner_is(g.user) %}
+            <a class="btn btn-sm btn-info" href="{{ url_for('.resource_new', key=client.key) }}">New resource</a>
+          {%- else %}
+            <em>(This application does not provide any resources)</em>
+          {%- endif %}
         </td>
       </tr>
     {% endfor %}
   </tbody>
 </table>
 {% if client.owner_is(g.user) %}
-  <p>
-    <a href="{{ url_for('.resource_new', key=client.key) }}">Define a new resource &rarr;</a>
-  </p>
-{% endif %}
-{% if client.owner_is(g.user) %}
   <h2>Permissions</h2>
   <p>
     The following {% if client.user %}users{% else %}teams{% endif %} have permissions to this app.
   </p>
-  <table class="table table-condensed table-bordered">
+  <table class="table table-condensed table-responsive">
     <thead>
       <tr>
         <th>#</th>
@@ -110,25 +119,27 @@
       </tr>
     </thead>
     <tbody>
-      {% for pa in permassignments %}
+      {%- for pa in permassignments %}
       <tr>
         <td>{{ loop.index }}</td>
         <td>{{ pa.pickername }}</td>
         <td>{{ pa.access_permissions }}</td>
-        <td><a href="{{ url_for('.permission_user_edit', key=client.key, userid=pa.userid) }}">Edit</a></td>
-        <td><a href="{{ url_for('.permission_user_delete', key=client.key, userid=pa.userid) }}">Delete</a></td>
-      {% else %}
+        <td>
+          <a class="btn btn-xs btn-info" href="{{ url_for('.permission_user_edit', key=client.key, userid=pa.userid) }}">Edit</a>
+          <a class="btn btn-xs btn-danger" href="{{ url_for('.permission_user_delete', key=client.key, userid=pa.userid) }}">Delete</a>
+        </td>
+      {%- else %}
       <tr>
         <td colspan="4">
           <em>(No permissions assigned)</em>
         </td>
       </tr>
-      {% endfor %}
+      {%- endfor %}
     </tbody>
   </table>
   <p>
-    <a href="{{ url_for('.permission_new') }}">Define a new permission &rarr;</a><br/>
-    <a href="{{ url_for('.permission_user_new', key=client.key) }}">Assign permissions to a new {% if client.user %}user{% else %}team{% endif %} &rarr;</a>
+    <a class="btn btn-info" href="{{ url_for('.permission_new') }}">Define a new permission</a>
+    <a class="btn btn-info" href="{{ url_for('.permission_user_new', key=client.key) }}">Assign permissions to another {% if client.user %}user{% else %}team{% endif %}</a>
   </p>
 {% endif %}
 {% if g.user and client.team_access and g.user.organizations_owned() %}
@@ -136,7 +147,7 @@
   <p>
     This application can manage access permissions per team. Select the organizations whose teams it has access to.
   </p>
-  <table class="table table-condensed table-bordered">
+  <table class="table table-condensed table-responsive">
     <thead>
       <tr>
         <th>#</th>
@@ -155,7 +166,7 @@
     </tbody>
   </table>
   <p>
-    <a href="{{ url_for('.client_team_access', key=client.key) }}">Change access permissions &rarr;</a>
+    <a class="btn btn-info" href="{{ url_for('.client_team_access', key=client.key) }}">Change access permissions</a>
   </p>
 {% endif %}
 {% endblock %}

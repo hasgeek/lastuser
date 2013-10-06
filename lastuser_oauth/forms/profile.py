@@ -50,7 +50,8 @@ class PasswordChangeForm(Form):
 
 class ProfileForm(Form):
     fullname = wtforms.TextField('Full name', validators=[wtforms.validators.Required()])
-    email = wtforms.fields.html5.EmailField('Email address', validators=[wtforms.validators.Required(), wtforms.validators.Email(), ValidEmailDomain()])
+    email = wtforms.fields.html5.EmailField('Email address',
+        validators=[wtforms.validators.Required(), wtforms.validators.Email(), ValidEmailDomain()])
     username = wtforms.TextField('Username', validators=[wtforms.validators.Required()])
     description = wtforms.TextAreaField('Bio')
     timezone = wtforms.SelectField('Timezone', validators=[wtforms.validators.Required()], choices=timezones)
