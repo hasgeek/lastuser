@@ -48,6 +48,13 @@ RESERVED_USERNAMES = set([
     'api',
     'static',
     '_baseframe',
+    'www',
+    'ftp',
+    'smtp',
+    'imap',
+    'pop',
+    'pop3',
+    'email',
     ])
 
 #: Mail settings
