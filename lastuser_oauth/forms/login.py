@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import Markup, url_for, current_app
+from flask import Markup, url_for, current_app, escape
 import wtforms
 import wtforms.fields.html5
 import flask.ext.wtf as wtf
@@ -51,5 +51,5 @@ class RegisterForm(Form):
         existing = UserEmail.get(email=field.data)
         if existing is not None:
             raise wtforms.ValidationError(Markup(
-                u'This email address is already registered. Do you want to <a href="{}">login</a> instead?'.format(
-                    url_for('.login'))))
+                u'This email address is already registered. Do you want to <a href="{loginurl}">login</a> instead?'.format(
+                    loginurl=escape(url_for('.login')))))

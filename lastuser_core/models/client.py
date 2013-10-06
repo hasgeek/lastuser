@@ -286,7 +286,7 @@ class AuthToken(BaseMixin, db.Model):
         elif value in ['hmac-sha-1', 'hmac-sha-256']:
             self._algorithm = value
         else:
-            raise ValueError(u"Unrecognized algorithm '{}'".format(value))
+            raise ValueError(u"Unrecognized algorithm ‘{value}’".format(value=value))
 
     algorithm = db.synonym('_algorithm', descriptor=algorithm)
 

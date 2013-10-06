@@ -176,9 +176,8 @@ def reset():
                 u"""
                 We do not have an email address for your account and therefore cannot
                 email you a reset link. Please contact
-                <a href="mailto:{}">{}</a> for assistance.
-                """.format(escape(current_app.config['SITE_SUPPORT_EMAIL']),
-                    escape(current_app.config['SITE_SUPPORT_EMAIL']))))
+                <a href="mailto:{email}">{email}</a> for assistance.
+                """.format(email=escape(current_app.config['SITE_SUPPORT_EMAIL']))))
         resetreq = PasswordResetRequest(user=user)
         db.session.add(resetreq)
         send_password_reset_link(email=email, user=user, secret=resetreq.reset_code)
@@ -201,13 +200,13 @@ def reset_email(user, kwargs):
     resetreq = PasswordResetRequest.query.filter_by(user=user, reset_code=kwargs['secret']).first()
     if not resetreq:
         return render_message(title="Invalid reset link",
-            message=Markup("The reset link you clicked on is invalid."))
+            message=u"The reset link you clicked on is invalid.")
     if resetreq.created_at < datetime.utcnow() - timedelta(days=1):
         # Reset code has expired (> 24 hours). Delete it
         db.session.delete(resetreq)
         db.session.commit()
         return render_message(title="Expired reset link",
-            message=Markup("The reset link you clicked on has expired."))
+            message=u"The reset link you clicked on has expired.")
 
     # Logout *after* validating the reset request to prevent DoS attacks on the user
     logout_internal()
@@ -219,7 +218,9 @@ def reset_email(user, kwargs):
         db.session.delete(resetreq)
         db.session.commit()
         return render_message(title="Password reset complete", message=Markup(
-            u'Your password has been reset. You may now <a href="{}">login</a> with your new password.'.format(escape(url_for('.login')))))
+            u'Your password has been reset. You may now <a href="{loginurl}">login</a> with your new password.'.format(
+                loginurl=escape(url_for('.login')))))
     return render_form(form=form, title="Reset password", formid='reset', submit="Reset password",
-        message=Markup(u'Hello, <strong>{}</strong>. You may now choose a new password.'.format(user.fullname)),
+        message=Markup(u'Hello, <strong>{fullname}</strong>. You may now choose a new password.'.format(
+            fullname=escape(user.fullname))),
         ajax=True)
