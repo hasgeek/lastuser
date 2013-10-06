@@ -68,7 +68,7 @@ RESERVED_USERNAMES = set([
 #: DEFAULT_MAIL_SENDER : default None
 MAIL_FAIL_SILENTLY = False
 MAIL_SERVER = 'localhost'
-DEFAULT_MAIL_SENDER = ('Lastuser', 'test@example.com')
+DEFAULT_MAIL_SENDER = 'Lastuser <test@example.com>'
 MAIL_DEFAULT_SENDER = DEFAULT_MAIL_SENDER  # For new versions of Flask-Mail
 
 #: Logging: recipients of error emails
