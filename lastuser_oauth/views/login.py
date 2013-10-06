@@ -172,12 +172,20 @@ def reset():
         if not email:
             # They don't have an email address. Maybe they logged in via Twitter
             # and set a local username and password, but no email. Could happen.
-            return render_message(title="Reset password", message=Markup(
-                u"""
-                We do not have an email address for your account and therefore cannot
-                email you a reset link. Please contact
-                <a href="mailto:{email}">{email}</a> for assistance.
-                """.format(email=escape(current_app.config['SITE_SUPPORT_EMAIL']))))
+            if len(user.externalids) > 0:
+                extid = user.externalids[0]
+                return render_message(title="Cannot reset password", message=Markup(u"""
+                    We do not have an email address for your account. However, your account
+                    is linked to <strong>{service}</strong> with the id <strong>{username}</strong>.
+                    You can use that to login.
+                    """.format(service=login_registry[extid.service].title, username=extid.username or extid.userid)))
+            else:
+                return render_message(title="Cannot reset password", message=Markup(
+                    u"""
+                    We do not have an email address for your account and therefore cannot
+                    email you a reset link. Please contact
+                    <a href="mailto:{email}">{email}</a> for assistance.
+                    """.format(email=escape(current_app.config['SITE_SUPPORT_EMAIL']))))
         resetreq = PasswordResetRequest(user=user)
         db.session.add(resetreq)
         send_password_reset_link(email=email, user=user, secret=resetreq.reset_code)
