@@ -17,17 +17,17 @@ def getuser(name):
         # TODO: This should be handled by the LoginProvider registry, not here
         if name.startswith('@'):
             extid = UserExternalId.get(service='twitter', username=name[1:])
-            if extid and extid.user.status == USER_STATUS.ACTIVE:
+            if extid and extid.user.is_active:
                 return extid.user
             else:
                 return None
         else:
             useremail = UserEmail.get(email=name)
-            if useremail and useremail.user.status == USER_STATUS.ACTIVE:
+            if useremail and useremail.user.is_active:
                 return useremail.user
             # No verified email id. Look for an unverified id; return first found
-            useremail = UserEmailClaim.get(email=name, user=None)
-            if useremail and useremail.user.status == USER_STATUS.ACTIVE:
+            results = UserEmailClaim.all(email=name)
+            if results and results[0].user.is_active:
                 return useremail.user
             return None
     else:

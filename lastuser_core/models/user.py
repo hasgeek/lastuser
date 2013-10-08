@@ -35,6 +35,10 @@ class User(BaseMixin, db.Model):
         self.password = password
         super(User, self).__init__(**kwargs)
 
+    @property
+    def is_active(self):
+        return self.status == USER_STATUS.ACTIVE
+
     def _set_password(self, password):
         if password is None:
             self.pw_hash = None
@@ -200,12 +204,13 @@ class User(BaseMixin, db.Model):
         :param str username: Username to lookup
         :param str userid: Userid to lookup
         """
+        if not bool(username) ^ bool(userid):
+            raise TypeError("Either username or userid should be specified")
+
         if userid:
             return cls.query.filter_by(userid=userid, status=USER_STATUS.ACTIVE).first()
-        elif username:
-            return cls.query.filter_by(username=username, status=USER_STATUS.ACTIVE).first()
         else:
-            raise TypeError("Either username or userid should be specified")
+            return cls.query.filter_by(username=username, status=USER_STATUS.ACTIVE).first()
 
     def available_permissions(self):
         """
@@ -266,10 +271,13 @@ class UserEmail(BaseMixin, db.Model):
         :param str email: Email address to lookup
         :param str md5sum: md5sum of email address to lookup
         """
-        if md5sum:
-            return cls.query.filter_by(md5sum=md5sum).first()
-        else:
+        if not bool(email) ^ bool(md5sum):
+            raise TypeError("Either email or md5sum should be specified")
+
+        if email:
             return cls.query.filter(cls.email.in_([email, email.lower()])).first()
+        else:
+            return cls.query.filter_by(md5sum=md5sum).first()
 
 
 class UserEmailClaim(BaseMixin, db.Model):
@@ -318,11 +326,16 @@ class UserEmailClaim(BaseMixin, db.Model):
         :param str email: Email address to lookup
         :param User user: User who claimed this email address
         """
-        query = cls.query.filter(UserEmailClaim.email.in_([email, email.lower()]))
-        if user is not None:
-            return query.filter_by(user=user).first()
-        else:
-            return query.first()
+        query = cls.query.filter(UserEmailClaim.email.in_([email, email.lower()])).filter_by(user=user).first()
+
+    @classmethod
+    def all(cls, email):
+        """
+        Return all UserEmailClaim instances with matching email address.
+
+        :param str email: Email address to lookup
+        """
+        return cls.query.filter(UserEmailClaim.email.in_([email, email.lower()])).all()
 
 
 class UserPhone(BaseMixin, db.Model):
@@ -410,6 +423,15 @@ class UserPhoneClaim(BaseMixin, db.Model):
         """
         return cls.query.filter_by(phone=phone, user=user).first()
 
+    @classmethod
+    def all(cls, phone):
+        """
+        Return all UserPhoneClaim instances with matching phone number.
+
+        :param str phone: Phone number to lookup (must be an exact match)
+        """
+        return cls.query.filter_by(phone=phone).all()
+
 
 class PasswordResetRequest(BaseMixin, db.Model):
     __tablename__ = 'passwordresetrequest'
@@ -452,12 +474,13 @@ class UserExternalId(BaseMixin, db.Model):
         site URL changes. The username is the email address, which will be the same despite
         different userids.
         """
+        if not bool(userid) ^ bool(username):
+            raise TypeError("Either userid or username should be specified")
+
         if userid:
             return cls.query.filter_by(service=service, userid=userid).first()
-        elif username:
-            return cls.query.filter_by(service=service, username=username).first()
         else:
-            raise TypeError("Either userid or username should be specified")
+            return cls.query.filter_by(service=service, username=username).first()
 
 # --- Organizations and teams -------------------------------------------------
 
@@ -552,6 +575,9 @@ class Organization(BaseMixin, db.Model):
         :param str name: Name of the organization
         :param str userid: Userid of the organization
         """
+        if not bool(name) ^ bool(userid):
+            raise TypeError("Either name or userid should be specified")
+
         if userid:
             return cls.query.filter_by(userid=userid).first()
         else:

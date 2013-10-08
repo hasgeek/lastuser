@@ -246,13 +246,17 @@ def permission_user_new(client):
 @load_model(Client, {'key': 'key'}, 'client', permission='assign-permissions', kwargs=True)
 def permission_user_edit(client, kwargs):
     if client.user:
-        user = User.query.filter_by(userid=kwargs['userid'], status=USER_STATUS.ACTIVE).first_or_404()
+        user = User.get(userid=kwargs['userid'])
+        if not user:
+            abort(404)
         available_perms = Permission.query.filter(db.or_(
             Permission.allusers == True,
             Permission.user == g.user)).order_by('name').all()
         permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
     elif client.org:
-        team = Team.query.filter_by(userid=kwargs['userid']).first_or_404()
+        team = Team.get(userid=kwargs['userid'])
+        if not team:
+            abort(404)
         available_perms = Permission.query.filter(db.or_(
             Permission.allusers == True,
             Permission.org == client.org)).order_by('name').all()
@@ -289,14 +293,18 @@ def permission_user_edit(client, kwargs):
 @load_model(Client, {'key': 'key'}, 'client', permission='assign-permissions', kwargs=True)
 def permission_user_delete(client, kwargs):
     if client.user:
-        user = User.query.filter_by(userid=kwargs['userid'], status=USER_STATUS.ACTIVE).first_or_404()
+        user = User.get(userid=kwargs['userid'])
+        if not user:
+            abort(404)
         permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
         return render_delete_sqla(permassign, db, title=u"Confirm delete", message=u"Remove all permissions assigned to user {pname} for app ‘{title}’?".format(
                 pname=user.pickername, title=client.title),
             success=u"You have revoked permisions for user {pname}".format(pname=user.pickername),
             next=url_for('.client_info', key=client.key))
     else:
-        team = Team.query.filter_by(userid=kwargs['userid']).first_or_404()
+        team = Team.get(userid=kwargs['userid'])
+        if not team:
+            abort(404)
         permassign = TeamClientPermissions.query.filter_by(team=team, client=client).first_or_404()
         return render_delete_sqla(permassign, db, title=u"Confirm delete", message=u"Remove all permissions assigned to team ‘{pname}’ for app ‘{title}’?".format(
                 pname=team.title, title=client.title),

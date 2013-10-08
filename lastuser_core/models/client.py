@@ -314,7 +314,7 @@ class AuthToken(BaseMixin, db.Model):
                 token.user = newuser  # Reassign this token to newuser
 
     @classmethod
-    def get(self, token):
+    def get(cls, token):
         """
         Return an AuthToken with the matching token.
 
@@ -376,12 +376,12 @@ class Permission(BaseMixin, db.Model):
         if allusers:
             return cls.query.filter_by(name=name, allusers=True).first()
         else:
+            if not bool(user) ^ bool(org):
+                raise TypeError("Either user or org should be specified")
             if user is not None:
                 return cls.query.filter_by(name=name, user=user).first()
-            elif org is not None:
-                return cls.query.filter_by(name=name, org=org).first()
             else:
-                raise TypeError("Either user or org should be specified")
+                return cls.query.filter_by(name=name, org=org).first()
 
 
 # This model's name is in plural because it defines multiple permissions within each instance

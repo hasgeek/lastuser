@@ -201,7 +201,6 @@ def reset():
     return render_form(form=form, title="Reset password", submit="Send reset code", ajax=True)
 
 
-# FIXME: Don't modify db on GET. Autosubmit via JS and process on POST
 @lastuser_oauth.route('/reset/<userid>/<secret>', methods=['GET', 'POST'])
 @load_model(User, {'userid': 'userid'}, 'user', kwargs=True)
 def reset_email(user, kwargs):

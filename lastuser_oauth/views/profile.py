@@ -62,6 +62,7 @@ def profile_edit(newprofile=False):
         return render_form(form, title="Edit profile", formid="profile_edit", submit="Save changes", ajax=True)
 
 
+# FIXME: Don't modify db on GET. Autosubmit via JS and process on POST
 @lastuser_oauth.route('/confirm/<md5sum>/<secret>')
 @requires_login
 def confirm_email(md5sum, secret):
