@@ -1,25 +1,26 @@
 {% extends "baseframe.html" -%}
+{% from "baseframe/components.html" import responsive_networkbar with context %}
 
-{% block networkbar %}{{ networkbar(siteid='home', login=true) }}{% endblock %}
+{% block networkbar %}{{ responsive_networkbar(siteid='auth', login=true) }}{% endblock %}
 
 {% block baseheadline -%}
 {%- endblock %}
 
 {% block basecontent -%}
   {# Show a sidebar only if the user is logged in -#}
-  {%- if g.user %}
+{#  {%- if g.user %}
   <div class="row">
-    <div class="span9">
-  {%- endif %}
+    <div class="span9 col-xs-12 col-sm-8 col-md-9 col-lg-9">
+  {%- endif %} #}
       {% block headline -%}
         <div class="page-header">
           <h1>{{ self.title()|e }}</h1>
         </div>
       {%- endblock %}
       {% block content %}{% endblock %}
-  {%- if g.user %}
+{#  {%- if g.user %}
     </div>
-    <div class="span3">
+    <div class="span3 col-xs-12 col-sm-4 col-md-3 col-lg-3">
       <ul class="well nav nav-list">
         <li class="nav-header">Account</li>
         <li{% if request.endpoint=='lastuser_ui.profile' %} class="active"{% endif %}><a href="{{ url_for('lastuser_ui.profile') }}"><span class="icon-user">Profile</span></a></li>
@@ -34,7 +35,7 @@
       </ul>
     </div>
   </div>
-  {%- endif %}
+  {%- endif %} #}
 {%- endblock %}
 
 {% block footer %}{{ config['MESSAGE_FOOTER'] }}{% endblock %}

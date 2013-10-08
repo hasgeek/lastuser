@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import Markup
+from os import environ
 
 #: The title of this site
 SITE_TITLE = 'Lastuser'
@@ -15,8 +16,9 @@ GA_CODE = ''
 
 #: Database backend
 SQLALCHEMY_BINDS = {
-    'lastuser': 'postgresql://postgres@localhost/myapp_test',
-    }
+    'lastuser': environ.get('SQLALCHEMY_DATABASE_URI', 'postgres://:@localhost:5432/lastuser_test_app'),
+}
+SQLALCHEMY_ECHO = False
 
 #: Cache type
 CACHE_TYPE = 'redis'

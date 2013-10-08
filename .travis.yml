@@ -3,10 +3,14 @@ python:
   - "2.7"
   - "pypy"
 install:
-  - pip install -r requirements.txt --use-mirrors
-  - pip install -r test_requirements.txt --use-mirrors
+  - pip --default-timeout=180 install -r requirements.txt --use-mirrors
+  - pip --default-timeout=180 install -r test_requirements.txt --use-mirrors
+  - 'if [[ "$TRAVIS_PYTHON_VERSION" != "pypy" ]]; then pip install psycopg2 --use-mirrors; fi'
+before_script:
+  - psql -c 'create database lastuser_test_app;' -U postgres
 script:
-  - nosetests tests --with-coverage
+  - 'if [[ "$TRAVIS_PYTHON_VERSION" != "pypy" ]]; then nosetests ; fi'
+  - 'if [[ "$TRAVIS_PYTHON_VERSION" == "pypy" ]]; then SQLALCHEMY_DATABASE_URI="sqlite://" nosetests ; fi'
 notifications:
   email: false
   irc: "irc.freenode.net#hasgeek-dev"

@@ -2,11 +2,10 @@ import os
 from datetime import datetime, timedelta
 from functools import wraps
 from urllib import unquote
-from urllib2 import urlopen, URLError
 from pytz import common_timezones
-from flask import g, current_app, request, session, flash, redirect, url_for, json, Response
+from flask import g, current_app, request, session, flash, redirect, url_for, Response
 from coaster.views import get_current_url
-from lastuser_core.models import db, User, Client, USER_STATUS
+from lastuser_core.models import db, User, Client
 from lastuser_core.signals import user_login, user_logout, user_registered
 from .. import lastuser_oauth
 
@@ -21,20 +20,7 @@ def lookup_current_user():
     """
     g.user = None
     if 'userid' in session:
-        g.user = User.query.filter_by(userid=session['userid'], status=USER_STATUS.ACTIVE).first()
-        if not 'avatar_url' in session:
-            if g.user and g.user.email:
-                session['avatar_url'] = avatar_url_email(g.user.email)
-            elif session.get('userid_external', {}).get('service') == 'twitter':
-                session['avatar_url'] = avatar_url_twitter(session['userid_external'].get('username'))
-            elif session.get('userid_external', {}).get('service') == 'github':
-                session['avatar_url'] = avatar_url_github(session['userid_external'].get('userid'))
-            else:
-                session['avatar_url'] = None
-        g.avatar_url = session['avatar_url']
-    else:
-        session.pop('avatar_url', None)
-        g.avatar_url = None
+        g.user = User.get(userid=session['userid'])
 
 
 @lastuser_oauth.after_app_request
@@ -110,8 +96,8 @@ def _client_login_inner():
     if request.authorization is None:
         return Response(u"Client credentials required.", 401,
             {'WWW-Authenticate': 'Basic realm="Client credentials"'})
-    client = Client.query.filter_by(key=request.authorization.username).first()
-    if client is None or not client.active or not client.secret_is(request.authorization.password):
+    client = Client.get(key=request.authorization.username)
+    if client is None or not client.secret_is(request.authorization.password):
         return Response(u"Invalid client credentials.", 401,
             {'WWW-Authenticate': 'Basic realm="Client credentials"'})
     g.client = client
@@ -147,30 +133,6 @@ def requires_user_or_client_login(f):
         else:
             return result
     return decorated_function
-
-
-def avatar_url_email(useremail):
-    if request.url.startswith('https:'):
-        return 'https://secure.gravatar.com/avatar/%s?s=80&d=mm' % useremail.md5sum
-    else:
-        return 'http://www.gravatar.com/avatar/%s?s=80&d=mm' % useremail.md5sum
-
-
-def avatar_url_twitter(twitterid):
-    if twitterid:
-        try:
-            return urlopen('http://api.twitter.com/1/users/profile_image/%s' % twitterid).geturl()
-        except URLError:
-            return None
-
-
-def avatar_url_github(githubid):
-    if githubid:
-        try:
-            ghinfo = json.loads(urlopen('https://api.github.com/users/%s' % githubid).read())
-            return ghinfo.get('avatar_url')
-        except URLError:
-            return None
 
 
 def login_internal(user):

@@ -26,7 +26,7 @@ def login_service(service):
     try:
         return provider.do(callback_url=callback_url)
     except LoginInitError, e:
-        flash("%s login failed: %s" % (provider.title, unicode(e)), category='error')
+        flash(u"{service} login failed: {error}".format(service=provider.title, error=unicode(e)), category='error')
         return redirect(next_url or get_next_url(referrer=True))
 
 
@@ -41,7 +41,7 @@ def login_service_callback(service):
     try:
         userdata = provider.callback()
     except LoginCallbackError, e:
-        flash("%s login failed: %s" % (provider.title, unicode(e)), category='error')
+        flash(u"{service} login failed: {error}".format(service=provider.title, error=unicode(e)), category='error')
         if g.user:
             return redirect(get_next_url(referrer=False))
         else:
@@ -58,7 +58,7 @@ def get_user_extid(service, userdata):
 
     useremail = None
     if 'email' in userdata:
-        useremail = UserEmail.query.filter_by(email=userdata['email']).first()
+        useremail = UserEmail.get(email=userdata['email'])
 
     user = None
     if extid is not None:
@@ -133,9 +133,13 @@ def login_service_postcallback(service, userdata):
         db.session.add(emailclaim)
         send_email_verify_link(emailclaim)
 
+    # Is the user's fullname missing? Populate it.
+    if not user.fullname and userdata.get('fullname'):
+        user.fullname = userdata['fullname']
+
     if not g.user:  # If a user isn't already logged in, login now.
         login_internal(user)
-        flash(u"You have logged in via %s." % login_registry[service].title, 'success')
+        flash(u"You have logged in via {service}.".format(service=login_registry[service].title), 'success')
     next_url = get_next_url(session=True)
 
     db.session.commit()
@@ -157,7 +161,7 @@ def login_service_postcallback(service, userdata):
 def profile_merge():
     if 'merge_userid' not in session:
         return redirect(get_next_url(), code=302)
-    other_user = User.query.filter_by(userid=session['merge_userid']).first()
+    other_user = User.get(userid=session['merge_userid'])
     if other_user is None:
         session.pop('merge_userid', None)
         return redirect(get_next_url(), code=302)

@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block title %}Application list{% endblock %}
 {% block content %}
-<table class="table table-condensed">
+<table class="table table-condensed table-hover table-responsive">
   <thead>
     <tr>
       <th>#</th>
@@ -16,7 +16,7 @@
       <tr class="link">
         <td><a href="{{ link }}">{{ loop.index }}</a></td>
         <td><a href="{{ link }}">{{ client.title|e }}</a></td>
-        <td><a href="{{ link }}">{{ client.owner|e }}</a></td>
+        <td><a href="{{ link }}">{{ client.owner_title|e }}</a></td>
         <td><a href="{{ link }}">{{ client.website|e }}</a></td>
       </tr>
     {% else %}
@@ -27,6 +27,6 @@
   </tbody>
 </table>
 <p>
-  <a href="{{ url_for('.client_new') }}">Register a new application &rarr;</a>
+  <a class="btn btn-primary" href="{{ url_for('.client_new') }}">New application</a>
 </p>
 {% endblock %}

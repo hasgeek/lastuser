@@ -14,6 +14,7 @@ requests
 blinker
 Flask-RQ
 Flask-Script
+tweepy
 https://github.com/hasgeek/coaster/archive/master.zip
 https://github.com/hasgeek/baseframe/archive/master.zip
 https://github.com/jace/flask-alembic/archive/master.zip
