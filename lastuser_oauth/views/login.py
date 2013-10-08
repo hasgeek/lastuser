@@ -80,7 +80,7 @@ def logout_user():
         return redirect(url_for('index'))
     else:
         logout_internal()
-        flash('You are now logged out', category='success')
+        flash('You are now logged out', category='info')
         return redirect(get_next_url())
 
 
@@ -131,6 +131,8 @@ def logout():
 
 @lastuser_oauth.route('/register', methods=['GET', 'POST'])
 def register():
+    if g.user:
+        return redirect(url_for('index'))
     form = RegisterForm()
     # Make Recaptcha optional
     if not (current_app.config.get('RECAPTCHA_PUBLIC_KEY') and current_app.config.get('RECAPTCHA_PRIVATE_KEY')):
@@ -147,10 +149,7 @@ def register():
         login_internal(user)
         db.session.commit()
         flash("You are now one of us. Welcome aboard!", category='success')
-        if 'next' in request.args:
-            return redirect(request.args['next'], code=303)
-        else:
-            return redirect(url_for('index'), code=303)
+        return redirect(get_next_url(session=True), code=303)
     return render_form(form=form, title='Create an account', formid='register', submit='Register')
 
 
