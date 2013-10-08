@@ -80,7 +80,7 @@ def logout_user():
         return redirect(url_for('index'))
     else:
         logout_internal()
-        flash('You are now logged out', category='success')
+        flash('You are now logged out', category='info')
         return redirect(get_next_url())
 
 
@@ -88,7 +88,7 @@ def logout_client():
     """
     Client-initiated logout
     """
-    client = Client.query.filter_by(key=request.args['client_id']).first()
+    client = Client.get(key=request.args['client_id'])
     if client is None:
         # No such client. Possible CSRF. Don't logout and don't send them back
         flash(logout_errormsg, 'error')
@@ -131,6 +131,8 @@ def logout():
 
 @lastuser_oauth.route('/register', methods=['GET', 'POST'])
 def register():
+    if g.user:
+        return redirect(url_for('index'))
     form = RegisterForm()
     # Make Recaptcha optional
     if not (current_app.config.get('RECAPTCHA_PUBLIC_KEY') and current_app.config.get('RECAPTCHA_PRIVATE_KEY')):
@@ -147,10 +149,7 @@ def register():
         login_internal(user)
         db.session.commit()
         flash("You are now one of us. Welcome aboard!", category='success')
-        if 'next' in request.args:
-            return redirect(request.args['next'], code=303)
-        else:
-            return redirect(url_for('index'), code=303)
+        return redirect(get_next_url(session=True), code=303)
     return render_form(form=form, title='Create an account', formid='register', submit='Register')
 
 
@@ -172,13 +171,20 @@ def reset():
         if not email:
             # They don't have an email address. Maybe they logged in via Twitter
             # and set a local username and password, but no email. Could happen.
-            return render_message(title="Reset password", message=Markup(
-                u"""
-                We do not have an email address for your account and therefore cannot
-                email you a reset link. Please contact
-                <a href="mailto:{}">{}</a> for assistance.
-                """.format(escape(current_app.config['SITE_SUPPORT_EMAIL']),
-                    escape(current_app.config['SITE_SUPPORT_EMAIL']))))
+            if len(user.externalids) > 0:
+                extid = user.externalids[0]
+                return render_message(title="Cannot reset password", message=Markup(u"""
+                    We do not have an email address for your account. However, your account
+                    is linked to <strong>{service}</strong> with the id <strong>{username}</strong>.
+                    You can use that to login.
+                    """.format(service=login_registry[extid.service].title, username=extid.username or extid.userid)))
+            else:
+                return render_message(title="Cannot reset password", message=Markup(
+                    u"""
+                    We do not have an email address for your account and therefore cannot
+                    email you a reset link. Please contact
+                    <a href="mailto:{email}">{email}</a> for assistance.
+                    """.format(email=escape(current_app.config['SITE_SUPPORT_EMAIL']))))
         resetreq = PasswordResetRequest(user=user)
         db.session.add(resetreq)
         send_password_reset_link(email=email, user=user, secret=resetreq.reset_code)
@@ -194,32 +200,33 @@ def reset():
     return render_form(form=form, title="Reset password", submit="Send reset code", ajax=True)
 
 
-# FIXME: Don't modify db on GET. Autosubmit via JS and process on POST
 @lastuser_oauth.route('/reset/<userid>/<secret>', methods=['GET', 'POST'])
 @load_model(User, {'userid': 'userid'}, 'user', kwargs=True)
 def reset_email(user, kwargs):
     resetreq = PasswordResetRequest.query.filter_by(user=user, reset_code=kwargs['secret']).first()
     if not resetreq:
         return render_message(title="Invalid reset link",
-            message=Markup("The reset link you clicked on is invalid."))
+            message=u"The reset link you clicked on is invalid.")
     if resetreq.created_at < datetime.utcnow() - timedelta(days=1):
         # Reset code has expired (> 24 hours). Delete it
         db.session.delete(resetreq)
         db.session.commit()
         return render_message(title="Expired reset link",
-            message=Markup("The reset link you clicked on has expired."))
+            message=u"The reset link you clicked on has expired.")
 
     # Logout *after* validating the reset request to prevent DoS attacks on the user
     logout_internal()
     # Reset code is valid. Now ask user to choose a new password
     form = PasswordResetForm()
-    form.user = user
+    form.edit_user = user
     if form.validate_on_submit():
         user.password = form.password.data
         db.session.delete(resetreq)
         db.session.commit()
         return render_message(title="Password reset complete", message=Markup(
-            u'Your password has been reset. You may now <a href="{}">login</a> with your new password.'.format(escape(url_for('.login')))))
+            u'Your password has been reset. You may now <a href="{loginurl}">login</a> with your new password.'.format(
+                loginurl=escape(url_for('.login')))))
     return render_form(form=form, title="Reset password", formid='reset', submit="Reset password",
-        message=Markup(u'Hello, <strong>{}</strong>. You may now choose a new password.'.format(user.fullname)),
+        message=Markup(u'Hello, <strong>{fullname}</strong>. You may now choose a new password.'.format(
+            fullname=escape(user.fullname))),
         ajax=True)

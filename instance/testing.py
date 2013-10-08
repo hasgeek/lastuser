@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import Markup
+from os import environ
 
 #: The title of this site
 SITE_TITLE = 'Lastuser'
@@ -15,14 +16,15 @@ GA_CODE = ''
 
 #: Database backend
 SQLALCHEMY_BINDS = {
-    'lastuser': 'sqlite:///test.db',
-    }
+    'lastuser': environ.get('SQLALCHEMY_DATABASE_URI', 'postgres://:@localhost:5432/lastuser_test_app'),
+}
+SQLALCHEMY_ECHO = False
 
 #: Cache type
 CACHE_TYPE = 'redis'
 
 #: Secret key
-SECRET_KEY = 'make this something random'
+SECRET_KEY = 'random_string_here'
 
 #: Timezone
 TIMEZONE = 'Asia/Calcutta'
@@ -44,17 +46,6 @@ RESERVED_USERNAMES = set([
     'register',
     'token',
     'organizations',
-    'embed',
-    'api',
-    'static',
-    '_baseframe',
-    'www',
-    'ftp',
-    'smtp',
-    'imap',
-    'pop',
-    'pop3',
-    'email',
     ])
 
 #: Mail settings
@@ -68,7 +59,7 @@ RESERVED_USERNAMES = set([
 #: DEFAULT_MAIL_SENDER : default None
 MAIL_FAIL_SILENTLY = False
 MAIL_SERVER = 'localhost'
-DEFAULT_MAIL_SENDER = 'Lastuser <test@example.com>'
+DEFAULT_MAIL_SENDER = ('Lastuser', 'test@example.com')
 MAIL_DEFAULT_SENDER = DEFAULT_MAIL_SENDER  # For new versions of Flask-Mail
 
 #: Logging: recipients of error emails
@@ -95,14 +86,9 @@ RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_OPTIONS = ''
 
 #: SMS gateways
-#: SMSGupShup support is deprecated
 SMS_SMSGUPSHUP_MASK = ''
 SMS_SMSGUPSHUP_USER = ''
 SMS_SMSGUPSHUP_PASS = ''
-#: Exotel support is active
-SMS_EXOTEL_SID = ''
-SMS_EXOTEL_TOKEN = ''
-SMS_FROM = ''
 
 #: Messages (text or HTML)
 MESSAGE_FOOTER = Markup('Copyright &copy; <a href="http://hasgeek.com/">HasGeek</a>. Powered by <a href="https://github.com/hasgeek/lastuser" title="GitHub project page">Lastuser</a>, open source software from <a href="https://github.com/hasgeek">HasGeek</a>.')
@@ -115,4 +101,3 @@ ORG_TITLE_REASON = u"Your organization’s given name, preferably without legal 
 ORG_DESCRIPTION_REASON = u"A few words about your organization (optional). Plain text only"
 LOGIN_MESSAGE_1 = ""
 LOGIN_MESSAGE_2 = ""
-SMS_VERIFICATION_TEMPLATE = 'Your verification code is {code}. If you did not request this, please ignore.'

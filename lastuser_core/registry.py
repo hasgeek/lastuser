@@ -52,7 +52,7 @@ class ResourceRegistry(OrderedDict):
                     if not token:
                         # No token provided in Authorization header or in request parameters
                         return resource_auth_error(u"An access token is required to access this resource.")
-                authtoken = AuthToken.query.filter_by(token=token).first()
+                authtoken = AuthToken.get(token=token)
                 if not authtoken:
                     return resource_auth_error(u"Unknown access token.")
                 if name not in authtoken.scope:

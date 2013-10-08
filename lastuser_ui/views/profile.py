@@ -25,9 +25,11 @@ def profile():
 def change_password():
     if g.user.pw_hash is None:
         form = PasswordResetForm()
+        form.edit_user = g.user
         del form.username
     else:
         form = PasswordChangeForm()
+        form.edit_user = g.user
     if form.validate_on_submit():
         g.user.password = form.password.data
         db.session.commit()
@@ -62,8 +64,9 @@ def remove_email(md5sum):
         return render_redirect(url_for('.profile'), code=303)
     if request.method == 'POST':
         user_data_changed.send(g.user, changes=['email-delete'])
-    return render_delete_sqla(useremail, db, title=u"Confirm removal", message="Remove email address {}?".format(useremail),
-        success=u"You have removed your email address {}.".format(useremail),
+    return render_delete_sqla(useremail, db, title=u"Confirm removal", message=u"Remove email address {email}?".format(
+            email=useremail.email),
+        success=u"You have removed your email address {email}.".format(email=useremail.email),
         next=url_for('.profile'))
 
 
@@ -90,8 +93,9 @@ def remove_phone(number):
         userphone = UserPhoneClaim.query.filter_by(phone=number, user=g.user).first_or_404()
     if request.method == 'POST':
         user_data_changed.send(g.user, changes=['phone-delete'])
-    return render_delete_sqla(userphone, db, title=u"Confirm removal", message="Remove phone number {}?".format(userphone),
-        success=u"You have removed your number {}.".format(userphone),
+    return render_delete_sqla(userphone, db, title=u"Confirm removal", message=u"Remove phone number {phone}?".format(
+            phone=userphone.phone),
+        success=u"You have removed your number {phone}.".format(phone=userphone.phone),
         next=url_for('.profile'))
 
 

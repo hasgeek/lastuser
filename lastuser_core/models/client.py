@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from coaster import newid, newsecret
 
 from . import db, BaseMixin
@@ -90,6 +91,15 @@ class Client(BaseMixin, db.Model):
             perms.add('new-resource')
         return perms
 
+    @classmethod
+    def get(cls, key):
+        """
+        Return a Client identified by its client key. Only returns active clients.
+
+        :param str key: Client key to lookup
+        """
+        return cls.query.filter_by(key=key, active=True).first()
+
 
 class UserFlashMessage(BaseMixin, db.Model):
     """
@@ -131,6 +141,23 @@ class Resource(BaseMixin, db.Model):
             perms.add('new-action')
         return perms
 
+    @classmethod
+    def get(cls, name):
+        """
+        Return a Resource with the given name.
+
+        :param str name: Name of the resource.
+        """
+        return cls.query.filter_by(name=name).first()
+
+    def get_action(self, name):
+        """
+        Return a ResourceAction on this Resource with the given name.
+
+        :param str name: Name of the action
+        """
+        return ResourceAction.get(name=name, resource=self)
+
 
 class ResourceAction(BaseMixin, db.Model):
     """
@@ -155,6 +182,16 @@ class ResourceAction(BaseMixin, db.Model):
             perms.add('edit')
             perms.add('delete')
         return perms
+
+    @classmethod
+    def get(cls, name, resource):
+        """
+        Return a ResourceAction on the specified resource with the specified name.
+
+        :param str name: Name of the action
+        :param Resource resource: Resource on which this action exists
+        """
+        return cls.query.filter_by(name=name, resource=resource).first()
 
 
 class AuthCode(BaseMixin, db.Model):
@@ -249,7 +286,7 @@ class AuthToken(BaseMixin, db.Model):
         elif value in ['hmac-sha-1', 'hmac-sha-256']:
             self._algorithm = value
         else:
-            raise ValueError(u"Unrecognized algorithm '{}'".format(value))
+            raise ValueError(u"Unrecognized algorithm ‘{value}’".format(value=value))
 
     algorithm = db.synonym('_algorithm', descriptor=algorithm)
 
@@ -275,6 +312,15 @@ class AuthToken(BaseMixin, db.Model):
                         break
             if merge_performed is False:
                 token.user = newuser  # Reassign this token to newuser
+
+    @classmethod
+    def get(cls, token):
+        """
+        Return an AuthToken with the matching token.
+
+        :param str token: Token to lookup
+        """
+        return cls.query.filter_by(token=token).first()
 
 
 class Permission(BaseMixin, db.Model):
@@ -314,6 +360,29 @@ class Permission(BaseMixin, db.Model):
             perms.add('delete')
         return perms
 
+    @classmethod
+    def get(cls, name, user=None, org=None, allusers=False):
+        """
+        Get a permission with the given name and owned by the given user or org,
+        or a permission available to all users.
+
+        :param str name: Name of the permission
+        :param User user: User who owns this permission
+        :param Organization org: Organization which owns this permission
+        :param bool allusers: Whether resources that belong to all users should be returned
+
+        One of ``user`` and ``org`` must be specified, unless ``allusers`` is ``True``.
+        """
+        if allusers:
+            return cls.query.filter_by(name=name, allusers=True).first()
+        else:
+            if not bool(user) ^ bool(org):
+                raise TypeError("Either user or org should be specified")
+            if user is not None:
+                return cls.query.filter_by(name=name, user=user).first()
+            else:
+                return cls.query.filter_by(name=name, org=org).first()
+
 
 # This model's name is in plural because it defines multiple permissions within each instance
 class UserClientPermissions(BaseMixin, db.Model):
@@ -333,10 +402,12 @@ class UserClientPermissions(BaseMixin, db.Model):
     # Only one assignment per user and client
     __table_args__ = (db.UniqueConstraint("user_id", "client_id"), {})
 
+    # Used by lastuser_ui/client_info.html
     @property
     def pickername(self):
         return self.user.pickername
 
+    # Used by lastuser_ui/client_info.html for url_for
     @property
     def userid(self):
         return self.user.userid
@@ -377,10 +448,12 @@ class TeamClientPermissions(BaseMixin, db.Model):
     # Only one assignment per team and client
     __table_args__ = (db.UniqueConstraint("team_id", "client_id"), {})
 
+    # Used by lastuser_ui/client_info.html
     @property
     def pickername(self):
         return self.team.pickername
 
+    # Used by lastuser_ui/client_info.html for url_for
     @property
     def userid(self):
         return self.team.userid

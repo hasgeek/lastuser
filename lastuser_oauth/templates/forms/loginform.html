@@ -6,7 +6,7 @@
   {% if loginform.csrf_token.errors %}
     {% for error in loginform.csrf_token.errors %}<div class="error">{{ error }}</div>{% endfor %}
   {% endif %}
-  {{ renderfield(loginform.username, "small", tabindex='1', autofocus=True, sidetext=Markup('<a href="' + url_for('.register', next=request.args.get('next', request.url)) + '">Create a new account?</a>')) }}
+  {{ renderfield(loginform.username, "small", tabindex='1', autofocus=True, sidetext=Markup('<a href="' + url_for('.register') + '">Create a new account?</a>')) }}
   {{ renderfield(loginform.password, "small", tabindex='2', sidetext=Markup('<a href="' + url_for('.reset') + '">Forgot password?</a>')) }}
   {{ rendersubmit([(None, "Login", 'btn-primary')], "small", tabindex='3') }}
 </form>

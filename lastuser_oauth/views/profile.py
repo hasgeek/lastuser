@@ -17,6 +17,7 @@ from .helpers import requires_login
 @requires_login
 def profile_edit(newprofile=False):
     form = ProfileForm(obj=g.user)
+    form.edit_user = g.user
     form.fullname.description = current_app.config.get('FULLNAME_REASON')
     form.email.description = current_app.config.get('EMAIL_REASON')
     form.username.description = current_app.config.get('USERNAME_REASON')
@@ -54,12 +55,14 @@ def profile_edit(newprofile=False):
             return render_redirect(url_for('profile'), code=303)
     if newprofile:
         return render_form(form, title="Update profile", formid="profile_new", submit="Continue",
-            message=u"Hello, {}. Please spare a minute to fill out your profile.".format(g.user.fullname),
+            message=Markup(u"Hello, <strong>{fullname}</strong>. Please spare a minute to fill out your profile.".format(
+                fullname=escape(g.user.fullname))),
             ajax=True)
     else:
         return render_form(form, title="Edit profile", formid="profile_edit", submit="Save changes", ajax=True)
 
 
+# FIXME: Don't modify db on GET. Autosubmit via JS and process on POST
 @lastuser_oauth.route('/confirm/<md5sum>/<secret>')
 @requires_login
 def confirm_email(md5sum, secret):
@@ -75,12 +78,13 @@ def confirm_email(md5sum, secret):
                 if claimed_user != g.user:
                     return render_message(title="Email address already claimed",
                         message=Markup(
-                            u"The email address <code>{}</code> has already been verified by another user.".format(
-                                escape(claimed_email))))
+                            u"The email address <code>{email}</code> has already been verified by another user.".format(
+                                email=escape(claimed_email))))
                 else:
                     return render_message(title="Email address already verified",
-                        message=Markup(u"Hello {}! Your email address <code>{}</code> has already been verified.".format(
-                            escape(claimed_user.fullname), escape(claimed_email))))
+                        message=Markup(u"Hello <strong>{fullname}</strong>! "
+                            u"Your email address <code>{email}</code> has already been verified.".format(
+                                fullname=escape(claimed_user.fullname), email=escape(claimed_email))))
 
             useremail = emailclaim.user.add_email(emailclaim.email.lower(), primary=emailclaim.user.email is None)
             db.session.delete(emailclaim)
@@ -89,8 +93,9 @@ def confirm_email(md5sum, secret):
             db.session.commit()
             user_data_changed.send(g.user, changes=['email'])
             return render_message(title="Email address verified",
-                message=Markup(u"Hello {}! Your email address <code>{}</code> has now been verified.".format(
-                    escape(emailclaim.user.fullname), escape(useremail.email))))
+                message=Markup(u"Hello <strong>{fullname}</strong>! "
+                    u"Your email address <code>{email}</code> has now been verified.".format(
+                        fullname=escape(emailclaim.user.fullname), email=escape(useremail.email))))
         else:
             return render_message(
                 title="That was not for you",
@@ -101,5 +106,5 @@ def confirm_email(md5sum, secret):
     else:
         return render_message(
             title="Expired confirmation link",
-            message="The confirmation link you clicked on is either invalid or has expired.",
+            message=u"The confirmation link you clicked on is either invalid or has expired.",
             code=404)

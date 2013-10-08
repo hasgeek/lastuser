@@ -2,11 +2,10 @@ import os
 from datetime import datetime, timedelta
 from functools import wraps
 from urllib import unquote
-from urllib2 import urlopen, URLError
 from pytz import common_timezones
-from flask import g, current_app, request, session, flash, redirect, url_for, json, Response
+from flask import g, current_app, request, session, flash, redirect, url_for, Response
 from coaster.views import get_current_url
-from lastuser_core.models import db, User, Client, USER_STATUS
+from lastuser_core.models import db, User, Client
 from lastuser_core.signals import user_login, user_logout, user_registered
 from .. import lastuser_oauth
 
@@ -21,7 +20,7 @@ def lookup_current_user():
     """
     g.user = None
     if 'userid' in session:
-        g.user = User.query.filter_by(userid=session['userid'], status=USER_STATUS.ACTIVE).first()
+        g.user = User.get(userid=session['userid'])
 
 
 @lastuser_oauth.after_app_request
@@ -97,8 +96,8 @@ def _client_login_inner():
     if request.authorization is None:
         return Response(u"Client credentials required.", 401,
             {'WWW-Authenticate': 'Basic realm="Client credentials"'})
-    client = Client.query.filter_by(key=request.authorization.username).first()
-    if client is None or not client.active or not client.secret_is(request.authorization.password):
+    client = Client.get(key=request.authorization.username)
+    if client is None or not client.secret_is(request.authorization.password):
         return Response(u"Invalid client credentials.", 401,
             {'WWW-Authenticate': 'Basic realm="Client credentials"'})
     g.client = client
