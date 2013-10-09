@@ -57,7 +57,7 @@ def get_user_extid(service, userdata):
     extid = getextid(service=service, userid=userdata['userid'])
 
     useremail = None
-    if 'email' in userdata:
+    if userdata.get('email'):
         useremail = UserEmail.get(email=userdata['email'])
 
     user = None
