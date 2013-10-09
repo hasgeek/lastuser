@@ -28,7 +28,7 @@ def getuser(name):
             # No verified email id. Look for an unverified id; return first found
             results = UserEmailClaim.all(email=name)
             if results and results[0].user.is_active:
-                return useremail.user
+                return results[0].user
             return None
     else:
         return User.get(username=name)
