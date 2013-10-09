@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from flask import g
 import wtforms
 import wtforms.fields.html5
 from baseframe.forms import Form, ValidEmailDomain
