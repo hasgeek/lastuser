@@ -383,7 +383,7 @@ def resource_phone(authtoken, args, files=None):
 
 
 @lastuser_oauth.route('/api/1/login/providers')
-@resource_registry.resource('user/externalids', u"Read user's login providers' data")
+@resource_registry.resource('user/externalids', u"Read user's login providers' data", trusted=True)
 def resource_login_providers(authtoken, args, files=None):
     """
     Return user's login providers' data.
