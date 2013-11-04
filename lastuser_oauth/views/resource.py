@@ -393,10 +393,11 @@ def resource_login_providers(authtoken, args, files=None):
     for extid in authtoken.user.externalids:
         if service is None or extid.service == service:
             response[extid.service] = {
-                "userid": unicode(extid.username),
+                "userid": unicode(extid.userid),
                 "username": unicode(extid.username),
                 "oauth_token": unicode(extid.oauth_token),
-                "oauth_token_secret": unicode(extid.oauth_token_secret)
+                "oauth_token_secret": unicode(extid.oauth_token_secret),
+                "oauth_token_type": unicode(extid.oauth_token_type)
             }
     return response
 
