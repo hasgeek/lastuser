@@ -382,6 +382,26 @@ def resource_phone(authtoken, args, files=None):
         return {'phone': unicode(authtoken.user.phone)}
 
 
+@lastuser_oauth.route('/api/1/login/providers')
+@resource_registry.resource('login/providers', u'Read Login Providers\' data')
+def resource_login_providers(authtoken, args, files=None):
+    """
+    Return user's Login Providers' data.
+    """
+    service = args.get('service')
+    response = {}
+    for extid in authtoken.user.externalids:
+        if service is None or extid.service == service:
+            print service, extid.__dict__
+            response[service] = {
+                "userid": unicode(extid.username),
+                "username": unicode(extid.username),
+                "oauth_token": unicode(extid.oauth_token),
+                "oauth_token_secret": unicode(extid.oauth_token_secret)
+            }
+    return response
+
+
 @lastuser_oauth.route('/api/1/organizations')
 @resource_registry.resource('organizations', u'Read the organizations you are a member of')
 def resource_organizations(authtoken, args, files=None):
