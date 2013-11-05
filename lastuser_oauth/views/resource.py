@@ -382,7 +382,7 @@ def resource_phone(authtoken, args, files=None):
         return {'phone': unicode(authtoken.user.phone)}
 
 
-@lastuser_oauth.route('/api/1/login/providers')
+@lastuser_oauth.route('/api/1/user/externalids')
 @resource_registry.resource('user/externalids', u"Read user's login providers' data", trusted=True)
 def resource_login_providers(authtoken, args, files=None):
     """
