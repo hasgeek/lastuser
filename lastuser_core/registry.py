@@ -21,7 +21,7 @@ class ResourceRegistry(OrderedDict):
     """
     Dictionary of resources
     """
-    def resource(self, name, description=None):
+    def resource(self, name, description=None, trusted=False):
         """
         Decorator for resource functions.
         """
@@ -57,6 +57,8 @@ class ResourceRegistry(OrderedDict):
                     return resource_auth_error(u"Unknown access token.")
                 if name not in authtoken.scope:
                     return resource_auth_error(u"Token does not provide access to this resource.")
+                if trusted and not authtoken.client.trusted:
+                    return resource_auth_error(u"This resource can only be accessed by trusted clients")
                 # All good. Return the result value
                 try:
                     result = f(authtoken, args, request.files)
