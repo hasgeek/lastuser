@@ -101,7 +101,7 @@
 </table>
 {%- if client.owner_is(g.user) %}
 <p>
-  <a class="btn btn-sm btn-info" href="{{ url_for('.resource_new', key=client.key) }}">New resource</a>
+  <a class="btn btn-info" href="{{ url_for('.resource_new', key=client.key) }}">New resource</a>
 </p>
 {%- endif %}
 {% if client.owner_is(g.user) %}
