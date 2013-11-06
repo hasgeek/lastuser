@@ -87,23 +87,23 @@
           <td class="separator"></td>
           <td colspan="5" class="separator">
             <a class="btn btn-sm btn-info" href="{{ url_for('.resource_action_new', key=client.key, idr=resource.id) }}">Add action</a>
-            <a class="btn btn-sm btn-info" href="{{ url_for('.resource_new', key=client.key) }}">Add resource</a>
           </td>
         </tr>
       {% endif %}
     {% else %}
       <tr>
         <td colspan="6">
-          {%- if client.owner_is(g.user) %}
-            <a class="btn btn-sm btn-info" href="{{ url_for('.resource_new', key=client.key) }}">New resource</a>
-          {%- else %}
-            <em>(This application does not provide any resources)</em>
-          {%- endif %}
+          <em>(This application does not provide any resources)</em>
         </td>
       </tr>
     {% endfor %}
   </tbody>
 </table>
+{%- if client.owner_is(g.user) %}
+<p>
+  <a class="btn btn-sm btn-info" href="{{ url_for('.resource_new', key=client.key) }}">New resource</a>
+</p>
+{%- endif %}
 {% if client.owner_is(g.user) %}
   <h2>Permissions</h2>
   <p>
