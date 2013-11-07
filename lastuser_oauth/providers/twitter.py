@@ -56,7 +56,10 @@ class TwitterProvider(LoginProvider):
 
         # Try to read more from the user's Twitter profile
         auth = TwitterOAuthHandler(self.consumer_key, self.consumer_secret)
-        auth.set_access_token(self.access_key, self.access_secret)
+        if self.access_key is not None and self.access_secret is not None:
+            auth.set_access_token(self.access_key, self.access_secret)
+        else:
+            auth.set_access_token(resp['oauth_token'], resp['oauth_token_secret'])
         api = TwitterAPI(auth)
         try:
             twinfo = api.lookup_users(user_ids=[resp['user_id']])[0]
