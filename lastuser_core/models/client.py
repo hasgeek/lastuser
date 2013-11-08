@@ -4,6 +4,7 @@ from coaster import newid, newsecret
 from coaster.utils import namespace_from_url
 
 from . import db, BaseMixin
+from coaster.sqlalchemy import BaseScopedNameMixin
 from .user import User, Organization, Team
 
 __all__ = ['Client', 'UserFlashMessage', 'Resource', 'ResourceAction', 'AuthCode', 'AuthToken',
@@ -122,7 +123,7 @@ class UserFlashMessage(BaseMixin, db.Model):
     message = db.Column(db.Unicode(250), nullable=False)
 
 
-class Resource(BaseMixin, db.Model):
+class Resource(BaseScopedNameMixin, db.Model):
     """
     Resources are provided by client applications. Other client applications
     can request access to user data at resource servers by providing the
@@ -135,11 +136,12 @@ class Resource(BaseMixin, db.Model):
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('resources', cascade="all, delete-orphan"))
+    parent = db.synonym('client')
     title = db.Column(db.Unicode(250), nullable=False)
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
     siteresource = db.Column(db.Boolean, default=False, nullable=False)
     trusted = db.Column(db.Boolean, default=False, nullable=False)
-    __table_args__ = (db.UniqueConstraint('name', 'client_id'), {})
+    __table_args__ = (db.UniqueConstraint('name', 'client_id', name='resource_name_client_id_key'),)
 
     def permissions(self, user, inherited=None):
         perms = super(Resource, self).permissions(user, inherited)
