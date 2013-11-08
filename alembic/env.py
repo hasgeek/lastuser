@@ -18,7 +18,7 @@ fileConfig(config.config_file_name)
 from flask import current_app
 with current_app.app_context():
     # set the database url
-    config.set_main_option('sqlalchemy.url', current_app.config.get('SQLALCHEMY_DATABASE_URI'))
+    config.set_main_option('sqlalchemy.url', current_app.config.get('SQLALCHEMY_BINDS').get('lastuser'))
     flask_app = __import__('%s' % (current_app.name), fromlist=[current_app.name])
 
 db_obj_name = config.get_main_option("flask_sqlalchemy")
