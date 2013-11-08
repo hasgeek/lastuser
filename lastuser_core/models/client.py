@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from coaster import newid, newsecret
+from coaster.utils import namespace_from_url
 
 from . import db, BaseMixin
 from .user import User, Organization, Team
@@ -69,6 +70,12 @@ class Client(BaseMixin, db.Model):
             return self.org.pickername
         else:
             raise AttributeError("This client has no owner")
+    @property
+    def namespace(self):
+        """
+        Return dotted namespace of the client.
+        """
+        return namespace_from_url(self.website)
 
     def owner_is(self, user):
         if not user:
@@ -124,7 +131,7 @@ class Resource(BaseMixin, db.Model):
     __tablename__ = 'resource'
     __bind_key__ = 'lastuser'
     # Resource names are unique across client apps
-    name = db.Column(db.Unicode(20), unique=True, nullable=False)
+    name = db.Column(db.Unicode(20), nullable=False)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('resources', cascade="all, delete-orphan"))
@@ -132,6 +139,7 @@ class Resource(BaseMixin, db.Model):
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
     siteresource = db.Column(db.Boolean, default=False, nullable=False)
     trusted = db.Column(db.Boolean, default=False, nullable=False)
+    __table_args__ = (db.UniqueConstraint('name', 'client_id'), {})
 
     def permissions(self, user, inherited=None):
         perms = super(Resource, self).permissions(user, inherited)
