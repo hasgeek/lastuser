@@ -53,6 +53,8 @@ class Client(BaseMixin, db.Model):
     #: When a single provider provides multiple services, each can be declared
     #: as a trusted client to provide single sign-in across the services
     trusted = db.Column(db.Boolean, nullable=False, default=False)
+    #: Namespace: determines inter-app resource access
+    namespace = db.Column(db.String(250), nullable=True)
 
     def secret_is(self, candidate):
         """
@@ -71,12 +73,6 @@ class Client(BaseMixin, db.Model):
             return self.org.pickername
         else:
             raise AttributeError("This client has no owner")
-    @property
-    def namespace(self):
-        """
-        Return dotted namespace of the client.
-        """
-        return namespace_from_url(self.website)
 
     def owner_is(self, user):
         if not user:
