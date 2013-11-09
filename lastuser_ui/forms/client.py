@@ -41,6 +41,8 @@ class RegisterClientForm(Form):
     resource_uri = wtforms.fields.html5.URLField('Resource URL', validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
         description="URL at which this application provides resources as per the Lastuser Resource API "
             "(not yet implemented)")
+    namespace = wtforms.TextField('Client Namespace', validators=[wtforms.validators.Required()],
+        description="A dot-based namespace that uniquely identifies your client application and provides external clients access to resources.")
     allow_any_login = wtforms.BooleanField('Allow anyone to login', default=True,
         description="If your application requires access to be restricted to specific users, uncheck this, "
             "and only users who have been assigned a permission to the app will be able to login")
