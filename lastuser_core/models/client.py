@@ -54,7 +54,7 @@ class Client(BaseMixin, db.Model):
     #: as a trusted client to provide single sign-in across the services
     trusted = db.Column(db.Boolean, nullable=False, default=False)
     #: Namespace: determines inter-app resource access
-    namespace = db.Column(db.String(250), nullable=True)
+    namespace = db.Column(db.String(250), nullable=True, unique=True)
 
     def secret_is(self, candidate):
         """
