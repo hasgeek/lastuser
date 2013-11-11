@@ -113,7 +113,7 @@ def token_verify():
     if not authtoken:
         # No such auth token
         return api_result('error', error='no_token')
-    if client_resource not in authtoken.scope:
+    if g.client.namespace + ':' + client_resource not in authtoken.scope:
         # Token does not grant access to this resource
         return api_result('error', error='access_denied')
     if '/' in client_resource:
