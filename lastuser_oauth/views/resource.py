@@ -189,7 +189,7 @@ def sync_resources(resources):
             action.name = parts[1]
             action.title = parts[1].title() + " " + resource.title
             db.session.add(action)
-        action.description = resources[name]['description']
+        action.description = resources[name]['description'] or u''
 
     # Deleting resources & actions not defined in client application.
     for resource_name in actions_list:
