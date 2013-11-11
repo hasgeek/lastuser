@@ -27,7 +27,13 @@ def verifyscope(scope, client):
 
     for item in scope:
         if item not in resource_registry:  # Validation is only required for non-internal resources
-            # Validation 1: resource/action is properly formatted
+            # Validation 1: namespace:resource/action is properly formatted
+            if ':' not in item:
+                raise ScopeException(u"Resource is non-internal. No namespace specified for ‘{scope}’ in scope".format(scope=item))
+            itemparts = item.split(':')
+            if len(itemparts) != 2:
+                raise ScopeException(u"Too many : characters in ‘{scope}’ in scope".format(scope=item))
+            namespace, item = itemparts[0], itemparts[1]
             if '/' in item:
                 parts = item.split('/')
                 if len(parts) != 2:
@@ -36,20 +42,17 @@ def verifyscope(scope, client):
             else:
                 resource_name = item
                 action_name = None
-            resource = Resource.query.filter_by(name=resource_name).first()
-            # Validation 2: Resource exists
+            client = Client.query.filter_by(namespace=namespace).first()
+            resource = Resource.query.filter_by(name=resource_name, client=client).first()
+            # Validation 2: Resource exists & client has access to it
             if not resource:
-                raise ScopeException(u"Unknown resource ‘{resource}’ in scope".format(resource=resource_name))
-            # Validation 3: Client has access to resource
-            if resource.trusted and not client.trusted:
-                raise ScopeException(
-                    u"This application does not have access to resource ‘{resource}’ in scope".format(resource=resource_name))
-            # Validation 4: Action is valid
+                raise ScopeException(u"Unknown resource ‘{resource}’ under namespace ’{namespace}’ in scope".format(resource=resource_name, namespace=namespace))
+            # Validation 3: Action is valid
             if action_name:
                 action = ResourceAction.query.filter_by(name=action_name, resource=resource).first()
                 if not action:
-                    raise ScopeException(u"Unknown action ‘{action}’ on resource ‘{resource}’".format(
-                        action=action_name, resource=resource_name))
+                    raise ScopeException(u"Unknown action ‘{action}’ on resource ‘{resource}’ under namespace ’{namespace}’".format(
+                        action=action_name, resource=resource_name, namespace=namespace))
                 resources.setdefault(resource, []).append(action)
             else:
                 resources.setdefault(resource, [])
