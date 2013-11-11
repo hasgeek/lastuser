@@ -8,10 +8,12 @@ from coaster.views import jsonp, requestargs
 
 from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Resource,
     ResourceAction, UserClientPermissions, TeamClientPermissions, USER_STATUS,
-    UserExternalId, UserEmail)
+    UserExternalId, UserEmail, Client)
 from lastuser_core import resource_registry
 from .. import lastuser_oauth
 from .helpers import requires_client_login, requires_user_or_client_login
+
+import simplejson as json
 
 
 defer_cols_user = (
@@ -146,6 +148,58 @@ def token_verify():
         'trusted': authtoken.client.trusted,
         }
     return api_result('ok', **params)
+
+
+@lastuser_oauth.route('/api/1/resource/sync', methods=['POST'])
+@requires_client_login
+@requestargs('resources')
+def sync_resources(resources):
+    resources = json.loads(resources)
+    client = Client.get(key=request.authorization.username)
+
+    resources_list = []
+    actions_list = {}
+
+    for name in resources:
+        if '/' in name:
+            parts = name.split('/')
+            if len(parts) != 2:
+                results['errors'][name] = "Invalid scope %s" % name
+            resource_name, action_name = parts
+        else:
+            resource_name = name
+            action_name = None
+        if resource_name not in resources_list:
+            resources_list.append(resource_name)
+        if resource_name not in actions_list:
+            actions_list[resource_name] = []
+        if action_name not in actions_list[resource_name]:
+            actions_list[resource_name].append(action_name)
+        resource = Resource.query.filter_by(client=client, name=parts[0]).first()
+        if not resource:
+            resource = Resource()
+            resource.client = client
+            resource.name = parts[0]
+            resource.title = parts[0].title()
+            db.session.add(resource)
+        action = ResourceAction.query.filter_by(resource=resource, name=parts[1]).first()
+        if not action:
+            action = ResourceAction()
+            action.resource = resource
+            action.name = parts[1]
+            action.title = parts[1].title() + " " + resource.title
+            db.session.add(action)
+        action.description = resources[name]['description']
+
+    # Deleting resources & actions not defined in client application.
+    for resource_name in actions_list:
+        resource = Resource.query.filter_by(name=resource_name).first()
+        ResourceAction.query.filter(~ResourceAction.name.in_(actions_list[resource_name]), ResourceAction.resource==resource).delete(synchronize_session='fetch')
+    Resource.query.filter(~Resource.name.in_(resources_list), Resource.client==client).delete(synchronize_session='fetch')
+
+    db.session.commit()
+    
+    return api_result('ok')
 
 
 @lastuser_oauth.route('/api/1/user/get_by_userid', methods=['GET', 'POST'])
