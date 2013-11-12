@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import urllib2
+from urlparse import urlparse
 
 import wtforms
 import wtforms.fields.html5
@@ -61,20 +61,21 @@ class RegisterClientForm(Form):
             self.user = None
             self.org = orgs[0]
 
-    def _check_netloc(self, url1, url2):
-        return urllib2.urlparse.urlparse(url1).netloc == urllib2.urlparse.urlparse(url2).netloc
+    def _check_domain(self, url1, url2):
+        parsed_url1_uri, parsed_url2_uri = urlparse(url1), urlparse(url2)
+        return parsed_url1_uri.netloc == parsed_url2_uri.netloc and parsed_url1_uri.scheme == parsed_url2_uri.scheme
 
     def validate_redirect_uri(self, field):
-        if not self._check_netloc(self.website.data, field.data):
-            raise wtforms.ValidationError("Website and redirect domain doesn't match")
+        if not self._check_domain(self.website.data, field.data):
+            raise wtforms.ValidationError("Website and redirect domains don't match")
 
     def validate_notification_uri(self, field):
-        if not self._check_netloc(self.website.data, field.data):
-            raise wtforms.ValidationError("Website and notification domain doesn't match")
+        if not self._check_domain(self.website.data, field.data):
+            raise wtforms.ValidationError("Website and notification domains don't match")
 
     def validate_resource_uri(self, field):
-        if not self._check_netloc(self.website.data, field.data):
-            raise wtforms.ValidationError("Website and resource domain doesn't match")
+        if not self._check_domain(self.website.data, field.data):
+            raise wtforms.ValidationError("Website and resource domains don't match")
 
 
 class PermissionForm(Form):
