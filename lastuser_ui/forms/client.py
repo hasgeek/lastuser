@@ -61,21 +61,23 @@ class RegisterClientForm(Form):
             self.user = None
             self.org = orgs[0]
 
-    def _check_domain(self, url1, url2):
-        parsed_url1_uri, parsed_url2_uri = urlparse(url1), urlparse(url2)
-        return parsed_url1_uri.netloc == parsed_url2_uri.netloc and parsed_url1_uri.scheme == parsed_url2_uri.scheme
+    def _urls_match(self, url1, url2):
+        p1 = urlparse(url1)
+        p2 = urlparse(url2)
+        return (p1.netloc == p2.netloc) and (p1.scheme == p2.scheme) and (
+            p1.username == p2.username) and (p1.password == p2.password)
 
     def validate_redirect_uri(self, field):
-        if not self._check_domain(self.website.data, field.data):
-            raise wtforms.ValidationError("Website and redirect domains don't match")
+        if not self._urls_match(self.website.data, field.data):
+            raise wtforms.ValidationError("The scheme, domain and port must match that of the website URL")
 
     def validate_notification_uri(self, field):
-        if not self._check_domain(self.website.data, field.data):
-            raise wtforms.ValidationError("Website and notification domains don't match")
+        if not self._urls_match(self.website.data, field.data):
+            raise wtforms.ValidationError("The scheme, domain and port must match that of the website URL")
 
     def validate_resource_uri(self, field):
-        if not self._check_domain(self.website.data, field.data):
-            raise wtforms.ValidationError("Website and resource domains don't match")
+        if not self._urls_match(self.website.data, field.data):
+            raise wtforms.ValidationError("The scheme, domain and port must match that of the website URL")
 
 
 class PermissionForm(Form):
