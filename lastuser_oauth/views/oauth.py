@@ -31,7 +31,7 @@ def verifyscope(scope, client):
             if '/' in item:
                 parts = item.split('/')
                 if len(parts) != 2:
-                    raise ScopeException("Too many / characters in '%s' in scope" % item)
+                    raise ScopeException(u"Too many / characters in ‘{scope}’ in scope".format(scope=item))
                 resource_name, action_name = parts
             else:
                 resource_name = item
@@ -39,16 +39,17 @@ def verifyscope(scope, client):
             resource = Resource.query.filter_by(name=resource_name).first()
             # Validation 2: Resource exists
             if not resource:
-                raise ScopeException("Unknown resource '%s' in scope" % resource_name)
+                raise ScopeException(u"Unknown resource ‘{resource}’ in scope".format(resource=resource_name))
             # Validation 3: Client has access to resource
             if resource.trusted and not client.trusted:
                 raise ScopeException(
-                    "This application does not have access to resource '%s' in scope" % resource_name)
+                    u"This application does not have access to resource ‘{resource}’ in scope".format(resource=resource_name))
             # Validation 4: Action is valid
             if action_name:
                 action = ResourceAction.query.filter_by(name=action_name, resource=resource).first()
                 if not action:
-                    raise ScopeException("Unknown action '%s' on resource '%s'" % (action_name, resource_name))
+                    raise ScopeException(u"Unknown action ‘{action}’ on resource ‘{resource}’".format(
+                        action=action_name, resource=resource_name))
                 resources.setdefault(resource, []).append(action)
             else:
                 resources.setdefault(resource, [])

@@ -4,46 +4,66 @@
 Adds support for texting Indian mobile numbers
 """
 
-from pytz import timezone
-from urllib2 import urlopen, URLError
-from urllib import urlencode
 from datetime import datetime
+from pytz import timezone
+import requests
+# from urllib2 import urlopen, URLError
+# from urllib import urlencode
 
 from flask import current_app, flash, request
 from lastuser_core.models import db, SMSMessage, SMS_STATUS
 from .. import lastuser_ui
 
 # SMS GupShup sends delivery reports with this timezone
-SMSGUPSHUP_TIMEZONE = timezone('Asia/Calcutta')
+SMSGUPSHUP_TIMEZONE = timezone('Asia/Kolkata')
 
 
 def send_message(msg):
-    if msg.phone_number.startswith('+91'):  # Indian number. Use SMS GupShup
+    if msg.phone_number.startswith('+91'):  # Indian number. Use Exotel
         if len(msg.phone_number) != 13:
             raise ValueError("Invalid Indian mobile number")
         # All okay. Send!
-        # TODO: Also check if we have SMS GupShup credentials in settings.py
-        params = urlencode(dict(
-            method='SendMessage',
-            send_to=msg.phone_number[1:],  # Number with leading +
-            msg=msg.message,
-            msg_type='TEXT',
-            format='text',
-            v='1.1',
-            auth_scheme='plain',
-            userid=current_app.config['SMS_SMSGUPSHUP_USER'],
-            password=current_app.config['SMS_SMSGUPSHUP_PASS'],
-            mask=current_app.config['SMS_SMSGUPSHUP_MASK']
-            ))
-        try:
-            response = urlopen('https://enterprise.smsgupshup.com/GatewayAPI/rest?%s' % params).read()
-            r_status, r_phone, r_id = [item.strip() for item in response.split('|')]
-            if r_status == 'success':
-                msg.status = SMS_STATUS.PENDING
-                msg.transaction_id = r_id
-        except URLError, e:
-            # FIXME: This function should not be sending messages to the UI
-            flash("Message could not be sent. Error: %s" % e)
+        if not (current_app.config.get('SMS_EXOTEL_SID') and current_app.config.get('SMS_EXOTEL_TOKEN')):
+            raise ValueError("Lastuser is not configured for SMS")
+        else:
+            sid = current_app.config['SMS_EXOTEL_SID']
+            token = current_app.config['SMS_EXOTEL_TOKEN']
+            r = requests.post('https://twilix.exotel.in/v1/Accounts/{sid}/Sms/send.json'.format(sid=sid),
+                auth=(sid, token),
+                data={
+                    'From': current_app.config.get('SMS_FROM'),
+                    'To': msg.phone_number,
+                    'Body': msg.message
+                })
+            if r.status_code in (200, 201):
+                # All good
+                msg.transaction_id = r.json().get('SMSMessage', {}).get('Sid')
+            else:
+                # FIXME: This function should not be sending messages to the UI
+                flash("Message could not be sent.", 'error')
+
+        # # TODO: Also check if we have SMS GupShup credentials in settings.py
+        # params = urlencode(dict(
+        #     method='SendMessage',
+        #     send_to=msg.phone_number[1:],  # Number with leading +
+        #     msg=msg.message,
+        #     msg_type='TEXT',
+        #     format='text',
+        #     v='1.1',
+        #     auth_scheme='plain',
+        #     userid=current_app.config['SMS_SMSGUPSHUP_USER'],
+        #     password=current_app.config['SMS_SMSGUPSHUP_PASS'],
+        #     mask=current_app.config['SMS_SMSGUPSHUP_MASK']
+        #     ))
+        # try:
+        #     response = urlopen('https://enterprise.smsgupshup.com/GatewayAPI/rest?%s' % params).read()
+        #     r_status, r_phone, r_id = [item.strip() for item in response.split('|')]
+        #     if r_status == 'success':
+        #         msg.status = SMS_STATUS.PENDING
+        #         msg.transaction_id = r_id
+        # except URLError, e:
+        #     # FIXME: This function should not be sending messages to the UI
+        #     flash("Message could not be sent. Error: %s" % e)
     else:
         # Unsupported at this time
         raise ValueError("Unsupported phone number")
@@ -51,8 +71,7 @@ def send_message(msg):
 
 def send_phone_verify_code(phoneclaim):
     msg = SMSMessage(phone_number=phoneclaim.phone,
-        message="Verification code: %s. If you did not request this, please report to us at %s." % (
-            phoneclaim.verification_code, current_app.config['SITE_SUPPORT_EMAIL']))
+        message=current_app.config['SMS_VERIFICATION_TEMPLATE'].format(code=phoneclaim.verification_code))
     # Now send this
     send_message(msg)
     db.session.add(msg)

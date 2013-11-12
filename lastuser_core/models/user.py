@@ -4,9 +4,10 @@ from hashlib import md5
 from werkzeug import check_password_hash, cached_property
 import bcrypt
 from sqlalchemy.ext.hybrid import hybrid_property
-from coaster import newid, newsecret, newpin
+from coaster import newid, newsecret, newpin, valid_username
 
 from . import db, TimestampMixin, BaseMixin
+
 
 __all__ = ['User', 'UserEmail', 'UserEmailClaim', 'PasswordResetRequest', 'UserExternalId',
            'UserPhone', 'UserPhoneClaim', 'Team', 'Organization', 'UserOldId', 'USER_STATUS', 'UserPastEmail']
@@ -34,14 +35,22 @@ class User(BaseMixin, db.Model):
         self.password = password
         super(User, self).__init__(**kwargs)
 
+    @property
+    def is_active(self):
+        return self.status == USER_STATUS.ACTIVE
+
     def _set_password(self, password):
         if password is None:
             self.pw_hash = None
         else:
-            self.pw_hash = bcrypt.hashpw(password, bcrypt.gensalt())
+            self.pw_hash = bcrypt.hashpw(
+                password.encode('utf-8') if isinstance(password, unicode) else password,
+                bcrypt.gensalt())
 
+    #: Write-only property (passwords cannot be read back in plain text)
     password = property(fset=_set_password)
 
+    #: Username (may be null)
     @hybrid_property
     def username(self):
         return self._username
@@ -54,10 +63,14 @@ class User(BaseMixin, db.Model):
             self._username = value
 
     def is_valid_username(self, value):
-        existing = User.query.filter_by(username=value).first()
+        if not valid_username(value):
+            return False
+        existing = User.query.filter(db.or_(
+            User.username == value,
+            User.userid == value)).first()  # Avoid User.get to skip status check
         if existing and existing.id != self.id:
             return False
-        existing = Organization.query.filter_by(name=value).first()
+        existing = Organization.get(name=value)
         if existing:
             return False
         return True
@@ -68,10 +81,13 @@ class User(BaseMixin, db.Model):
         if self.pw_hash.startswith('sha1$'):
             return check_password_hash(self.pw_hash, password)
         else:
-            return bcrypt.hashpw(password, self.pw_hash) == self.pw_hash
+            return bcrypt.hashpw(
+                password.encode('utf-8') if isinstance(password, unicode) else password,
+                self.pw_hash) == self.pw_hash
 
     def __repr__(self):
-        return '<User %s "%s">' % (self.username or self.userid, self.fullname)
+        return u'<User {username} "{fullname}">'.format(username=self.username or self.userid,
+            fullname=self.fullname)
 
     def profileid(self):
         if self.username:
@@ -85,7 +101,7 @@ class User(BaseMixin, db.Model):
     @property
     def pickername(self):
         if self.username:
-            return '%s (~%s)' % (self.fullname, self.username)
+            return u'{fullname} (~{username})'.format(fullname=self.fullname, username=self.username)
         else:
             return self.fullname
 
@@ -108,7 +124,7 @@ class User(BaseMixin, db.Model):
             db.session.add(user_past_email)
             db.session.delete(useremail)
         if setprimary:
-            for emailob in UserEmail.query.filter_by(user_id=self.id).all():
+            for emailob in UserEmail.query.filter_by(user=self).all():
                 if emailob is not useremail:
                     emailob.primary = True
                     break
@@ -132,6 +148,27 @@ class User(BaseMixin, db.Model):
         # This user has no email address. Return a blank string instead of None
         # to support the common use case, where the caller will use unicode(user.email)
         # to get the email address as a string.
+        return u''
+
+    @cached_property
+    def phone(self):
+        """
+        Returns primary phone number for user.
+        """
+        # Look for a primary address
+        userphone = UserPhone.query.filter_by(user=self, primary=True).first()
+        if userphone:
+            return userphone
+        # No primary? Maybe there's one that's not set as primary?
+        userphone = UserPhone.query.filter_by(user=self).first()
+        if userphone:
+            # XXX: Mark at primary. This may or may not be saved depending on
+            # whether the request ended in a database commit.
+            userphone.primary = True
+            return userphone
+        # This user has no phone number. Return a blank string instead of None
+        # to support the common use case, where the caller will use unicode(user.phone)
+        # to get the phone number as a string.
         return u''
 
     def organizations(self):
@@ -161,6 +198,32 @@ class User(BaseMixin, db.Model):
         """
         return bool(self.fullname and self.username and self.email)
 
+    @classmethod
+    def get(cls, username=None, userid=None):
+        """
+        Return a User with the given username or userid.
+
+        :param str username: Username to lookup
+        :param str userid: Userid to lookup
+        """
+        if not bool(username) ^ bool(userid):
+            raise TypeError("Either username or userid should be specified")
+
+        if userid:
+            return cls.query.filter_by(userid=userid, status=USER_STATUS.ACTIVE).first()
+        else:
+            return cls.query.filter_by(username=username, status=USER_STATUS.ACTIVE).first()
+
+    def available_permissions(self):
+        """
+        Return all permission objects available to this user
+        (either owned by user or available to all users).
+        """
+        from .client import Permission
+        return Permission.query.filter(
+            db.or_(Permission.allusers == True, Permission.user == self)
+            ).order_by(Permission.name).all()
+
 
 class UserOldId(TimestampMixin, db.Model):
     __tablename__ = 'useroldid'
@@ -186,7 +249,7 @@ class UserEmail(BaseMixin, db.Model):
         self._email = email
         self.md5sum = md5(self._email).hexdigest()
 
-    @property
+    @hybrid_property
     def email(self):
         return self._email
 
@@ -194,13 +257,29 @@ class UserEmail(BaseMixin, db.Model):
     email = db.synonym('_email', descriptor=email)
 
     def __repr__(self):
-        return u'<UserEmail %s of user %s>' % (self.email, repr(self.user))
+        return u'<UserEmail {email} of user {user}>'.format(email=self.email, user=repr(self.user))
 
     def __unicode__(self):
         return unicode(self.email)
 
     def __str__(self):
         return str(self.__unicode__())
+
+    @classmethod
+    def get(cls, email=None, md5sum=None):
+        """
+        Return a UserEmail with matching email or md5sum.
+
+        :param str email: Email address to lookup
+        :param str md5sum: md5sum of email address to lookup
+        """
+        if not bool(email) ^ bool(md5sum):
+            raise TypeError("Either email or md5sum should be specified")
+
+        if email:
+            return cls.query.filter(cls.email.in_([email, email.lower()])).first()
+        else:
+            return cls.query.filter_by(md5sum=md5sum).first()
 
 
 class UserPastEmail(BaseMixin, db.Model):
@@ -239,7 +318,7 @@ class UserEmailClaim(BaseMixin, db.Model):
         self._email = email
         self.md5sum = md5(self._email).hexdigest()
 
-    @property
+    @hybrid_property
     def email(self):
         return self._email
 
@@ -247,7 +326,7 @@ class UserEmailClaim(BaseMixin, db.Model):
     email = db.synonym('_email', descriptor=email)
 
     def __repr__(self):
-        return u'<UserEmailClaim %s of user %s>' % (self.email, repr(self.user))
+        return u'<UserEmailClaim {email} of user {user}>'.format(email=self.email, user=repr(self.user))
 
     def __unicode__(self):
         return unicode(self.email)
@@ -260,6 +339,25 @@ class UserEmailClaim(BaseMixin, db.Model):
         if user and user == self.user:
             perms.add('verify')
         return perms
+
+    @classmethod
+    def get(cls, email, user):
+        """
+        Return a UserEmailClaim with matching email address for the given user.
+
+        :param str email: Email address to lookup
+        :param User user: User who claimed this email address
+        """
+        query = cls.query.filter(UserEmailClaim.email.in_([email, email.lower()])).filter_by(user=user).first()
+
+    @classmethod
+    def all(cls, email):
+        """
+        Return all UserEmailClaim instances with matching email address.
+
+        :param str email: Email address to lookup
+        """
+        return cls.query.filter(UserEmailClaim.email.in_([email, email.lower()])).all()
 
 
 class UserPhone(BaseMixin, db.Model):
@@ -276,20 +374,29 @@ class UserPhone(BaseMixin, db.Model):
         super(UserPhone, self).__init__(**kwargs)
         self._phone = phone
 
-    @property
+    @hybrid_property
     def phone(self):
         return self._phone
 
     phone = db.synonym('_phone', descriptor=phone)
 
     def __repr__(self):
-        return u'<UserPhone %s of user %s>' % (self.phone, repr(self.user))
+        return u'<UserPhone {phone} of user {user}>'.format(phone=self.phone, user=repr(self.user))
 
     def __unicode__(self):
         return unicode(self.phone)
 
     def __str__(self):
         return str(self.__unicode__())
+
+    @classmethod
+    def get(cls, phone):
+        """
+        Return a UserPhone with matching phone number.
+
+        :param str phone: Phone number to lookup (must be an exact match)
+        """
+        return cls.query.filter_by(phone=phone).first()
 
 
 class UserPhoneClaim(BaseMixin, db.Model):
@@ -307,14 +414,14 @@ class UserPhoneClaim(BaseMixin, db.Model):
         self.verification_code = newpin()
         self._phone = phone
 
-    @property
+    @hybrid_property
     def phone(self):
         return self._phone
 
     phone = db.synonym('_phone', descriptor=phone)
 
     def __repr__(self):
-        return u'<UserPhoneClaim %s of user %s>' % (self.phone, repr(self.user))
+        return u'<UserPhoneClaim {phone} of user {user}>'.format(phone=self.phone, user=repr(self.user))
 
     def __unicode__(self):
         return unicode(self.phone)
@@ -327,6 +434,25 @@ class UserPhoneClaim(BaseMixin, db.Model):
         if user and user == self.user:
             perms.add('verify')
         return perms
+
+    @classmethod
+    def get(cls, phone, user):
+        """
+        Return a UserPhoneClaim with matching phone number for the given user.
+
+        :param str phone: Phone number to lookup (must be an exact match)
+        :param User user: User who claimed this phone number
+        """
+        return cls.query.filter_by(phone=phone, user=user).first()
+
+    @classmethod
+    def all(cls, phone):
+        """
+        Return all UserPhoneClaim instances with matching phone number.
+
+        :param str phone: Phone number to lookup (must be an exact match)
+        """
+        return cls.query.filter_by(phone=phone).all()
 
 
 class PasswordResetRequest(BaseMixin, db.Model):
@@ -356,6 +482,27 @@ class UserExternalId(BaseMixin, db.Model):
 
     __table_args__ = (db.UniqueConstraint("service", "userid"), {})
 
+    @classmethod
+    def get(cls, service, userid=None, username=None):
+        """
+        Return a UserExternalId with the given service and userid or username.
+
+        :param str service: Service to lookup
+        :param str userid: Userid to lookup
+        :param str username: Username to lookup (may be non-unique)
+
+        Usernames are not guaranteed to be unique within a service. An example is with Google,
+        where the userid is a directed OpenID URL, unique but subject to change if the Lastuser
+        site URL changes. The username is the email address, which will be the same despite
+        different userids.
+        """
+        if not bool(userid) ^ bool(username):
+            raise TypeError("Either userid or username should be specified")
+
+        if userid:
+            return cls.query.filter_by(service=service, userid=userid).first()
+        else:
+            return cls.query.filter_by(service=service, username=username).first()
 
 # --- Organizations and teams -------------------------------------------------
 
@@ -398,21 +545,23 @@ class Organization(BaseMixin, db.Model):
             self._name = value
 
     def valid_name(self, value):
-        existing = Organization.query.filter_by(name=value).first()
+        if not valid_username(value):
+            return False
+        existing = Organization.get(name=value)
         if existing and existing.id != self.id:
             return False
-        existing = User.query.filter_by(username=value).first()
+        existing = User.query.filter_by(username=value).first()  # Avoid User.get to skip status check
         if existing:
             return False
         return True
 
     def __repr__(self):
-        return '<Organization %s "%s">' % (self.name or self.userid, self.title)
+        return u'<Organization {name} "{title}">'.format(name=self.name or self.userid, title=self.title)
 
     @property
     def pickername(self):
         if self.name:
-            return '%s (~%s)' % (self.title, self.name)
+            return u'{title} (~{name})'.format(title=self.title, name=self.name)
         else:
             return self.title
 
@@ -440,6 +589,32 @@ class Organization(BaseMixin, db.Model):
                 perms.remove('delete')
         return perms
 
+    @classmethod
+    def get(cls, name=None, userid=None):
+        """
+        Return an Organization with matching name or userid. Note that ``name`` is the username, not the title.
+
+        :param str name: Name of the organization
+        :param str userid: Userid of the organization
+        """
+        if not bool(name) ^ bool(userid):
+            raise TypeError("Either name or userid should be specified")
+
+        if userid:
+            return cls.query.filter_by(userid=userid).first()
+        else:
+            return cls.query.filter_by(name=name).first()
+
+    def available_permissions(self):
+        """
+        Return all permission objects available to this organization
+        (either owned by this organization or available to all users).
+        """
+        from .client import Permission
+        return Permission.query.filter(
+            db.or_(Permission.allusers == True, Permission.org == self)
+            ).order_by(Permission.name).all()
+
 
 class Team(BaseMixin, db.Model):
     __tablename__ = 'team'
@@ -456,7 +631,7 @@ class Team(BaseMixin, db.Model):
         backref='teams')  # No cascades here! Cascades will delete users
 
     def __repr__(self):
-        return '<Team %s of %s>' % (self.title, self.org.title)
+        return u'<Team {team} of {org}>'.format(team=self.title, org=self.org.title)
 
     @property
     def pickername(self):

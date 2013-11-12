@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import g, flash, render_template, url_for, session, request, make_response
+from flask import g, flash, render_template, url_for, request, make_response
 from coaster.views import load_model
 from baseframe.forms import render_form, render_redirect, render_delete_sqla, ConfirmDeleteForm
 
@@ -17,8 +17,7 @@ from .sms import send_phone_verify_code
 @lastuser_ui.route('/profile')
 @requires_login
 def profile():
-    # TODO: move the avatar in the user model
-    return render_template('profile.html', avatar=session['avatar_url'])
+    return render_template('profile.html')
 
 
 @lastuser_ui.route('/profile/password', methods=['GET', 'POST'])
@@ -26,9 +25,11 @@ def profile():
 def change_password():
     if g.user.pw_hash is None:
         form = PasswordResetForm()
+        form.edit_user = g.user
         del form.username
     else:
         form = PasswordChangeForm()
+        form.edit_user = g.user
     if form.validate_on_submit():
         g.user.password = form.password.data
         db.session.commit()
@@ -99,8 +100,9 @@ def remove_phone(number):
         userphone = UserPhoneClaim.query.filter_by(phone=number, user=g.user).first_or_404()
     if request.method == 'POST':
         user_data_changed.send(g.user, changes=['phone-delete'])
-    return render_delete_sqla(userphone, db, title="Confirm removal", message="Remove phone number %s?" % userphone,
-        success="You have removed your number %s." % userphone,
+    return render_delete_sqla(userphone, db, title=u"Confirm removal", message=u"Remove phone number {phone}?".format(
+            phone=userphone.phone),
+        success=u"You have removed your number {phone}.".format(phone=userphone.phone),
         next=url_for('.profile'))
 
 
@@ -120,6 +122,6 @@ def verify_phone(phoneclaim):
         db.session.delete(phoneclaim)
         db.session.commit()
         flash("Your phone number has been verified.", 'success')
-        user_data_changed.send(g.user, 'phone')
+        user_data_changed.send(g.user, changes=['phone'])
         return render_redirect(url_for('.profile'), code=303)
     return render_form(form=form, title="Verify phone number", formid="phone_verify", submit="Verify", ajax=True)

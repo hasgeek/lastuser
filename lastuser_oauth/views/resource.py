@@ -40,6 +40,8 @@ def get_userinfo(user, client, scope=[], get_permissions=True):
         userinfo = {}
     if 'email' in scope:
         userinfo['email'] = unicode(user.email)
+    if 'phone' in scope:
+        userinfo['phone'] = unicode(user.phone)
     if 'organizations' in scope:
         userinfo['organizations'] = {
             'owner': [{'userid': org.userid, 'name': org.name, 'title': org.title} for org in user.organizations_owned()],
@@ -333,7 +335,7 @@ def org_team_get():
 # --- Token-based resource endpoints ------------------------------------------
 
 @lastuser_oauth.route('/api/1/id')
-@resource_registry.resource('id', u'Read your name and username')
+@resource_registry.resource('id', u"Read your name and username")
 def resource_id(authtoken, args, files=None):
     """
     Return user's id
@@ -345,7 +347,7 @@ def resource_id(authtoken, args, files=None):
 
 
 @lastuser_oauth.route('/api/1/email')
-@resource_registry.resource('email', u'Read your email address')
+@resource_registry.resource('email', u"Read your email address")
 def resource_email(authtoken, args, files=None):
     """
     Return user's email addresses.
@@ -358,17 +360,50 @@ def resource_email(authtoken, args, files=None):
 
 
 @lastuser_oauth.route('/api/1/email/add', methods=['POST'])
-@resource_registry.resource('email/add', u'Add an email address to your profile')
+@resource_registry.resource('email/add', u"Add an email address to your profile")
 def resource_email_add(authtoken, args, files=None):
     """
-    Add an email address to the user's profile.
+    TODO: Add an email address to the user's profile.
     """
     email = args['email']
     return {'email': email}  # TODO
 
 
+@lastuser_oauth.route('/api/1/phone')
+@resource_registry.resource('phone', u"Read your phone number")
+def resource_phone(authtoken, args, files=None):
+    """
+    Return user's phone numbers.
+    """
+    if 'all' in args and getbool(args['all']):
+        return {'phone': unicode(authtoken.user.phone),
+                'all': [unicode(phone) for phone in authtoken.user.phones]}
+    else:
+        return {'phone': unicode(authtoken.user.phone)}
+
+
+@lastuser_oauth.route('/api/1/user/externalids')
+@resource_registry.resource('user/externalids', u"Access your external account information such as Twitter and Google", trusted=True)
+def resource_login_providers(authtoken, args, files=None):
+    """
+    Return user's login providers' data.
+    """
+    service = args.get('service')
+    response = {}
+    for extid in authtoken.user.externalids:
+        if service is None or extid.service == service:
+            response[extid.service] = {
+                "userid": unicode(extid.userid),
+                "username": unicode(extid.username),
+                "oauth_token": unicode(extid.oauth_token),
+                "oauth_token_secret": unicode(extid.oauth_token_secret),
+                "oauth_token_type": unicode(extid.oauth_token_type)
+            }
+    return response
+
+
 @lastuser_oauth.route('/api/1/organizations')
-@resource_registry.resource('organizations', u'Read the organizations you are a member of')
+@resource_registry.resource('organizations', u"Read the organizations you are a member of")
 def resource_organizations(authtoken, args, files=None):
     """
     Return user's organizations and teams.
@@ -377,6 +412,6 @@ def resource_organizations(authtoken, args, files=None):
 
 
 @lastuser_oauth.route('/api/1/notice/send')
-@resource_registry.resource('notice/send', u'Send you notifications')
+@resource_registry.resource('notice/send', u"Send you notifications")
 def resource_notice_send(authtoken, args, files=None):
     pass

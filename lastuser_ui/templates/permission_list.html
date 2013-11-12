@@ -16,7 +16,7 @@
   and are therefore listed for you alone.
 </p>
 <h2>Global permissions</h2>
-<table class="table">
+<table class="table table-condensed table-responsive">
   <thead>
     <tr>
       <th>#</th>
@@ -42,7 +42,7 @@
 </table>
 
 <h2>Your permissions</h2>
-<table class="table">
+<table class="table table-condensed table-responsive">
   <thead>
     <tr>
       <th>#</th>
@@ -61,8 +61,10 @@
         <td>{{ perm.title }}</td>
         <td>{{ perm.description }}</td>
         <td>{{ perm.owner_title }}</td>
-        <td><a href="{{ url_for('.permission_edit', id=perm.id) }}">Edit</a></td>
-        <td><a href="{{ url_for('.permission_delete', id=perm.id) }}">Delete</a></td>
+        <td>
+          <a class="btn btn-xs btn-info" href="{{ url_for('.permission_edit', id=perm.id) }}">Edit</a>
+          <a class="btn btn-xs btn-danger" href="{{ url_for('.permission_delete', id=perm.id) }}">Delete</a>
+        </td>
       </tr>
     {% else %}
       <tr>
@@ -72,7 +74,7 @@
   </tbody>
 </table>
 <p>
-  <a href="{{url_for('.permission_new') }}">Define a new permission &rarr;</a>
+  <a class="btn btn-info" href="{{url_for('.permission_new') }}">New permission</a>
 </p>
 <p>
   Users can be assigned permissions from each application's info page.

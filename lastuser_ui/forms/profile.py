@@ -15,13 +15,13 @@ class NewEmailAddressForm(Form):
     # TODO: Move to function and place before ValidEmailDomain()
     def validate_email(self, field):
         field.data = field.data.lower()  # Convert to lowercase
-        existing = UserEmail.query.filter_by(email=field.data).first()
+        existing = UserEmail.get(email=field.data)
         if existing is not None:
             if existing.user == g.user:
                 raise wtforms.ValidationError("You have already registered this email address.")
             else:
                 raise wtforms.ValidationError("This email address has already been claimed.")
-        existing = UserEmailClaim.query.filter_by(email=field.data, user=g.user).first()
+        existing = UserEmailClaim.get(email=field.data, user=g.user)
         if existing is not None:
             raise wtforms.ValidationError("This email address is pending verification.")
 
@@ -31,13 +31,13 @@ class NewPhoneForm(Form):
         description="Indian mobile numbers only")
 
     def validate_phone(self, field):
-        existing = UserPhone.query.filter_by(phone=field.data).first()
+        existing = UserPhone.get(phone=field.data)
         if existing is not None:
             if existing.user == g.user:
                 raise wtforms.ValidationError("You have already registered this phone number.")
             else:
                 raise wtforms.ValidationError("That phone number has already been claimed.")
-        existing = UserPhoneClaim.query.filter_by(phone=field.data, user=g.user).first()
+        existing = UserPhoneClaim.get(phone=field.data, user=g.user)
         if existing is not None:
             raise wtforms.ValidationError("That phone number is pending verification.")
         # Step 1: Remove punctuation in number

@@ -16,26 +16,26 @@ def getuser(name):
     if '@' in name:
         # TODO: This should be handled by the LoginProvider registry, not here
         if name.startswith('@'):
-            extid = UserExternalId.query.filter_by(service='twitter', username=name[1:]).first()
-            if extid and extid.user.status == USER_STATUS.ACTIVE:
+            extid = UserExternalId.get(service='twitter', username=name[1:])
+            if extid and extid.user.is_active:
                 return extid.user
             else:
                 return None
         else:
-            useremail = UserEmail.query.filter(UserEmail.email.in_([name, name.lower()])).first()
-            if useremail and useremail.user.status == USER_STATUS.ACTIVE:
+            useremail = UserEmail.get(email=name)
+            if useremail and useremail.user.is_active:
                 return useremail.user
             # No verified email id. Look for an unverified id; return first found
-            useremail = UserEmailClaim.query.filter(UserEmailClaim.email.in_([name, name.lower()])).first()
-            if useremail and useremail.user.status == USER_STATUS.ACTIVE:
-                return useremail.user
+            results = UserEmailClaim.all(email=name)
+            if results and results[0].user.is_active:
+                return results[0].user
             return None
     else:
-        return User.query.filter_by(username=name, status=USER_STATUS.ACTIVE).first()
+        return User.get(username=name)
 
 
 def getextid(service, userid):
-    return UserExternalId.query.filter_by(service=service, userid=userid).first()
+    return UserExternalId.get(service=service, userid=userid)
 
 
 def merge_users(user1, user2):

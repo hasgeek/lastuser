@@ -30,7 +30,7 @@ def init_for(env):
     db.init_app(app)
     db.app = app  # To make it work without an app context
     RQ(app)  # Pick up RQ configuration from the app
-    baseframe.init_app(app, requires=['baseframe', 'jquery.cookie', 'timezone', 'lastuser-oauth'])
+    baseframe.init_app(app, requires=['baseframe-bs3', 'jquery.cookie', 'timezone', 'lastuser-oauth'])
 
     lastuser_oauth.mailclient.mail.init_app(app)
     lastuser_oauth.views.login.oid.init_app(app)
@@ -40,7 +40,9 @@ def init_for(env):
         login_registry['twitter'] = providers.TwitterProvider('twitter', 'Twitter',
             at_login=True, priority=True,
             key=app.config['OAUTH_TWITTER_KEY'],
-            secret=app.config['OAUTH_TWITTER_SECRET'])
+            secret=app.config['OAUTH_TWITTER_SECRET'],
+            access_key=app.config.get('OAUTH_TWITTER_ACCESS_KEY'),
+            access_secret=app.config.get('OAUTH_TWITTER_ACCESS_SECRET'))
     login_registry['google'] = providers.GoogleProvider('google', 'Google',
         at_login=True, priority=True)
     if app.config.get('OAUTH_GITHUB_KEY') and app.config.get('OAUTH_GITHUB_SECRET'):
