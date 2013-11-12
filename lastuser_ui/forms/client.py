@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import urllib2
+
 import wtforms
 import wtforms.fields.html5
 from baseframe.forms import Form
@@ -58,6 +60,21 @@ class RegisterClientForm(Form):
                 raise wtforms.ValidationError("Invalid owner")
             self.user = None
             self.org = orgs[0]
+
+    def _check_netloc(self, url1, url2):
+        return urllib2.urlparse.urlparse(url1).netloc == urllib2.urlparse.urlparse(url2).netloc
+
+    def validate_redirect_uri(self, field):
+        if not self._check_netloc(self.website.data, field.data):
+            raise wtforms.ValidationError("Website and redirect domain didn't match")
+
+    def validate_notification_uri(self, field):
+        if not self._check_netloc(self.website.data, field.data):
+            raise wtforms.ValidationError("Website and notification domain didn't match")
+
+    def validate_resource_uri(self, field):
+        if not self._check_netloc(self.website.data, field.data):
+            raise wtforms.ValidationError("Website and resource domain didn't match")
 
 
 class PermissionForm(Form):
