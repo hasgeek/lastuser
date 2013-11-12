@@ -66,15 +66,15 @@ class RegisterClientForm(Form):
 
     def validate_redirect_uri(self, field):
         if not self._check_netloc(self.website.data, field.data):
-            raise wtforms.ValidationError("Website and redirect domain didn't match")
+            raise wtforms.ValidationError("Website and redirect domain doesn't match")
 
     def validate_notification_uri(self, field):
         if not self._check_netloc(self.website.data, field.data):
-            raise wtforms.ValidationError("Website and notification domain didn't match")
+            raise wtforms.ValidationError("Website and notification domain doesn't match")
 
     def validate_resource_uri(self, field):
         if not self._check_netloc(self.website.data, field.data):
-            raise wtforms.ValidationError("Website and resource domain didn't match")
+            raise wtforms.ValidationError("Website and resource domain doesn't match")
 
 
 class PermissionForm(Form):
