@@ -150,7 +150,8 @@ def register():
         db.session.commit()
         flash("You are now one of us. Welcome aboard!", category='success')
         return redirect(get_next_url(session=True), code=303)
-    return render_form(form=form, title='Create an account', formid='register', submit='Register')
+    return render_form(form=form, title='Create an account', formid='register', submit='Register',
+        message=current_app.config.get('CREATE_ACCOUNT_MESSAGE'))
 
 
 @lastuser_oauth.route('/reset', methods=['GET', 'POST'])
