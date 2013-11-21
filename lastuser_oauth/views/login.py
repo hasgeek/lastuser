@@ -65,9 +65,8 @@ def login():
             service_forms=service_forms, Markup=Markup)
 
 
-# TODO: Move this into settings.py
-logout_errormsg = ("We detected an possibly unauthorized attempt to log you out. "
-    "If you really did intend to logout, please click on the logout link again.")
+logout_errormsg = ("We detected a possibly unauthorized attempt to log you out. "
+    "If you really did intend to logout, please click on the logout link again")
 
 
 def logout_user():
@@ -76,7 +75,7 @@ def logout_user():
     """
     if not request.referrer or (urlparse.urlsplit(request.referrer).hostname != urlparse.urlsplit(request.url).hostname):
         # TODO: present a logout form
-        flash(logout_errormsg, 'error')
+        flash(current_app.config.get('LOGOUT_UNAUTHORIZED_MESSAGE') or logout_errormsg, 'danger')
         return redirect(url_for('index'))
     else:
         logout_internal()
@@ -91,7 +90,7 @@ def logout_client():
     client = Client.get(key=request.args['client_id'])
     if client is None:
         # No such client. Possible CSRF. Don't logout and don't send them back
-        flash(logout_errormsg, 'error')
+        flash(logout_errormsg, 'danger')
         return redirect(url_for('index'))
     if client.trusted:
         # This is a trusted client. Does the referring domain match?
@@ -99,7 +98,7 @@ def logout_client():
         if request.referrer:
             if clienthost != urlparse.urlsplit(request.referrer).hostname:
                 # Doesn't. Don't logout and don't send back
-                flash(logout_errormsg, 'error')
+                flash(logout_errormsg, 'danger')
                 return redirect(url_for('index'))
         # else: no referrer? Either stripped out by browser or a proxy, or this is a direct link.
         # We can't do anything about that, so assume it's a legit case.
@@ -108,7 +107,7 @@ def logout_client():
         if 'next' in request.args:
             if clienthost != urlparse.urlsplit(request.args['next']).hostname:
                 # Doesn't. Assume CSRF and redirect to index without logout
-                flash(logout_errormsg, 'error')
+                flash(logout_errormsg, 'danger')
                 return redirect(url_for('index'))
         # All good. Log them out and send them back
         logout_internal()

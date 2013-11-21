@@ -40,7 +40,7 @@ def send_message(msg):
                 msg.transaction_id = r.json().get('SMSMessage', {}).get('Sid')
             else:
                 # FIXME: This function should not be sending messages to the UI
-                flash("Message could not be sent.", 'error')
+                flash("Message could not be sent.", 'danger')
 
         # # TODO: Also check if we have SMS GupShup credentials in settings.py
         # params = urlencode(dict(
