@@ -9,13 +9,13 @@
     </div>
   </div>
   <div class="cookies-required form-horizontal">
-    <h2>
+    <div class="page-header"><h2>
       {%- if config['LOGIN_MESSAGE_1'] -%}
         {{ config['LOGIN_MESSAGE_1'] }}
       {%- else -%}
         Login with your existing account at any of these <small>(pick one)</small>
       {%- endif -%}
-    </h2>
+    </h2></div>
     <div class="clearfix">
       {# TODO: Replace hardcoded buttons by iterated list from login_registry #}
       <a class="loginbutton {%- if lastused=='twitter' %} lastused{% endif %}" href="{{ url_for('.login_service', service='twitter', next=request.args.get('next')) }}"

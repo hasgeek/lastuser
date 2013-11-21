@@ -87,6 +87,8 @@ def requires_login_no_message(f):
     def decorated_function(*args, **kwargs):
         if g.user is None:
             session['next'] = get_current_url()
+            if 'message' in request.args and request.args['message']:
+                flash(request.args['message'], 'info')
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
