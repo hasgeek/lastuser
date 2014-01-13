@@ -17,11 +17,11 @@ class Client(BaseMixin, db.Model):
     #: User who owns this client
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref=db.backref('clients', cascade="all, delete-orphan"))
+        backref=db.backref('clients', cascade="all"))
     #: Organization that owns this client. Only one of this or user must be set
     org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
     org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
-        backref=db.backref('clients', cascade="all, delete-orphan"))
+        backref=db.backref('clients', cascade="all"))
     #: Human-readable title
     title = db.Column(db.Unicode(250), nullable=False)
     #: Long description
