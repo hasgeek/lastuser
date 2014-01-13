@@ -34,7 +34,7 @@
 {% if client.owner_is(g.user) %}
   <p>
     <a class="btn btn-info" href="{{ url_for('.client_edit', key=client.key) }}">Edit this application</a>
-    <a class="btn btn-danger" href="{{ url_for('.client_edit', key=client.key) }}">Delete</a>
+    <a class="btn btn-danger" href="{{ url_for('.client_delete', key=client.key) }}">Delete</a>
   </p>
 {% endif %}
 <h2>Resources</h2>
