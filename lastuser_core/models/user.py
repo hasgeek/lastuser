@@ -335,7 +335,7 @@ class UserEmailClaim(BaseMixin, db.Model):
 
         :param str email: Email address to lookup
         """
-        return cls.query.filter(UserEmailClaim.email.in_([email, email.lower()])).all()
+        return cls.query.filter(UserEmailClaim.email.in_([email, email.lower()])).order_by(cls.user_id).all()
 
 
 class UserPhone(BaseMixin, db.Model):
