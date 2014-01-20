@@ -326,7 +326,7 @@ class UserEmailClaim(BaseMixin, db.Model):
         :param str email: Email address to lookup
         :param User user: User who claimed this email address
         """
-        query = cls.query.filter(UserEmailClaim.email.in_([email, email.lower()])).filter_by(user=user).first()
+        return cls.query.filter(UserEmailClaim.email.in_([email, email.lower()])).filter_by(user=user).first()
 
     @classmethod
     def all(cls, email):

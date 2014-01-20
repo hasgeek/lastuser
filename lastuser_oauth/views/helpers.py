@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 from datetime import datetime, timedelta
 from functools import wraps
