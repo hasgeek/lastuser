@@ -17,15 +17,10 @@
       {%- endif -%}
     </h2></div>
     <div class="clearfix">
-      {# TODO: Replace hardcoded buttons by iterated list from login_registry #}
-      <a class="loginbutton {%- if lastused=='twitter' %} lastused{% endif %}" href="{{ url_for('.login_service', service='twitter', next=request.args.get('next')) }}"
-          style="background-image: url({{ url_for('.static', filename='img/login/twitter.png') }});">Twitter</a>
-      <a class="loginbutton {%- if lastused=='google' %} lastused{% endif %}" href="{{ url_for('.login_service', service='google', next=request.args.get('next')) }}"
-          style="background-image: url({{ url_for('.static', filename='img/login/google.png') }});">Google</a>
-      <a class="loginbutton {%- if lastused=='github' %} lastused{% else %} optional jshidden{% endif %}" href="{{ url_for('.login_service', service='github', next=request.args.get('next')) }}"
-          style="background-image: url({{ url_for('.static', filename='img/login/github.png') }});">GitHub</a>
-      <a class="loginbutton {%- if lastused=='openid' %} lastused{% else %} optional jshidden{% endif %}" id="openidbutton" href="#openidform"
-          style="background-image: url({{ url_for('.static', filename='img/login/openid.png') }});">OpenID</a>
+      {% for provider in login_registry %}
+        <a class="loginbutton {%- if lastused==provider %} lastused{% elif loop.index > 2 %} optional jshidden{% endif %}" href="{{ url_for('.login_service', service=provider, next=request.args.get('next')) }}"
+            style="background-image: url({{ url_for('.static', filename='img/login/%s.png' % provider) }});">{{ login_registry[provider]['title'] }}</a>
+      {% endfor %}
       <a class="loginbutton caption no-jshidden" id="showmore" href="#">Show more...</a>
     </div>
     {%- for service, formdata in service_forms.items() %}{% with form = formdata['form'] %}
