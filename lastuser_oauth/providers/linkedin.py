@@ -24,8 +24,8 @@ class LinkedInProvider(LoginProvider):
         self.secret = secret
 
     def do(self, callback_url):
-        self.callback_url = callback_url
         session['linkedin_state'] = unicode(uuid4())
+        session['linkedin_callback'] = callback_url
         return redirect(self.auth_url.format(
             client_id=self.key,
             redirect_uri=quote(callback_url),
@@ -34,6 +34,7 @@ class LinkedInProvider(LoginProvider):
 
     def callback(self):
         state = session.pop('linkedin_state', None)
+        callback_url = session.pop('linkedin_callback', None)
         if state is None or request.args.get('state') != state:
             raise LoginCallbackError("We detected a possible attempt at cross-site request forgery")
         if 'error' in request.args:
@@ -52,7 +53,7 @@ class LinkedInProvider(LoginProvider):
                     'client_id': self.key,
                     'client_secret': self.secret,
                     'code': code,
-                    'redirect_uri': self.callback_url
+                    'redirect_uri': callback_url,
                     }
                 ).json()
         except requests.ConnectionError as e:
