@@ -2,8 +2,8 @@
 
 from urllib import quote
 import requests
-import simplejson as json
-from flask import redirect, request
+from uuid import uuid4
+from flask import redirect, request, session
 from lastuser_core.registry import LoginProvider, LoginCallbackError
 
 __all__ = ['LinkedInProvider']
@@ -25,14 +25,18 @@ class LinkedInProvider(LoginProvider):
 
     def do(self, callback_url):
         self.callback_url = callback_url
+        session['linkedin_state'] = unicode(uuid4())
         return redirect(self.auth_url.format(
             client_id=self.key,
             redirect_uri=quote(callback_url),
             scope='r_basicprofile r_emailaddress',
-            state='DCEEFWF45453sdffef424'))
+            state=session['linkedin_state']))
 
     def callback(self):
-        if request.args.get('error'):
+        state = session.pop('linkedin_state', None)
+        if state is None or request.args.get('state') != state:
+            raise LoginCallbackError("We detected a possible attempt at cross-site request forgery")
+        if 'error' in request.args:
             if request.args['error'] == 'access_denied':
                 raise LoginCallbackError(u"You denied the LinkedIn login request")
             elif request.args['error'] == 'redirect_uri_mismatch':
