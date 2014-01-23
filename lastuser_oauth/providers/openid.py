@@ -6,7 +6,7 @@ from flask import Markup, session
 import wtforms
 import wtforms.fields.html5
 from baseframe.forms import Form
-from lastuser_core.registry import LoginProvider
+from lastuser_core.registry import LoginProvider, LoginInitError
 from ..views.login import oid
 from ..views.account import login_service_postcallback
 
@@ -39,6 +39,7 @@ class OpenIdProvider(LoginProvider):
             session['openid_service'] = self.name
             return oid.try_login(form.openid.data,
                 ask_for=['email', 'fullname', 'nickname'])
+        raise LoginInitError("OpenID URL is invalid")
 
 
 @oid.after_login
