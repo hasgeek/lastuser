@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from urlparse import urlparse
+
 import wtforms
 import wtforms.fields.html5
 from baseframe.forms import Form
@@ -60,6 +62,24 @@ class RegisterClientForm(Form):
                 raise wtforms.ValidationError("Invalid owner")
             self.user = None
             self.org = orgs[0]
+
+    def _urls_match(self, url1, url2):
+        p1 = urlparse(url1)
+        p2 = urlparse(url2)
+        return (p1.netloc == p2.netloc) and (p1.scheme == p2.scheme) and (
+            p1.username == p2.username) and (p1.password == p2.password)
+
+    def validate_redirect_uri(self, field):
+        if not self._urls_match(self.website.data, field.data):
+            raise wtforms.ValidationError("The scheme, domain and port must match that of the website URL")
+
+    def validate_notification_uri(self, field):
+        if not self._urls_match(self.website.data, field.data):
+            raise wtforms.ValidationError("The scheme, domain and port must match that of the website URL")
+
+    def validate_resource_uri(self, field):
+        if not self._urls_match(self.website.data, field.data):
+            raise wtforms.ValidationError("The scheme, domain and port must match that of the website URL")
 
 
 class PermissionForm(Form):

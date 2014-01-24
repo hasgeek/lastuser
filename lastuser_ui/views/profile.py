@@ -106,15 +106,20 @@ def verify_phone(phoneclaim):
     form = VerifyPhoneForm()
     form.phoneclaim = phoneclaim
     if form.validate_on_submit():
-        if not g.user.phones:
-            primary = True
+        if UserPhone.get(phoneclaim.phone) is None:
+            if not g.user.phones:
+                primary = True
+            else:
+                primary = False
+            userphone = UserPhone(user=g.user, phone=phoneclaim.phone, gets_text=True, primary=primary)
+            db.session.add(userphone)
+            db.session.delete(phoneclaim)
+            db.session.commit()
+            flash("Your phone number has been verified.", 'success')
+            user_data_changed.send(g.user, changes=['phone'])
+            return render_redirect(url_for('.profile'), code=303)
         else:
-            primary = False
-        userphone = UserPhone(user=g.user, phone=phoneclaim.phone, gets_text=True, primary=primary)
-        db.session.add(userphone)
-        db.session.delete(phoneclaim)
-        db.session.commit()
-        flash("Your phone number has been verified.", 'success')
-        user_data_changed.send(g.user, changes=['phone'])
-        return render_redirect(url_for('.profile'), code=303)
+            db.session.delete(phoneclaim)
+            db.session.commit()
+            flash("This phone number has already been claimed by another user.", 'danger')
     return render_form(form=form, title="Verify phone number", formid="phone_verify", submit="Verify", ajax=True)

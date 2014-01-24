@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
 # Id generation
-from random import randint
-import uuid
-from base64 import urlsafe_b64encode
 import re
 import urlparse
 from urllib import urlencode as make_query_string
@@ -27,6 +24,8 @@ def make_redirect_url(url, **params):
     # 4: fragment
     queryparts = urlparse.parse_qsl(urlparts[3], keep_blank_values=True)
     queryparts.extend(params.items())
+    queryparts = [(key.encode('utf-8') if isinstance(key, unicode) else key,
+                   value.encode('utf-8') if isinstance(value, unicode) else value) for key, value in queryparts]
     urlparts[3] = make_query_string(queryparts)
     return urlparse.urlunsplit(urlparts)
 

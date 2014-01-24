@@ -10,7 +10,7 @@ from lastuser_core.models import User, Organization
 
 class OrganizationForm(Form):
     title = wtforms.TextField('Organization name', validators=[wtforms.validators.Required()])
-    name = wtforms.TextField('URL name', validators=[wtforms.validators.Required()])
+    name = wtforms.TextField('Username', validators=[wtforms.validators.Required()])
     description = wtforms.TextAreaField('Description')
 
     def validate_name(self, field):

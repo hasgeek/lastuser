@@ -116,3 +116,5 @@ ORG_DESCRIPTION_REASON = u"A few words about your organization (optional). Plain
 LOGIN_MESSAGE_1 = ""
 LOGIN_MESSAGE_2 = ""
 SMS_VERIFICATION_TEMPLATE = 'Your verification code is {code}. If you did not request this, please ignore.'
+CREATE_ACCOUNT_MESSAGE = u"This account is for you as an individual. We’ll make one for your company later"
+LOGOUT_UNAUTHORIZED_MESSAGE = "We detected a possibly unauthorized attempt to log you out. If you really did intend to logout, please click on the logout link again"
