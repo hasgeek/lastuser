@@ -29,10 +29,10 @@ def verifyscope(scope, client):
         if item not in resource_registry:  # Validation is only required for non-internal resources
             # Validation 1: namespace:resource/action is properly formatted
             if ':' not in item:
-                raise ScopeException(u"Resource is non-internal. No namespace specified for ‘{scope}’ in scope".format(scope=item))
+                raise ScopeException(u"No namespace specified for external resource ‘{scope}’ in scope".format(scope=item))
             itemparts = item.split(':')
             if len(itemparts) != 2:
-                raise ScopeException(u"Too many : characters in ‘{scope}’ in scope".format(scope=item))
+                raise ScopeException(u"Too many ':' characters in ‘{scope}’ in scope".format(scope=item))
             namespace, item = itemparts[0], itemparts[1]
             if '/' in item:
                 parts = item.split('/')
