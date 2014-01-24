@@ -16,9 +16,9 @@ import sqlalchemy as sa
 
 def upgrade():
     op.drop_constraint('resource_name_key','resource')
-    op.create_unique_constraint('resource_name_client_id_key', 'resource', ['name', 'client_id'])
+    op.create_unique_constraint('resource_client_id_name_key', 'resource', ['client_id', 'name'])
 
 
 def downgrade():
-    op.drop_constraint('resource_name_client_id_key','resource')
+    op.drop_constraint('resource_client_id_name_key','resource')
     op.create_unique_constraint('resource_name_key', 'resource', ['name'])
