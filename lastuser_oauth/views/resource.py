@@ -152,54 +152,71 @@ def token_verify():
 
 @lastuser_oauth.route('/api/1/resource/sync', methods=['POST'])
 @requires_client_login
-@requestargs('resources')
+@requestargs(('resources', json.loads))
 def sync_resources(resources):
-    resources = json.loads(resources)
-    client = Client.get(key=request.authorization.username)
-
-    resources_list = []
     actions_list = {}
+    results = dict()
 
     for name in resources:
         if '/' in name:
             parts = name.split('/')
             if len(parts) != 2:
-                results['errors'][name] = "Invalid scope %s" % name
+                results[name] = dict(status='error', error="Invalid scope %s" % name)
+                continue
             resource_name, action_name = parts
         else:
             resource_name = name
             action_name = None
-        if resource_name not in resources_list:
-            resources_list.append(resource_name)
+        desc = resources[name].get('description')
+        siteresource = resources[name].get('siteresource')
         if resource_name not in actions_list:
             actions_list[resource_name] = []
-        if action_name not in actions_list[resource_name]:
-            actions_list[resource_name].append(action_name)
-        resource = Resource.query.filter_by(client=client, name=parts[0]).first()
-        if not resource:
-            resource = Resource()
-            resource.client = client
-            resource.name = parts[0]
-            resource.title = parts[0].title()
+        resource = Resource.get(client=g.client, name=resource_name)
+        if resource:
+            results[resource.name] = dict(status='exists', actions=dict())
+            if not action_name and resource.description != desc:
+                resource.description = desc
+                results[resource.name]['status'] = 'updated'
+            if resource.siteresource != siteresource:
+                resource.siteresource = siteresource
+                results[resource.name]['status'] = 'updated'
+        else:
+            resource = Resource(client=g.client, name=resource_name, title=resource_name.title())
             db.session.add(resource)
-        action = ResourceAction.query.filter_by(resource=resource, name=parts[1]).first()
-        if not action:
-            action = ResourceAction()
-            action.resource = resource
-            action.name = parts[1]
-            action.title = parts[1].title() + " " + resource.title
-            db.session.add(action)
-        action.description = resources[name]['description'] or u''
+            if not action_name:
+                resource.description = desc
+            results[resource.name] = dict(status='added', actions=dict())
+        if action_name:
+            if action_name not in actions_list[resource_name]:
+                actions_list[resource_name].append(action_name)
+            action = resource.get_action(name=action_name)
+            if action:
+                if desc != action.description:
+                    action.description = desc
+                    results[resource.name]['actions'][action.name] = dict(status='updated')
+                else:
+                    results[resource.name]['actions'][action.name] = dict(status='exists')
+            else:
+                action = ResourceAction(resource=resource, name=action_name, title=action_name.title() + " " + resource.title, description=desc)
+                db.session.add(action)
+                results[resource.name]['actions'][action.name] = dict(status='added')
 
     # Deleting resources & actions not defined in client application.
     for resource_name in actions_list:
-        resource = Resource.query.filter_by(name=resource_name).first()
-        ResourceAction.query.filter(~ResourceAction.name.in_(actions_list[resource_name]), ResourceAction.resource==resource).delete(synchronize_session='fetch')
-    Resource.query.filter(~Resource.name.in_(resources_list), Resource.client==client).delete(synchronize_session='fetch')
+        resource = Resource.get(client=g.client, name=resource_name)
+        actions = ResourceAction.query.filter(~ResourceAction.name.in_(actions_list[resource_name]), ResourceAction.resource==resource)
+        for action in actions.all():
+            results[resource_name]['actions'][action.name] = dict(status='deleted')
+        actions.delete(synchronize_session='fetch')
+    del_resources = Resource.query.filter(~Resource.name.in_(actions_list.keys()), Resource.client==g.client)
+    for resource in del_resources.all():
+        ResourceAction.query.filter_by(resource=resource).delete(synchronize_session='fetch')
+        results[resource.name] = dict(status='deleted')
+    del_resources.delete(synchronize_session='fetch')
 
     db.session.commit()
     
-    return api_result('ok')
+    return api_result('ok', results=results)
 
 
 @lastuser_oauth.route('/api/1/user/get_by_userid', methods=['GET', 'POST'])
