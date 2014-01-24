@@ -96,13 +96,18 @@ class Client(BaseMixin, db.Model):
         return perms
 
     @classmethod
-    def get(cls, key):
+    def get(cls, key=None, **filters):
         """
         Return a Client identified by its client key. Only returns active clients.
 
         :param str key: Client key to lookup
         """
-        return cls.query.filter_by(key=key, active=True).first()
+        if key:
+            return cls.query.filter_by(key=key, active=True).first()
+        elif len(filters):
+            return cls.query.filter_by(**filters).first()
+        else:
+            return None
 
 
 class UserFlashMessage(BaseMixin, db.Model):
@@ -148,13 +153,22 @@ class Resource(BaseScopedNameMixin, db.Model):
         return perms
 
     @classmethod
-    def get(cls, name):
+    def get(cls, name=None, client=None, **filters):
         """
         Return a Resource with the given name.
 
         :param str name: Name of the resource.
         """
-        return cls.query.filter_by(name=name).first()
+        if name:
+            keys = dict()
+            keys['name'] = name
+            if client:
+                keys['client'] = client
+            return cls.query.filter_by(**keys).first()
+        elif len(filters):
+            return cls.query.filter_by(**filters).first()
+        else:
+            return None
 
     def get_action(self, name):
         """

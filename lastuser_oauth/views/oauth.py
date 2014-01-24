@@ -42,14 +42,14 @@ def verifyscope(scope, client):
             else:
                 resource_name = item
                 action_name = None
-            client = Client.query.filter_by(namespace=namespace).first()
-            resource = Resource.query.filter_by(name=resource_name, client=client).first()
+            client = Client.get(namespace=namespace)
+            resource = Resource.get(name=resource_name, client=client)
             # Validation 2: Resource exists & client has access to it
             if not resource:
                 raise ScopeException(u"Unknown resource ‘{resource}’ under namespace ’{namespace}’ in scope".format(resource=resource_name, namespace=namespace))
             # Validation 3: Action is valid
             if action_name:
-                action = ResourceAction.query.filter_by(name=action_name, resource=resource).first()
+                action = resource.get_action(action_name)
                 if not action:
                     raise ScopeException(u"Unknown action ‘{action}’ on resource ‘{resource}’ under namespace ’{namespace}’".format(
                         action=action_name, resource=resource_name, namespace=namespace))
