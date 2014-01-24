@@ -137,7 +137,7 @@ class Resource(BaseScopedNameMixin, db.Model):
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
     siteresource = db.Column(db.Boolean, default=False, nullable=False)
     trusted = db.Column(db.Boolean, default=False, nullable=False)
-    __table_args__ = (db.UniqueConstraint('name', 'client_id', name='resource_name_client_id_key'),)
+    __table_args__ = (db.UniqueConstraint('name', 'client_id', name='resource_client_id_name_key'),)
 
     def permissions(self, user, inherited=None):
         perms = super(Resource, self).permissions(user, inherited)
