@@ -4,6 +4,7 @@ from hashlib import md5
 from werkzeug import check_password_hash, cached_property
 import bcrypt
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm.exc import NoResultFound
 from coaster import newid, newsecret, newpin, valid_username
 
 from . import db, TimestampMixin, BaseMixin
@@ -207,10 +208,13 @@ class User(BaseMixin, db.Model):
         if not bool(username) ^ bool(userid):
             raise TypeError("Either username or userid should be specified")
 
-        if userid:
-            return cls.query.filter_by(userid=userid, status=USER_STATUS.ACTIVE).first()
-        else:
-            return cls.query.filter_by(username=username, status=USER_STATUS.ACTIVE).first()
+        try:
+            if userid:
+                return cls.query.filter_by(userid=userid, status=USER_STATUS.ACTIVE).one()
+            else:
+                return cls.query.filter_by(username=username, status=USER_STATUS.ACTIVE).one()
+        except NoResultFound:
+            return None
 
     def available_permissions(self):
         """
@@ -274,10 +278,13 @@ class UserEmail(BaseMixin, db.Model):
         if not bool(email) ^ bool(md5sum):
             raise TypeError("Either email or md5sum should be specified")
 
-        if email:
-            return cls.query.filter(cls.email.in_([email, email.lower()])).first()
-        else:
-            return cls.query.filter_by(md5sum=md5sum).first()
+        try:
+            if email:
+                return cls.query.filter(cls.email.in_([email, email.lower()])).one()
+            else:
+                return cls.query.filter_by(md5sum=md5sum).one()
+        except NoResultFound:
+            return None
 
 
 class UserEmailClaim(BaseMixin, db.Model):
@@ -326,7 +333,10 @@ class UserEmailClaim(BaseMixin, db.Model):
         :param str email: Email address to lookup
         :param User user: User who claimed this email address
         """
-        return cls.query.filter(UserEmailClaim.email.in_([email, email.lower()])).filter_by(user=user).first()
+        try:
+            return cls.query.filter(UserEmailClaim.email.in_([email, email.lower()])).filter_by(user=user).one()
+        except NoResultFound:
+            return None
 
     @classmethod
     def all(cls, email):
@@ -374,7 +384,10 @@ class UserPhone(BaseMixin, db.Model):
 
         :param str phone: Phone number to lookup (must be an exact match)
         """
-        return cls.query.filter_by(phone=phone).first()
+        try:
+            return cls.query.filter_by(phone=phone).one()
+        except NoResultFound:
+            return None
 
 
 class UserPhoneClaim(BaseMixin, db.Model):
@@ -421,7 +434,10 @@ class UserPhoneClaim(BaseMixin, db.Model):
         :param str phone: Phone number to lookup (must be an exact match)
         :param User user: User who claimed this phone number
         """
-        return cls.query.filter_by(phone=phone, user=user).first()
+        try:
+            return cls.query.filter_by(phone=phone, user=user).one()
+        except NoResultFound:
+            return None
 
     @classmethod
     def all(cls, phone):
@@ -477,10 +493,13 @@ class UserExternalId(BaseMixin, db.Model):
         if not bool(userid) ^ bool(username):
             raise TypeError("Either userid or username should be specified")
 
-        if userid:
-            return cls.query.filter_by(service=service, userid=userid).first()
-        else:
-            return cls.query.filter_by(service=service, username=username).first()
+        try:
+            if userid:
+                return cls.query.filter_by(service=service, userid=userid).one()
+            else:
+                return cls.query.filter_by(service=service, username=username).one()
+        except NoResultFound:
+            return None
 
 # --- Organizations and teams -------------------------------------------------
 
@@ -578,10 +597,13 @@ class Organization(BaseMixin, db.Model):
         if not bool(name) ^ bool(userid):
             raise TypeError("Either name or userid should be specified")
 
-        if userid:
-            return cls.query.filter_by(userid=userid).first()
-        else:
-            return cls.query.filter_by(name=name).first()
+        try:
+            if userid:
+                return cls.query.filter_by(userid=userid).one()
+            else:
+                return cls.query.filter_by(name=name).one()
+        except NoResultFound:
+            return None
 
     def available_permissions(self):
         """
@@ -628,3 +650,15 @@ class Team(BaseMixin, db.Model):
             if team not in newuser.teams:
                 newuser.teams.append(team)
         olduser.teams = []
+
+    @classmethod
+    def get(cls, userid=None):
+        """
+        Return a Team with matching userid.
+
+        :param str userid: Userid of the organization
+        """
+        try:
+            return cls.query.filter_by(userid=userid).one()
+        except NoResultFound:
+            return None
