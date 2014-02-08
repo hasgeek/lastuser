@@ -43,9 +43,11 @@ def change_password():
 def add_email():
     form = NewEmailAddressForm()
     if form.validate_on_submit():
-        useremail = UserEmailClaim(user=g.user, email=form.email.data)
-        db.session.add(useremail)
-        db.session.commit()
+        useremail = UserEmailClaim.get(user=g.user, email=form.email.data)
+        if useremail is None:
+            useremail = UserEmailClaim(user=g.user, email=form.email.data)
+            db.session.add(useremail)
+            db.session.commit()
         send_email_verify_link(useremail)
         flash("We sent you an email to confirm your address.", 'success')
         user_data_changed.send(g.user, changes=['email-claim'])
@@ -75,10 +77,12 @@ def remove_email(md5sum):
 def add_phone():
     form = NewPhoneForm()
     if form.validate_on_submit():
-        userphone = UserPhoneClaim(user=g.user, phone=form.phone.data)
-        db.session.add(userphone)
+        userphone = UserPhoneClaim.get(user=g.user, phone=form.phone.data)
+        if userphone is None:
+            userphone = UserPhoneClaim(user=g.user, phone=form.phone.data)
+            db.session.add(userphone)
         send_phone_verify_code(userphone)
-        db.session.commit()
+        db.session.commit()  # Commit after sending because send_phone_verify_code saves the message sent
         flash("We sent a verification code to your phone number.", 'success')
         user_data_changed.send(g.user, changes=['phone-claim'])
         return render_redirect(url_for('.verify_phone', number=userphone.phone), code=303)
