@@ -242,7 +242,7 @@ class UserEmail(BaseMixin, db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('emails', cascade="all, delete-orphan"))
-    _email = db.Column('email', db.Unicode(80), unique=True, nullable=False)
+    _email = db.Column('email', db.Unicode(254), unique=True, nullable=False)
     md5sum = db.Column(db.String(32), unique=True, nullable=False)
     primary = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -293,7 +293,7 @@ class UserEmailClaim(BaseMixin, db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('emailclaims', cascade="all, delete-orphan"))
-    _email = db.Column('email', db.Unicode(80), nullable=True)
+    _email = db.Column('email', db.Unicode(254), nullable=True)
     verification_code = db.Column(db.String(44), nullable=False, default=newsecret)
     md5sum = db.Column(db.String(32), nullable=False)
 
