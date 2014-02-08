@@ -297,6 +297,8 @@ class UserEmailClaim(BaseMixin, db.Model):
     verification_code = db.Column(db.String(44), nullable=False, default=newsecret)
     md5sum = db.Column(db.String(32), nullable=False)
 
+    __table_args__ = (db.UniqueConstraint('user_id', 'email'),)
+
     def __init__(self, email, **kwargs):
         super(UserEmailClaim, self).__init__(**kwargs)
         self.verification_code = newsecret()
@@ -399,6 +401,8 @@ class UserPhoneClaim(BaseMixin, db.Model):
     _phone = db.Column('phone', db.Unicode(80), nullable=False)
     gets_text = db.Column(db.Boolean, nullable=False, default=True)
     verification_code = db.Column(db.Unicode(4), nullable=False, default=newpin)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'phone'),)
 
     def __init__(self, phone, **kwargs):
         super(UserPhoneClaim, self).__init__(**kwargs)
