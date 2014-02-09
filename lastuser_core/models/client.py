@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.ext.declarative import declared_attr
 from coaster import newid, newsecret
 
 from . import db, BaseMixin
@@ -204,7 +205,30 @@ class ResourceAction(BaseMixin, db.Model):
             return None
 
 
-class AuthCode(BaseMixin, db.Model):
+class ScopeMixin(object):
+    @declared_attr
+    def _scope(self):
+        return db.Column('scope', db.UnicodeText, nullable=False)
+
+    def _scope_get(self):
+        return sorted([t.strip() for t in self._scope.replace('\r', ' ').replace('\n', ' ').split(u' ') if t])
+
+    def _scope_set(self, value):
+        if isinstance(value, basestring):
+            value = [value]
+        self._scope = u' '.join(sorted([t.strip() for t in value if t]))
+
+    @declared_attr
+    def scope(self):
+        return db.synonym('_scope', descriptor=property(self._scope_get, self._scope_set))
+
+    def add_scope(self, additional):
+        if isinstance(additional, basestring):
+            additional = [additional]
+        self.scope = list(set(self.scope).union(set(additional)))
+
+
+class AuthCode(ScopeMixin, BaseMixin, db.Model):
     """Short-lived authorization tokens."""
     __tablename__ = 'authcode'
     __bind_key__ = 'lastuser'
@@ -214,27 +238,11 @@ class AuthCode(BaseMixin, db.Model):
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref("authcodes", cascade="all, delete-orphan"))
     code = db.Column(db.String(44), default=newsecret, nullable=False)
-    _scope = db.Column('scope', db.Unicode(250), nullable=False)
     redirect_uri = db.Column(db.Unicode(1024), nullable=False)
     used = db.Column(db.Boolean, default=False, nullable=False)
 
-    @property
-    def scope(self):
-        return self._scope.split(u' ')
 
-    @scope.setter
-    def scope(self, value):
-        self._scope = u' '.join(value)
-
-    scope = db.synonym('_scope', descriptor=scope)
-
-    def add_scope(self, additional):
-        if isinstance(additional, basestring):
-            additional = [additional]
-        self.scope = list(set(self.scope).union(set(additional)))
-
-
-class AuthToken(BaseMixin, db.Model):
+class AuthToken(ScopeMixin, BaseMixin, db.Model):
     """Access tokens for access to data."""
     __tablename__ = 'authtoken'
     __bind_key__ = 'lastuser'
@@ -247,7 +255,6 @@ class AuthToken(BaseMixin, db.Model):
     token_type = db.Column(db.String(250), default='bearer', nullable=False)  # 'bearer', 'mac' or a URL
     secret = db.Column(db.String(44), nullable=True)
     _algorithm = db.Column('algorithm', db.String(20), nullable=True)
-    _scope = db.Column('scope', db.Unicode(250), nullable=False)
     validity = db.Column(db.Integer, nullable=False, default=0)  # Validity period in seconds
     refresh_token = db.Column(db.String(22), nullable=True, unique=True)
 
@@ -268,21 +275,6 @@ class AuthToken(BaseMixin, db.Model):
         if self.refresh_token is not None:
             self.token = newid()
             self.secret = newsecret()
-
-    @property
-    def scope(self):
-        return self._scope.split(u' ')
-
-    @scope.setter
-    def scope(self, value):
-        self._scope = u' '.join(sorted(value))
-
-    scope = db.synonym('_scope', descriptor=scope)
-
-    def add_scope(self, additional):
-        if isinstance(additional, basestring):
-            additional = [additional]
-        self.scope = list(set(self.scope).union(set(additional)))
 
     @property
     def algorithm(self):
