@@ -38,8 +38,10 @@ def profile_edit(newprofile=False):
         g.user.timezone = form.timezone.data
 
         if newprofile and not g.user.email:
-            useremail = UserEmailClaim(user=g.user, email=form.email.data)
-            db.session.add(useremail)
+            useremail = UserEmailClaim.get(user=g.user, email=form.email.data)
+            if useremail is None:
+                useremail = UserEmailClaim(user=g.user, email=form.email.data)
+                db.session.add(useremail)
             send_email_verify_link(useremail)
             db.session.commit()
             user_data_changed.send(g.user, changes=['profile', 'email-claim'])
