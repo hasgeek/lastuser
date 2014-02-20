@@ -235,6 +235,10 @@ class UserOldId(TimestampMixin, db.Model):
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('oldids', cascade="all, delete-orphan"))
 
+    def __repr__(self):
+        return u'<UserOldId {userid} of {user}'.format(
+            userid=self.userid, user=repr(self.user)[1:-1])
+
 
 class UserEmail(BaseMixin, db.Model):
     __tablename__ = 'useremail'
@@ -259,7 +263,8 @@ class UserEmail(BaseMixin, db.Model):
     email = db.synonym('_email', descriptor=email)
 
     def __repr__(self):
-        return u'<UserEmail {email} of user {user}>'.format(email=self.email, user=repr(self.user))
+        return u'<UserEmail {email} of {user}>'.format(
+            email=self.email, user=repr(self.user)[1:-1])
 
     def __unicode__(self):
         return unicode(self.email)
@@ -313,7 +318,8 @@ class UserEmailClaim(BaseMixin, db.Model):
     email = db.synonym('_email', descriptor=email)
 
     def __repr__(self):
-        return u'<UserEmailClaim {email} of user {user}>'.format(email=self.email, user=repr(self.user))
+        return u'<UserEmailClaim {email} of {user}>'.format(
+            email=self.email, user=repr(self.user)[1:-1])
 
     def __unicode__(self):
         return unicode(self.email)
@@ -371,7 +377,8 @@ class UserPhone(BaseMixin, db.Model):
     phone = db.synonym('_phone', descriptor=phone)
 
     def __repr__(self):
-        return u'<UserPhone {phone} of user {user}>'.format(phone=self.phone, user=repr(self.user))
+        return u'<UserPhone {phone} of {user}>'.format(
+            phone=self.phone, user=repr(self.user)[1:-1])
 
     def __unicode__(self):
         return unicode(self.phone)
@@ -416,7 +423,8 @@ class UserPhoneClaim(BaseMixin, db.Model):
     phone = db.synonym('_phone', descriptor=phone)
 
     def __repr__(self):
-        return u'<UserPhoneClaim {phone} of user {user}>'.format(phone=self.phone, user=repr(self.user))
+        return u'<UserPhoneClaim {phone} of {user}>'.format(
+            phone=self.phone, user=repr(self.user)[1:-1])
 
     def __unicode__(self):
         return unicode(self.phone)
@@ -479,6 +487,10 @@ class UserExternalId(BaseMixin, db.Model):
     oauth_token_type = db.Column(db.String(250), nullable=True)
 
     __table_args__ = (db.UniqueConstraint("service", "userid"), {})
+
+    def __repr__(self):
+        return u'<UserExternalId {service}:{username} of {user}'.format(
+            service=self.service, username=self.username, user=repr(self.user)[1:-1])
 
     @classmethod
     def get(cls, service, userid=None, username=None):
@@ -557,7 +569,8 @@ class Organization(BaseMixin, db.Model):
         return True
 
     def __repr__(self):
-        return u'<Organization {name} "{title}">'.format(name=self.name or self.userid, title=self.title)
+        return u'<Organization {name} "{title}">'.format(
+            name=self.name or self.userid, title=self.title)
 
     @property
     def pickername(self):
@@ -635,7 +648,8 @@ class Team(BaseMixin, db.Model):
         backref='teams')  # No cascades here! Cascades will delete users
 
     def __repr__(self):
-        return u'<Team {team} of {org}>'.format(team=self.title, org=self.org.title)
+        return u'<Team {team} of {org}>'.format(
+            team=self.title, org=repr(self.org)[1:-1])
 
     @property
     def pickername(self):
