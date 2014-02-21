@@ -49,8 +49,8 @@ def merge_users(user1, user2):
         keep_user, merge_user = user2, user1
 
     # 1. Inspect all tables for foreign key references to merge_user and switch to keep_user.
-    for model in globals().values():
-        if isclass(model) and issubclass(model, db.Model) and model != User:
+    for model in db.Model.__subclasses__():
+        if model != User:
             # a. This is a model and it's not the User model. Does it have a migrate_user classmethod?
             if hasattr(model, 'migrate_user'):
                 model.migrate_user(olduser=merge_user, newuser=keep_user)
