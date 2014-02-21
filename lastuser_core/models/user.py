@@ -243,7 +243,7 @@ class User(BaseMixin, db.Model):
         user = query.one_or_none()
         if user and user.status == USER_STATUS.MERGED:
             user = user.merged_user()
-        if user.is_active:
+        if user and user.is_active:
             return user
 
     @classmethod
