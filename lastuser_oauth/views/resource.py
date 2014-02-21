@@ -1,32 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from sqlalchemy import or_
-from sqlalchemy.orm import defer
 from flask import request, g
 from coaster import getbool
 from coaster.views import jsonp, requestargs
 
-from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Resource,
-    ResourceAction, UserClientPermissions, TeamClientPermissions, USER_STATUS,
-    UserExternalId, UserEmail)
+from lastuser_core.models import (getuser, User, Organization, AuthToken, Resource,
+    ResourceAction, UserClientPermissions, TeamClientPermissions)
 from lastuser_core import resource_registry
 from .. import lastuser_oauth
 from .helpers import requires_client_login, requires_user_or_client_login
-
-
-defer_cols_user = (
-    defer('created_at'),
-    defer('updated_at'),
-    defer('pw_hash'),
-    defer('timezone'),
-    defer('description'),
-    )
-
-defer_cols_org = (
-    defer('created_at'),
-    defer('updated_at'),
-    defer('description'),
-    )
 
 
 def get_userinfo(user, client, scope=[], get_permissions=True):
@@ -157,25 +139,28 @@ def user_get_by_userid():
     userid = request.values.get('userid')
     if not userid:
         return api_result('error', error='no_userid_provided')
-    user = User.query.filter_by(userid=userid, status=USER_STATUS.ACTIVE).options(*defer_cols_user).first()
+    user = User.get(userid=userid, defercols=True)
     if user:
         return api_result('ok',
             type='user',
             userid=user.userid,
             buid=user.userid,
             name=user.username,
-            title=user.fullname)
+            title=user.fullname,
+            label=user.pickername,
+            timezone=user.timezone,
+            oldids=[o.userid for o in user.oldids])
     else:
-        org = Organization.query.filter_by(userid=userid).options(*defer_cols_org).first()
+        org = Organization.get(userid=userid, defercols=True)
         if org:
             return api_result('ok',
                 type='organization',
                 userid=org.userid,
                 buid=org.userid,
                 name=org.name,
-                title=org.title)
-        else:
-            return api_result('error', error='not_found')
+                title=org.title,
+                label=org.pickername)
+    return api_result('error', error='not_found')
 
 
 @lastuser_oauth.route('/api/1/user/get_by_userids', methods=['GET', 'POST'])
@@ -189,9 +174,8 @@ def user_get_by_userids(userid):
     """
     if not userid:
         return api_result('error', error='no_userid_provided')
-    users = User.query.filter(User.userid.in_(userid),
-        User.status == USER_STATUS.ACTIVE).options(*defer_cols_user).all()
-    orgs = Organization.query.filter(Organization.userid.in_(userid)).options(*defer_cols_org).all()
+    users = User.all(userids=userid)
+    orgs = Organization.all(userids=userid)
     return api_result('ok',
         results=[
             {'type': 'user',
@@ -199,7 +183,9 @@ def user_get_by_userids(userid):
              'userid': u.userid,
              'name': u.username,
              'title': u.fullname,
-             'label': u.pickername} for u in users] + [
+             'label': u.pickername,
+             'timezone': u.timezone,
+             'oldids': [o.userid for o in u.oldids]} for u in users] + [
             {'type': 'organization',
              'buid': o.userid,
              'userid': o.userid,
@@ -223,8 +209,12 @@ def user_get(name):
         return api_result('ok',
             type='user',
             userid=user.userid,
+            buid=user.userid,
             name=user.username,
-            title=user.fullname)
+            title=user.fullname,
+            label=user.pickername,
+            timezone=user.timezone,
+            oldids=[o.userid for o in user.oldids])
     else:
         return api_result('error', error='not_found')
 
@@ -251,6 +241,8 @@ def user_getall(name):
                 'name': user.username,
                 'title': user.fullname,
                 'label': user.pickername,
+                'timezone': user.timezone,
+                'oldids': [o.userid for o in user.oldids],
                 })
             userids.add(user.userid)
     if not results:
@@ -265,34 +257,10 @@ def user_autocomplete():
     """
     Returns users (userid, username, fullname, twitter, github or email) matching the search term.
     """
-    # Escape the '%' and '_' wildcards in SQL LIKE clauses.
-    # Some SQL dialects respond to '[' and ']', so remove them.
-    q = request.values.get('q', '').replace('%', '\\%').replace('_', '\\_').replace('[', '').replace(']', '')
+    q = request.values.get('q', '')
     if not q:
         return api_result('error', error='no_query_provided')
-    q += '%'
-    # Use User._username since 'username' is a hybrid property that checks for validity
-    # before passing on to _username, the actual column name on the model
-    users = User.query.filter(User.status == USER_STATUS.ACTIVE,
-        or_(  # Match against userid (exact value only), fullname or username, case insensitive
-            User.userid == q[:-1],
-            db.func.lower(User.fullname).like(db.func.lower(q)),
-            db.func.lower(User._username).like(db.func.lower(q))
-            )
-        ).options(*defer_cols_user).limit(100).all()  # Limit to 100 results
-    if q.startswith('@'):
-        # Add Twitter/GitHub accounts to the head of results
-        # TODO: Move this query to a login provider class method
-        users = User.query.filter(User.status == USER_STATUS.ACTIVE, User.id.in_(
-            db.session.query(UserExternalId.user_id).filter(
-                UserExternalId.service.in_([u'twitter', u'github']),
-                db.func.lower(UserExternalId.username).like(db.func.lower(q[1:]))
-            ).subquery())).options(*defer_cols_user).limit(100).all() + users
-    elif '@' in q:
-        users = User.query.filter(User.status == USER_STATUS.ACTIVE, User.id.in_(
-            db.session.query(UserEmail.user_id).filter(
-                db.func.lower(UserEmail.email).like(db.func.lower(q))
-            ).subquery())).options(*defer_cols_user).limit(100).all() + users
+    users = User.autocomplete(q)
     result = [{
         'userid': u.userid,
         'buid': u.userid,
@@ -314,7 +282,7 @@ def org_team_get():
     org_userids = request.values.getlist('org')
     if not org_userids:
         return api_result('error', error='no_org_provided')
-    organizations = Organization.query.filter(Organization.userid.in_(org_userids)).options(*defer_cols_org).all()
+    organizations = Organization.all(userids=org_userids)
     if not organizations:
         return api_result('error', error='no_such_organization')
     orgteams = {}
