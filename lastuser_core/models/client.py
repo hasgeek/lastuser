@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.ext.declarative import declared_attr
 from coaster import newid, newsecret
 
@@ -100,10 +99,7 @@ class Client(BaseMixin, db.Model):
 
         :param str key: Client key to lookup
         """
-        try:
-            return cls.query.filter_by(key=key, active=True).one()
-        except NoResultFound:
-            return None
+        return cls.query.filter_by(key=key, active=True).one_or_none()
 
 
 class UserFlashMessage(BaseMixin, db.Model):
@@ -153,10 +149,7 @@ class Resource(BaseMixin, db.Model):
 
         :param str name: Name of the resource.
         """
-        try:
-            return cls.query.filter_by(name=name).one()
-        except NoResultFound:
-            return None
+        return cls.query.filter_by(name=name).one_or_none()
 
     def get_action(self, name):
         """
@@ -199,10 +192,7 @@ class ResourceAction(BaseMixin, db.Model):
         :param str name: Name of the action
         :param Resource resource: Resource on which this action exists
         """
-        try:
-            return cls.query.filter_by(name=name, resource=resource).one()
-        except NoResultFound:
-            return None
+        return cls.query.filter_by(name=name, resource=resource).one_or_none()
 
 
 class ScopeMixin(object):
@@ -322,10 +312,7 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
 
         :param str token: Token to lookup
         """
-        try:
-            return cls.query.filter_by(token=token).one()
-        except NoResultFound:
-            return None
+        return cls.query.filter_by(token=token).one_or_none()
 
 
 class Permission(BaseMixin, db.Model):
@@ -378,18 +365,15 @@ class Permission(BaseMixin, db.Model):
 
         One of ``user`` and ``org`` must be specified, unless ``allusers`` is ``True``.
         """
-        try:
-            if allusers:
-                return cls.query.filter_by(name=name, allusers=True).one()
+        if allusers:
+            return cls.query.filter_by(name=name, allusers=True).one_or_none()
+        else:
+            if not bool(user) ^ bool(org):
+                raise TypeError("Either user or org should be specified")
+            if user is not None:
+                return cls.query.filter_by(name=name, user=user).one_or_none()
             else:
-                if not bool(user) ^ bool(org):
-                    raise TypeError("Either user or org should be specified")
-                if user is not None:
-                    return cls.query.filter_by(name=name, user=user).one()
-                else:
-                    return cls.query.filter_by(name=name, org=org).one()
-        except NoResultFound:
-            return None
+                return cls.query.filter_by(name=name, org=org).one_or_none()
 
 
 # This model's name is in plural because it defines multiple permissions within each instance
