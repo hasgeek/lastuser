@@ -20,3 +20,13 @@ Here is how you make a test deployment::
     $ open instance/settings.py # Customize this file as needed
     $ pip install -r requirements.txt
     $ python runserver.py
+
+You may also want to setup the database with::
+
+    $ python manage.py db create
+
+For development setup, you can also set the `CACHE_TYPE` to `simple` in `instance/settings.py` or in `instance/development.py`::
+
+    #: Cache type
+    CACHE_TYPE = 'simple'
+
