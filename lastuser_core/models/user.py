@@ -7,6 +7,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import defer
 from sqlalchemy.ext.hybrid import hybrid_property
 from coaster import newid, newsecret, newpin, valid_username
+from coaster.sqlalchemy import Query as CoasterQuery
 
 from . import db, TimestampMixin, BaseMixin
 
@@ -308,6 +309,8 @@ class User(BaseMixin, db.Model):
 class UserOldId(TimestampMixin, db.Model):
     __tablename__ = 'useroldid'
     __bind_key__ = 'lastuser'
+    query_class = CoasterQuery
+
     userid = db.Column(db.String(22), nullable=False, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
