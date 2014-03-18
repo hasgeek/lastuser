@@ -75,6 +75,10 @@ class Client(BaseMixin, db.Model):
         else:
             raise AttributeError("This client has no owner")
 
+    @property
+    def owner(self):
+        return self.user or self.org
+
     def owner_is(self, user):
         if not user:
             return False
@@ -143,7 +147,7 @@ class Resource(BaseScopedNameMixin, db.Model):
     title = db.Column(db.Unicode(250), nullable=False)
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
     siteresource = db.Column(db.Boolean, default=False, nullable=False)
-    trusted = db.Column(db.Boolean, default=False, nullable=False)
+    restricted = db.Column(db.Boolean, default=False, nullable=False)
     __table_args__ = (db.UniqueConstraint('client_id', 'name', name='resource_client_id_name_key'),)
 
     def permissions(self, user, inherited=None):

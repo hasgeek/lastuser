@@ -8,7 +8,7 @@ from coaster import newsecret
 from lastuser_core.utils import make_redirect_url
 from lastuser_core import resource_registry
 from lastuser_core.models import (db, Client, AuthCode, AuthToken, UserFlashMessage,
-    UserClientPermissions, TeamClientPermissions, getuser, Resource, ResourceAction)
+    UserClientPermissions, TeamClientPermissions, getuser, Resource)
 from .. import lastuser_oauth
 from ..forms import AuthorizeForm
 from .helpers import requires_login_no_message, requires_client_login
@@ -43,9 +43,14 @@ def verifyscope(scope, client):
                 resource_name = item
                 action_name = None
             resource = Resource.get(name=resource_name, namespace=namespace)
-            # Validation 2: Resource exists & client has access to it
+
+            # Validation 2: Resource exists and client has access to it
             if not resource:
                 raise ScopeException(u"Unknown resource ‘{resource}’ under namespace ‘{namespace}’ in scope".format(resource=resource_name, namespace=namespace))
+            if resource.restricted and resource.client.owner != client.owner:
+                raise ScopeException(
+                    u"This application does not have access to resource ‘{resource}’ in scope".format(resource=resource_name))
+
             # Validation 3: Action is valid
             if action_name:
                 action = resource.get_action(action_name)

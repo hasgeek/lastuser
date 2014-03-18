@@ -189,9 +189,10 @@ class ResourceForm(Form):
         description='An optional description of what the resource is')
     siteresource = wtforms.BooleanField('Site resource',
         description='Enable if this resource is generic to the site and not owned by specific users')
-    trusted = wtforms.BooleanField('Trusted applications only',
-        description='Enable if access to the resource should be restricted to trusted '
-            'applications. You may want to do this for sensitive information like billing data')
+    restricted = wtforms.BooleanField('Restrict access to your apps',
+        description='Enable if access to the resource should be restricted to client apps '
+            'that share the same owner. You may want to do this for sensitive resources '
+            'that should only be available to your own apps')
 
     def validate_name(self, field):
         if not valid_username(field.data):
