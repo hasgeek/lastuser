@@ -24,6 +24,9 @@ def lookup_current_user():
     if 'userid' in session:
         g.user = User.get(userid=session['userid'])
 
+    # This will be set to True downstream by the requires_login decorator
+    g.login_required = False
+
 
 @lastuser_oauth.after_app_request
 def cache_expiry_headers(response):
@@ -73,6 +76,7 @@ def requires_login(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        g.login_required = True
         if g.user is None:
             flash(u"You need to be logged in for that page", "info")
             session['next'] = get_current_url()
@@ -87,6 +91,7 @@ def requires_login_no_message(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        g.login_required = True
         if g.user is None:
             session['next'] = get_current_url()
             if 'message' in request.args and request.args['message']:
@@ -127,6 +132,7 @@ def requires_user_or_client_login(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        g.login_required = True
         # Check for user first:
         if g.user is not None:
             return f(*args, **kwargs)
