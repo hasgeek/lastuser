@@ -13,7 +13,7 @@ Flask-WTF
 requests
 blinker
 Flask-RQ
-Flask-Script
+Flask-Script==0.5.3
 tweepy
 https://github.com/hasgeek/coaster/archive/master.zip
 https://github.com/hasgeek/baseframe/archive/master.zip

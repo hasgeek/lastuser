@@ -200,7 +200,7 @@ class ResourceForm(Form):
         if field.data in resource_registry:
             raise wtforms.ValidationError("This name is reserved for internal use")
 
-        existing = Resource.get(name=field.data)
+        existing = Resource.get(name=field.data, client=self.client)
         if existing and existing.id != self.edit_id:
             raise wtforms.ValidationError("A resource with that name already exists")
 

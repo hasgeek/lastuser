@@ -22,7 +22,8 @@ class LoginForm(Form):
     def validate_password(self, field):
         user = getuser(self.username.data)
         if user is None or not user.password_is(field.data):
-            raise wtforms.ValidationError("Incorrect password")
+            if not self.username.errors:
+                raise wtforms.ValidationError("Incorrect password")
         self.user = user
 
 

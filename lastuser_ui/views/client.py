@@ -319,6 +319,7 @@ def permission_user_delete(client, kwargs):
 @load_model(Client, {'key': 'key'}, 'client', permission='new-resource')
 def resource_new(client):
     form = ResourceForm()
+    form.client = client
     form.edit_id = None
     if form.validate_on_submit():
         resource = Resource(client=client)
@@ -338,6 +339,7 @@ def resource_new(client):
     permission='edit')
 def resource_edit(client, resource):
     form = ResourceForm(obj=resource)
+    form.client = client
     if form.validate_on_submit():
         form.populate_obj(resource)
         db.session.commit()

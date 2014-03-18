@@ -42,8 +42,7 @@ def verifyscope(scope, client):
             else:
                 resource_name = item
                 action_name = None
-            client = Client.get(namespace=namespace)
-            resource = Resource.get(name=resource_name, client=client)
+            resource = Resource.get(name=resource_name, namespace=namespace)
             # Validation 2: Resource exists & client has access to it
             if not resource:
                 raise ScopeException(u"Unknown resource ‘{resource}’ under namespace ’{namespace}’ in scope".format(resource=resource_name, namespace=namespace))

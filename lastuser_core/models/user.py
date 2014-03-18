@@ -3,8 +3,11 @@
 from hashlib import md5
 from werkzeug import check_password_hash, cached_property
 import bcrypt
+from sqlalchemy import or_
+from sqlalchemy.orm import defer
 from sqlalchemy.ext.hybrid import hybrid_property
 from coaster import newid, newsecret, newpin, valid_username
+from coaster.sqlalchemy import Query as CoasterQuery
 
 from . import db, TimestampMixin, BaseMixin
 
@@ -30,6 +33,14 @@ class User(BaseMixin, db.Model):
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
     status = db.Column(db.SmallInteger, nullable=False, default=USER_STATUS.ACTIVE)
 
+    _defercols = [
+        defer('created_at'),
+        defer('updated_at'),
+        defer('pw_hash'),
+        defer('timezone'),
+        defer('description'),
+        ]
+
     def __init__(self, password=None, **kwargs):
         self.userid = newid()
         self.password = password
@@ -38,6 +49,12 @@ class User(BaseMixin, db.Model):
     @property
     def is_active(self):
         return self.status == USER_STATUS.ACTIVE
+
+    def merged_user(self):
+        if self.status == USER_STATUS.MERGED:
+            return UserOldId.get(self.userid).user
+        else:
+            return self
 
     def _set_password(self, password):
         if password is None:
@@ -196,22 +213,6 @@ class User(BaseMixin, db.Model):
         """
         return bool(self.fullname and self.username and self.email)
 
-    @classmethod
-    def get(cls, username=None, userid=None):
-        """
-        Return a User with the given username or userid.
-
-        :param str username: Username to lookup
-        :param str userid: Userid to lookup
-        """
-        if not bool(username) ^ bool(userid):
-            raise TypeError("Either username or userid should be specified")
-
-        if userid:
-            return cls.query.filter_by(userid=userid, status=USER_STATUS.ACTIVE).first()
-        else:
-            return cls.query.filter_by(username=username, status=USER_STATUS.ACTIVE).first()
-
     def available_permissions(self):
         """
         Return all permission objects available to this user
@@ -222,14 +223,106 @@ class User(BaseMixin, db.Model):
             db.or_(Permission.allusers == True, Permission.user == self)
             ).order_by(Permission.name).all()
 
+    @classmethod
+    def get(cls, username=None, userid=None, defercols=False):
+        """
+        Return a User with the given username or userid.
+
+        :param str username: Username to lookup
+        :param str userid: Userid to lookup
+        :param bool defercols: Defer loading non-critical columns
+        """
+        if not bool(username) ^ bool(userid):
+            raise TypeError("Either username or userid should be specified")
+
+        if userid:
+            query = cls.query.filter_by(userid=userid)
+        else:
+            query = cls.query.filter_by(username=username)
+        if defercols:
+            query = query.options(*cls._defercols)
+        user = query.one_or_none()
+        if user and user.status == USER_STATUS.MERGED:
+            user = user.merged_user()
+        if user and user.is_active:
+            return user
+
+    @classmethod
+    def all(cls, userids=None, usernames=None, defercols=False):
+        """
+        Return all matching users.
+
+        :param list userids: Userids to look up
+        :param list usernames: Usernames to look up
+        :param bool defercols: Defer loading non-critical columns
+        """
+        users = set()
+        if userids:
+            query = cls.query.filter(cls.userid.in_(userids))
+            if defercols:
+                query = query.options(*cls._defercols)
+            for user in query.all():
+                user = user.merged_user()
+                if user.is_active:
+                    users.add(user)
+        return list(users)
+
+    @classmethod
+    def autocomplete(cls, query):
+        """
+        Return users whose names begin with the query, for autocomplete widgets.
+        Looks up users by fullname, username, external ids and email addresses.
+
+        :param str query: Letters to start matching with
+        """
+        # Escape the '%' and '_' wildcards in SQL LIKE clauses.
+        # Some SQL dialects respond to '[' and ']', so remove them.
+        query = query.replace(u'%', ur'\%').replace(u'_', ur'\_').replace(u'[', u'').replace(u']', u'') + u'%'
+        # Use User._username since 'username' is a hybrid property that checks for validity
+        # before passing on to _username, the actual column name on the model.
+        # We convert to lowercase and use the LIKE operator since ILIKE isn't standard.
+        if not query:
+            return []
+        users = cls.query.filter(cls.status == USER_STATUS.ACTIVE,
+            or_(  # Match against userid (exact value only), fullname or username, case insensitive
+                cls.userid == query[:-1],
+                db.func.lower(cls.fullname).like(db.func.lower(query)),
+                db.func.lower(cls._username).like(db.func.lower(query))
+                )
+            ).options(*cls._defercols).limit(100).all()  # Limit to 100 results
+        if query.startswith('@'):
+            # Add Twitter/GitHub accounts to the head of results
+            # TODO: Move this query to a login provider class method
+            users = cls.query.filter(cls.status == USER_STATUS.ACTIVE, cls.id.in_(
+                db.session.query(UserExternalId.user_id).filter(
+                    UserExternalId.service.in_([u'twitter', u'github']),
+                    db.func.lower(UserExternalId.username).like(db.func.lower(query[1:]))
+                ).subquery())).options(*cls._defercols).limit(100).all() + users
+        elif '@' in query:
+            users = cls.query.filter(cls.status == USER_STATUS.ACTIVE, cls.id.in_(
+                db.session.query(UserEmail.user_id).filter(
+                    db.func.lower(UserEmail.email).like(db.func.lower(query))
+                ).subquery())).options(*cls._defercols).limit(100).all() + users
+        return users
+
 
 class UserOldId(TimestampMixin, db.Model):
     __tablename__ = 'useroldid'
     __bind_key__ = 'lastuser'
+    query_class = CoasterQuery
+
     userid = db.Column(db.String(22), nullable=False, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('oldids', cascade="all, delete-orphan"))
+
+    def __repr__(self):
+        return u'<UserOldId {userid} of {user}'.format(
+            userid=self.userid, user=repr(self.user)[1:-1])
+
+    @classmethod
+    def get(cls, userid):
+        return cls.query.filter_by(userid=userid).one_or_none()
 
 
 class UserEmail(BaseMixin, db.Model):
@@ -238,7 +331,7 @@ class UserEmail(BaseMixin, db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('emails', cascade="all, delete-orphan"))
-    _email = db.Column('email', db.Unicode(80), unique=True, nullable=False)
+    _email = db.Column('email', db.Unicode(254), unique=True, nullable=False)
     md5sum = db.Column(db.String(32), unique=True, nullable=False)
     primary = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -255,7 +348,8 @@ class UserEmail(BaseMixin, db.Model):
     email = db.synonym('_email', descriptor=email)
 
     def __repr__(self):
-        return u'<UserEmail {email} of user {user}>'.format(email=self.email, user=repr(self.user))
+        return u'<UserEmail {email} of {user}>'.format(
+            email=self.email, user=repr(self.user)[1:-1])
 
     def __unicode__(self):
         return unicode(self.email)
@@ -275,9 +369,9 @@ class UserEmail(BaseMixin, db.Model):
             raise TypeError("Either email or md5sum should be specified")
 
         if email:
-            return cls.query.filter(cls.email.in_([email, email.lower()])).first()
+            return cls.query.filter(cls.email.in_([email, email.lower()])).one_or_none()
         else:
-            return cls.query.filter_by(md5sum=md5sum).first()
+            return cls.query.filter_by(md5sum=md5sum).one_or_none()
 
 
 class UserEmailClaim(BaseMixin, db.Model):
@@ -286,9 +380,11 @@ class UserEmailClaim(BaseMixin, db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('emailclaims', cascade="all, delete-orphan"))
-    _email = db.Column('email', db.Unicode(80), nullable=True)
+    _email = db.Column('email', db.Unicode(254), nullable=True)
     verification_code = db.Column(db.String(44), nullable=False, default=newsecret)
     md5sum = db.Column(db.String(32), nullable=False)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'email'),)
 
     def __init__(self, email, **kwargs):
         super(UserEmailClaim, self).__init__(**kwargs)
@@ -304,7 +400,8 @@ class UserEmailClaim(BaseMixin, db.Model):
     email = db.synonym('_email', descriptor=email)
 
     def __repr__(self):
-        return u'<UserEmailClaim {email} of user {user}>'.format(email=self.email, user=repr(self.user))
+        return u'<UserEmailClaim {email} of {user}>'.format(
+            email=self.email, user=repr(self.user)[1:-1])
 
     def __unicode__(self):
         return unicode(self.email)
@@ -326,7 +423,7 @@ class UserEmailClaim(BaseMixin, db.Model):
         :param str email: Email address to lookup
         :param User user: User who claimed this email address
         """
-        return cls.query.filter(UserEmailClaim.email.in_([email, email.lower()])).filter_by(user=user).first()
+        return cls.query.filter(UserEmailClaim.email.in_([email, email.lower()])).filter_by(user=user).one_or_none()
 
     @classmethod
     def all(cls, email):
@@ -359,7 +456,8 @@ class UserPhone(BaseMixin, db.Model):
     phone = db.synonym('_phone', descriptor=phone)
 
     def __repr__(self):
-        return u'<UserPhone {phone} of user {user}>'.format(phone=self.phone, user=repr(self.user))
+        return u'<UserPhone {phone} of {user}>'.format(
+            phone=self.phone, user=repr(self.user)[1:-1])
 
     def __unicode__(self):
         return unicode(self.phone)
@@ -374,7 +472,7 @@ class UserPhone(BaseMixin, db.Model):
 
         :param str phone: Phone number to lookup (must be an exact match)
         """
-        return cls.query.filter_by(phone=phone).first()
+        return cls.query.filter_by(phone=phone).one_or_none()
 
 
 class UserPhoneClaim(BaseMixin, db.Model):
@@ -386,6 +484,8 @@ class UserPhoneClaim(BaseMixin, db.Model):
     _phone = db.Column('phone', db.Unicode(80), nullable=False)
     gets_text = db.Column(db.Boolean, nullable=False, default=True)
     verification_code = db.Column(db.Unicode(4), nullable=False, default=newpin)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'phone'),)
 
     def __init__(self, phone, **kwargs):
         super(UserPhoneClaim, self).__init__(**kwargs)
@@ -399,7 +499,8 @@ class UserPhoneClaim(BaseMixin, db.Model):
     phone = db.synonym('_phone', descriptor=phone)
 
     def __repr__(self):
-        return u'<UserPhoneClaim {phone} of user {user}>'.format(phone=self.phone, user=repr(self.user))
+        return u'<UserPhoneClaim {phone} of {user}>'.format(
+            phone=self.phone, user=repr(self.user)[1:-1])
 
     def __unicode__(self):
         return unicode(self.phone)
@@ -421,7 +522,7 @@ class UserPhoneClaim(BaseMixin, db.Model):
         :param str phone: Phone number to lookup (must be an exact match)
         :param User user: User who claimed this phone number
         """
-        return cls.query.filter_by(phone=phone, user=user).first()
+        return cls.query.filter_by(phone=phone, user=user).one_or_none()
 
     @classmethod
     def all(cls, phone):
@@ -460,6 +561,10 @@ class UserExternalId(BaseMixin, db.Model):
 
     __table_args__ = (db.UniqueConstraint("service", "userid"), {})
 
+    def __repr__(self):
+        return u'<UserExternalId {service}:{username} of {user}'.format(
+            service=self.service, username=self.username, user=repr(self.user)[1:-1])
+
     @classmethod
     def get(cls, service, userid=None, username=None):
         """
@@ -478,9 +583,9 @@ class UserExternalId(BaseMixin, db.Model):
             raise TypeError("Either userid or username should be specified")
 
         if userid:
-            return cls.query.filter_by(service=service, userid=userid).first()
+            return cls.query.filter_by(service=service, userid=userid).one_or_none()
         else:
-            return cls.query.filter_by(service=service, username=username).first()
+            return cls.query.filter_by(service=service, username=username).one_or_none()
 
 # --- Organizations and teams -------------------------------------------------
 
@@ -508,6 +613,12 @@ class Organization(BaseMixin, db.Model):
     title = db.Column(db.Unicode(80), default=u'', nullable=False)
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
 
+    _defercols = [
+        defer('created_at'),
+        defer('updated_at'),
+        defer('description'),
+        ]
+
     def __init__(self, *args, **kwargs):
         super(Organization, self).__init__(*args, **kwargs)
         if self.owners is None:
@@ -534,7 +645,8 @@ class Organization(BaseMixin, db.Model):
         return True
 
     def __repr__(self):
-        return u'<Organization {name} "{title}">'.format(name=self.name or self.userid, title=self.title)
+        return u'<Organization {name} "{title}">'.format(
+            name=self.name or self.userid, title=self.title)
 
     @property
     def pickername(self):
@@ -567,22 +679,6 @@ class Organization(BaseMixin, db.Model):
                 perms.remove('delete')
         return perms
 
-    @classmethod
-    def get(cls, name=None, userid=None):
-        """
-        Return an Organization with matching name or userid. Note that ``name`` is the username, not the title.
-
-        :param str name: Name of the organization
-        :param str userid: Userid of the organization
-        """
-        if not bool(name) ^ bool(userid):
-            raise TypeError("Either name or userid should be specified")
-
-        if userid:
-            return cls.query.filter_by(userid=userid).first()
-        else:
-            return cls.query.filter_by(name=name).first()
-
     def available_permissions(self):
         """
         Return all permission objects available to this organization
@@ -592,6 +688,41 @@ class Organization(BaseMixin, db.Model):
         return Permission.query.filter(
             db.or_(Permission.allusers == True, Permission.org == self)
             ).order_by(Permission.name).all()
+
+    @classmethod
+    def get(cls, name=None, userid=None, defercols=False):
+        """
+        Return an Organization with matching name or userid. Note that ``name`` is the username, not the title.
+
+        :param str name: Name of the organization
+        :param str userid: Userid of the organization
+        :param bool defercols: Defer loading non-critical columns
+        """
+        if not bool(name) ^ bool(userid):
+            raise TypeError("Either name or userid should be specified")
+
+        if userid:
+            query = cls.query.filter_by(userid=userid)
+        else:
+            query = cls.query.filter_by(name=name)
+        if defercols:
+            query = query.options(*cls._defercols)
+        return query.one_or_none()
+
+    @classmethod
+    def all(cls, userids=None, names=None, defercols=False):
+        orgs = []
+        if userids:
+            query = cls.query.filter(cls.userid.in_(userids))
+            if defercols:
+                query = query.options(*cls._defercols)
+            orgs.extend(query.all())
+        if names:
+            query = cls.query.filter(cls.name.in_(names))
+            if defercols:
+                query = query.options(*cls._defercols)
+            orgs.extend(query.all())
+        return orgs
 
 
 class Team(BaseMixin, db.Model):
@@ -609,7 +740,8 @@ class Team(BaseMixin, db.Model):
         backref='teams')  # No cascades here! Cascades will delete users
 
     def __repr__(self):
-        return u'<Team {team} of {org}>'.format(team=self.title, org=self.org.title)
+        return u'<Team {team} of {org}>'.format(
+            team=self.title, org=repr(self.org)[1:-1])
 
     @property
     def pickername(self):
@@ -628,3 +760,12 @@ class Team(BaseMixin, db.Model):
             if team not in newuser.teams:
                 newuser.teams.append(team)
         olduser.teams = []
+
+    @classmethod
+    def get(cls, userid=None):
+        """
+        Return a Team with matching userid.
+
+        :param str userid: Userid of the organization
+        """
+        return cls.query.filter_by(userid=userid).one_or_none()

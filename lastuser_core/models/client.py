@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from sqlalchemy.ext.declarative import declared_attr
 from coaster import newid, newsecret
 from coaster.utils import namespace_from_url
 
@@ -96,18 +97,19 @@ class Client(BaseMixin, db.Model):
         return perms
 
     @classmethod
-    def get(cls, key=None, **filters):
+    def get(cls, key=None, namespace=None):
         """
-        Return a Client identified by its client key. Only returns active clients.
+        Return a Client identified by its client key or namespace. Only returns active clients.
 
         :param str key: Client key to lookup
+        :param str namespace: Client namespace to lookup
         """
+        if not bool(key) ^ bool(namespace):
+            raise TypeError("Either key or namespace should be specified")
         if key:
-            return cls.query.filter_by(key=key, active=True).first()
-        elif len(filters):
-            return cls.query.filter_by(**filters).first()
+            return cls.query.filter_by(key=key, active=True).one_or_none()
         else:
-            return None
+            return cls.query.filter_by(namespace=namespace, active=True).one_or_none()
 
 
 class UserFlashMessage(BaseMixin, db.Model):
@@ -153,22 +155,19 @@ class Resource(BaseScopedNameMixin, db.Model):
         return perms
 
     @classmethod
-    def get(cls, name=None, client=None, **filters):
+    def get(cls, name, client=None, namespace=None):
         """
         Return a Resource with the given name.
 
         :param str name: Name of the resource.
         """
-        if name:
-            keys = dict()
-            keys['name'] = name
-            if client:
-                keys['client'] = client
-            return cls.query.filter_by(**keys).first()
-        elif len(filters):
-            return cls.query.filter_by(**filters).first()
+        if not bool(client) ^ bool(namespace):
+            raise TypeError("Either client or namespace should be specified")
+
+        if client:
+            return cls.query.filter_by(name=name, client=client).one_or_none()
         else:
-            return None
+            return cls.query.filter_by(name=name).join(Client).filter(Client.namespace == namespace).one_or_none()
 
     def get_action(self, name):
         """
@@ -211,10 +210,33 @@ class ResourceAction(BaseMixin, db.Model):
         :param str name: Name of the action
         :param Resource resource: Resource on which this action exists
         """
-        return cls.query.filter_by(name=name, resource=resource).first()
+        return cls.query.filter_by(name=name, resource=resource).one_or_none()
 
 
-class AuthCode(BaseMixin, db.Model):
+class ScopeMixin(object):
+    @declared_attr
+    def _scope(self):
+        return db.Column('scope', db.UnicodeText, nullable=False)
+
+    def _scope_get(self):
+        return sorted([t.strip() for t in self._scope.replace('\r', ' ').replace('\n', ' ').split(u' ') if t])
+
+    def _scope_set(self, value):
+        if isinstance(value, basestring):
+            value = [value]
+        self._scope = u' '.join(sorted([t.strip() for t in value if t]))
+
+    @declared_attr
+    def scope(self):
+        return db.synonym('_scope', descriptor=property(self._scope_get, self._scope_set))
+
+    def add_scope(self, additional):
+        if isinstance(additional, basestring):
+            additional = [additional]
+        self.scope = list(set(self.scope).union(set(additional)))
+
+
+class AuthCode(ScopeMixin, BaseMixin, db.Model):
     """Short-lived authorization tokens."""
     __tablename__ = 'authcode'
     __bind_key__ = 'lastuser'
@@ -224,27 +246,11 @@ class AuthCode(BaseMixin, db.Model):
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref("authcodes", cascade="all, delete-orphan"))
     code = db.Column(db.String(44), default=newsecret, nullable=False)
-    _scope = db.Column('scope', db.Unicode(250), nullable=False)
     redirect_uri = db.Column(db.Unicode(1024), nullable=False)
     used = db.Column(db.Boolean, default=False, nullable=False)
 
-    @property
-    def scope(self):
-        return self._scope.split(u' ')
 
-    @scope.setter
-    def scope(self, value):
-        self._scope = u' '.join(value)
-
-    scope = db.synonym('_scope', descriptor=scope)
-
-    def add_scope(self, additional):
-        if isinstance(additional, basestring):
-            additional = [additional]
-        self.scope = list(set(self.scope).union(set(additional)))
-
-
-class AuthToken(BaseMixin, db.Model):
+class AuthToken(ScopeMixin, BaseMixin, db.Model):
     """Access tokens for access to data."""
     __tablename__ = 'authtoken'
     __bind_key__ = 'lastuser'
@@ -257,7 +263,6 @@ class AuthToken(BaseMixin, db.Model):
     token_type = db.Column(db.String(250), default='bearer', nullable=False)  # 'bearer', 'mac' or a URL
     secret = db.Column(db.String(44), nullable=True)
     _algorithm = db.Column('algorithm', db.String(20), nullable=True)
-    _scope = db.Column('scope', db.Unicode(250), nullable=False)
     validity = db.Column(db.Integer, nullable=False, default=0)  # Validity period in seconds
     refresh_token = db.Column(db.String(22), nullable=True, unique=True)
 
@@ -278,21 +283,6 @@ class AuthToken(BaseMixin, db.Model):
         if self.refresh_token is not None:
             self.token = newid()
             self.secret = newsecret()
-
-    @property
-    def scope(self):
-        return self._scope.split(u' ')
-
-    @scope.setter
-    def scope(self, value):
-        self._scope = u' '.join(sorted(value))
-
-    scope = db.synonym('_scope', descriptor=scope)
-
-    def add_scope(self, additional):
-        if isinstance(additional, basestring):
-            additional = [additional]
-        self.scope = list(set(self.scope).union(set(additional)))
 
     @property
     def algorithm(self):
@@ -340,7 +330,7 @@ class AuthToken(BaseMixin, db.Model):
 
         :param str token: Token to lookup
         """
-        return cls.query.filter_by(token=token).first()
+        return cls.query.filter_by(token=token).one_or_none()
 
 
 class Permission(BaseMixin, db.Model):
@@ -394,14 +384,14 @@ class Permission(BaseMixin, db.Model):
         One of ``user`` and ``org`` must be specified, unless ``allusers`` is ``True``.
         """
         if allusers:
-            return cls.query.filter_by(name=name, allusers=True).first()
+            return cls.query.filter_by(name=name, allusers=True).one_or_none()
         else:
             if not bool(user) ^ bool(org):
                 raise TypeError("Either user or org should be specified")
             if user is not None:
-                return cls.query.filter_by(name=name, user=user).first()
+                return cls.query.filter_by(name=name, user=user).one_or_none()
             else:
-                return cls.query.filter_by(name=name, org=org).first()
+                return cls.query.filter_by(name=name, org=org).one_or_none()
 
 
 # This model's name is in plural because it defines multiple permissions within each instance
