@@ -32,8 +32,8 @@ def verifyscope(scope, client):
                 raise ScopeException(u"No namespace specified for external resource ‘{scope}’ in scope".format(scope=item))
             itemparts = item.split(':')
             if len(itemparts) != 2:
-                raise ScopeException(u"Too many ':' characters in ‘{scope}’ in scope".format(scope=item))
-            namespace, item = itemparts[0], itemparts[1]
+                raise ScopeException(u"Too many ‘:’ characters in ‘{scope}’ in scope".format(scope=item))
+            namespace, item = itemparts
             if '/' in item:
                 parts = item.split('/')
                 if len(parts) != 2:
@@ -45,12 +45,12 @@ def verifyscope(scope, client):
             resource = Resource.get(name=resource_name, namespace=namespace)
             # Validation 2: Resource exists & client has access to it
             if not resource:
-                raise ScopeException(u"Unknown resource ‘{resource}’ under namespace ’{namespace}’ in scope".format(resource=resource_name, namespace=namespace))
+                raise ScopeException(u"Unknown resource ‘{resource}’ under namespace ‘{namespace}’ in scope".format(resource=resource_name, namespace=namespace))
             # Validation 3: Action is valid
             if action_name:
                 action = resource.get_action(action_name)
                 if not action:
-                    raise ScopeException(u"Unknown action ‘{action}’ on resource ‘{resource}’ under namespace ’{namespace}’".format(
+                    raise ScopeException(u"Unknown action ‘{action}’ on resource ‘{resource}’ under namespace ‘{namespace}’".format(
                         action=action_name, resource=resource_name, namespace=namespace))
                 resources.setdefault(resource, []).append(action)
             else:

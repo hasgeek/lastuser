@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import request, g
+from flask import request, g, json
 from coaster import getbool
 from coaster.views import jsonp, requestargs
 
@@ -9,8 +9,6 @@ from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Re
 from lastuser_core import resource_registry
 from .. import lastuser_oauth
 from .helpers import requires_client_login, requires_user_or_client_login
-
-import simplejson as json
 
 
 def get_userinfo(user, client, scope=[], get_permissions=True):
@@ -137,13 +135,13 @@ def token_verify():
 @requestargs(('resources', json.loads))
 def sync_resources(resources):
     actions_list = {}
-    results = dict()
+    results = {}
 
     for name in resources:
         if '/' in name:
             parts = name.split('/')
             if len(parts) != 2:
-                results[name] = dict(status='error', error="Invalid scope %s" % name)
+                results[name] = {'status': 'error', 'error': "Invalid scope %s" % name}
                 continue
             resource_name, action_name = parts
         else:
@@ -155,7 +153,7 @@ def sync_resources(resources):
             actions_list[resource_name] = []
         resource = Resource.get(name=resource_name, client=g.client)
         if resource:
-            results[resource.name] = dict(status='exists', actions=dict())
+            results[resource.name] = {'status': 'exists', 'actions': {}}
             if not action_name and resource.description != desc:
                 resource.description = desc
                 results[resource.name]['status'] = 'updated'
@@ -167,7 +165,7 @@ def sync_resources(resources):
             db.session.add(resource)
             if not action_name:
                 resource.description = desc
-            results[resource.name] = dict(status='added', actions=dict())
+            results[resource.name] = {'status': 'added', 'actions': {}}
         if action_name:
             if action_name not in actions_list[resource_name]:
                 actions_list[resource_name].append(action_name)
@@ -175,25 +173,25 @@ def sync_resources(resources):
             if action:
                 if desc != action.description:
                     action.description = desc
-                    results[resource.name]['actions'][action.name] = dict(status='updated')
+                    results[resource.name]['actions'][action.name] = {'status': 'updated'}
                 else:
-                    results[resource.name]['actions'][action.name] = dict(status='exists')
+                    results[resource.name]['actions'][action.name] = {'status': 'exists'}
             else:
                 action = ResourceAction(resource=resource, name=action_name, title=action_name.title() + " " + resource.title, description=desc)
                 db.session.add(action)
-                results[resource.name]['actions'][action.name] = dict(status='added')
+                results[resource.name]['actions'][action.name] = {'status': 'added'}
 
     # Deleting resources & actions not defined in client application.
     for resource_name in actions_list:
         resource = Resource.get(name=resource_name, client=g.client)
         actions = ResourceAction.query.filter(~ResourceAction.name.in_(actions_list[resource_name]), ResourceAction.resource==resource)
         for action in actions.all():
-            results[resource_name]['actions'][action.name] = dict(status='deleted')
+            results[resource_name]['actions'][action.name] = {'status': 'deleted'}
         actions.delete(synchronize_session='fetch')
     del_resources = Resource.query.filter(~Resource.name.in_(actions_list.keys()), Resource.client==g.client)
     for resource in del_resources.all():
         ResourceAction.query.filter_by(resource=resource).delete(synchronize_session='fetch')
-        results[resource.name] = dict(status='deleted')
+        results[resource.name] = {'status': 'deleted'}
     del_resources.delete(synchronize_session='fetch')
 
     db.session.commit()

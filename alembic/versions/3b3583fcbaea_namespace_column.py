@@ -28,16 +28,17 @@ def upgrade():
         column('id', sa.Integer),
         column('website', sa.Unicode(250)),
         column('namespace', sa.Unicode(250)))
-    result = connection.execute(select([client.c.id, client.c.website]))
+    results = connection.execute(select([client.c.id, client.c.website]))
     namespaces = []
     namespace_list = []
-    for r in result:
+    for r in results:
         new_namespace = namespace = namespace_from_url(r[1])
         append_count = 0
         while new_namespace in namespace_list:
             append_count = append_count + 1
-            new_namespace = "%s_%s" % (namespace, append_count)
-        namespaces.append(dict(clientid=r[0], namespace=new_namespace))
+            new_namespace = "%s%s" % (namespace, append_count)
+        namespaces.append({'clientid': r[0], 'namespace': new_namespace})
+        namespace_list.append(new_namespace)
     updt_stmt = client.update().where(client.c.id == bindparam('clientid')).values(namespace=bindparam('namespace'))
     connection.execute(updt_stmt, namespaces)
 
