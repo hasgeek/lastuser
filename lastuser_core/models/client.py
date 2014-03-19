@@ -2,8 +2,10 @@
 
 from sqlalchemy.ext.declarative import declared_attr
 from coaster import newid, newsecret
+from coaster.utils import namespace_from_url
 
 from . import db, BaseMixin
+from coaster.sqlalchemy import BaseScopedNameMixin
 from .user import User, Organization, Team
 
 __all__ = ['Client', 'UserFlashMessage', 'Resource', 'ResourceAction', 'AuthCode', 'AuthToken',
@@ -52,6 +54,8 @@ class Client(BaseMixin, db.Model):
     #: When a single provider provides multiple services, each can be declared
     #: as a trusted client to provide single sign-in across the services
     trusted = db.Column(db.Boolean, nullable=False, default=False)
+    #: Namespace: determines inter-app resource access
+    namespace = db.Column(db.Unicode(250), nullable=True, unique=True)
 
     def secret_is(self, candidate):
         """
@@ -70,6 +74,10 @@ class Client(BaseMixin, db.Model):
             return self.org.pickername
         else:
             raise AttributeError("This client has no owner")
+
+    @property
+    def owner(self):
+        return self.user or self.org
 
     def owner_is(self, user):
         if not user:
@@ -93,13 +101,19 @@ class Client(BaseMixin, db.Model):
         return perms
 
     @classmethod
-    def get(cls, key):
+    def get(cls, key=None, namespace=None):
         """
-        Return a Client identified by its client key. Only returns active clients.
+        Return a Client identified by its client key or namespace. Only returns active clients.
 
         :param str key: Client key to lookup
+        :param str namespace: Client namespace to lookup
         """
-        return cls.query.filter_by(key=key, active=True).one_or_none()
+        if not bool(key) ^ bool(namespace):
+            raise TypeError("Either key or namespace should be specified")
+        if key:
+            return cls.query.filter_by(key=key, active=True).one_or_none()
+        else:
+            return cls.query.filter_by(namespace=namespace, active=True).one_or_none()
 
 
 class UserFlashMessage(BaseMixin, db.Model):
@@ -116,7 +130,7 @@ class UserFlashMessage(BaseMixin, db.Model):
     message = db.Column(db.Unicode(250), nullable=False)
 
 
-class Resource(BaseMixin, db.Model):
+class Resource(BaseScopedNameMixin, db.Model):
     """
     Resources are provided by client applications. Other client applications
     can request access to user data at resource servers by providing the
@@ -125,14 +139,16 @@ class Resource(BaseMixin, db.Model):
     __tablename__ = 'resource'
     __bind_key__ = 'lastuser'
     # Resource names are unique across client apps
-    name = db.Column(db.Unicode(20), unique=True, nullable=False)
+    name = db.Column(db.Unicode(20), nullable=False)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('resources', cascade="all, delete-orphan"))
+    parent = db.synonym('client')
     title = db.Column(db.Unicode(250), nullable=False)
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
     siteresource = db.Column(db.Boolean, default=False, nullable=False)
-    trusted = db.Column(db.Boolean, default=False, nullable=False)
+    restricted = db.Column(db.Boolean, default=False, nullable=False)
+    __table_args__ = (db.UniqueConstraint('client_id', 'name', name='resource_client_id_name_key'),)
 
     def permissions(self, user, inherited=None):
         perms = super(Resource, self).permissions(user, inherited)
@@ -143,13 +159,19 @@ class Resource(BaseMixin, db.Model):
         return perms
 
     @classmethod
-    def get(cls, name):
+    def get(cls, name, client=None, namespace=None):
         """
         Return a Resource with the given name.
 
         :param str name: Name of the resource.
         """
-        return cls.query.filter_by(name=name).one_or_none()
+        if not bool(client) ^ bool(namespace):
+            raise TypeError("Either client or namespace should be specified")
+
+        if client:
+            return cls.query.filter_by(name=name, client=client).one_or_none()
+        else:
+            return cls.query.filter_by(name=name).join(Client).filter(Client.namespace == namespace).one_or_none()
 
     def get_action(self, name):
         """

@@ -43,6 +43,8 @@ class RegisterClientForm(Form):
     resource_uri = wtforms.fields.html5.URLField('Resource URL', validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
         description="URL at which this application provides resources as per the Lastuser Resource API "
             "(not yet implemented)")
+    namespace = wtforms.TextField('Client namespace', validators=[wtforms.validators.Required()],
+        description="A dot-based namespace that uniquely identifies your client application and provides external clients access to resources. For example, if your client website is http://funnel.hasgeek.com, use 'com.hasgeek.funnel'.")
     allow_any_login = wtforms.BooleanField('Allow anyone to login', default=True,
         description="If your application requires access to be restricted to specific users, uncheck this, "
             "and only users who have been assigned a permission to the app will be able to login")
@@ -187,9 +189,10 @@ class ResourceForm(Form):
         description='An optional description of what the resource is')
     siteresource = wtforms.BooleanField('Site resource',
         description='Enable if this resource is generic to the site and not owned by specific users')
-    trusted = wtforms.BooleanField('Trusted applications only',
-        description='Enable if access to the resource should be restricted to trusted '
-            'applications. You may want to do this for sensitive information like billing data')
+    restricted = wtforms.BooleanField('Restrict access to your apps',
+        description='Enable if access to the resource should be restricted to client apps '
+            'that share the same owner. You may want to do this for sensitive resources '
+            'that should only be available to your own apps')
 
     def validate_name(self, field):
         if not valid_username(field.data):
@@ -198,7 +201,7 @@ class ResourceForm(Form):
         if field.data in resource_registry:
             raise wtforms.ValidationError("This name is reserved for internal use")
 
-        existing = Resource.get(name=field.data)
+        existing = Resource.get(name=field.data, client=self.client)
         if existing and existing.id != self.edit_id:
             raise wtforms.ValidationError("A resource with that name already exists")
 

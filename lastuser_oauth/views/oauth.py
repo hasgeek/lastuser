@@ -8,7 +8,7 @@ from coaster import newsecret
 from lastuser_core.utils import make_redirect_url
 from lastuser_core import resource_registry
 from lastuser_core.models import (db, Client, AuthCode, AuthToken, UserFlashMessage,
-    UserClientPermissions, TeamClientPermissions, getuser, Resource, ResourceAction)
+    UserClientPermissions, TeamClientPermissions, getuser, Resource)
 from .. import lastuser_oauth
 from ..forms import AuthorizeForm
 from .helpers import requires_login_no_message, requires_client_login
@@ -27,7 +27,13 @@ def verifyscope(scope, client):
 
     for item in scope:
         if item not in resource_registry:  # Validation is only required for non-internal resources
-            # Validation 1: resource/action is properly formatted
+            # Validation 1: namespace:resource/action is properly formatted
+            if ':' not in item:
+                raise ScopeException(u"No namespace specified for external resource ‘{scope}’ in scope".format(scope=item))
+            itemparts = item.split(':')
+            if len(itemparts) != 2:
+                raise ScopeException(u"Too many ‘:’ characters in ‘{scope}’ in scope".format(scope=item))
+            namespace, item = itemparts
             if '/' in item:
                 parts = item.split('/')
                 if len(parts) != 2:
@@ -36,20 +42,21 @@ def verifyscope(scope, client):
             else:
                 resource_name = item
                 action_name = None
-            resource = Resource.query.filter_by(name=resource_name).first()
-            # Validation 2: Resource exists
+            resource = Resource.get(name=resource_name, namespace=namespace)
+
+            # Validation 2: Resource exists and client has access to it
             if not resource:
-                raise ScopeException(u"Unknown resource ‘{resource}’ in scope".format(resource=resource_name))
-            # Validation 3: Client has access to resource
-            if resource.trusted and not client.trusted:
+                raise ScopeException(u"Unknown resource ‘{resource}’ under namespace ‘{namespace}’ in scope".format(resource=resource_name, namespace=namespace))
+            if resource.restricted and resource.client.owner != client.owner:
                 raise ScopeException(
                     u"This application does not have access to resource ‘{resource}’ in scope".format(resource=resource_name))
-            # Validation 4: Action is valid
+
+            # Validation 3: Action is valid
             if action_name:
-                action = ResourceAction.query.filter_by(name=action_name, resource=resource).first()
+                action = resource.get_action(action_name)
                 if not action:
-                    raise ScopeException(u"Unknown action ‘{action}’ on resource ‘{resource}’".format(
-                        action=action_name, resource=resource_name))
+                    raise ScopeException(u"Unknown action ‘{action}’ on resource ‘{resource}’ under namespace ‘{namespace}’".format(
+                        action=action_name, resource=resource_name, namespace=namespace))
                 resources.setdefault(resource, []).append(action)
             else:
                 resources.setdefault(resource, [])
