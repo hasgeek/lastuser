@@ -58,8 +58,8 @@ class TestResource(TestDatabaseFixture):
 
     def test_find_all(self):
         resources = self.client.resources
-        self.assertIs(len(resources), 2)
-        self.assertEquals(resources[1].name, u"resource")
+        self.assertEqual(len(resources), 2)
+        self.assertEqual(set([r.name for r in resources]), set([u'test_resource', u'resource']))
 
 
 class TestClientTeamAccess(TestDatabaseFixture):
