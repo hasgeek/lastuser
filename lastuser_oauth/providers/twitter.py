@@ -3,6 +3,7 @@
 from functools import wraps
 from tweepy import TweepError, OAuthHandler as TwitterOAuthHandler, API as TwitterAPI
 from httplib import BadStatusLine
+from ssl import SSLError
 from flask.ext.oauth import OAuth, OAuthException  # OAuth 1.0a
 from lastuser_core.registry import LoginProvider, LoginInitError, LoginCallbackError
 
@@ -47,7 +48,7 @@ class TwitterProvider(LoginProvider):
     def do(self, callback_url):
         try:
             return self.twitter.authorize(callback=callback_url)
-        except (OAuthException, BadStatusLine), e:
+        except (OAuthException, BadStatusLine, SSLError), e:
             raise LoginInitError(e)
 
     def unwrapped_callback(self, resp):
