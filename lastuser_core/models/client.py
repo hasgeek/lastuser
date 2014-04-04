@@ -2,7 +2,6 @@
 
 from sqlalchemy.ext.declarative import declared_attr
 from coaster import newid, newsecret
-from coaster.utils import namespace_from_url
 
 from . import db, BaseMixin
 from coaster.sqlalchemy import BaseScopedNameMixin

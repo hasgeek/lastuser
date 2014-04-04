@@ -102,7 +102,7 @@ def requires_login_no_message(f):
 
 
 def _client_login_inner():
-    if request.authorization is None:
+    if request.authorization is None or not request.authorization.username:
         return Response(u"Client credentials required.", 401,
             {'WWW-Authenticate': 'Basic realm="Client credentials"'})
     client = Client.get(key=request.authorization.username)
