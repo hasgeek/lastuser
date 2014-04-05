@@ -15,7 +15,7 @@ def twitter_exception_handler(f):
     def decorated_function(*args, **kwargs):
         try:
             return f(*args, **kwargs)
-        except (OAuthException, BadStatusLine, AttributeError), e:
+        except (OAuthException, BadStatusLine, AttributeError) as e:
             raise LoginCallbackError(e)
     return decorated_function
 
