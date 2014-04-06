@@ -55,10 +55,12 @@ class ResourceRegistry(OrderedDict):
                 authtoken = AuthToken.get(token=token)
                 if not authtoken:
                     return resource_auth_error(u"Unknown access token.")
+                if not authtoken.is_valid():
+                    return resource_auth_error(u"Access token has expired.")
                 if name not in authtoken.scope:
                     return resource_auth_error(u"Token does not provide access to this resource.")
                 if trusted and not authtoken.client.trusted:
-                    return resource_auth_error(u"This resource can only be accessed by trusted clients")
+                    return resource_auth_error(u"This resource can only be accessed by trusted clients.")
                 # All good. Return the result value
                 try:
                     result = f(authtoken, args, request.files)

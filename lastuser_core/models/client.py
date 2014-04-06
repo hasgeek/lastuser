@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from datetime import datetime, timedelta
 from sqlalchemy.ext.declarative import declared_attr
 from coaster import newid, newsecret
 
@@ -55,6 +56,9 @@ class Client(BaseMixin, db.Model):
     trusted = db.Column(db.Boolean, nullable=False, default=False)
     #: Namespace: determines inter-app resource access
     namespace = db.Column(db.Unicode(250), nullable=True, unique=True)
+
+    def __repr__(self):
+        return u'<Client "{title}" {key}>'.format(title=self.title, key=self.key)
 
     def secret_is(self, candidate):
         """
@@ -303,6 +307,14 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
             raise ValueError(u"Unrecognized algorithm ‘{value}’".format(value=value))
 
     algorithm = db.synonym('_algorithm', descriptor=algorithm)
+
+    def is_valid(self):
+        if self.validity == 0:
+            return True  # This token is perpetually valid
+        now = datetime.utcnow()
+        if self.created_at + timedelta(seconds=self.validity) < now:
+            return False
+        return True
 
     @classmethod
     def migrate_user(cls, olduser, newuser):
