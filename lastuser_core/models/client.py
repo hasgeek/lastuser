@@ -258,7 +258,8 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
     __tablename__ = 'authtoken'
     __bind_key__ = 'lastuser'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Null for client-only tokens
-    user = db.relationship(User, primaryjoin=user_id == User.id)
+    user = db.relationship(User, primaryjoin=user_id == User.id,
+        backref=db.backref("authtokens", cascade="all, delete-orphan"))
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref("authtokens", cascade="all, delete-orphan"))

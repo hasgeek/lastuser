@@ -12,6 +12,9 @@ from .helpers import requires_client_login, requires_user_or_client_login
 
 
 def get_userinfo(user, client, scope=[], get_permissions=True):
+
+    teams = {}
+
     if 'id' in scope:
         userinfo = {'userid': user.userid,
                     'username': user.username,
@@ -29,16 +32,29 @@ def get_userinfo(user, client, scope=[], get_permissions=True):
             'owner': [{'userid': org.userid, 'name': org.name, 'title': org.title} for org in user.organizations_owned()],
             'member': [{'userid': org.userid, 'name': org.name, 'title': org.title} for org in user.organizations()],
             }
-        userinfo['teams'] = [{'userid': team.userid,
-                              'title': team.title,
-                              'org': team.org.userid,
-                              'owners': team == team.org.owners} for team in user.teams]
-    if 'organizations/teams' in scope:
-        userinfo['organizations/teams'] = [{org.userid: [{
-            'userid': team.userid,
-            'title': team.title,
-            'owners': team == team.org.owners
-            } for team in org.teams]} for org in user.organizations_owned()]
+
+    if 'organizations' in scope or 'teams' in scope:
+        for team in user.teams:
+            teams[team.userid] = {
+                'userid': team.userid,
+                'title': team.title,
+                'org': team.org.userid,
+                'owners': team == team.org.owners,
+                'member': True}
+
+    if 'teams' in scope:
+        for org in user.organizations_owned():
+            for team in org.teams:
+                if team.userid not in teams:
+                    teams[team.userid] = {
+                        'userid': team.userid,
+                        'title': team.title,
+                        'org': team.org.userid,
+                        'owners': team == team.org.owners,
+                        'member': False}
+
+    if teams:
+        userinfo['teams'] = teams.values()
 
     if get_permissions:
         if client.user:
@@ -353,6 +369,7 @@ def user_autocomplete():
 
 
 # This is org/* instead of organizations/* because it's a client resource. TODO: Reconsider
+# DEPRECATED, to be removed soon
 @lastuser_oauth.route('/api/1/org/get_teams', methods=['GET', 'POST'])
 @requires_client_login
 def org_team_get():
@@ -461,13 +478,13 @@ def resource_organizations(authtoken, args, files=None):
     return get_userinfo(authtoken.user, authtoken.client, scope=['organizations'], get_permissions=False)
 
 
-@lastuser_oauth.route('/api/1/organizations/teams')
-@resource_registry.resource('organizations/teams', u"Read the list of teams in your organizations")
+@lastuser_oauth.route('/api/1/teams')
+@resource_registry.resource('teams', u"Read the list of teams in your organizations")
 def resource_teams(authtoken, args, files=None):
     """
     Return user's organizations' teams.
     """
-    return get_userinfo(authtoken.user, authtoken.client, scope=['organizations/teams'], get_permissions=False)
+    return get_userinfo(authtoken.user, authtoken.client, scope=['teams'], get_permissions=False)
 
 
 @lastuser_oauth.route('/api/1/notice/send')

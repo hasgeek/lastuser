@@ -223,6 +223,13 @@ class User(BaseMixin, db.Model):
             db.or_(Permission.allusers == True, Permission.user == self)
             ).order_by(Permission.name).all()
 
+    def clients_with_team_access(self):
+        """
+        Return a list of clients with access to the user's organizations' teams.
+        """
+        return [token.client for token in self.authtokens if 'teams' in token.scope]
+
+
     @classmethod
     def get(cls, username=None, userid=None, defercols=False):
         """

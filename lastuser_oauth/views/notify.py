@@ -46,7 +46,7 @@ def notify_org_data_changed(org, user, changes, team=None):
     """
     client_users = {}
     if team is not None:
-        team_access = set(org.clients_with_team_access())
+        team_access = set(org.clients_with_team_access()) | set(user.clients_with_team_access())
     else:
         team_access = []
     for token in AuthToken.query.filter(AuthToken.user_id.in_([u.id for u in org.owners.users])).all():
