@@ -33,6 +33,13 @@ def get_userinfo(user, client, scope=[], get_permissions=True):
                               'title': team.title,
                               'org': team.org.userid,
                               'owners': team == team.org.owners} for team in user.teams]
+    if 'organizations/teams' in scope:
+        userinfo['organizations/teams'] = [{org.userid: [{
+            'userid': team.userid,
+            'title': team.title,
+            'owners': team == team.org.owners
+            } for team in org.teams]} for org in user.organizations_owned()]
+
     if get_permissions:
         if client.user:
             perms = UserClientPermissions.query.filter_by(user=user, client=client).first()
@@ -449,9 +456,18 @@ def resource_login_providers(authtoken, args, files=None):
 @resource_registry.resource('organizations', u"Read the organizations you are a member of")
 def resource_organizations(authtoken, args, files=None):
     """
-    Return user's organizations and teams.
+    Return user's organizations and teams that they are a member of.
     """
     return get_userinfo(authtoken.user, authtoken.client, scope=['organizations'], get_permissions=False)
+
+
+@lastuser_oauth.route('/api/1/organizations/teams')
+@resource_registry.resource('organizations/teams', u"Read the list of teams in your organizations")
+def resource_teams(authtoken, args, files=None):
+    """
+    Return user's organizations' teams.
+    """
+    return get_userinfo(authtoken.user, authtoken.client, scope=['organizations/teams'], get_permissions=False)
 
 
 @lastuser_oauth.route('/api/1/notice/send')
