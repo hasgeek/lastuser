@@ -226,7 +226,7 @@ def oauth_authorize():
         scope=scope,
         resources=resources,
         resource_registry=resource_registry,
-        )
+        ), 200, {'X-Frame-Options': 'SAMEORIGIN'}
 
 
 def oauth_token_error(error, error_description=None, error_uri=None):
