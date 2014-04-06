@@ -56,13 +56,16 @@ class LinkedInProvider(LoginProvider):
                     'redirect_uri': callback_url,
                     }
                 ).json()
-        except requests.ConnectionError as e:
+        except requests.exceptions.RequestException as e:
             raise LoginCallbackError(u"Unable to authenticate via LinkedIn. Internal details: {error}".format(error=e))
         if 'error' in response:
             raise LoginCallbackError(response['error'])
-        info = requests.get(self.user_info,
-            params={'oauth2_access_token': response['access_token']},
-            headers={'x-li-format': 'json'}).json()
+        try:
+            info = requests.get(self.user_info,
+                params={'oauth2_access_token': response['access_token']},
+                headers={'x-li-format': 'json'}).json()
+        except requests.exceptions.RequestException as e:
+            raise LoginCallbackError(u"Unable to authenticate via LinkedIn. Internal details: {error}".format(error=e))
         
         return {'email': info.get('emailAddress'),
                 'userid': info.get('id'),

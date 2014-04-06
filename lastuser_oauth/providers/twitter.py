@@ -4,6 +4,7 @@ from functools import wraps
 from tweepy import TweepError, OAuthHandler as TwitterOAuthHandler, API as TwitterAPI
 from httplib import BadStatusLine
 from ssl import SSLError
+from socket import error as socket_error
 from flask.ext.oauth import OAuth, OAuthException  # OAuth 1.0a
 from lastuser_core.registry import LoginProvider, LoginInitError, LoginCallbackError
 
@@ -15,7 +16,7 @@ def twitter_exception_handler(f):
     def decorated_function(*args, **kwargs):
         try:
             return f(*args, **kwargs)
-        except (OAuthException, BadStatusLine, AttributeError) as e:
+        except (OAuthException, BadStatusLine, AttributeError, socket_error) as e:
             raise LoginCallbackError(e)
     return decorated_function
 
