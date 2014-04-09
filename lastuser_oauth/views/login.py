@@ -133,7 +133,7 @@ def logout():
 @lastuser_oauth.route('/logout/<session>')
 @load_model(UserSession, {'buid': 'session'}, 'session')
 def logout_session(session):
-    if not request.referrer or (urlparse.urlsplit(request.referrer).hostname != urlparse.urlsplit(request.url).hostname):
+    if not request.referrer or (urlparse.urlsplit(request.referrer).hostname != urlparse.urlsplit(request.url).hostname) or (session.user != g.user):
         flash(current_app.config.get('LOGOUT_UNAUTHORIZED_MESSAGE') or logout_errormsg, 'danger')
         return redirect(url_for('index'))
 
