@@ -3,11 +3,22 @@
 import requests
 from flask.ext.rq import job
 from lastuser_core.models import AuthToken
-from lastuser_core.signals import user_data_changed, org_data_changed, team_data_changed
+from lastuser_core.signals import user_data_changed, org_data_changed, team_data_changed, session_revoked
 
 
 user_changes_to_notify = set(['merge', 'profile', 'email', 'email-claim', 'email-delete',
     'phone', 'phone-claim', 'phone-delete'])
+
+
+@session_revoked.connect
+def notify_session_revoked(session):
+    for token in session.user.authtokens:
+        if token.is_valid() and token.client.notification_uri:
+            send_notice.delay(token.client.notification_uri, data=
+                {'userid': session.user.userid,
+                 'type': 'user',
+                 'changes': ['logout'],
+                 'sessionid': session.buid})
 
 
 @user_data_changed.connect
@@ -19,8 +30,8 @@ def notify_user_data_changed(user, changes):
     """
     if user_changes_to_notify & set(changes):
         # We have changes that apps need to hear about
-        for token in AuthToken.query.filter_by(user=user).all():
-            if token.client.notification_uri:
+        for token in user.authtokens:
+            if token.is_valid() and token.client.notification_uri:
                 notify_changes = []
                 for change in changes:
                     if change in ['merge', 'profile']:
@@ -49,8 +60,8 @@ def notify_org_data_changed(org, user, changes, team=None):
         team_access = set(org.clients_with_team_access()) | set(user.clients_with_team_access())
     else:
         team_access = []
-    for token in AuthToken.query.filter(AuthToken.user_id.in_([u.id for u in org.owners.users])).all():
-        if 'organizations' in token.scope and token.client.notification_uri:
+    for token in AuthToken.all(users=org.owners.users):
+        if 'organizations' in token.scope and token.client.notification_uri and token.is_valid():
             if team is not None:
                 if token.client not in team_access:
                     continue

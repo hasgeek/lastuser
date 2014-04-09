@@ -72,4 +72,10 @@
   {%- endfor %}
   <li><a href="{{ url_for('.org_new') }}">Create a new organization &rarr;</a></li>
 </ul>
+<h2>My sessions</h2>
+<ul>
+  {%- for session in g.user.active_sessions() %}
+    <li>From {{ session.ipaddr }} since {{ session.created_at|age }} with {{ session.ua.browser}}/{{ session.ua.platform }}/{{ session.ua.version }}, last active {{ session.accessed_at|age }} {% if session == g.usersession -%} (current) {%- else -%} (<a href="{{ url_for('lastuser_oauth.logout_session', session=session.buid) }}">logout</a>) {%- endif %}</li>
+  {%- endfor %}
+</ul>
 {% endblock %}

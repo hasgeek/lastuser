@@ -11,7 +11,7 @@ from .. import lastuser_oauth
 from .helpers import requires_client_login, requires_user_or_client_login
 
 
-def get_userinfo(user, client, scope=[], get_permissions=True):
+def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
 
     teams = {}
 
@@ -23,6 +23,10 @@ def get_userinfo(user, client, scope=[], get_permissions=True):
                     'oldids': [o.userid for o in user.oldids]}
     else:
         userinfo = {}
+
+    if session:
+        userinfo['sessionid'] = session.buid
+
     if 'email' in scope:
         userinfo['email'] = unicode(user.email)
     if 'phone' in scope:

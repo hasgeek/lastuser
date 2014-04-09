@@ -11,7 +11,7 @@ from baseframe.forms import render_form, render_message, render_redirect
 from lastuser_core import login_registry
 from .. import lastuser_oauth
 from ..mailclient import send_email_verify_link, send_password_reset_link
-from lastuser_core.models import db, User, UserEmailClaim, PasswordResetRequest, Client
+from lastuser_core.models import db, User, UserEmailClaim, PasswordResetRequest, Client, UserSession
 from ..forms import LoginForm, RegisterForm, PasswordResetForm, PasswordResetRequestForm
 from .helpers import login_internal, logout_internal, register_internal, set_loginmethod_cookie
 
@@ -79,6 +79,7 @@ def logout_user():
         return redirect(url_for('index'))
     else:
         logout_internal()
+        db.session.commit()
         flash('You are now logged out', category='info')
         return redirect(get_next_url())
 
@@ -111,6 +112,7 @@ def logout_client():
                 return redirect(url_for('index'))
         # All good. Log them out and send them back
         logout_internal()
+        db.session.commit()
         return redirect(get_next_url(external=True))
     else:
         # We know this client, but it's not trusted. Send back without logout.
@@ -126,6 +128,18 @@ def logout():
     else:
         # If this is not a logout request from a client, check if all is good.
         return logout_user()
+
+
+@lastuser_oauth.route('/logout/<session>')
+@load_model(UserSession, {'buid': 'session'}, 'session')
+def logout_session(session):
+    if not request.referrer or (urlparse.urlsplit(request.referrer).hostname != urlparse.urlsplit(request.url).hostname):
+        flash(current_app.config.get('LOGOUT_UNAUTHORIZED_MESSAGE') or logout_errormsg, 'danger')
+        return redirect(url_for('index'))
+
+    session.revoke()
+    db.session.commit()
+    return redirect(get_next_url(referrer=True), code=303)
 
 
 @lastuser_oauth.route('/register', methods=['GET', 'POST'])
@@ -216,6 +230,7 @@ def reset_email(user, kwargs):
 
     # Logout *after* validating the reset request to prevent DoS attacks on the user
     logout_internal()
+    db.session.commit()
     # Reset code is valid. Now ask user to choose a new password
     form = PasswordResetForm()
     form.edit_user = user

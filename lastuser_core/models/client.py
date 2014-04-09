@@ -7,6 +7,7 @@ from coaster import newid, newsecret
 from . import db, BaseMixin
 from coaster.sqlalchemy import BaseScopedNameMixin
 from .user import User, Organization, Team
+from .session import UserSession
 
 __all__ = ['Client', 'UserFlashMessage', 'Resource', 'ResourceAction', 'AuthCode', 'AuthToken',
     'Permission', 'UserClientPermissions', 'TeamClientPermissions', 'NoticeType',
@@ -252,9 +253,16 @@ class AuthCode(ScopeMixin, BaseMixin, db.Model):
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref("authcodes", cascade="all, delete-orphan"))
+    session_id = db.Column(None, db.ForeignKey('user_session.id'), nullable=True)
+    session = db.relationship(UserSession)
     code = db.Column(db.String(44), default=newsecret, nullable=False)
     redirect_uri = db.Column(db.Unicode(1024), nullable=False)
     used = db.Column(db.Boolean, default=False, nullable=False)
+
+    def is_valid(self):
+        # Time limit: 3 minutes. Should be reasonable enough to load a page
+        # on a slow mobile connection, without keeping the code valid too long
+        return not self.used and self.created_at >= datetime.utcnow() - timedelta(minutes=3)
 
 
 class AuthToken(ScopeMixin, BaseMixin, db.Model):
@@ -312,7 +320,7 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
         if self.validity == 0:
             return True  # This token is perpetually valid
         now = datetime.utcnow()
-        if self.created_at + timedelta(seconds=self.validity) < now:
+        if self.created_at < now - timedelta(seconds=self.validity):
             return False
         return True
 
@@ -347,6 +355,18 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
         :param str token: Token to lookup
         """
         return cls.query.filter_by(token=token).one_or_none()
+
+    @classmethod
+    def all(cls, users):
+        """
+        Return all AuthToken for the specified users.
+        """
+        if len(users) == 0:
+            return []
+        elif len(users) == 1:
+            return cls.query.filter_by(user=users[0]).all()
+        else:
+            return cls.query.filter(AuthToken.user_id.in_([u.id for u in users])).all()
 
 
 class Permission(BaseMixin, db.Model):

@@ -75,7 +75,7 @@ def oauth_make_auth_code(client, scope, redirect_uri):
     Make an auth code for a given client. Caller must commit
     the database session for this to work.
     """
-    authcode = AuthCode(user=g.user, client=client, scope=scope, redirect_uri=redirect_uri)
+    authcode = AuthCode(user=g.user, session=g.usersession, client=client, scope=scope, redirect_uri=redirect_uri)
     authcode.code = newsecret()
     db.session.add(authcode)
     return authcode.code
@@ -319,7 +319,7 @@ def oauth_token():
         authcode = AuthCode.query.filter_by(code=code, client=client).first()
         if not authcode:
             return oauth_token_error('invalid_grant', "Unknown auth code")
-        if authcode.created_at < (datetime.utcnow() - timedelta(minutes=1)):  # XXX: Time limit: 1 minute
+        if not authcode.is_valid():
             db.session.delete(authcode)
             db.session.commit()
             return oauth_token_error('invalid_grant', "Expired auth code")
@@ -336,7 +336,8 @@ def oauth_token():
 
         token = oauth_make_token(user=authcode.user, client=client, scope=scope)
         db.session.delete(authcode)
-        return oauth_token_success(token, userinfo=get_userinfo(user=authcode.user, client=client, scope=scope))
+        return oauth_token_success(token, userinfo=get_userinfo(
+            user=authcode.user, client=client, scope=scope, session=authcode.session))
 
     elif grant_type == 'password':
         # Validations 4.1: password grant_type is only for trusted clients

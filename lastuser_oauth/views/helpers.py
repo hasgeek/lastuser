@@ -7,7 +7,7 @@ from urllib import unquote
 from pytz import common_timezones
 from flask import g, current_app, request, session, flash, redirect, url_for, Response
 from coaster.views import get_current_url
-from lastuser_core.models import db, User, Client
+from lastuser_core.models import db, User, Client, UserSession
 from lastuser_core.signals import user_login, user_logout, user_registered
 from .. import lastuser_oauth
 
@@ -21,8 +21,30 @@ def lookup_current_user():
     to the request namespace object g.
     """
     g.user = None
+    g.usersession = None
+
+    if 'sessionid' in session:
+        usersession = UserSession.authenticate(buid=session['sessionid'])
+        g.usersession = usersession
+        if usersession:
+            usersession.access()
+            db.session.commit()  # Save access
+            g.user = usersession.user
+        else:
+            session.pop('sessionid', None)
+
+    # Transition users with 'userid' to 'sessionid'
     if 'userid' in session:
-        g.user = User.get(userid=session['userid'])
+        if not g.usersession:
+            user = User.get(userid=session['userid'])
+            if user:
+                usersession = UserSession(user=user)
+                usersession.access()
+                db.session.commit()  # Save access
+                g.usersession = usersession
+                g.user = user
+                session['sessionid'] = usersession.buid
+        session.pop('userid', None)
 
     # This will be set to True downstream by the requires_login decorator
     g.login_required = False
@@ -147,7 +169,9 @@ def requires_user_or_client_login(f):
 
 def login_internal(user):
     g.user = user
-    session['userid'] = user.userid
+    usersession = UserSession(user=user)
+    usersession.access()
+    session['sessionid'] = usersession.buid
     session.permanent = True
     autoset_timezone(user)
     user_login.send(user)
@@ -165,6 +189,10 @@ def autoset_timezone(user):
 def logout_internal():
     user = g.user
     g.user = None
+    if g.usersession:
+        g.usersession.revoke()
+        g.usersession = None
+    session.pop('sessionid', None)
     session.pop('userid', None)
     session.pop('merge_userid', None)
     session.pop('userid_external', None)

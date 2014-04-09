@@ -178,6 +178,7 @@ def profile_merge():
             user_data_changed.send(new_user, changes=['merge'])
             flash("Your accounts have been merged.", 'success')
             session.pop('merge_userid', None)
+            db.session.commit()
             return redirect(get_next_url(), code=303)
         else:
             session.pop('merge_userid', None)

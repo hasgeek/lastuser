@@ -8,6 +8,7 @@ db = SQLAlchemy()
 
 
 from .user import *
+from .session import *
 from .client import *
 from .notice import *
 
