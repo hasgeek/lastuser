@@ -3,6 +3,7 @@ from flask import abort, url_for, flash, redirect, g, session, render_template, 
 
 from coaster import valid_username
 from coaster.views import get_next_url
+from baseframe.signals import exception_catchall
 from lastuser_core import login_registry
 from lastuser_core.models import db, getextid, merge_users, User, UserEmail, UserExternalId, UserEmailClaim
 from lastuser_core.registry import LoginInitError, LoginCallbackError
@@ -25,8 +26,10 @@ def login_service(service):
     callback_url = url_for('.login_service_callback', service=service, next=next_url, _external=True)
     try:
         return provider.do(callback_url=callback_url)
-    except LoginInitError, e:
-        flash(u"{service} login failed: {error}".format(service=provider.title, error=unicode(e)), category='danger')
+    except (LoginInitError, LoginCallbackError) as e:
+        msg = u"{service} login failed: {error}".format(service=provider.title, error=unicode(e))
+        exception_catchall.send(e, msg)
+        flash(msg, category='danger')
         return redirect(next_url or get_next_url(referrer=True))
 
 
@@ -40,8 +43,10 @@ def login_service_callback(service):
     provider = login_registry[service]
     try:
         userdata = provider.callback()
-    except LoginCallbackError, e:
-        flash(u"{service} login failed: {error}".format(service=provider.title, error=unicode(e)), category='danger')
+    except (LoginInitError, LoginCallbackError) as e:
+        msg = u"{service} login failed: {error}".format(service=provider.title, error=unicode(e))
+        exception_catchall.send(e, msg)
+        flash(msg, category='danger')
         if g.user:
             return redirect(get_next_url(referrer=False))
         else:
