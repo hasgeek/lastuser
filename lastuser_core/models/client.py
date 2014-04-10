@@ -292,6 +292,10 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
             self.refresh_token = newid()
         self.secret = newsecret()
 
+    def __repr__(self):
+        return u'<AuthToken {token} of {client} {user}>'.format(
+            token=self.token, client=repr(self.client)[1:-1], user=repr(self.user)[1:-1])
+
     def refresh(self):
         """
         Create a new token while retaining the refresh token.

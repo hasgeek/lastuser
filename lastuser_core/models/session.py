@@ -17,6 +17,7 @@ class UserSession(BaseMixin, db.Model):
     __bind_key__ = 'lastuser'
 
     buid = db.Column(db.Unicode(22), nullable=False, unique=True, default=make_buid)
+    sessionid = db.synonym('buid')
 
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, backref=db.backref('sessions', cascade='all, delete-orphan', lazy='dynamic'))
@@ -73,7 +74,8 @@ class UserSession(BaseMixin, db.Model):
 
 # Patch a retriever into the User class. This could be placed in the
 # UserSession.user relationship's backref with a custom primaryjoin
-# clause and explicit foreign_keys.
+# clause and explicit foreign_keys, but we're not sure if we can
+# put the datetime.utcnow() in there too.
 def active_sessions(self):
     return self.sessions.filter(
         UserSession.accessed_at > datetime.utcnow() - timedelta(days=14),

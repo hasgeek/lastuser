@@ -5,7 +5,7 @@ from coaster.utils import getbool
 from coaster.views import jsonp, requestargs
 
 from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Resource,
-    ResourceAction, UserClientPermissions, TeamClientPermissions)
+    ResourceAction, UserClientPermissions, TeamClientPermissions, UserSession)
 from lastuser_core import resource_registry
 from .. import lastuser_oauth
 from .helpers import requires_client_login, requires_user_or_client_login
@@ -415,6 +415,24 @@ def resource_id(authtoken, args, files=None):
         return get_userinfo(authtoken.user, authtoken.client, scope=authtoken.scope, get_permissions=True)
     else:
         return get_userinfo(authtoken.user, authtoken.client, scope=['id'], get_permissions=False)
+
+
+@lastuser_oauth.route('/api/1/session/verify', methods=['POST'])
+@resource_registry.resource('session/verify', u"Verify user session", scope='id')
+def session_verify(authtoken, args, files=None):
+    sessionid = args['sessionid']
+    session = UserSession.authenticate(buid=sessionid)
+    if session and session.user == authtoken.user:
+        session.access()
+        db.session.commit()
+        return {
+            'active': True,
+            'sessionid': session.buid,
+            'userid': session.user.userid,
+            'sudo': session.has_sudo,
+            }
+    else:
+        return {'active': False}
 
 
 @lastuser_oauth.route('/api/1/email')

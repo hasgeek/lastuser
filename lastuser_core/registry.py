@@ -21,9 +21,14 @@ class ResourceRegistry(OrderedDict):
     """
     Dictionary of resources
     """
-    def resource(self, name, description=None, trusted=False):
+    def resource(self, name, description=None, trusted=False, scope=None):
         """
         Decorator for resource functions.
+
+        :param unicode name: Name of the resource
+        :param unicode description: User-friendly description
+        :param bool trusted: Restrict access to trusted clients?
+        :param unicode scope: Grant access via this other resource name
         """
         def resource_auth_error(message):
             return Response(message, 401,
@@ -57,7 +62,7 @@ class ResourceRegistry(OrderedDict):
                     return resource_auth_error(u"Unknown access token.")
                 if not authtoken.is_valid():
                     return resource_auth_error(u"Access token has expired.")
-                if name not in authtoken.scope:
+                if (scope and scope not in authtoken.scope) or (not scope and name not in authtoken.scope):
                     return resource_auth_error(u"Token does not provide access to this resource.")
                 if trusted and not authtoken.client.trusted:
                     return resource_auth_error(u"This resource can only be accessed by trusted clients.")
@@ -77,6 +82,7 @@ class ResourceRegistry(OrderedDict):
 
             self[name] = {
                 'name': name,
+                'scope': scope or name,
                 'description': description,
                 'f': f,
                 }
