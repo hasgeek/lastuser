@@ -423,7 +423,7 @@ def session_verify(authtoken, args, files=None):
     sessionid = args['sessionid']
     session = UserSession.authenticate(buid=sessionid)
     if session and session.user == authtoken.user:
-        session.access()
+        session.access(api=True)
         db.session.commit()
         return {
             'active': True,

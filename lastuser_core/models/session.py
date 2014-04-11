@@ -34,12 +34,18 @@ class UserSession(BaseMixin, db.Model):
         if not self.buid:
             self.buid = make_buid()
 
-    def access(self):
+    def access(self, api=False):
+        """
+        Mark as a session as currently active.
+
+        :param bool api: Is this an API access call? Don't save the IP address and browser then.
+        """
         # `accessed_at` will be different from the automatic `updated_at` in one
         # crucial context: when the session was revoked remotely
         self.accessed_at = datetime.utcnow()
-        self.ipaddr = request.environ.get('REMOTE_ADDR', u'')
-        self.user_agent = request.user_agent.string[:250] or u''
+        if not api:
+            self.ipaddr = request.environ.get('REMOTE_ADDR', u'')
+            self.user_agent = request.user_agent.string[:250] or u''
 
     @cached_property
     def ua(self):
