@@ -45,7 +45,7 @@ class UserSession(BaseMixin, db.Model):
         self.accessed_at = datetime.utcnow()
         if not api:
             self.ipaddr = request.environ.get('REMOTE_ADDR', u'')
-            self.user_agent = request.user_agent.string[:250] or u''
+            self.user_agent = unicode(request.user_agent.string[:250]) or u''
 
     @cached_property
     def ua(self):
