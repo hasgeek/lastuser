@@ -21,20 +21,14 @@ def profile_edit(newprofile=False):
     form.fullname.description = current_app.config.get('FULLNAME_REASON')
     form.email.description = current_app.config.get('EMAIL_REASON')
     form.username.description = current_app.config.get('USERNAME_REASON')
-    form.description.description = current_app.config.get('BIO_REASON')
     form.timezone.description = current_app.config.get('TIMEZONE_REASON')
     if g.user.email or newprofile is False:
         del form.email
-
-    if newprofile is True:
-        del form.description
 
     if form.validate_on_submit():
         # Can't auto-populate here because user.email is read-only
         g.user.fullname = form.fullname.data
         g.user.username = form.username.data
-        if not newprofile:
-            g.user.description = form.description.data
         g.user.timezone = form.timezone.data
 
         if newprofile and not g.user.email:

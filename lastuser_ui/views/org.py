@@ -25,7 +25,6 @@ def org_new():
     form = OrganizationForm()
     form.name.description = current_app.config.get('ORG_NAME_REASON')
     form.title.description = current_app.config.get('ORG_TITLE_REASON')
-    form.description.description = current_app.config.get('ORG_DESCRIPTION_REASON')
     if form.validate_on_submit():
         org = Organization()
         form.populate_obj(org)
@@ -51,7 +50,6 @@ def org_edit(org):
     form = OrganizationForm(obj=org)
     form.name.description = current_app.config.get('ORG_NAME_REASON')
     form.title.description = current_app.config.get('ORG_TITLE_REASON')
-    form.description.description = current_app.config.get('ORG_DESCRIPTION_REASON')
     if form.validate_on_submit():
         form.populate_obj(org)
         db.session.commit()

@@ -6,7 +6,6 @@
   <ul>
     <li><strong>Name:</strong> {{ user.fullname }}</li>
     <li><strong>Username:</strong> {{ user.username or ''}}</li>
-    <li><strong>Bio:</strong> {{ user.description }}</li>
     <li><strong>Email addresses:</strong>
       <ul>
         {%- for useremail in user.emails %}

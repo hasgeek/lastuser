@@ -108,11 +108,9 @@ SMS_FROM = ''
 MESSAGE_FOOTER = Markup('Copyright &copy; <a href="http://hasgeek.com/">HasGeek</a>. Powered by <a href="https://github.com/hasgeek/lastuser" title="GitHub project page">Lastuser</a>, open source software from <a href="https://github.com/hasgeek">HasGeek</a>.')
 USERNAME_REASON = ''
 EMAIL_REASON = 'Please provide an email address to complete your profile'
-BIO_REASON = ''
 TIMEZONE_REASON = 'Dates and times will be shown in your preferred timezone'
 ORG_NAME_REASON = u"Your company’s name as it will appear in the URL. Letters, numbers and dashes only"
 ORG_TITLE_REASON = u"Your organization’s given name, preferably without legal suffixes"
-ORG_DESCRIPTION_REASON = u"A few words about your organization (optional). Plain text only"
 LOGIN_MESSAGE_1 = ""
 LOGIN_MESSAGE_2 = ""
 SMS_VERIFICATION_TEMPLATE = 'Your verification code is {code}. If you did not request this, please ignore.'

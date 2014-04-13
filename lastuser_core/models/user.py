@@ -4,7 +4,7 @@ from hashlib import md5
 from werkzeug import check_password_hash, cached_property
 import bcrypt
 from sqlalchemy import or_
-from sqlalchemy.orm import defer
+from sqlalchemy.orm import defer, deferred
 from sqlalchemy.ext.hybrid import hybrid_property
 from coaster import newid, newsecret, newpin, valid_username
 from coaster.sqlalchemy import Query as CoasterQuery, timestamp_columns
@@ -30,7 +30,8 @@ class User(BaseMixin, db.Model):
     _username = db.Column('username', db.Unicode(80), unique=True, nullable=True)
     pw_hash = db.Column(db.String(80), nullable=True)
     timezone = db.Column(db.Unicode(40), nullable=True)
-    description = db.Column(db.UnicodeText, default=u'', nullable=False)
+    #: Deprecated, but column preserved for existing data until migration
+    description = deferred(db.Column(db.UnicodeText, default=u'', nullable=False))
     status = db.Column(db.SmallInteger, nullable=False, default=USER_STATUS.ACTIVE)
 
     _defercols = [
@@ -38,7 +39,6 @@ class User(BaseMixin, db.Model):
         defer('updated_at'),
         defer('pw_hash'),
         defer('timezone'),
-        defer('description'),
         ]
 
     def __init__(self, password=None, **kwargs):
@@ -619,12 +619,12 @@ class Organization(BaseMixin, db.Model):
     userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
     _name = db.Column('name', db.Unicode(80), unique=True, nullable=True)
     title = db.Column(db.Unicode(80), default=u'', nullable=False)
-    description = db.Column(db.UnicodeText, default=u'', nullable=False)
+    #: Deprecated, but column preserved for existing data until migration
+    description = deferred(db.Column(db.UnicodeText, default=u'', nullable=False))
 
     _defercols = [
         defer('created_at'),
         defer('updated_at'),
-        defer('description'),
         ]
 
     def __init__(self, *args, **kwargs):

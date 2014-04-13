@@ -11,8 +11,6 @@
   <dd>{{ g.user.fullname }}</dd>
   <dt>My username</dt>
   <dd>{% if g.user.username %}{{ g.user.username }}{% else %}<em>(none)</em>{% endif %}</dd>
-  <dt>Bio</dt>
-  <dd>{{ g.user.description }}</dd>
 </dl>
 <p>
   <a class="btn btn-info" href="{{ url_for('lastuser_oauth.profile_edit') }}">Edit this</a>
