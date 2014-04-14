@@ -38,7 +38,7 @@ class User(BaseMixin, db.Model):
     client_id = db.Column(None, db.ForeignKey('client.id',
         use_alter=True, name='user_client_id_fkey'), nullable=True)
     #: If this user was created by a client app via the API, record it here
-    client = db.relationship('Client')  # No backref or cascade
+    client = db.relationship('Client', foreign_keys=[client_id])  # No backref or cascade
 
     _defercols = [
         defer('created_at'),
@@ -632,7 +632,7 @@ class Organization(BaseMixin, db.Model):
     client_id = db.Column(None, db.ForeignKey('client.id',
         use_alter=True, name='organization_client_id_fkey'), nullable=True)
     #: If this org was created by a client app via the API, record it here
-    client = db.relationship('Client')  # No backref or cascade
+    client = db.relationship('Client', foreign_keys=[client_id])  # No backref or cascade
 
     _defercols = [
         defer('created_at'),
@@ -763,7 +763,7 @@ class Team(BaseMixin, db.Model):
     client_id = db.Column(None, db.ForeignKey('client.id',
         use_alter=True, name='team_client_id_fkey'), nullable=True)
     #: If this team was created by a client app via the API, record it here
-    client = db.relationship('Client')  # No backref or cascade
+    client = db.relationship('Client', foreign_keys=[client_id])  # No backref or cascade
 
     def __repr__(self):
         return u'<Team {team} of {org}>'.format(
