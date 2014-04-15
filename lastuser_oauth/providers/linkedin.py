@@ -66,7 +66,10 @@ class LinkedInProvider(LoginProvider):
                 headers={'x-li-format': 'json'}).json()
         except requests.exceptions.RequestException as e:
             raise LoginCallbackError(u"Unable to authenticate via LinkedIn. Internal details: {error}".format(error=e))
-        
+
+        if not info.get('id'):
+            raise LoginCallbackError(u"Unable to retrieve user details from LinkedIn. Please try again")
+
         return {'email': info.get('emailAddress'),
                 'userid': info.get('id'),
                 'username': info.get('publicProfileUrl'),
