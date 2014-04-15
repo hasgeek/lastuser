@@ -40,6 +40,12 @@ class User(BaseMixin, db.Model):
     #: If this user was created by a client app via the API, record it here
     client = db.relationship('Client', foreign_keys=[client_id])  # No backref or cascade
 
+    #: Id of user who invited this user
+    referrer_id = db.Column(None, db.ForeignKey('user.id',
+        use_alter=True, name='user_referrer_id_fkey'), nullable=True)
+    #: User who invited this user
+    referrer = db.relationship('User', foreign_keys=[referrer_id])
+
     _defercols = [
         defer('created_at'),
         defer('updated_at'),
