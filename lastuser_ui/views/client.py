@@ -6,7 +6,7 @@ from baseframe.forms import render_form, render_redirect, render_delete_sqla
 
 from lastuser_core.models import (db, User, Client, Organization, Team, Permission,
     UserClientPermissions, TeamClientPermissions, Resource, ResourceAction, ClientTeamAccess,
-    CLIENT_TEAM_ACCESS, USER_STATUS)
+    CLIENT_TEAM_ACCESS)
 from lastuser_oauth.views.helpers import requires_login
 from .. import lastuser_ui
 from ..forms import (RegisterClientForm, PermissionForm, UserPermissionAssignForm,
@@ -44,7 +44,7 @@ def available_client_owners():
 @lastuser_ui.route('/apps/new', methods=['GET', 'POST'])
 @requires_login
 def client_new():
-    form = RegisterClientForm()
+    form = RegisterClientForm(model=Client)
     form.edit_user = g.user
     form.client_owner.choices = available_client_owners()
     if request.method == 'GET':
@@ -81,7 +81,7 @@ def client_info(client):
 @requires_login
 @load_model(Client, {'key': 'key'}, 'client', permission='edit')
 def client_edit(client):
-    form = RegisterClientForm(obj=client)
+    form = RegisterClientForm(obj=client, model=Client)
     form.edit_user = g.user
     form.client_owner.choices = available_client_owners()
     if request.method == 'GET':

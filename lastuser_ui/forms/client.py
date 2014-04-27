@@ -81,6 +81,13 @@ class RegisterClientForm(Form):
         if not self._urls_match(self.website.data, field.data):
             raise wtforms.ValidationError("The scheme, domain and port must match that of the website URL")
 
+    def validate_namespace(self, field):
+        client = self.edit_model.get(namespace=field.data)
+        if client:
+            if client == self.edit_obj:
+                return
+            raise wtforms.ValidationError("This namespace has been claimed by another client app")
+
 
 class PermissionForm(Form):
     """
