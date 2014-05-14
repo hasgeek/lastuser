@@ -30,7 +30,8 @@ def init_for(env):
     db.init_app(app)
     db.app = app  # To make it work without an app context
     RQ(app)  # Pick up RQ configuration from the app
-    baseframe.init_app(app, requires=['baseframe-bs3', 'jquery.cookie', 'timezone', 'lastuser-oauth'])
+    baseframe.init_app(app, requires=['lastuser-oauth'],
+        ext_requires=['baseframe-bs3', 'fontawesome>=4.0.0', 'jquery.cookie', 'timezone'])
 
     lastuser_oauth.mailclient.mail.init_app(app)
     lastuser_oauth.views.login.oid.init_app(app)
