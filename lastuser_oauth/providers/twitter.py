@@ -49,7 +49,7 @@ class TwitterProvider(LoginProvider):
     def do(self, callback_url):
         try:
             return self.twitter.authorize(callback=callback_url)
-        except (OAuthException, BadStatusLine, SSLError), e:
+        except (OAuthException, BadStatusLine, SSLError, gaierror), e:
             raise LoginInitError(e)
 
     def unwrapped_callback(self, resp):
