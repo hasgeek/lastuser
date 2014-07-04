@@ -106,6 +106,8 @@ def client_edit(client):
             # This client does not have access to teams in organizations. Remove all existing assignments
             for cta in ClientTeamAccess.query.filter_by(client=client).all():
                 db.session.delete(cta)
+        if not client.namespace:
+            client.namespace = None
         db.session.commit()
         return render_redirect(url_for('.client_info', key=client.key), code=303)
 
