@@ -2,10 +2,11 @@
 
 from urlparse import urlparse
 
+from flask import Markup
 import wtforms
 import wtforms.fields.html5
 from baseframe.forms import Form
-from coaster import valid_username
+from coaster.utils import valid_username, domain_namespace_match
 
 from lastuser_core.models import Permission, Resource, getuser, Organization
 from lastuser_core import resource_registry
@@ -23,32 +24,45 @@ class RegisterClientForm(Form):
     """
     Register a new OAuth client application
     """
-    title = wtforms.TextField('Application title', validators=[wtforms.validators.Required()],
+    title = wtforms.TextField('Application title',
+        validators=[wtforms.validators.Required()],
         description="The name of your application")
-    description = wtforms.TextAreaField('Description', validators=[wtforms.validators.Required()],
+    description = wtforms.TextAreaField('Description',
+        validators=[wtforms.validators.Required()],
         description="A description to help users recognize your application")
-    client_owner = wtforms.RadioField('Owner', validators=[wtforms.validators.Required()],
+    client_owner = wtforms.RadioField('Owner',
+        validators=[wtforms.validators.Required()],
         description="User or organization that owns this application. Changing the owner "
             "will revoke all currently assigned permissions for this app")
-    website = wtforms.fields.html5.URLField('Application website', validators=[wtforms.validators.Required(), wtforms.validators.URL()],
+    website = wtforms.fields.html5.URLField('Application website',
+        validators=[wtforms.validators.Required(), wtforms.validators.URL()],
         description="Website where users may access this application")
-    redirect_uri = wtforms.fields.html5.URLField('Redirect URL', validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
+    namespace = wtforms.TextField('Client namespace',
+        validators=[wtforms.validators.Optional()],
+        description=Markup(u"A dot-based namespace that uniquely identifies your client application. "
+            u"For example, if your client website is <code>https://auth.hasgeek.com</code>, "
+            u"use <code>com.hasgeek.auth</code>. Only required if your client app provides resources"))
+    redirect_uri = wtforms.fields.html5.URLField('Redirect URL',
+        validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
         description="OAuth2 Redirect URL")
-    notification_uri = wtforms.fields.html5.URLField('Notification URL', validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
+    notification_uri = wtforms.fields.html5.URLField('Notification URL',
+        validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
         description="When the user's data changes, Lastuser will POST a notice to this URL. "
-            "Other notices may be posted too")
-    iframe_uri = wtforms.fields.html5.URLField('IFrame URL', validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
+            "Other notices may be posted too.")
+    iframe_uri = wtforms.fields.html5.URLField('IFrame URL',
+        validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
         description="Front-end notifications URL. This is loaded in a hidden iframe to notify the app that the "
             "user updated their profile in some way (not yet implemented)")
-    resource_uri = wtforms.fields.html5.URLField('Resource URL', validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
+    resource_uri = wtforms.fields.html5.URLField('Resource URL',
+        validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
         description="URL at which this application provides resources as per the Lastuser Resource API "
             "(not yet implemented)")
-    namespace = wtforms.TextField('Client namespace', validators=[wtforms.validators.Required()],
-        description="A dot-based namespace that uniquely identifies your client application and provides external clients access to resources. For example, if your client website is http://funnel.hasgeek.com, use 'com.hasgeek.funnel'.")
-    allow_any_login = wtforms.BooleanField('Allow anyone to login', default=True,
+    allow_any_login = wtforms.BooleanField('Allow anyone to login',
+        default=True,
         description="If your application requires access to be restricted to specific users, uncheck this, "
             "and only users who have been assigned a permission to the app will be able to login")
-    team_access = wtforms.BooleanField('Requires access to teams', default=False,
+    team_access = wtforms.BooleanField('Requires access to teams',
+        default=False,
         description="If your application is capable of assigning access permissions to teams, check this. "
             "Organization owners will then able to grant access to teams in their organizations")
 
@@ -82,11 +96,16 @@ class RegisterClientForm(Form):
             raise wtforms.ValidationError("The scheme, domain and port must match that of the website URL")
 
     def validate_namespace(self, field):
-        client = self.edit_model.get(namespace=field.data)
-        if client:
-            if client == self.edit_obj:
-                return
-            raise wtforms.ValidationError("This namespace has been claimed by another client app")
+        if field.data:
+            if not domain_namespace_match(self.website.data, field.data):
+                raise wtforms.ValidationError(u"The namespace should be derived from your application’s website domain")
+            client = self.edit_model.get(namespace=field.data)
+            if client:
+                if client == self.edit_obj:
+                    return
+                raise wtforms.ValidationError("This namespace has been claimed by another client app")
+        else:
+            field.data = None
 
 
 class PermissionForm(Form):

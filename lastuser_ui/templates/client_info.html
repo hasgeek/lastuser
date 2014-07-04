@@ -10,6 +10,10 @@
   <dd>{{ client.owner_title }}</dd>
   <dt>Website</dt>
   <dd><a rel="nofollow" href="{{ client.website }}">{{ client.website }}</a></dd>
+  {%- if client.namespace %}
+    <dt>Namespace</dt>
+    <dd>{{ client.namespace }}</dd>
+  {%- endif %}
   <dt>Redirect URL</dt>
   <dd>{{ client.redirect_uri }}</dd>
   <dt>Notification URL</dt>
