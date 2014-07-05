@@ -94,7 +94,7 @@ def confirm_email(md5sum, secret):
                         fullname=escape(emailclaim.user.fullname), email=escape(useremail.email))))
         else:
             return render_message(
-                title="That was not for you",
+                title="This was not for you",
                 message=u"You’ve opened an email verification link that was meant for another user. "
                         u"If you are managing multiple accounts, please login with the correct account "
                         u"and open the link again.",

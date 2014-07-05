@@ -5,7 +5,7 @@ from urlparse import urlparse
 from flask import Markup
 import wtforms
 import wtforms.fields.html5
-from baseframe.forms import Form
+from baseframe.forms import Form, NullTextField
 from coaster.utils import valid_username, domain_namespace_match
 
 from lastuser_core.models import Permission, Resource, getuser, Organization
@@ -37,7 +37,7 @@ class RegisterClientForm(Form):
     website = wtforms.fields.html5.URLField('Application website',
         validators=[wtforms.validators.Required(), wtforms.validators.URL()],
         description="Website where users may access this application")
-    namespace = wtforms.TextField('Client namespace',
+    namespace = NullTextField("Client namespace",
         validators=[wtforms.validators.Optional()],
         description=Markup(u"A dot-based namespace that uniquely identifies your client application. "
             u"For example, if your client website is <code>https://auth.hasgeek.com</code>, "
@@ -104,8 +104,6 @@ class RegisterClientForm(Form):
                 if client == self.edit_obj:
                     return
                 raise wtforms.ValidationError("This namespace has been claimed by another client app")
-        else:
-            field.data = None
 
 
 class PermissionForm(Form):

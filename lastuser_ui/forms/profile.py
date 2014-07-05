@@ -36,10 +36,10 @@ class NewPhoneForm(Form):
             if existing.user == g.user:
                 raise wtforms.ValidationError("You have already registered this phone number.")
             else:
-                raise wtforms.ValidationError("That phone number has already been claimed.")
+                raise wtforms.ValidationError("This phone number has already been claimed.")
         existing = UserPhoneClaim.get(phone=field.data, user=g.user)
         if existing is not None:
-            raise wtforms.ValidationError("That phone number is pending verification.")
+            raise wtforms.ValidationError("This phone number is pending verification.")
         # Step 1: Remove punctuation in number
         field.data = strip_phone(field.data)
         # Step 2: Validate number format

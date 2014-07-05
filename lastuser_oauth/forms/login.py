@@ -40,12 +40,12 @@ class RegisterForm(Form):
 
     def validate_username(self, field):
         if field.data in current_app.config['RESERVED_USERNAMES']:
-            raise wtforms.ValidationError, "That name is reserved"
+            raise wtforms.ValidationError, "This name is reserved"
         if not valid_username(field.data):
             raise wtforms.ValidationError(u"Invalid characters in name. Names must be made of ‘a-z’, ‘0-9’ and ‘-’, without trailing dashes")
         existing = User.get(username=field.data)
         if existing is not None:
-            raise wtforms.ValidationError("That username is taken")
+            raise wtforms.ValidationError("This username is taken")
 
     def validate_email(self, field):
         field.data = field.data.lower()  # Convert to lowercase
