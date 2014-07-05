@@ -17,9 +17,10 @@ __all__ = ['User', 'UserEmail', 'UserEmailClaim', 'PasswordResetRequest', 'UserE
 
 
 class USER_STATUS:
-    ACTIVE = 0
-    SUSPENDED = 1
-    MERGED = 2
+    ACTIVE = 0     # Regular, active user
+    SUSPENDED = 1  # Suspended account
+    MERGED = 2     # Merged into another user
+    INVITED = 3    # Invited to make an account, doesn't have one yet
 
 
 class User(BaseMixin, db.Model):
