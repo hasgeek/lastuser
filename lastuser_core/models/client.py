@@ -4,8 +4,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.ext.declarative import declared_attr
 from coaster import newid, newsecret
 
-from . import db, BaseMixin
-from coaster.sqlalchemy import BaseScopedNameMixin
+from . import db, BaseMixin, BaseScopedNameMixin
 from .user import User, Organization, Team
 from .session import UserSession
 

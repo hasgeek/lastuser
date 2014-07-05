@@ -161,10 +161,3 @@ class LoginProvider(object):
             'emailclaim': None,          # Claimed email address. Must be verified
             'email_md5sum': None,        # For when we have the email md5sum, but not the email itself
         }
-
-
-class LoginProviderRegistry(OrderedDict):
-    """
-    Dictionary of login providers (service: instance).
-    """
-    pass
