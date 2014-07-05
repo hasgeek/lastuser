@@ -491,6 +491,13 @@ def resource_login_providers(authtoken, args, files=None):
     return response
 
 
+@lastuser_oauth.route('/api/1/user/new', methods=['POST'])
+@resource_registry.resource('user/new', u"Create a new user account", trusted=True)
+def resource_user_new(authtoken, args, files=None):
+    # Set User.client to authtoken.client and User.referrer to authtoken.user
+    pass
+
+
 @lastuser_oauth.route('/api/1/organizations')
 @resource_registry.resource('organizations', u"Read the organizations you are a member of")
 def resource_organizations(authtoken, args, files=None):
@@ -500,6 +507,18 @@ def resource_organizations(authtoken, args, files=None):
     return get_userinfo(authtoken.user, authtoken.client, scope=['organizations'], get_permissions=False)
 
 
+@lastuser_oauth.route('/api/1/organizations/new', methods=['POST'])
+@resource_registry.resource('organizations/new', u"Create a new organization", trusted=True)
+def resource_organizations_new(authtoken, args, files=None):
+    pass
+
+
+@lastuser_oauth.route('/api/1/organizations/edit', methods=['POST'])
+@resource_registry.resource('organizations/edit', u"Edit your organizations", trusted=True)
+def resource_organizations_edit(authtoken, args, files=None):
+    pass
+
+
 @lastuser_oauth.route('/api/1/teams')
 @resource_registry.resource('teams', u"Read the list of teams in your organizations")
 def resource_teams(authtoken, args, files=None):
@@ -507,6 +526,19 @@ def resource_teams(authtoken, args, files=None):
     Return user's organizations' teams.
     """
     return get_userinfo(authtoken.user, authtoken.client, scope=['teams'], get_permissions=False)
+
+
+@lastuser_oauth.route('/api/1/teams/new', methods=['POST'])
+@resource_registry.resource('teams/new', u"Create a new team in your organizations", trusted=True)
+def resource_teams_new(authtoken, args, files=None):
+    pass
+
+
+# GET to read member list, POST to write to it
+@lastuser_oauth.route('/api/1/teams/edit', methods=['GET', 'POST'])
+@resource_registry.resource('teams/edit', u"Edit your organizations' teams", trusted=True)
+def resource_teams_edit(authtoken, args, files=None):
+    pass
 
 
 @lastuser_oauth.route('/api/1/notice/send')
