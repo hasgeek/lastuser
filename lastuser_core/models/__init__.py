@@ -2,7 +2,7 @@
 
 from inspect import isclass
 from flask.ext.sqlalchemy import SQLAlchemy
-from coaster.sqlalchemy import TimestampMixin, BaseMixin  # Imported from here by other models
+from coaster.sqlalchemy import TimestampMixin, BaseMixin, BaseScopedNameMixin  # Imported from here by other models
 
 db = SQLAlchemy()
 
