@@ -166,7 +166,7 @@ def oauth_authorize():
         if not redirect_uri:  # Validation 1.3.1: No redirect_uri specified
             return oauth_auth_403(u"No redirect URI specified")
     elif redirect_uri != client.redirect_uri:
-        if urlparse.urlsplit(redirect_uri).hostname != urlparse.urlsplit(client.redirect_uri).hostname:
+        if urlparse.urlsplit(redirect_uri).hostname != urlparse.urlsplit(client.redirect_uri or client.website).hostname:
             return oauth_auth_error(client.redirect_uri, state, 'invalid_request', u"Redirect URI hostname doesn't match")
 
     # Validation 1.4: Client allows login for this user
