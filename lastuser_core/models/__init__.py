@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from inspect import isclass
 from flask.ext.sqlalchemy import SQLAlchemy
 from coaster.sqlalchemy import TimestampMixin, BaseMixin, BaseScopedNameMixin  # Imported from here by other models
 
@@ -10,7 +9,7 @@ db = SQLAlchemy()
 from .user import *
 from .session import *
 from .client import *
-from .notice import *
+from .notification import *
 
 
 def getuser(name):
