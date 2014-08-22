@@ -24,23 +24,26 @@ def send_message(msg):
             raise ValueError("Invalid Indian mobile number")
         # All okay. Send!
         if not (current_app.config.get('SMS_EXOTEL_SID') and current_app.config.get('SMS_EXOTEL_TOKEN')):
-            raise ValueError("Lastuser is not configured for SMS")
+            raise ValueError("This server is not configured to send SMS")
         else:
             sid = current_app.config['SMS_EXOTEL_SID']
             token = current_app.config['SMS_EXOTEL_TOKEN']
-            r = requests.post('https://twilix.exotel.in/v1/Accounts/{sid}/Sms/send.json'.format(sid=sid),
-                auth=(sid, token),
-                data={
-                    'From': current_app.config.get('SMS_FROM'),
-                    'To': msg.phone_number,
-                    'Body': msg.message
-                })
-            if r.status_code in (200, 201):
-                # All good
-                msg.transaction_id = r.json().get('SMSMessage', {}).get('Sid')
-            else:
-                # FIXME: This function should not be sending messages to the UI
-                flash("Message could not be sent.", 'danger')
+            try:
+                r = requests.post('https://twilix.exotel.in/v1/Accounts/{sid}/Sms/send.json'.format(sid=sid),
+                    auth=(sid, token),
+                    data={
+                        'From': current_app.config.get('SMS_FROM'),
+                        'To': msg.phone_number,
+                        'Body': msg.message
+                    })
+                if r.status_code in (200, 201):
+                    # All good
+                    msg.transaction_id = r.json().get('SMSMessage', {}).get('Sid')
+                else:
+                    # FIXME: This function should not be sending messages to the UI
+                    flash("Message could not be sent", 'danger')
+            except requests.ConnectionError:
+                flash("The SMS delivery engine is not reachable at the moment. Please try again", 'danger')
 
         # # TODO: Also check if we have SMS GupShup credentials in settings.py
         # params = urlencode(dict(
