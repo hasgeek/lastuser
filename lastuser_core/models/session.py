@@ -44,7 +44,7 @@ class UserSession(BaseMixin, db.Model):
         # crucial context: when the session was revoked remotely
         self.accessed_at = datetime.utcnow()
         if not api:
-            self.ipaddr = request.environ.get('REMOTE_ADDR', u'')
+            self.ipaddr = request.remote_addr or u''
             self.user_agent = unicode(request.user_agent.string[:250]) or u''
 
     @cached_property
