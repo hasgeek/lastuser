@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from flask import request, g
+from flask import request, g, abort, render_template, jsonify
 from coaster.utils import getbool
 from coaster.views import jsonp, requestargs
 
 from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Resource,
-    ResourceAction, UserClientPermissions, TeamClientPermissions, UserSession)
+    ResourceAction, UserClientPermissions, TeamClientPermissions, UserSession, Client)
 from lastuser_core import resource_registry
 from .. import lastuser_oauth
 from .helpers import requires_client_login, requires_user_or_client_login
@@ -83,7 +83,7 @@ def resource_error(error, description=None, uri=None):
         params['error_uri'] = uri
 
     response = jsonp(params)
-    response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
+    response.headers['Cache-Control'] = 'private, no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     response.status_code = 400
     return response
@@ -97,7 +97,7 @@ def api_result(status, **params):
     params['status'] = status
     response = jsonp(params)
     response.status_code = status_code
-    response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
+    response.headers['Cache-Control'] = 'private, no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     return response
 
@@ -401,6 +401,40 @@ def org_team_get():
                                      'title': team.title,
                                      'owners': team == org.owners} for team in org.teams]
     return api_result('ok', org_teams=orgteams)
+
+
+# --- Public endpoints --------------------------------------------------------
+
+@lastuser_oauth.route('/api/1/login/beacon.html')
+@requestargs('client_id', 'login_url')
+def login_beacon_iframe(client_id, login_url):
+    client = Client.get(key=client_id)
+    if client is None:
+        abort(404)
+    if not client.host_matches(login_url):
+        abort(400)
+    return render_template('login_beacon.html', client=client, login_url=login_url), 200, {
+        'Expires': 'Fri, 01 Jan 1990 00:00:00 GMT',
+        'Cache-Control': 'private, max-age=86400'
+        }
+
+
+@lastuser_oauth.route('/api/1/login/beacon.json')
+@requestargs('client_id')
+def login_beacon_json(client_id):
+    client = Client.get(key=client_id)
+    if client is None:
+        abort(404)
+    if g.user:
+        token = client.authtoken_for(g.user)
+    else:
+        token = None
+    response = jsonify({
+        'hastoken': True if token else False
+        })
+    response.headers['Expires'] = 'Fri, 01 Jan 1990 00:00:00 GMT'
+    response.headers['Cache-Control'] = 'private, max-age=300'
+    return response
 
 
 # --- Token-based resource endpoints ------------------------------------------

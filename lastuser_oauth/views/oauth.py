@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime, timedelta
 import urlparse
 from flask import g, render_template, redirect, request, jsonify, get_flashed_messages
 from coaster import newsecret
@@ -166,7 +165,7 @@ def oauth_authorize():
         if not redirect_uri:  # Validation 1.3.1: No redirect_uri specified
             return oauth_auth_403(u"No redirect URI specified")
     elif redirect_uri != client.redirect_uri:
-        if urlparse.urlsplit(redirect_uri).hostname != urlparse.urlsplit(client.redirect_uri or client.website).hostname:
+        if not client.host_matches(redirect_uri):
             return oauth_auth_error(client.redirect_uri, state, 'invalid_request', u"Redirect URI hostname doesn't match")
 
     # Validation 1.4: Client allows login for this user

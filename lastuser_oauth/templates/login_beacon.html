@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Lastuser login beacon</title>
+  </head>
+  <body>
+    <script type="text/javascript">
+      if (decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*" + encodeURIComponent("hasuser").replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1")) == "1") {
+        // User is logged into Lastuser. Log them into client app too
+      {%- if client.trusted %}
+        window.top.location.href = {{ login_url|tojson }};
+      {%- else %}
+        // getJSON code from https://mathiasbynens.be/notes/xhr-responsetype-json
+        var getJSON = function(url, successHandler, errorHandler) {
+          var xhr = typeof XMLHttpRequest != 'undefined'
+            ? new XMLHttpRequest()
+            : new ActiveXObject('Microsoft.XMLHTTP');
+          xhr.open('get', url, true);
+          xhr.onreadystatechange = function() {
+            var status;
+            var data;
+            // http://xhr.spec.whatwg.org/#dom-xmlhttprequest-readystate
+            if (xhr.readyState == 4) { // `DONE`
+              status = xhr.status;
+              if (status == 200) {
+                data = JSON.parse(xhr.responseText);
+                successHandler && successHandler(data);
+              } else {
+                errorHandler && errorHandler(status);
+              }
+            }
+          };
+          xhr.send();
+        };
+
+        getJSON({{ url_for('.login_beacon_json', client_id=client.key)|tojson }}, function(data) {
+          if (data.hastoken) {
+            window.top.location.href = {{ login_url|tojson }};
+          }
+        }, function(status) {
+          console.log("Login status check failed: " + status);
+        });
+      {%- endif %}
+      }
+    </script>
+  </body>
+</html>

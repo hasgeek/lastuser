@@ -51,6 +51,18 @@ def lookup_current_user():
 
 
 @lastuser_oauth.after_app_request
+def hasuser_cookie(response):
+    """
+    Add a userid cookie, for use from JS to check if a user is logged in.
+    """
+    response.set_cookie('hasuser', value='1' if g.user else '0', max_age=31557600,  # Keep this cookie for a year.
+        expires=datetime.utcnow() + timedelta(days=365),                            # Expire one year from now.
+        httponly=False)                                                             # Allow reading this from JS.
+
+    return response
+
+
+@lastuser_oauth.after_app_request
 def cache_expiry_headers(response):
     if 'Expires' not in response.headers:
         response.headers['Expires'] = 'Fri, 01 Jan 1990 00:00:00 GMT'
@@ -110,6 +122,7 @@ def requires_login(f):
 def requires_login_no_message(f):
     """
     Decorator to require a login for the given view.
+    Does not display a message asking the user to login.
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -213,5 +226,6 @@ def register_internal(username, fullname, password):
 
 def set_loginmethod_cookie(response, value):
     response.set_cookie('login', value, max_age=31557600,  # Keep this cookie for a year
-        expires=datetime.utcnow() + timedelta(days=365))   # Expire one year from now
+        expires=datetime.utcnow() + timedelta(days=365),   # Expire one year from now
+        httponly=True)
     return response

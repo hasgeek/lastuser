@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime, timedelta
+import urlparse
 from sqlalchemy.ext.declarative import declared_attr
 from coaster import newid, newsecret
 
@@ -66,6 +67,9 @@ class Client(BaseMixin, db.Model):
         """
         return self.secret == candidate
 
+    def host_matches(self, url):
+        return urlparse.urlsplit(url).netloc == urlparse.urlsplit(self.redirect_uri or self.website).netloc
+
     @property
     def owner_title(self):
         """
@@ -102,6 +106,9 @@ class Client(BaseMixin, db.Model):
             perms.add('assign-permissions')
             perms.add('new-resource')
         return perms
+
+    def authtoken_for(self, user):
+        return AuthToken.query.filter_by(client=self, user=user).one_or_none()
 
     @classmethod
     def get(cls, key=None, namespace=None):
