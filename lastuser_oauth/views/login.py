@@ -73,7 +73,7 @@ def logout_user():
     """
     User-initiated logout
     """
-    if not request.referrer or (urlparse.urlsplit(request.referrer).hostname != urlparse.urlsplit(request.url).hostname):
+    if not request.referrer or (urlparse.urlsplit(request.referrer).netloc != urlparse.urlsplit(request.url).netloc):
         # TODO: present a logout form
         flash(current_app.config.get('LOGOUT_UNAUTHORIZED_MESSAGE') or logout_errormsg, 'danger')
         return redirect(url_for('index'))
@@ -89,34 +89,22 @@ def logout_client():
     Client-initiated logout
     """
     client = Client.get(key=request.args['client_id'])
-    if client is None:
-        # No such client. Possible CSRF. Don't logout and don't send them back
-        flash(logout_errormsg, 'danger')
+    if client is None or not request.referrer or not client.host_matches(request.referrer):
+        # No referrer or such client, or request didn't come from the client website.
+        # Possible CSRF. Don't logout and don't send them back
+        flash(current_app.config.get('LOGOUT_UNAUTHORIZED_MESSAGE') or logout_errormsg, 'danger')
         return redirect(url_for('index'))
-    if client.trusted:
-        # This is a trusted client. Does the referring domain match?
-        clienthost = urlparse.urlsplit(client.redirect_uri).hostname
-        if request.referrer:
-            if clienthost != urlparse.urlsplit(request.referrer).hostname:
-                # Doesn't. Don't logout and don't send back
-                flash(logout_errormsg, 'danger')
-                return redirect(url_for('index'))
-        # else: no referrer? Either stripped out by browser or a proxy, or this is a direct link.
-        # We can't do anything about that, so assume it's a legit case.
-        #
-        # If there is a next destination, is it in the same domain?
-        if 'next' in request.args:
-            if clienthost != urlparse.urlsplit(request.args['next']).hostname:
-                # Doesn't. Assume CSRF and redirect to index without logout
-                flash(logout_errormsg, 'danger')
-                return redirect(url_for('index'))
-        # All good. Log them out and send them back
-        logout_internal()
-        db.session.commit()
-        return redirect(get_next_url(external=True))
-    else:
-        # We know this client, but it's not trusted. Send back without logout.
-        return redirect(get_next_url(external=True))
+
+    # If there is a next destination, is it in the same domain as the client?
+    if 'next' in request.args:
+        if not client.host_matches(request.args['next']):
+            # Host doesn't match. Assume CSRF and redirect to index without logout
+            flash(current_app.config.get('LOGOUT_UNAUTHORIZED_MESSAGE') or logout_errormsg, 'danger')
+            return redirect(url_for('index'))
+    # All good. Log them out and send them back
+    logout_internal()
+    db.session.commit()
+    return redirect(get_next_url(external=True))
 
 
 @lastuser_oauth.route('/logout')
@@ -133,7 +121,7 @@ def logout():
 @lastuser_oauth.route('/logout/<session>')
 @load_model(UserSession, {'buid': 'session'}, 'session')
 def logout_session(session):
-    if not request.referrer or (urlparse.urlsplit(request.referrer).hostname != urlparse.urlsplit(request.url).hostname) or (session.user != g.user):
+    if not request.referrer or (urlparse.urlsplit(request.referrer).netloc != urlparse.urlsplit(request.url).netloc) or (session.user != g.user):
         flash(current_app.config.get('LOGOUT_UNAUTHORIZED_MESSAGE') or logout_errormsg, 'danger')
         return redirect(url_for('index'))
 

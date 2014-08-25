@@ -68,7 +68,7 @@ class Client(BaseMixin, db.Model):
         return self.secret == candidate
 
     def host_matches(self, url):
-        return urlparse.urlsplit(url).netloc == urlparse.urlsplit(self.redirect_uri or self.website).netloc
+        return urlparse.urlsplit(url or '').netloc == urlparse.urlsplit(self.redirect_uri or self.website).netloc
 
     @property
     def owner_title(self):
