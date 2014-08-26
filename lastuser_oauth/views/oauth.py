@@ -74,7 +74,7 @@ def oauth_make_auth_code(client, scope, redirect_uri):
     Make an auth code for a given client. Caller must commit
     the database session for this to work.
     """
-    authcode = AuthCode(user=g.user, session=g.usersession, client=client, scope=scope, redirect_uri=redirect_uri)
+    authcode = AuthCode(user=g.user, session=g.usersession, client=client, scope=scope, redirect_uri=redirect_uri[:1024])
     authcode.code = newsecret()
     db.session.add(authcode)
     return authcode.code
