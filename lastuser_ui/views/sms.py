@@ -39,7 +39,10 @@ def send_message(msg):
                 if r.status_code in (200, 201):
                     # All good
                     jsonresponse = r.json()
-                    msg.transaction_id = jsonresponse.get('SMSMessage', {}).get('Sid')
+                    if isinstance(jsonresponse, (list, tuple)) and jsonresponse:
+                        msg.transaction_id = jsonresponse[0].get('Sid')
+                    else:
+                        msg.transaction_id = jsonresponse.get('SMSMessage', {}).get('Sid')
                 else:
                     # FIXME: This function should not be sending messages to the UI
                     flash("Message could not be sent", 'danger')
