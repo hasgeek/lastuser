@@ -40,7 +40,7 @@ def send_message(msg):
                     # All good
                     jsonresponse = r.json()
                     if isinstance(jsonresponse, (list, tuple)) and jsonresponse:
-                        msg.transaction_id = jsonresponse[0].get('Sid')
+                        msg.transaction_id = jsonresponse[0].get('SMSMessage', {}).get('Sid')
                     else:
                         msg.transaction_id = jsonresponse.get('SMSMessage', {}).get('Sid')
                 else:
