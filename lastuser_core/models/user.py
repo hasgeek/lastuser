@@ -7,7 +7,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import defer, deferred
 from sqlalchemy.ext.hybrid import hybrid_property
 from coaster import newid, newsecret, newpin, valid_username
-from coaster.sqlalchemy import Query as CoasterQuery, timestamp_columns
+from coaster.sqlalchemy import Query as CoasterQuery, make_timestamp_columns
 
 from . import db, TimestampMixin, BaseMixin
 
@@ -612,7 +612,7 @@ class UserExternalId(BaseMixin, db.Model):
 
 team_membership = db.Table(
     'team_membership', db.Model.metadata,
-    *(timestamp_columns + (
+    *(make_timestamp_columns() + (
         db.Column('user_id', db.Integer, db.ForeignKey('user.id'), nullable=False, primary_key=True),
         db.Column('team_id', db.Integer, db.ForeignKey('team.id'), nullable=False, primary_key=True))),
     info={'bind_key': 'lastuser'}
