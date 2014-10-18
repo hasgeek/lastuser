@@ -4,7 +4,7 @@ from flask import current_app
 import wtforms
 import wtforms.fields.html5
 from coaster import valid_username, sorted_timezones
-from baseframe.forms import Form, ValidEmailDomain, AnnotatedNullTextField
+from baseframe.forms import Form, ValidEmail, AnnotatedNullTextField
 
 from lastuser_core.models import UserEmail, getuser
 
@@ -51,7 +51,7 @@ class PasswordChangeForm(Form):
 class ProfileForm(Form):
     fullname = wtforms.TextField('Full name', validators=[wtforms.validators.Required()])
     email = wtforms.fields.html5.EmailField('Email address',
-        validators=[wtforms.validators.Required(), wtforms.validators.Email(), ValidEmailDomain()])
+        validators=[wtforms.validators.Required(), ValidEmail()])
     username = AnnotatedNullTextField('Username', validators=[wtforms.validators.Required()],
         prefix=u"https://hasgeek.com/…")
     timezone = wtforms.SelectField('Timezone', validators=[wtforms.validators.Required()], choices=timezones)
@@ -69,7 +69,7 @@ class ProfileForm(Form):
         if not self.edit_user.is_valid_username(field.data):
             raise wtforms.ValidationError("This username is taken")
 
-    # TODO: Move to function and place before ValidEmailDomain()
+    # TODO: Move to function and place before ValidEmail()
     def validate_email(self, field):
         field.data = field.data.lower()  # Convert to lowercase
         existing = UserEmail.get(email=field.data)
