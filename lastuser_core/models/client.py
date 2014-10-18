@@ -58,6 +58,10 @@ class Client(BaseMixin, db.Model):
     #: Namespace: determines inter-app resource access
     namespace = db.Column(db.Unicode(250), nullable=True, unique=True)
 
+    __table_args__ = (db.CheckConstraint(
+        db.case([(user_id != None, 1)], else_=0) + db.case([(org_id != None, 1)], else_=0) == 1,
+        name='client_user_id_or_org_id'),)
+
     def __repr__(self):
         return u'<Client "{title}" {key}>'.format(title=self.title, key=self.key)
 
@@ -398,6 +402,10 @@ class Permission(BaseMixin, db.Model):
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
     #: Is this permission available to all users and client apps?
     allusers = db.Column(db.Boolean, default=False, nullable=False)
+
+    __table_args__ = (db.CheckConstraint(
+        db.case([(user_id != None, 1)], else_=0) + db.case([(org_id != None, 1)], else_=0) == 1,
+        name='permission_user_id_or_org_id'),)
 
     def owner_is(self, user):
         return user is not None and self.user == user or (self.org and self.org in user.organizations_owned())
