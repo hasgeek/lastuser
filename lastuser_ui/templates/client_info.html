@@ -33,9 +33,9 @@
     <dd>{{ client.key }}</dd>
     <dt>Client secret</dt>
     <dd><span id="client-secret" class="jshidden">{{ client.secret }}</span><a id="client-secret-reveal" href="" class="btn btn-default btn-xs js-only">Reveal</a></dd>
+    <dt>Users</dt>
+    <dd>{{ client.authtokens.count() }}</dd>
   {%- endif %}
-  <dt>Users</dt>
-  <dd>{{ client.authtokens.count() }}</dd>
 </dl>
 {% if client.owner_is(g.user) %}
   <p>
