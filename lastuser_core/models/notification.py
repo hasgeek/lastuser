@@ -5,7 +5,7 @@ from coaster.utils import LabeledEnum
 from baseframe import __
 from ..registry import OrderedDict
 from . import db, BaseMixin, BaseScopedNameMixin
-from .user import User, UserEmail, UserPhone, Organization
+from .user import User, UserEmail, UserPhone
 from .client import Client
 
 __all__ = ['SMSMessage', 'SMS_STATUS']
@@ -118,103 +118,103 @@ class SMSMessage(BaseMixin, db.Model):
     fail_reason = db.Column(db.Unicode(25), nullable=True)
 
 
-class ChannelMixin(object):
-    @declared_attr
-    def _channels(self):
-        """
-        Preferred channels for sending this notification class (in order of preference).
-        Only listed channels are available for delivery of this notification.
-        """
-        return db.Column('channels', db.Unicode(250), default=u'', nullable=False)
+# class ChannelMixin(object):
+#     @declared_attr
+#     def _channels(self):
+#         """
+#         Preferred channels for sending this notification class (in order of preference).
+#         Only listed channels are available for delivery of this notification.
+#         """
+#         return db.Column('channels', db.Unicode(250), default=u'', nullable=False)
 
-    def _channels_get(self):
-        return [c.strip() for c in self._channels.replace(u'\r', u' ').replace(u'\n', u' ').split(u' ') if c]
+#     def _channels_get(self):
+#         return [c.strip() for c in self._channels.replace(u'\r', u' ').replace(u'\n', u' ').split(u' ') if c]
 
-    def _channels_set(self, value):
-        if isinstance(value, basestring):
-            value = [value]
-        self._channels = u' '.join([c.strip() for c in value if c])
+#     def _channels_set(self, value):
+#         if isinstance(value, basestring):
+#             value = [value]
+#         self._channels = u' '.join([c.strip() for c in value if c])
 
-    @declared_attr
-    def channels(self):
-        return db.synonym('_channels', descriptor=property(self._channels_get, self._channels_set))
-
-
-class NotificationClass(BaseScopedNameMixin, ChannelMixin, db.Model):
-    """
-    A NotificationClass is a type of notification 
-    """
-
-    __tablename__ = 'notification_class'
-    __bind_key__ = 'lastuser'
-
-    #: Client app that will send these notifications
-    client_id = db.Column(None, db.ForeignKey('client.id'), nullable=False)
-    client = db.relationship(Client, backref=db.backref('notifications', cascade='all, delete-orphan'))
-    parent = db.synonym('client')
-
-    #: User-unique notification class. The name is now a random unique string that is saved in the app
-    #: and is used to send these notifications
-    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=True)
-    user = db.relationship(User, foreign_keys=[user_id],
-        backref=db.backref('notifications', cascade='all, delete-orphan'))
-
-    #: Type of notification (as per NOTIFICATION_TYPE), currently for informational purposes only
-    type = db.Column(db.SmallInteger, nullable=False)
-    #: Default delivery frequency
-    freq = db.Column(db.SmallInteger, nullable=False, default=NOTIFICATION_FREQUENCY.IMMEDIATE)
-
-    __table_args__ = (db.UniqueConstraint('client_id', 'name'),)
+#     @declared_attr
+#     def channels(self):
+#         return db.synonym('_channels', descriptor=property(self._channels_get, self._channels_set))
 
 
-class UserNotificationPreference(BaseMixin, ChannelMixin, db.Model):
-    __tablename__ = 'user_notification_preference'
-    __bind_key__ = 'lastuser'
+# class NotificationClass(BaseScopedNameMixin, ChannelMixin, db.Model):
+#     """
+#     A NotificationClass is a type of notification 
+#     """
 
-    #: The notification class these preferences are for
-    notification_class_id = db.Column(None, db.ForeignKey('notification_class.id'), nullable=False)
-    notification_class = db.relationship(NotificationClass,
-        backref=db.backref('user_preferences', lazy='dynamic', cascade='all, delete-orphan'))
+#     __tablename__ = 'notification_class'
+#     __bind_key__ = 'lastuser'
 
-    #: The user these preferences are for
-    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(User, foreign_keys=[user_id],
-        backref=db.backref('notification_preferences', cascade='all, delete-orphan'))
+#     #: Client app that will send these notifications
+#     client_id = db.Column(None, db.ForeignKey('client.id'), nullable=False)
+#     client = db.relationship(Client, backref=db.backref('notifications', cascade='all, delete-orphan'))
+#     parent = db.synonym('client')
 
-    #: Context for user's preferences (default user's userid, else org's userid)
-    #: If we migrate User/Organization/Team into a Principal model (ticket #91)
-    #: this should become a foreign key to Principal.
-    context = db.Column(db.Unicode(22))
+#     #: User-unique notification class. The name is now a random unique string that is saved in the app
+#     #: and is used to send these notifications
+#     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=True)
+#     user = db.relationship(User, foreign_keys=[user_id],
+#         backref=db.backref('notifications', cascade='all, delete-orphan'))
 
-    #: Preferred email address for delivering these notifications. If blank,
-    #: implies default email (user.email) or no email, depending on whether
-    #: 'email' is in the channels
-    email_id = db.Column(None, db.ForeignKey('useremail.id'), nullable=True)
-    email = db.relationship(UserEmail)
+#     #: Type of notification (as per NOTIFICATION_TYPE), currently for informational purposes only
+#     type = db.Column(db.SmallInteger, nullable=False)
+#     #: Default delivery frequency
+#     freq = db.Column(db.SmallInteger, nullable=False, default=NOTIFICATION_FREQUENCY.IMMEDIATE)
 
-    #: Preferred phone number for delivering these notifications. If blank,
-    #: implies default phone (user.phone) or no SMS, depending on whether
-    #: 'sms' is in the channels
-    phone_id = db.Column(None, db.ForeignKey('userphone.id'), nullable=True)
-    phone = db.relationship(UserPhone)
+#     __table_args__ = (db.UniqueConstraint('client_id', 'name'),)
 
-    #: User's preferred delivery frequency (null = default)
-    _freq = db.Column('freq', db.SmallInteger, nullable=True)
 
-    __table_args__ = (db.UniqueConstraint('user_id', 'notification_class_id', 'context'),)
+# class UserNotificationPreference(BaseMixin, ChannelMixin, db.Model):
+#     __tablename__ = 'user_notification_preference'
+#     __bind_key__ = 'lastuser'
 
-    def _freq_get(self):
-        return self._freq if self._freq is not None else self.notification_class.freq
+#     #: The notification class these preferences are for
+#     notification_class_id = db.Column(None, db.ForeignKey('notification_class.id'), nullable=False)
+#     notification_class = db.relationship(NotificationClass,
+#         backref=db.backref('user_preferences', lazy='dynamic', cascade='all, delete-orphan'))
 
-    def _freq_set(self, value):
-        self._freq = value
+#     #: The user these preferences are for
+#     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
+#     user = db.relationship(User, foreign_keys=[user_id],
+#         backref=db.backref('notification_preferences', cascade='all, delete-orphan'))
 
-    freq = db.synonym('_freq', descriptor=property(_freq_get, _freq_set))
+#     #: Context for user's preferences (default user's userid, else org's userid)
+#     #: If we migrate User/Organization/Team into a Principal model (ticket #91)
+#     #: this should become a foreign key to Principal.
+#     context = db.Column(db.Unicode(22))
 
-    def _channels_set(self, value):
-        available_channels = self.notification_class.channels
-        if isinstance(value, basestring):
-            value = [value]
-        self._channels = u' '.join([c.strip() for c in value if c and c in available_channels])
+#     #: Preferred email address for delivering these notifications. If blank,
+#     #: implies default email (user.email) or no email, depending on whether
+#     #: 'email' is in the channels
+#     email_id = db.Column(None, db.ForeignKey('useremail.id'), nullable=True)
+#     email = db.relationship(UserEmail)
 
-    channels = db.synonym('_channels', descriptor=property(ChannelMixin._channels_get, _channels_set))
+#     #: Preferred phone number for delivering these notifications. If blank,
+#     #: implies default phone (user.phone) or no SMS, depending on whether
+#     #: 'sms' is in the channels
+#     phone_id = db.Column(None, db.ForeignKey('userphone.id'), nullable=True)
+#     phone = db.relationship(UserPhone)
+
+#     #: User's preferred delivery frequency (null = default)
+#     _freq = db.Column('freq', db.SmallInteger, nullable=True)
+
+#     __table_args__ = (db.UniqueConstraint('user_id', 'notification_class_id', 'context'),)
+
+#     def _freq_get(self):
+#         return self._freq if self._freq is not None else self.notification_class.freq
+
+#     def _freq_set(self, value):
+#         self._freq = value
+
+#     freq = db.synonym('_freq', descriptor=property(_freq_get, _freq_set))
+
+#     def _channels_set(self, value):
+#         available_channels = self.notification_class.channels
+#         if isinstance(value, basestring):
+#             value = [value]
+#         self._channels = u' '.join([c.strip() for c in value if c and c in available_channels])
+
+#     channels = db.synonym('_channels', descriptor=property(ChannelMixin._channels_get, _channels_set))
