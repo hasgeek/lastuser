@@ -38,8 +38,6 @@ class Client(BaseMixin, db.Model):
     notification_uri = db.Column(db.Unicode(250), nullable=True, default=u'')
     #: Front-end notification URI
     iframe_uri = db.Column(db.Unicode(250), nullable=True, default=u'')
-    #: Resource discovery URI
-    resource_uri = db.Column(db.Unicode(250), nullable=True, default=u'')
     #: Active flag
     active = db.Column(db.Boolean, nullable=False, default=True)
     #: Allow anyone to login to this app?

@@ -53,10 +53,6 @@ class RegisterClientForm(Form):
         validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
         description="Front-end notifications URL. This is loaded in a hidden iframe to notify the app that the "
             "user updated their profile in some way (not yet implemented)")
-    resource_uri = wtforms.fields.html5.URLField('Resource URL',
-        validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
-        description="URL at which this application provides resources as per the Lastuser Resource API "
-            "(not yet implemented)")
     allow_any_login = wtforms.BooleanField('Allow anyone to login',
         default=True,
         description="If your application requires access to be restricted to specific users, uncheck this, "
