@@ -281,10 +281,10 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
     __bind_key__ = 'lastuser'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Null for client-only tokens
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref=db.backref("authtokens", cascade="all, delete-orphan"))
+        backref=db.backref("authtokens", lazy='dynamic', cascade="all, delete-orphan"))
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
-        backref=db.backref("authtokens", cascade="all, delete-orphan"))
+        backref=db.backref("authtokens", lazy='dynamic', cascade="all, delete-orphan"))
     token = db.Column(db.String(22), default=newid, nullable=False, unique=True)
     token_type = db.Column(db.String(250), default='bearer', nullable=False)  # 'bearer', 'mac' or a URL
     secret = db.Column(db.String(44), nullable=True)
