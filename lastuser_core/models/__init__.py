@@ -23,7 +23,7 @@ def getuser(name):
                 return None
         else:
             useremail = UserEmail.get(email=name)
-            if useremail and useremail.user.is_active:
+            if useremail and useremail.user is not None and useremail.user.is_active:
                 return useremail.user
             # No verified email id. Look for an unverified id; return first found
             results = UserEmailClaim.all(email=name)

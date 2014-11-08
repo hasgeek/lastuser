@@ -1,4 +1,4 @@
-Hello {{ useremail.user.fullname }},
+Hello {{ useremail.owner.title }},
 
 [Click here to confirm your email address][confirm].
 

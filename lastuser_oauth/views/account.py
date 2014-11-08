@@ -68,7 +68,7 @@ def get_user_extid(service, userdata):
     user = None
     if extid is not None:
         user = extid.user
-    elif useremail is not None:
+    elif useremail is not None and useremail.user is not None:
         user = useremail.user
     else:
         # Cross-check with all other instances of the same LoginProvider (if we don't have a user)

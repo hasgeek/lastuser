@@ -28,6 +28,7 @@ class User(BaseMixin, db.Model):
     __bind_key__ = 'lastuser'
     userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
     fullname = db.Column(db.Unicode(80), default=u'', nullable=False)
+    title = db.synonym('fullname')
     _username = db.Column('username', db.Unicode(80), unique=True, nullable=True)
     pw_hash = db.Column(db.String(80), nullable=True)
     timezone = db.Column(db.Unicode(40), nullable=True)
@@ -80,6 +81,8 @@ class User(BaseMixin, db.Model):
     #: Write-only property (passwords cannot be read back in plain text)
     password = property(fset=_set_password)
 
+    # FIXME: move this to an SQLAlchemy validator
+
     #: Username (may be null)
     @hybrid_property
     def username(self):
@@ -91,6 +94,9 @@ class User(BaseMixin, db.Model):
             self._username = None
         elif self.is_valid_username(value):
             self._username = value
+
+    # Alias name to username
+    name = username
 
     def is_valid_username(self, value):
         if not valid_username(value):
@@ -163,11 +169,11 @@ class User(BaseMixin, db.Model):
         Returns primary email address for user.
         """
         # Look for a primary address
-        useremail = UserEmail.query.filter_by(user_id=self.id, primary=True).first()
+        useremail = UserEmail.query.filter_by(user=self, primary=True).first()
         if useremail:
             return useremail
         # No primary? Maybe there's one that's not set as primary?
-        useremail = UserEmail.query.filter_by(user_id=self.id).first()
+        useremail = UserEmail.query.filter_by(user=self).first()
         if useremail:
             # XXX: Mark at primary. This may or may not be saved depending on
             # whether the request ended in a database commit.
@@ -321,7 +327,7 @@ class User(BaseMixin, db.Model):
         elif '@' in query:
             users = cls.query.filter(cls.status == USER_STATUS.ACTIVE, cls.id.in_(
                 db.session.query(UserEmail.user_id).filter(
-                    db.func.lower(UserEmail.email).like(db.func.lower(query))
+                    db.func.lower(UserEmail.email).like(db.func.lower(query), UserEmail.user_id != None)
                 ).subquery())).options(*cls._defercols).limit(100).all() + users
         return users
 
@@ -374,9 +380,13 @@ class UserEmail(BaseMixin, db.Model):
     #: Make email immutable. There is no setter for email.
     email = db.synonym('_email', descriptor=email)
 
+    @property
+    def owner(self):
+        return self.user  # or self.org or self.team  # in future
+
     def __repr__(self):
-        return u'<UserEmail {email} of {user}>'.format(
-            email=self.email, user=repr(self.user)[1:-1])
+        return u'<UserEmail {email} of {owner}>'.format(
+            email=self.email, owner=repr(self.owner)[1:-1])
 
     def __unicode__(self):
         return unicode(self.email)
@@ -432,9 +442,13 @@ class UserEmailClaim(BaseMixin, db.Model):
     #: Make email immutable. There is no setter for email.
     email = db.synonym('_email', descriptor=email)
 
+    @property
+    def owner(self):
+        return self.user  # or self.org or self.team
+
     def __repr__(self):
-        return u'<UserEmailClaim {email} of {user}>'.format(
-            email=self.email, user=repr(self.user)[1:-1])
+        return u'<UserEmailClaim {email} of {owner}>'.format(
+            email=self.email, owner=repr(self.owner)[1:-1])
 
     def __unicode__(self):
         return unicode(self.email)
