@@ -316,7 +316,7 @@ class User(BaseMixin, db.Model):
                 db.func.lower(cls._username).like(db.func.lower(query))
                 )
             ).options(*cls._defercols).limit(100).all()  # Limit to 100 results
-        if query.startswith('@'):
+        if query.startswith('@') and UserExternalId.__at_username_services__:
             # Add Twitter/GitHub accounts to the head of results
             users = cls.query.filter(cls.status == USER_STATUS.ACTIVE, cls.id.in_(
                 db.session.query(UserExternalId.user_id).filter(
