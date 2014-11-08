@@ -11,7 +11,7 @@ try:
 except ImportError:
     from ordereddict import OrderedDict
 from flask import Response, request, jsonify, abort
-from .models import AuthToken
+from .models import AuthToken, UserExternalId
 
 # Bearer token, as per http://tools.ietf.org/html/draft-ietf-oauth-v2-bearer-15#section-2.1
 auth_bearer_re = re.compile("^Bearer ([a-zA-Z0-9_.~+/-]+=*)$")
@@ -90,6 +90,24 @@ class ResourceRegistry(OrderedDict):
         return wrapper
 
 
+class LoginProviderRegistry(OrderedDict):
+    """Registry of login providers"""
+
+    def at_username_services(self):
+        """Services which typically use @username addressing."""
+        return [key for key in self if self[key].at_username]
+
+    def __setitem__(self, key, value):
+        retval = super(LoginProviderRegistry, self).__setitem__(key, value)
+        UserExternalId.__at_username_services__ = self.at_username_services()
+        return retval
+
+    def __delitem__(self, key):
+        retval = super(LoginProviderRegistry, self).__delitem__(key)
+        UserExternalId.__at_username_services__ = self.at_username_services()
+        return retval
+
+
 class LoginError(Exception):
     """External service login failure"""
     pass
@@ -133,6 +151,8 @@ class LoginProvider(object):
     icon = None
     #: Login form, if required
     form = None
+    #: This service's usernames are typically used for addressing with @username
+    at_username = False
 
     def __init__(self, name, title, at_login=True, priority=False, **kwargs):
         self.name = name

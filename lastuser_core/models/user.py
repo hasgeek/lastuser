@@ -318,10 +318,9 @@ class User(BaseMixin, db.Model):
             ).options(*cls._defercols).limit(100).all()  # Limit to 100 results
         if query.startswith('@'):
             # Add Twitter/GitHub accounts to the head of results
-            # TODO: Move this query to a login provider class method
             users = cls.query.filter(cls.status == USER_STATUS.ACTIVE, cls.id.in_(
                 db.session.query(UserExternalId.user_id).filter(
-                    UserExternalId.service.in_([u'twitter', u'github']),
+                    UserExternalId.service.in_(UserExternalId.__at_username_services__),
                     db.func.lower(UserExternalId.username).like(db.func.lower(query[1:]))
                 ).subquery())).options(*cls._defercols).limit(100).all() + users
         elif '@' in query:
@@ -596,6 +595,7 @@ class PasswordResetRequest(BaseMixin, db.Model):
 class UserExternalId(BaseMixin, db.Model):
     __tablename__ = 'userexternalid'
     __bind_key__ = 'lastuser'
+    __at_username_services__ = []
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('externalids', cascade="all, delete-orphan"))

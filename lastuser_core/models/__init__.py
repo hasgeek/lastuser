@@ -14,7 +14,8 @@ from .notification import *
 
 def getuser(name):
     if '@' in name:
-        # TODO: This should be handled by the LoginProvider registry, not here
+        # TODO: This should have used UserExternalId.__at_username_services__,
+        # but this bit has traditionally been for Twitter only. Fix pending.
         if name.startswith('@'):
             extid = UserExternalId.get(service='twitter', username=name[1:])
             if extid and extid.user.is_active:
