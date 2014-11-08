@@ -3,7 +3,7 @@
 from hashlib import md5
 from werkzeug import check_password_hash, cached_property
 import bcrypt
-from sqlalchemy import or_
+from sqlalchemy import or_, event, DDL
 from sqlalchemy.orm import defer, deferred
 from sqlalchemy.ext.hybrid import hybrid_property
 from coaster import newid, newsecret, newpin, valid_username
@@ -326,6 +326,13 @@ class User(BaseMixin, db.Model):
         return users
 
 
+create_user_index = DDL(
+    "CREATE INDEX ix_user_username_lower ON \"user\" (lower(username) text_pattern_ops); "
+    "CREATE INDEX ix_user_fullname_lower ON \"user\" (lower(fullname) text_pattern_ops);")
+event.listen(User.__table__, 'after_create',
+    create_user_index.execute_if(dialect='postgresql'))
+
+
 class UserOldId(TimestampMixin, db.Model):
     __tablename__ = 'useroldid'
     __bind_key__ = 'lastuser'
@@ -392,6 +399,12 @@ class UserEmail(BaseMixin, db.Model):
             return cls.query.filter(cls.email.in_([email, email.lower()])).one_or_none()
         else:
             return cls.query.filter_by(md5sum=md5sum).one_or_none()
+
+
+create_useremail_index = DDL(
+    "CREATE INDEX ix_useremail_email_lower ON useremail (lower(email) text_pattern_ops);")
+event.listen(UserEmail.__table__, 'after_create',
+    create_useremail_index.execute_if(dialect='postgresql'))
 
 
 class UserEmailClaim(BaseMixin, db.Model):
@@ -606,6 +619,11 @@ class UserExternalId(BaseMixin, db.Model):
             return cls.query.filter_by(service=service, userid=userid).one_or_none()
         else:
             return cls.query.filter_by(service=service, username=username).one_or_none()
+
+create_userexternalid_index = DDL(
+    "CREATE INDEX ix_userexternalid_username_lower ON userexternalid (lower(username) text_pattern_ops);")
+event.listen(UserExternalId.__table__, 'after_create',
+    create_userexternalid_index.execute_if(dialect='postgresql'))
 
 # --- Organizations and teams -------------------------------------------------
 
