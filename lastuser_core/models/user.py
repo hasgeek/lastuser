@@ -306,7 +306,8 @@ class User(BaseMixin, db.Model):
         query = query.replace(u'%', ur'\%').replace(u'_', ur'\_').replace(u'[', u'').replace(u']', u'') + u'%'
         # Use User._username since 'username' is a hybrid property that checks for validity
         # before passing on to _username, the actual column name on the model.
-        # We convert to lowercase and use the LIKE operator since ILIKE isn't standard.
+        # We convert to lowercase and use the LIKE operator since ILIKE isn't standard
+        # and doesn't use an index on PostgreSQL (there's a functional index defined below).
         if not query:
             return []
         users = cls.query.filter(cls.status == USER_STATUS.ACTIVE,
@@ -332,8 +333,8 @@ class User(BaseMixin, db.Model):
 
 
 create_user_index = DDL(
-    "CREATE INDEX ix_user_username_lower ON \"user\" (lower(username) text_pattern_ops); "
-    "CREATE INDEX ix_user_fullname_lower ON \"user\" (lower(fullname) text_pattern_ops);")
+    'CREATE INDEX ix_user_username_lower ON "user" (lower(username) varchar_pattern_ops); '
+    'CREATE INDEX ix_user_fullname_lower ON "user" (lower(fullname) varchar_pattern_ops);')
 event.listen(User.__table__, 'after_create',
     create_user_index.execute_if(dialect='postgresql'))
 
@@ -411,7 +412,7 @@ class UserEmail(BaseMixin, db.Model):
 
 
 create_useremail_index = DDL(
-    "CREATE INDEX ix_useremail_email_lower ON useremail (lower(email) text_pattern_ops);")
+    'CREATE INDEX ix_useremail_email_lower ON useremail (lower(email) varchar_pattern_ops);')
 event.listen(UserEmail.__table__, 'after_create',
     create_useremail_index.execute_if(dialect='postgresql'))
 
@@ -635,7 +636,7 @@ class UserExternalId(BaseMixin, db.Model):
             return cls.query.filter_by(service=service, username=username).one_or_none()
 
 create_userexternalid_index = DDL(
-    "CREATE INDEX ix_userexternalid_username_lower ON userexternalid (lower(username) text_pattern_ops);")
+    'CREATE INDEX ix_userexternalid_username_lower ON userexternalid (lower(username) varchar_pattern_ops);')
 event.listen(UserExternalId.__table__, 'after_create',
     create_userexternalid_index.execute_if(dialect='postgresql'))
 

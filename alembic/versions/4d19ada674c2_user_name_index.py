@@ -16,13 +16,13 @@ import sqlalchemy as sa
 
 def upgrade():
     op.execute(sa.DDL(
-        "CREATE INDEX ix_user_username_lower ON \"user\" (lower(username) text_pattern_ops);"))
+        "CREATE INDEX ix_user_username_lower ON \"user\" (lower(username) varchar_pattern_ops);"))
     op.execute(sa.DDL(
-        "CREATE INDEX ix_user_fullname_lower ON \"user\" (lower(fullname) text_pattern_ops);"))
+        "CREATE INDEX ix_user_fullname_lower ON \"user\" (lower(fullname) varchar_pattern_ops);"))
     op.execute(sa.DDL(
-        "CREATE INDEX ix_useremail_email_lower ON useremail (lower(email) text_pattern_ops);"))
+        "CREATE INDEX ix_useremail_email_lower ON useremail (lower(email) varchar_pattern_ops);"))
     op.execute(sa.DDL(
-        "CREATE INDEX ix_userexternalid_username_lower ON userexternalid (lower(username) text_pattern_ops);"))
+        "CREATE INDEX ix_userexternalid_username_lower ON userexternalid (lower(username) varchar_pattern_ops);"))
 
 
 def downgrade():
