@@ -326,8 +326,8 @@ class User(BaseMixin, db.Model):
                 ).subquery())).options(*cls._defercols).limit(100).all() + users
         elif '@' in query:
             users = cls.query.filter(cls.status == USER_STATUS.ACTIVE, cls.id.in_(
-                db.session.query(UserEmail.user_id).filter(
-                    db.func.lower(UserEmail.email).like(db.func.lower(query), UserEmail.user_id != None)
+                db.session.query(UserEmail.user_id).filter(UserEmail.user_id != None).filter(
+                    db.func.lower(UserEmail.email).like(db.func.lower(query))
                 ).subquery())).options(*cls._defercols).limit(100).all() + users
         return users
 
