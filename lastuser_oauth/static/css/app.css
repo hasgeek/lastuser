@@ -12,13 +12,11 @@ a.loginbutton {
   line-height: 40px;
   padding: 5px;
   margin: 0 4px 4px 0;
-  -webkit-border-radius: 3px;
   -moz-border-radius: 3px;
-  -ms-border-radius: 3px;
-  -o-border-radius: 3px;
+  -webkit-border-radius: 3px;
   border-radius: 3px;
-  -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
@@ -29,8 +27,8 @@ a.loginbutton.hidden, .js a.loginbutton.jshidden, .no-js a.loginbutton.no-jshidd
 
 a.loginbutton.lastused, a.loginbutton.lastused:hover {
   border: 1px solid rgba(82, 168, 236, 0.8);
-  -webkit-box-shadow: 0 0 8px rgba(82, 168, 236, 0.6);
   -moz-box-shadow: 0 0 8px rgba(82, 168, 236, 0.6);
+  -webkit-box-shadow: 0 0 8px rgba(82, 168, 236, 0.6);
   box-shadow: 0 0 8px rgba(82, 168, 236, 0.6);
 }
 
@@ -39,8 +37,8 @@ a.loginbutton.caption {
 }
 
 a.loginbutton:hover {
-  -webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
   -moz-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+  -webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
   border-color: #969696;
   text-decoration: none;
@@ -56,6 +54,7 @@ input[name="field-openid"] {
   text-indent: -119988px;
   overflow: hidden;
   text-align: left;
+  text-transform: capitalize;
   background-image: url('../img/logo.png?1372854153');
   background-repeat: no-repeat;
   background-position: 50% 50%;
@@ -69,6 +68,7 @@ input[name="field-openid"] {
   text-indent: -119988px;
   overflow: hidden;
   text-align: left;
+  text-transform: capitalize;
   background-image: url('../img/logo@2x.png?1372854195');
   background-repeat: no-repeat;
   background-position: 50% 50%;
@@ -84,6 +84,9 @@ input[name="field-openid"] {
 @media only screen and (-webkit-min-device-pixel-ratio: 2) {
   #logo {
     background-image: url('../img/logo@2x.png?1372854195');
+    -moz-background-size: 113px 75px;
+    -o-background-size: 113px 75px;
     -webkit-background-size: 113px 75px;
+    background-size: 113px 75px;
   }
 }
