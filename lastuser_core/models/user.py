@@ -36,6 +36,9 @@ class User(BaseMixin, db.Model):
     description = deferred(db.Column(db.UnicodeText, default=u'', nullable=False))
     status = db.Column(db.SmallInteger, nullable=False, default=USER_STATUS.ACTIVE)
 
+    #: User avatar (URL to browser-ready image)
+    avatar = db.Column(db.Unicode(250), nullable=True)
+
     #: Client id that created this account
     client_id = db.Column(None, db.ForeignKey('client.id',
         use_alter=True, name='user_client_id_fkey'), nullable=True)
@@ -239,7 +242,7 @@ class User(BaseMixin, db.Model):
         """
         from .client import Permission
         return Permission.query.filter(
-            db.or_(Permission.allusers == True, Permission.user == self)
+            db.or_(Permission.allusers == True, Permission.user == self)  # NOQA
             ).order_by(Permission.name).all()
 
     def clients_with_team_access(self):
@@ -247,7 +250,6 @@ class User(BaseMixin, db.Model):
         Return a list of clients with access to the user's organizations' teams.
         """
         return [token.client for token in self.authtokens if 'teams' in token.scope]
-
 
     @classmethod
     def get(cls, username=None, userid=None, defercols=False):
@@ -326,7 +328,7 @@ class User(BaseMixin, db.Model):
                 ).subquery())).options(*cls._defercols).limit(100).all() + users
         elif '@' in query:
             users = cls.query.filter(cls.status == USER_STATUS.ACTIVE, cls.id.in_(
-                db.session.query(UserEmail.user_id).filter(UserEmail.user_id != None).filter(
+                db.session.query(UserEmail.user_id).filter(UserEmail.user_id != None).filter(  # NOQA
                     db.func.lower(UserEmail.email).like(db.func.lower(query))
                 ).subquery())).options(*cls._defercols).limit(100).all() + users
         return users

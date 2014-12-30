@@ -20,6 +20,7 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                     'username': user.username,
                     'fullname': user.fullname,
                     'timezone': user.timezone,
+                    'avatar': user.avatar,
                     'oldids': [o.userid for o in user.oldids]}
     else:
         userinfo = {}
