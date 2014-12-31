@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from urlparse import urlparse
+from werkzeug.exceptions import BadRequest
 from flask import request, g, abort, render_template, jsonify
 from coaster.utils import getbool
 from coaster.views import jsonp, requestargs
@@ -218,18 +220,20 @@ def sync_resources():
     # Deleting resources & actions not defined in client application.
     for resource_name in actions_list:
         resource = Resource.get(name=resource_name, client=g.client)
-        actions = ResourceAction.query.filter(~ResourceAction.name.in_(actions_list[resource_name]), ResourceAction.resource==resource)
+        actions = ResourceAction.query.filter(
+            ~ResourceAction.name.in_(actions_list[resource_name]), ResourceAction.resource == resource)
         for action in actions.all():
             results[resource_name]['actions'][action.name] = {'status': 'deleted'}
         actions.delete(synchronize_session='fetch')
-    del_resources = Resource.query.filter(~Resource.name.in_(actions_list.keys()), Resource.client==g.client)
+    del_resources = Resource.query.filter(
+        ~Resource.name.in_(actions_list.keys()), Resource.client == g.client)
     for resource in del_resources.all():
         ResourceAction.query.filter_by(resource=resource).delete(synchronize_session='fetch')
         results[resource.name] = {'status': 'deleted'}
     del_resources.delete(synchronize_session='fetch')
 
     db.session.commit()
-    
+
     return api_result('ok', results=results)
 
 
@@ -468,6 +472,23 @@ def session_verify(authtoken, args, files=None):
             }
     else:
         return {'active': False}
+
+
+@lastuser_oauth.route('/api/1/avatar/edit', methods=['POST'])
+@resource_registry.resource('avatar/edit', u"Update your profile picture")
+def resource_avatar_edit(authtoken, args, files=None):
+    """
+    Set a user's avatar image
+    """
+    avatar = args['avatar']
+    parsed = urlparse(avatar)
+    if parsed.scheme == 'https' and parsed.netloc:
+        # Accept any properly formatted URL.
+        # TODO: Add better validation.
+        authtoken.user.avatar = avatar
+        return {'avatar': authtoken.user.avatar}
+    else:
+        raise BadRequest("Invalid avatar URL")
 
 
 @lastuser_oauth.route('/api/1/email')
