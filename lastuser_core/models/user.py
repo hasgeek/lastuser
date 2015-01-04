@@ -4,8 +4,9 @@ from hashlib import md5
 from werkzeug import check_password_hash, cached_property
 import bcrypt
 from sqlalchemy import or_, event, DDL
-from sqlalchemy.orm import defer, deferred
+from sqlalchemy.orm import defer, deferred, foreign, remote
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.ext.associationproxy import association_proxy
 from coaster import newid, newsecret, newpin, valid_username
 from coaster.sqlalchemy import Query as CoasterQuery, make_timestamp_columns
 
@@ -50,6 +51,8 @@ class User(BaseMixin, db.Model):
         use_alter=True, name='user_referrer_id_fkey'), nullable=True)
     #: User who invited this user
     referrer = db.relationship('User', foreign_keys=[referrer_id])
+
+    oldusers = association_proxy('oldids', 'olduser')
 
     _defercols = [
         defer('created_at'),
@@ -346,13 +349,17 @@ class UserOldId(TimestampMixin, db.Model):
     __bind_key__ = 'lastuser'
     query_class = CoasterQuery
 
+    # userid here is NOT a foreign key since it has to continue to exist
+    # even if the User record is removed
     userid = db.Column(db.String(22), nullable=False, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    olduser = db.relationship(User, primaryjoin=foreign(userid) == remote(User.userid),
+        backref=db.backref('oldid', uselist=False))
+    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('oldids', cascade="all, delete-orphan"))
 
     def __repr__(self):
-        return u'<UserOldId {userid} of {user}'.format(
+        return u'<UserOldId {userid} of {user}>'.format(
             userid=self.userid, user=repr(self.user)[1:-1])
 
     @classmethod
