@@ -367,6 +367,204 @@ class UserOldId(TimestampMixin, db.Model):
         return cls.query.filter_by(userid=userid).one_or_none()
 
 
+# --- Organizations and teams -------------------------------------------------
+
+team_membership = db.Table(
+    'team_membership', db.Model.metadata,
+    *(make_timestamp_columns() + (
+        db.Column('user_id', db.Integer, db.ForeignKey('user.id'), nullable=False, primary_key=True),
+        db.Column('team_id', db.Integer, db.ForeignKey('team.id'), nullable=False, primary_key=True))),
+    info={'bind_key': 'lastuser'}
+    )
+
+
+class Organization(BaseMixin, db.Model):
+    __tablename__ = 'organization'
+    __bind_key__ = 'lastuser'
+    # owners_id cannot be null, but must be declared with nullable=True since there is
+    # a circular dependency. The post_update flag on the relationship tackles the circular
+    # dependency within SQLAlchemy.
+    owners_id = db.Column(db.Integer, db.ForeignKey('team.id',
+        use_alter=True, name='fk_organization_owners_id'), nullable=True)
+    owners = db.relationship('Team', primaryjoin='Organization.owners_id == Team.id',
+        uselist=False, cascade='all', post_update=True)
+    userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
+    _name = db.Column('name', db.Unicode(80), unique=True, nullable=True)
+    title = db.Column(db.Unicode(80), default=u'', nullable=False)
+    #: Deprecated, but column preserved for existing data until migration
+    description = deferred(db.Column(db.UnicodeText, default=u'', nullable=False))
+
+    #: Client id that created this account
+    client_id = db.Column(None, db.ForeignKey('client.id',
+        use_alter=True, name='organization_client_id_fkey'), nullable=True)
+    #: If this org was created by a client app via the API, record it here
+    client = db.relationship('Client', foreign_keys=[client_id])  # No backref or cascade
+
+    _defercols = [
+        defer('created_at'),
+        defer('updated_at'),
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(Organization, self).__init__(*args, **kwargs)
+        if self.owners is None:
+            self.owners = Team(title=u"Owners", org=self)
+
+    @hybrid_property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        if self.valid_name(value):
+            self._name = value
+
+    def valid_name(self, value):
+        if not valid_username(value):
+            return False
+        existing = Organization.get(name=value)
+        if existing and existing.id != self.id:
+            return False
+        existing = User.query.filter_by(username=value).first()  # Avoid User.get to skip status check
+        if existing:
+            return False
+        return True
+
+    def __repr__(self):
+        return u'<Organization {name} "{title}">'.format(
+            name=self.name or self.userid, title=self.title)
+
+    @property
+    def pickername(self):
+        if self.name:
+            return u'{title} (~{name})'.format(title=self.title, name=self.name)
+        else:
+            return self.title
+
+    def clients_with_team_access(self):
+        """
+        Return a list of clients with access to the organization's teams.
+        """
+        from lastuser_core.models.client import CLIENT_TEAM_ACCESS
+        return [cta.client for cta in self.client_team_access if cta.access_level == CLIENT_TEAM_ACCESS.ALL]
+
+    def permissions(self, user, inherited=None):
+        perms = super(Organization, self).permissions(user, inherited)
+        if user and user in self.owners.users:
+            perms.add('view')
+            perms.add('edit')
+            perms.add('delete')
+            perms.add('view-teams')
+            perms.add('new-team')
+        else:
+            if 'view' in perms:
+                perms.remove('view')
+            if 'edit' in perms:
+                perms.remove('edit')
+            if 'delete' in perms:
+                perms.remove('delete')
+        return perms
+
+    def available_permissions(self):
+        """
+        Return all permission objects available to this organization
+        (either owned by this organization or available to all users).
+        """
+        from .client import Permission
+        return Permission.query.filter(
+            db.or_(Permission.allusers == True, Permission.org == self)  # NOQA
+            ).order_by(Permission.name).all()
+
+    @classmethod
+    def get(cls, name=None, userid=None, defercols=False):
+        """
+        Return an Organization with matching name or userid. Note that ``name`` is the username, not the title.
+
+        :param str name: Name of the organization
+        :param str userid: Userid of the organization
+        :param bool defercols: Defer loading non-critical columns
+        """
+        if not bool(name) ^ bool(userid):
+            raise TypeError("Either name or userid should be specified")
+
+        if userid:
+            query = cls.query.filter_by(userid=userid)
+        else:
+            query = cls.query.filter_by(name=name)
+        if defercols:
+            query = query.options(*cls._defercols)
+        return query.one_or_none()
+
+    @classmethod
+    def all(cls, userids=None, names=None, defercols=False):
+        orgs = []
+        if userids:
+            query = cls.query.filter(cls.userid.in_(userids))
+            if defercols:
+                query = query.options(*cls._defercols)
+            orgs.extend(query.all())
+        if names:
+            query = cls.query.filter(cls.name.in_(names))
+            if defercols:
+                query = query.options(*cls._defercols)
+            orgs.extend(query.all())
+        return orgs
+
+
+class Team(BaseMixin, db.Model):
+    __tablename__ = 'team'
+    __bind_key__ = 'lastuser'
+    #: Unique and non-changing id
+    userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
+    #: Displayed name
+    title = db.Column(db.Unicode(250), nullable=False)
+    #: Organization
+    org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=False)
+    org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
+        backref=db.backref('teams', order_by=title, cascade='all, delete-orphan'))
+    users = db.relationship(User, secondary='team_membership',
+        backref='teams')  # No cascades here! Cascades will delete users
+
+    #: Client id that created this team
+    client_id = db.Column(None, db.ForeignKey('client.id',
+        use_alter=True, name='team_client_id_fkey'), nullable=True)
+    #: If this team was created by a client app via the API, record it here
+    client = db.relationship('Client', foreign_keys=[client_id])  # No backref or cascade
+
+    def __repr__(self):
+        return u'<Team {team} of {org}>'.format(
+            team=self.title, org=repr(self.org)[1:-1])
+
+    @property
+    def pickername(self):
+        return self.title
+
+    def permissions(self, user, inherited=None):
+        perms = super(Team, self).permissions(user, inherited)
+        if user and user in self.org.owners.users:
+            perms.add('edit')
+            perms.add('delete')
+        return perms
+
+    @classmethod
+    def migrate_user(cls, olduser, newuser):
+        for team in olduser.teams:
+            if team not in newuser.teams:
+                newuser.teams.append(team)
+        olduser.teams = []
+
+    @classmethod
+    def get(cls, userid=None):
+        """
+        Return a Team with matching userid.
+
+        :param str userid: Userid of the organization
+        """
+        return cls.query.filter_by(userid=userid).one_or_none()
+
+
+# -- User/Org/Team email/phone and misc
+
 class UserEmail(BaseMixin, db.Model):
     __tablename__ = 'useremail'
     __bind_key__ = 'lastuser'
@@ -648,199 +846,3 @@ create_userexternalid_index = DDL(
     'CREATE INDEX ix_userexternalid_username_lower ON userexternalid (lower(username) varchar_pattern_ops);')
 event.listen(UserExternalId.__table__, 'after_create',
     create_userexternalid_index.execute_if(dialect='postgresql'))
-
-# --- Organizations and teams -------------------------------------------------
-
-
-team_membership = db.Table(
-    'team_membership', db.Model.metadata,
-    *(make_timestamp_columns() + (
-        db.Column('user_id', db.Integer, db.ForeignKey('user.id'), nullable=False, primary_key=True),
-        db.Column('team_id', db.Integer, db.ForeignKey('team.id'), nullable=False, primary_key=True))),
-    info={'bind_key': 'lastuser'}
-    )
-
-
-class Organization(BaseMixin, db.Model):
-    __tablename__ = 'organization'
-    __bind_key__ = 'lastuser'
-    # owners_id cannot be null, but must be declared with nullable=True since there is
-    # a circular dependency. The post_update flag on the relationship tackles the circular
-    # dependency within SQLAlchemy.
-    owners_id = db.Column(db.Integer, db.ForeignKey('team.id',
-        use_alter=True, name='fk_organization_owners_id'), nullable=True)
-    owners = db.relationship('Team', primaryjoin='Organization.owners_id == Team.id',
-        uselist=False, cascade='all', post_update=True)
-    userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
-    _name = db.Column('name', db.Unicode(80), unique=True, nullable=True)
-    title = db.Column(db.Unicode(80), default=u'', nullable=False)
-    #: Deprecated, but column preserved for existing data until migration
-    description = deferred(db.Column(db.UnicodeText, default=u'', nullable=False))
-
-    #: Client id that created this account
-    client_id = db.Column(None, db.ForeignKey('client.id',
-        use_alter=True, name='organization_client_id_fkey'), nullable=True)
-    #: If this org was created by a client app via the API, record it here
-    client = db.relationship('Client', foreign_keys=[client_id])  # No backref or cascade
-
-    _defercols = [
-        defer('created_at'),
-        defer('updated_at'),
-        ]
-
-    def __init__(self, *args, **kwargs):
-        super(Organization, self).__init__(*args, **kwargs)
-        if self.owners is None:
-            self.owners = Team(title=u"Owners", org=self)
-
-    @hybrid_property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        if self.valid_name(value):
-            self._name = value
-
-    def valid_name(self, value):
-        if not valid_username(value):
-            return False
-        existing = Organization.get(name=value)
-        if existing and existing.id != self.id:
-            return False
-        existing = User.query.filter_by(username=value).first()  # Avoid User.get to skip status check
-        if existing:
-            return False
-        return True
-
-    def __repr__(self):
-        return u'<Organization {name} "{title}">'.format(
-            name=self.name or self.userid, title=self.title)
-
-    @property
-    def pickername(self):
-        if self.name:
-            return u'{title} (~{name})'.format(title=self.title, name=self.name)
-        else:
-            return self.title
-
-    def clients_with_team_access(self):
-        """
-        Return a list of clients with access to the organization's teams.
-        """
-        from lastuser_core.models.client import CLIENT_TEAM_ACCESS
-        return [cta.client for cta in self.client_team_access if cta.access_level == CLIENT_TEAM_ACCESS.ALL]
-
-    def permissions(self, user, inherited=None):
-        perms = super(Organization, self).permissions(user, inherited)
-        if user and user in self.owners.users:
-            perms.add('view')
-            perms.add('edit')
-            perms.add('delete')
-            perms.add('view-teams')
-            perms.add('new-team')
-        else:
-            if 'view' in perms:
-                perms.remove('view')
-            if 'edit' in perms:
-                perms.remove('edit')
-            if 'delete' in perms:
-                perms.remove('delete')
-        return perms
-
-    def available_permissions(self):
-        """
-        Return all permission objects available to this organization
-        (either owned by this organization or available to all users).
-        """
-        from .client import Permission
-        return Permission.query.filter(
-            db.or_(Permission.allusers == True, Permission.org == self)
-            ).order_by(Permission.name).all()
-
-    @classmethod
-    def get(cls, name=None, userid=None, defercols=False):
-        """
-        Return an Organization with matching name or userid. Note that ``name`` is the username, not the title.
-
-        :param str name: Name of the organization
-        :param str userid: Userid of the organization
-        :param bool defercols: Defer loading non-critical columns
-        """
-        if not bool(name) ^ bool(userid):
-            raise TypeError("Either name or userid should be specified")
-
-        if userid:
-            query = cls.query.filter_by(userid=userid)
-        else:
-            query = cls.query.filter_by(name=name)
-        if defercols:
-            query = query.options(*cls._defercols)
-        return query.one_or_none()
-
-    @classmethod
-    def all(cls, userids=None, names=None, defercols=False):
-        orgs = []
-        if userids:
-            query = cls.query.filter(cls.userid.in_(userids))
-            if defercols:
-                query = query.options(*cls._defercols)
-            orgs.extend(query.all())
-        if names:
-            query = cls.query.filter(cls.name.in_(names))
-            if defercols:
-                query = query.options(*cls._defercols)
-            orgs.extend(query.all())
-        return orgs
-
-
-class Team(BaseMixin, db.Model):
-    __tablename__ = 'team'
-    __bind_key__ = 'lastuser'
-    #: Unique and non-changing id
-    userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
-    #: Displayed name
-    title = db.Column(db.Unicode(250), nullable=False)
-    #: Organization
-    org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=False)
-    org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
-        backref=db.backref('teams', order_by=title, cascade='all, delete-orphan'))
-    users = db.relationship(User, secondary='team_membership',
-        backref='teams')  # No cascades here! Cascades will delete users
-
-    #: Client id that created this team
-    client_id = db.Column(None, db.ForeignKey('client.id',
-        use_alter=True, name='team_client_id_fkey'), nullable=True)
-    #: If this team was created by a client app via the API, record it here
-    client = db.relationship('Client', foreign_keys=[client_id])  # No backref or cascade
-
-    def __repr__(self):
-        return u'<Team {team} of {org}>'.format(
-            team=self.title, org=repr(self.org)[1:-1])
-
-    @property
-    def pickername(self):
-        return self.title
-
-    def permissions(self, user, inherited=None):
-        perms = super(Team, self).permissions(user, inherited)
-        if user and user in self.org.owners.users:
-            perms.add('edit')
-            perms.add('delete')
-        return perms
-
-    @classmethod
-    def migrate_user(cls, olduser, newuser):
-        for team in olduser.teams:
-            if team not in newuser.teams:
-                newuser.teams.append(team)
-        olduser.teams = []
-
-    @classmethod
-    def get(cls, userid=None):
-        """
-        Return a Team with matching userid.
-
-        :param str userid: Userid of the organization
-        """
-        return cls.query.filter_by(userid=userid).one_or_none()
