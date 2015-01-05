@@ -3,7 +3,7 @@
 from flask import current_app
 import wtforms
 import wtforms.fields.html5
-from coaster import valid_username, sorted_timezones
+from coaster.utils import valid_username, sorted_timezones
 from baseframe.forms import Form, ValidEmail, AnnotatedNullTextField
 
 from lastuser_core.models import UserEmail, getuser

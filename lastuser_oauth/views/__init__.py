@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-from . import helpers, login, account, oauth, resource, profile, notify
+from . import helpers, login, account, oauth, resource, profile, notify  # NOQA

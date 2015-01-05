@@ -11,4 +11,4 @@ login_registry = LoginProviderRegistry()
 channel_registry = OrderedDict()
 
 # Register signals
-from . import signals
+from . import signals  # NOQA

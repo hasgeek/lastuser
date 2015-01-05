@@ -8,4 +8,4 @@ lastuser_ui = Blueprint('lastuser_ui', __name__,
     template_folder='templates')
 
 
-from . import forms, views
+from . import forms, views  # NOQA

@@ -4,7 +4,7 @@ from flask import Markup, url_for, current_app, escape
 import wtforms
 import wtforms.fields.html5
 import flask.ext.wtf as wtf
-from coaster import valid_username
+from coaster.utils import valid_username
 from baseframe.forms import Form
 
 from lastuser_core.models import User, UserEmail, getuser

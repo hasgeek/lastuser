@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 import urlparse
 from sqlalchemy.ext.declarative import declared_attr
-from coaster import newid, newsecret
+from coaster.utils import newid, newsecret
 
 from . import db, BaseMixin, BaseScopedNameMixin
 from .user import User, Organization, Team
@@ -403,7 +403,7 @@ class Permission(BaseMixin, db.Model):
 
     __table_args__ = (db.CheckConstraint(
         db.case([(user_id != None, 1)], else_=0) + db.case([(org_id != None, 1)], else_=0) == 1,
-        name='permission_user_id_or_org_id'),)
+        name='permission_user_id_or_org_id'),)  # NOQA
 
     def owner_is(self, user):
         return user is not None and self.user == user or (self.org and self.org in user.organizations_owned())

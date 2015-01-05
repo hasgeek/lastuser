@@ -30,6 +30,7 @@ org_data_changed = lastuser_signals.signal('org-data-changed')
 team_data_changed = lastuser_signals.signal('team-data-changed')
 session_revoked = lastuser_signals.signal('session-revoked')
 
+
 @sqla_event.listens_for(User, 'after_insert')
 def _user_new(mapper, connection, target):
     model_user_new.send(target)

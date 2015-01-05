@@ -7,7 +7,7 @@ from sqlalchemy import or_, event, DDL
 from sqlalchemy.orm import defer, deferred, foreign, remote
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
-from coaster import newid, newsecret, newpin, valid_username
+from coaster.utils import newid, newsecret, newpin, valid_username
 from coaster.sqlalchemy import Query as CoasterQuery, make_timestamp_columns
 
 from . import db, TimestampMixin, BaseMixin
@@ -80,9 +80,7 @@ class User(BaseMixin, db.Model):
         if password is None:
             self.pw_hash = None
         else:
-            self.pw_hash = bcrypt.hashpw(
-                password.encode('utf-8') if isinstance(password, unicode) else password,
-                bcrypt.gensalt())
+            self.pw_hash = bcrypt.hashpw(password, bcrypt.gensalt())
 
     #: Write-only property (passwords cannot be read back in plain text)
     password = property(fset=_set_password)
@@ -123,9 +121,7 @@ class User(BaseMixin, db.Model):
         if self.pw_hash.startswith('sha1$'):
             return check_password_hash(self.pw_hash, password)
         else:
-            return bcrypt.hashpw(
-                password.encode('utf-8') if isinstance(password, unicode) else password,
-                self.pw_hash) == self.pw_hash
+            return bcrypt.hashpw(password, self.pw_hash) == self.pw_hash
 
     def __repr__(self):
         return u'<User {username} "{fullname}">'.format(username=self.username or self.userid,

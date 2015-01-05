@@ -5,7 +5,9 @@ from flask.ext.rq import RQ
 import coaster.app
 from baseframe import baseframe, assets, Version
 
-import lastuser_core, lastuser_oauth, lastuser_ui
+import lastuser_core
+import lastuser_oauth
+import lastuser_ui
 from lastuser_core import login_registry
 from lastuser_core.models import db
 from lastuser_oauth import providers
@@ -19,7 +21,7 @@ app.register_blueprint(lastuser_oauth.lastuser_oauth)
 app.register_blueprint(lastuser_ui.lastuser_ui)
 
 
-from . import views
+from . import views  # NOQA
 
 assets['lastuser-oauth.js'][version] = lastuser_oauth.lastuser_oauth_js,
 assets['lastuser-oauth.css'][version] = lastuser_oauth.lastuser_oauth_css

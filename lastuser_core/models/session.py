@@ -75,7 +75,7 @@ class UserSession(BaseMixin, db.Model):
             # Sessions are valid for two weeks...
             cls.accessed_at > datetime.utcnow() - timedelta(days=14),
             # ...unless explicitly revoked (or user logged out)
-            cls.revoked_at == None).one_or_none()
+            cls.revoked_at == None).one_or_none()  # NOQA
 
 
 # Patch a retriever into the User class. This could be placed in the
@@ -85,6 +85,6 @@ class UserSession(BaseMixin, db.Model):
 def active_sessions(self):
     return self.sessions.filter(
         UserSession.accessed_at > datetime.utcnow() - timedelta(days=14),
-        UserSession.revoked_at == None).all()
+        UserSession.revoked_at == None).all()  # NOQA
 
 User.active_sessions = active_sessions

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from .login import *
-from .profile import *
-from .auth import *
+from .login import *    # NOQA
+from .profile import *  # NOQA
+from .auth import *     # NOQA

@@ -117,8 +117,8 @@ def client_edit(client):
 @requires_login
 @load_model(Client, {'key': 'key'}, 'client', permission='delete')
 def client_delete(client):
-    return render_delete_sqla(client, db, title=u"Confirm delete", message=u"Delete application ‘{title}’? ".format(
-            title=client.title),
+    return render_delete_sqla(client, db, title=u"Confirm delete",
+        message=u"Delete application ‘{title}’? ".format(title=client.title),
         success=u"You have deleted application ‘{title}’ and all its associated resources and permission assignments".format(
             title=client.title),
         next=url_for('.client_list'))
@@ -202,12 +202,12 @@ def permission_user_new(client):
     if client.user:
         available_perms = Permission.query.filter(db.or_(
             Permission.allusers == True,
-            Permission.user == g.user)).order_by('name').all()
+            Permission.user == g.user)).order_by('name').all()  # NOQA
         form = UserPermissionAssignForm()
     elif client.org:
         available_perms = Permission.query.filter(db.or_(
             Permission.allusers == True,
-            Permission.org == client.org)).order_by('name').all()
+            Permission.org == client.org)).order_by('name').all()  # NOQA
         form = TeamPermissionAssignForm()
         form.org = client.org
         form.team_id.choices = [(team.userid, team.title) for team in client.org.teams]
@@ -251,7 +251,7 @@ def permission_user_edit(client, kwargs):
             abort(404)
         available_perms = Permission.query.filter(db.or_(
             Permission.allusers == True,
-            Permission.user == g.user)).order_by('name').all()
+            Permission.user == g.user)).order_by('name').all()  # NOQA
         permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
     elif client.org:
         team = Team.get(userid=kwargs['userid'])
@@ -259,7 +259,7 @@ def permission_user_edit(client, kwargs):
             abort(404)
         available_perms = Permission.query.filter(db.or_(
             Permission.allusers == True,
-            Permission.org == client.org)).order_by('name').all()
+            Permission.org == client.org)).order_by('name').all()  # NOQA
         permassign = TeamClientPermissions.query.filter_by(team=team, client=client).first_or_404()
     form = PermissionEditForm()
     form.perms.choices = [(ap.name, u"{name} – {title}".format(name=ap.name, title=ap.title)) for ap in available_perms]
@@ -297,7 +297,8 @@ def permission_user_delete(client, kwargs):
         if not user:
             abort(404)
         permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
-        return render_delete_sqla(permassign, db, title=u"Confirm delete", message=u"Remove all permissions assigned to user {pname} for app ‘{title}’?".format(
+        return render_delete_sqla(permassign, db, title=u"Confirm delete",
+            message=u"Remove all permissions assigned to user {pname} for app ‘{title}’?".format(
                 pname=user.pickername, title=client.title),
             success=u"You have revoked permisions for user {pname}".format(pname=user.pickername),
             next=url_for('.client_info', key=client.key))
@@ -306,7 +307,8 @@ def permission_user_delete(client, kwargs):
         if not team:
             abort(404)
         permassign = TeamClientPermissions.query.filter_by(team=team, client=client).first_or_404()
-        return render_delete_sqla(permassign, db, title=u"Confirm delete", message=u"Remove all permissions assigned to team ‘{pname}’ for app ‘{title}’?".format(
+        return render_delete_sqla(permassign, db, title=u"Confirm delete",
+            message=u"Remove all permissions assigned to team ‘{pname}’ for app ‘{title}’?".format(
                 pname=team.title, title=client.title),
             success=u"You have revoked permisions for team {title}".format(title=team.title),
             next=url_for('.client_info', key=client.key))

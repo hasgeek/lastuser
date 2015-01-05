@@ -10,7 +10,7 @@ from lastuser_core.models import UserEmail, UserEmailClaim, UserPhone, UserPhone
 
 
 class NewEmailAddressForm(Form):
-    email = wtforms.fields.html5.EmailField('Email address', validators=[wtforms.validators.Required(), ValidEmail()])
+    email = wtforms.fields.html5.EmailField("Email address", validators=[wtforms.validators.Required(), ValidEmail()])
 
     # TODO: Move to function and place before ValidEmail()
     def validate_email(self, field):
@@ -27,7 +27,7 @@ class NewEmailAddressForm(Form):
 
 
 class NewPhoneForm(Form):
-    phone = wtforms.TextField('Phone number', default='+91',
+    phone = wtforms.TextField("Phone number", default="+91",
         validators=[
             wtforms.validators.Required(),
             wtforms.validators.Length(min=1, max=16, message="This is too long to be a valid phone number")],
@@ -49,7 +49,7 @@ class NewPhoneForm(Form):
         if not valid_phone(field.data):
             raise wtforms.ValidationError("Invalid phone number (must be in international format with a leading + symbol)")
         # Step 3: Check if Indian number (startswith('+91'))
-        if not field.data.startswith('+91') or len(field.data) != 13:
+        if not field.data.startswith("+91") or len(field.data) != 13:
             raise wtforms.ValidationError("Only Indian mobile numbers are allowed at this time")
 
 

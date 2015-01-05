@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import abort, url_for, flash, redirect, g, session, render_template, request
 
-from coaster import valid_username
+from coaster.utils import valid_username
 from coaster.views import get_next_url
 from baseframe.signals import exception_catchall
 from lastuser_core import login_registry

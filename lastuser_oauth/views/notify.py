@@ -14,11 +14,12 @@ user_changes_to_notify = set(['merge', 'profile', 'email', 'email-claim', 'email
 def notify_session_revoked(session):
     for token in session.user.authtokens:
         if token.is_valid() and token.client.notification_uri:
-            send_notice.delay(token.client.notification_uri, data=
-                {'userid': session.user.userid,
-                 'type': 'user',
-                 'changes': ['logout'],
-                 'sessionid': session.buid})
+            send_notice.delay(token.client.notification_uri, data={
+                'userid': session.user.userid,
+                'type': 'user',
+                'changes': ['logout'],
+                'sessionid': session.buid
+                })
 
 
 @user_data_changed.connect
@@ -43,10 +44,11 @@ def notify_user_data_changed(user, changes):
                         if 'phone' in token.scope:
                             notify_changes.append(change)
                 if notify_changes:
-                    send_notice.delay(token.client.notification_uri, data=
-                        {'userid': user.userid,
+                    send_notice.delay(token.client.notification_uri, data={
+                        'userid': user.userid,
                         'type': 'user',
-                        'changes': notify_changes})
+                        'changes': notify_changes
+                        })
 
 
 @org_data_changed.connect
@@ -72,8 +74,8 @@ def notify_org_data_changed(org, user, changes, team=None):
             notify_user = user
         else:
             notify_user = users[0]  # First user available
-        send_notice.delay(client.notification_uri, data=
-            {'userid': notify_user.userid,
+        send_notice.delay(client.notification_uri, data={
+            'userid': notify_user.userid,
             'type': 'org' if team is None else 'team',
             'orgid': org.userid,
             'teamid': team.userid if team is not None else None,

@@ -13,4 +13,4 @@ lastuser_oauth = Blueprint('lastuser_oauth', __name__,
 lastuser_oauth_js = Bundle('lastuser_oauth/js/app.js')
 lastuser_oauth_css = Bundle('lastuser_oauth/css/app.css')
 
-from . import forms, views
+from . import forms, views  # NOQA

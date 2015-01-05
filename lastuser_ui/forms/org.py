@@ -2,7 +2,7 @@
 
 from flask import g, current_app, Markup, url_for
 import wtforms
-from coaster import valid_username
+from coaster.utils import valid_username
 from baseframe import _
 from baseframe.forms import Form, HiddenMultiField, AnnotatedTextField
 
@@ -10,9 +10,9 @@ from lastuser_core.models import User, Organization
 
 
 class OrganizationForm(Form):
-    title = wtforms.TextField('Organization name', validators=[wtforms.validators.Required()])
-    name = AnnotatedTextField('Username', validators=[wtforms.validators.Required()],
-        prefix=u'https://hasgeek.com/…')
+    title = wtforms.TextField("Organization name", validators=[wtforms.validators.Required()])
+    name = AnnotatedTextField("Username", validators=[wtforms.validators.Required()],
+        prefix=u"https://hasgeek.com/…")
 
     def validate_name(self, field):
         if not valid_username(field.data):
@@ -34,5 +34,5 @@ class OrganizationForm(Form):
 
 
 class TeamForm(Form):
-    title = wtforms.TextField('Team name', validators=[wtforms.validators.Required()])
-    users = HiddenMultiField('Users', validators=[wtforms.validators.Required()])
+    title = wtforms.TextField("Team name", validators=[wtforms.validators.Required()])
+    users = HiddenMultiField("Users", validators=[wtforms.validators.Required()])

@@ -5,7 +5,7 @@ from baseframe.forms import render_form, render_redirect, render_delete_sqla
 from coaster.views import load_model, load_models
 
 from lastuser_core.models import db, Organization, Team, User
-from lastuser_core.signals import user_data_changed, org_data_changed, team_data_changed
+from lastuser_core.signals import org_data_changed, team_data_changed
 from lastuser_oauth.views.helpers import requires_login
 from .. import lastuser_ui
 from ..forms.org import OrganizationForm, TeamForm
@@ -65,7 +65,8 @@ def org_delete(org):
     if request.method == 'POST':
         # FIXME: Find a better way to do this
         org_data_changed.send(org, changes=['delete'], user=g.user)
-    return render_delete_sqla(org, db, title=u"Confirm delete", message=u"Delete organization ‘{title}’? ".format(
+    return render_delete_sqla(org, db, title=u"Confirm delete",
+        message=u"Delete organization ‘{title}’? ".format(
             title=org.title),
         success=u"You have deleted organization ‘{title}’ and all its associated teams.".format(title=org.title),
         next=url_for('.org_list'))

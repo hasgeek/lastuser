@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from flask.ext.sqlalchemy import SQLAlchemy
-from coaster.sqlalchemy import TimestampMixin, BaseMixin, BaseScopedNameMixin  # Imported from here by other models
+from coaster.sqlalchemy import TimestampMixin, BaseMixin, BaseScopedNameMixin  # Imported from here by other models  # NOQA
 
 db = SQLAlchemy()
 
 
-from .user import *
-from .session import *
-from .client import *
-from .notification import *
+from .user import *          # NOQA
+from .session import *       # NOQA
+from .client import *        # NOQA
+from .notification import *  # NOQA
 
 
 def getuser(name):
