@@ -57,7 +57,7 @@ class ProfileForm(Form):
     timezone = wtforms.SelectField('Timezone', validators=[wtforms.validators.Required()], choices=timezones)
 
     def validate_username(self, field):
-        ## Usernames are now mandatory. This should be commented out:
+        # # Usernames are now mandatory. This should be commented out:
         # if not field.data:
         #     field.data = None
         #     return

@@ -57,7 +57,7 @@ class Client(BaseMixin, db.Model):
     namespace = db.Column(db.Unicode(250), nullable=True, unique=True)
 
     __table_args__ = (db.CheckConstraint(
-        db.case([(user_id != None, 1)], else_=0) + db.case([(org_id != None, 1)], else_=0) == 1,
+        db.case([(user_id != None, 1)], else_=0) + db.case([(org_id != None, 1)], else_=0) == 1,  # NOQA
         name='client_user_id_or_org_id'),)
 
     def __repr__(self):

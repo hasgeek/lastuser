@@ -17,11 +17,11 @@ from sqlalchemy.sql import column
 
 def upgrade():
     op.create_check_constraint('client_user_id_or_org_id', 'client',
-        sa.case([(column('user_id') != None, 1)], else_=0) + sa.case([(column('org_id') != None, 1)], else_=0) == 1
+        sa.case([(column('user_id') != None, 1)], else_=0) + sa.case([(column('org_id') != None, 1)], else_=0) == 1  # NOQA
         )
 
     op.create_check_constraint('permission_user_id_or_org_id', 'permission',
-        sa.case([(column('user_id') != None, 1)], else_=0) + sa.case([(column('org_id') != None, 1)], else_=0) == 1
+        sa.case([(column('user_id') != None, 1)], else_=0) + sa.case([(column('org_id') != None, 1)], else_=0) == 1  # NOQA
         )
 
 
