@@ -140,9 +140,9 @@ class SMSMessage(BaseMixin, db.Model):
 #         return db.synonym('_channels', descriptor=property(self._channels_get, self._channels_set))
 
 
-# class NotificationClass(BaseScopedNameMixin, ChannelMixin, db.Model):
+# class NotificationClass(ChannelMixin, BaseScopedNameMixin, db.Model):
 #     """
-#     A NotificationClass is a type of notification 
+#     A NotificationClass is a type of notification
 #     """
 
 #     __tablename__ = 'notification_class'
@@ -167,7 +167,7 @@ class SMSMessage(BaseMixin, db.Model):
 #     __table_args__ = (db.UniqueConstraint('client_id', 'name'),)
 
 
-# class UserNotificationPreference(BaseMixin, ChannelMixin, db.Model):
+# class UserNotificationPreference(ChannelMixin, BaseMixin, db.Model):
 #     __tablename__ = 'user_notification_preference'
 #     __bind_key__ = 'lastuser'
 
