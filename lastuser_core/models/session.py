@@ -72,8 +72,8 @@ class UserSession(BaseMixin, db.Model):
         return cls.query.filter(
             # Session key must match.
             cls.buid == buid,
-            # Sessions are valid for two weeks...
-            cls.accessed_at > datetime.utcnow() - timedelta(days=14),
+            # Sessions are valid for one month...
+            cls.accessed_at > datetime.utcnow() - timedelta(days=30),
             # ...unless explicitly revoked (or user logged out)
             cls.revoked_at == None).one_or_none()  # NOQA
 
