@@ -27,7 +27,10 @@ class NewEmailAddressForm(Form):
 
 
 class NewPhoneForm(Form):
-    phone = wtforms.TextField('Phone number', default='+91', validators=[wtforms.validators.Required()],
+    phone = wtforms.TextField('Phone number', default='+91',
+        validators=[
+            wtforms.validators.Required(),
+            wtforms.validators.Length(min=1, max=16, message="This is too long to be a valid phone number")],
         description="Indian mobile numbers only")
 
     def validate_phone(self, field):
