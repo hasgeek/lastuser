@@ -73,18 +73,6 @@ class Client(BaseMixin, db.Model):
         return urlparse.urlsplit(url or '').netloc == urlparse.urlsplit(self.redirect_uri or self.website).netloc
 
     @property
-    def owner_title(self):
-        """
-        Return human-readable owner name.
-        """
-        if self.user:
-            return self.user.pickername
-        elif self.org:
-            return self.org.pickername
-        else:
-            raise AttributeError("This client has no owner")
-
-    @property
     def owner(self):
         return self.user or self.org
 
@@ -409,11 +397,8 @@ class Permission(BaseMixin, db.Model):
         return user is not None and self.user == user or (self.org and self.org in user.organizations_owned())
 
     @property
-    def owner_title(self):
-        if self.user:
-            return self.user.pickername
-        else:
-            return self.org.pickername
+    def owner(self):
+        return self.user or self.org
 
     def permissions(self, user, inherited=None):
         perms = super(Permission, self).permissions(user, inherited)

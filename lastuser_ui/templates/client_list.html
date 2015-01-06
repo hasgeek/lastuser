@@ -15,9 +15,9 @@
       {%- set link = url_for('.client_info', key=client.key)|e %}
       <tr class="link">
         <td><a href="{{ link }}">{{ loop.index }}</a></td>
-        <td><a href="{{ link }}">{{ client.title|e }}</a></td>
-        <td><a href="{{ link }}">{{ client.owner_title|e }}</a></td>
-        <td><a href="{{ link }}">{{ client.website|e }}</a></td>
+        <td><a href="{{ link }}">{{ client.title }}</a></td>
+        <td><a href="{{ link }}">{{ client.owner.pickername }}</a></td>
+        <td><a href="{{ link }}">{{ client.website }}</a></td>
       </tr>
     {% else %}
       <tr>

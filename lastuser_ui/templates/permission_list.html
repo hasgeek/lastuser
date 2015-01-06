@@ -60,7 +60,7 @@
         <td>{{ perm.name }}</td>
         <td>{{ perm.title }}</td>
         <td>{{ perm.description }}</td>
-        <td>{{ perm.owner_title }}</td>
+        <td>{{ perm.owner.pickername }}</td>
         <td>
           <a class="btn btn-xs btn-info" href="{{ url_for('.permission_edit', id=perm.id) }}">Edit</a>
           <a class="btn btn-xs btn-danger" href="{{ url_for('.permission_delete', id=perm.id) }}">Delete</a>
