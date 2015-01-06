@@ -24,11 +24,12 @@ def twitter_exception_handler(f):
 class TwitterProvider(LoginProvider):
     at_username = True
 
-    def __init__(self, name, title, key, secret, access_key, access_secret, at_login=True, priority=True):
+    def __init__(self, name, title, key, secret, access_key, access_secret, at_login=True, priority=True, icon=None):
         self.name = name
         self.title = title
         self.at_login = at_login
         self.priority = priority
+        self.icon = icon
         self.consumer_key = key
         self.consumer_secret = secret
         self.access_key = access_key

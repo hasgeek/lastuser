@@ -154,10 +154,12 @@ class LoginProvider(object):
     #: This service's usernames are typically used for addressing with @username
     at_username = False
 
-    def __init__(self, name, title, at_login=True, priority=False, **kwargs):
+    def __init__(self, name, title, at_login=True, priority=False, icon=None, **kwargs):
         self.name = name
         self.title = title
         self.at_login = at_login
+        self.priority = priority
+        self.icon = icon
 
     def get_form(self):
         """

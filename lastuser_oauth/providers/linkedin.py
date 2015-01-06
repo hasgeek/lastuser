@@ -14,11 +14,12 @@ class LinkedInProvider(LoginProvider):
     token_url = "https://www.linkedin.com/uas/oauth2/accessToken"
     user_info = "https://api.linkedin.com/v1/people/~:(id,formatted-name,email-address,picture-url,public-profile-url)?secure-urls=true"
 
-    def __init__(self, name, title, key, secret, at_login=True, priority=False):
+    def __init__(self, name, title, key, secret, at_login=True, priority=False, icon=None):
         self.name = name
         self.title = title
         self.at_login = at_login
         self.priority = priority
+        self.icon = icon
 
         self.key = key
         self.secret = secret

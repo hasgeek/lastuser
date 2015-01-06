@@ -21,12 +21,6 @@ class OpenIdForm(Form):
 class OpenIdProvider(LoginProvider):
     form = OpenIdForm
 
-    def __init__(self, name, title, key=None, secret=None, at_login=True, priority=False):
-        self.name = name
-        self.title = title
-        self.at_login = at_login
-        self.priority = priority
-
     def get_form(self):
         return {
             'error': oid.fetch_error(),

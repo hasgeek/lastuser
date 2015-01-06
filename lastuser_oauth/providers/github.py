@@ -15,11 +15,12 @@ class GitHubProvider(LoginProvider):
     user_info = "https://api.github.com/user"
     user_emails = "https://api.github.com/user/emails"
 
-    def __init__(self, name, title, key, secret, at_login=True, priority=False):
+    def __init__(self, name, title, key, secret, at_login=True, priority=False, icon=None):
         self.name = name
         self.title = title
         self.at_login = at_login
         self.priority = priority
+        self.icon = icon
 
         self.key = key
         self.secret = secret

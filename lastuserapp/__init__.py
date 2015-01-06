@@ -41,22 +41,22 @@ def init_for(env):
     # Register some login providers
     if app.config.get('OAUTH_TWITTER_KEY') and app.config.get('OAUTH_TWITTER_SECRET'):
         login_registry['twitter'] = providers.TwitterProvider('twitter', 'Twitter',
-            at_login=True, priority=True,
+            at_login=True, priority=True, icon='twitter',
             key=app.config['OAUTH_TWITTER_KEY'],
             secret=app.config['OAUTH_TWITTER_SECRET'],
             access_key=app.config.get('OAUTH_TWITTER_ACCESS_KEY'),
             access_secret=app.config.get('OAUTH_TWITTER_ACCESS_SECRET'))
     login_registry['google'] = providers.GoogleProvider('google', 'Google',
-        at_login=True, priority=True)
+        at_login=True, priority=True, icon='google')
     if app.config.get('OAUTH_LINKEDIN_KEY') and app.config.get('OAUTH_LINKEDIN_SECRET'):
         login_registry['linkedin'] = providers.LinkedInProvider('linkedin', 'LinkedIn',
-            at_login=True, priority=False,
+            at_login=True, priority=False, icon='linkedin',
             key=app.config['OAUTH_LINKEDIN_KEY'],
             secret=app.config['OAUTH_LINKEDIN_SECRET'])
     if app.config.get('OAUTH_GITHUB_KEY') and app.config.get('OAUTH_GITHUB_SECRET'):
         login_registry['github'] = providers.GitHubProvider('github', 'GitHub',
-            at_login=True, priority=False,
+            at_login=True, priority=False, icon='github',
             key=app.config['OAUTH_GITHUB_KEY'],
             secret=app.config['OAUTH_GITHUB_SECRET'])
     login_registry['openid'] = providers.OpenIdProvider('openid', 'OpenID',
-        at_login=True, priority=False)
+        at_login=True, priority=False, icon='openid')
