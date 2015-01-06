@@ -8,6 +8,8 @@ from baseframe.forms import Form, ValidEmail
 from lastuser_core.utils import strip_phone, valid_phone
 from lastuser_core.models import UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
 
+__all__ = ['NewEmailAddressForm', 'NewPhoneForm', 'VerifyPhoneForm']
+
 
 class NewEmailAddressForm(Form):
     email = wtforms.fields.html5.EmailField("Email address", validators=[wtforms.validators.Required(), ValidEmail()])

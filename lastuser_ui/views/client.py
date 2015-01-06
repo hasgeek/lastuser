@@ -4,12 +4,12 @@ from flask import g, request, render_template, url_for, flash, abort
 from coaster.views import load_model, load_models
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
 
-from lastuser_core.models import (db, User, Client, Organization, Team, Permission,
+from lastuser_core.models import (db, User, Client, Organization, Team, Permission, ClientCredential,
     UserClientPermissions, TeamClientPermissions, Resource, ResourceAction, ClientTeamAccess,
     CLIENT_TEAM_ACCESS)
 from lastuser_oauth.views.helpers import requires_login
 from .. import lastuser_ui
-from ..forms import (RegisterClientForm, PermissionForm, UserPermissionAssignForm,
+from ..forms import (RegisterClientForm, PermissionForm, UserPermissionAssignForm, ClientCredentialForm,
     TeamPermissionAssignForm, PermissionEditForm, ResourceForm, ResourceActionForm, ClientTeamAccessForm)
 
 # --- Routes: client apps -----------------------------------------------------
@@ -124,8 +124,38 @@ def client_delete(client):
         next=url_for('.client_list'))
 
 
-# --- Routes: user permissions ------------------------------------------------
+# --- Routes: client credentials ----------------------------------------------
 
+@lastuser_ui.route('/apps/<key>/cred', methods=['GET', 'POST'])
+@requires_login
+@load_model(Client, {'key': 'key'}, 'client', permission='edit')
+def client_cred_new(client):
+    form = ClientCredentialForm()
+    if request.method == 'GET' and not client.credentials:
+        form.title.data = u"Default"
+    if form.validate_on_submit():
+        cred, secret = ClientCredential.new(client)
+        cred.title = form.title.data
+        db.session.commit()
+        return render_template('client_cred.html', name=cred.name, secret=secret, cred=cred)
+    return render_form(form=form, title="New access key", formid="client_cred",
+        submit="Create", ajax=False)
+
+
+@lastuser_ui.route('/apps/<key>/cred/<name>/delete', methods=['GET', 'POST'])
+@requires_login
+@load_models(
+    (Client, {'key': 'key'}, 'client'),
+    (ClientCredential, {'name': 'name', 'client': 'client'}, 'cred'),
+    permission='delete')
+def client_cred_delete(client, cred):
+    return render_delete_sqla(cred, db, title=u"Confirm delete",
+        message=u"Delete access key ‘{title}’? ".format(title=cred.title),
+        success=u"You have deleted access key ‘{title}’".format(title=cred.title),
+        next=url_for('.client_info', key=client.key))
+
+
+# --- Routes: user permissions ------------------------------------------------
 
 @lastuser_ui.route('/perms')
 @requires_login

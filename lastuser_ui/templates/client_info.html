@@ -29,20 +29,51 @@
   <dt>Registered date</dt>
   <dd>{{ client.created_at }}</dd>
   {%- if client.owner_is(g.user) %}
+{#- XXX: DEPRECATED
     <dt>Client id (key)</dt>
     <dd>{{ client.key }}</dd>
     <dt>Client secret</dt>
     <dd><span id="client-secret" class="jshidden">{{ client.secret }}</span><a id="client-secret-reveal" href="" class="btn btn-default btn-xs js-only">Reveal</a></dd>
+#}
     <dt>Users</dt>
     <dd>{{ client.authtokens.count() }}</dd>
   {%- endif %}
 </dl>
-{% if client.owner_is(g.user) %}
+{%- if client.owner_is(g.user) %}
   <p>
     <a class="btn btn-info" href="{{ url_for('.client_edit', key=client.key) }}">Edit this application</a>
     <a class="btn btn-danger" href="{{ url_for('.client_delete', key=client.key) }}">Delete</a>
+    <a class="btn btn-default" href="{{ url_for('.client_cred_new', key=client.key) }}">New access key</a>
   </p>
-{% endif %}
+  <h2>Credentials</h2>
+  <table class="table table-condensed table-responsive">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Purpose</th>
+        <th>Key</th>
+        <th>Created</th>
+        <th colspan="2">Last used</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cred in client.credentials.values() %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ cred.title }}</td>
+          <td>{{ cred.name }}</td>
+          <td>{{ cred.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</td>
+          <td>{% if cred.accessed_at %}{{ cred.accessed_at|age }}{% else %}never{% endif %}</td>
+          <td><a class="btn btn-xs btn-danger" href="{{ url_for('.client_cred_delete', key=client.key, name=cred.name) }}">Revoke</a></td>
+        </tr>
+      {%- else %}
+        <tr>
+          <td colspan="6"><em>(This application does not have any access keys)</em></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{%- endif %}
 <h2>Resources</h2>
 <p>
   This app provides the following resources and actions on resources.
@@ -177,7 +208,7 @@
 {% endif %}
 {% endblock %}
 
-{% block footerscripts %}
+{% block footerscripts %}{# XXX: DEPRECATED
   <script type="text/javascript">
     $(function() {
       $("#client-secret-reveal").click(function(e) {
@@ -187,5 +218,5 @@
         return false;
       })
     });
-  </script>
+  </script> -#}
 {% endblock %}

@@ -2,7 +2,9 @@
 
 from datetime import datetime, timedelta
 import urlparse
+from hashlib import sha256
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.orm.collections import attribute_mapped_collection
 from coaster.utils import newid, newsecret
 
 from . import db, BaseMixin, BaseScopedNameMixin
@@ -11,7 +13,7 @@ from .session import UserSession
 
 __all__ = ['Client', 'UserFlashMessage', 'Resource', 'ResourceAction', 'AuthCode', 'AuthToken',
     'Permission', 'UserClientPermissions', 'TeamClientPermissions', 'NoticeType',
-    'CLIENT_TEAM_ACCESS', 'ClientTeamAccess']
+    'CLIENT_TEAM_ACCESS', 'ClientTeamAccess', 'ClientCredential']
 
 
 class Client(BaseMixin, db.Model):
@@ -46,7 +48,7 @@ class Client(BaseMixin, db.Model):
     team_access = db.Column(db.Boolean, nullable=False, default=False)
     #: OAuth client key/id
     key = db.Column(db.String(22), nullable=False, unique=True, default=newid)
-    #: OAuth client secret
+    #: OAuth client secret XXX: DEPRECATED
     secret = db.Column(db.String(44), nullable=False, default=newsecret)
     #: Trusted flag: trusted clients are authorized to access user data
     #: without user consent, but the user must still login and identify themself.
@@ -63,11 +65,15 @@ class Client(BaseMixin, db.Model):
     def __repr__(self):
         return u'<Client "{title}" {key}>'.format(title=self.title, key=self.key)
 
-    def secret_is(self, candidate):
+    def secret_is(self, candidate, name=None):
         """
         Check if the provided client secret is valid.
         """
-        return self.secret == candidate
+        if name:
+            credential = self.credentials[name]
+            return credential.secret_is(candidate)
+        else:  # XXX: DEPRECATED
+            return self.secret == candidate
 
     def host_matches(self, url):
         return urlparse.urlsplit(url or '').netloc == urlparse.urlsplit(self.redirect_uri or self.website).netloc
@@ -114,6 +120,64 @@ class Client(BaseMixin, db.Model):
             return cls.query.filter_by(key=key, active=True).one_or_none()
         else:
             return cls.query.filter_by(namespace=namespace, active=True).one_or_none()
+
+
+class ClientCredential(BaseMixin, db.Model):
+    """
+    Client key and secret hash.
+
+    We use unsalted SHA256 instead of a salted hash or a more secure hash
+    like bcrypt because:
+
+    1. Secrets are UUID-based and guaranteed unique before hashing.
+       Salting is only beneficial when the source values are the same.
+    2. Unlike user passwords, client secrets are used often, up to many times
+       per minute. The hash needs to be fast (MD5 or SHA) and reasonably
+       safe from collision attacks (eliminating MD5, SHA0 and SHA1). SHA256
+       is the fastest available candidate meeting this criteria.
+    3. To allow for a different hash to be used in future, hashes are stored
+       prefixed with 'sha256$'.
+    """
+    __tablename__ = 'client_credential'
+    __bind_key__ = 'lastuser'
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    client = db.relationship(Client, primaryjoin=client_id == Client.id,
+        backref=db.backref('credentials', cascade='all, delete-orphan',
+            collection_class=attribute_mapped_collection("name")))
+
+    #: OAuth client key
+    name = db.Column(db.String(22), nullable=False, unique=True, default=newid)
+    #: User description for this credential
+    title = db.Column(db.Unicode(250), nullable=False, default=u'')
+    #: OAuth client secret, hashed (64 chars hash plus 7 chars id prefix = 71 chars)
+    secret_hash = db.Column(db.String(71), nullable=False)
+    #: When was this credential last used for an API call?
+    accessed_at = db.Column(db.DateTime, nullable=True)
+
+    def new_secret(self):
+        secret = newsecret()
+        self.secret_hash = 'sha256$' + sha256(secret).hexdigest()
+        return secret
+
+    def secret_is(self, candidate):
+        return self.secret_hash == 'sha256$' + sha256(candidate).hexdigest()
+
+    @classmethod
+    def get(cls, name):
+        return cls.query.filter_by(name=name).one_or_none()
+
+    @classmethod
+    def new(cls, client):
+        """
+        Create a new client credential and return (cred, secret). The secret is not
+        saved in plaintext, so this is the last time it will be available.
+
+        :param client: The client for which a name/secret pair is being generated
+        """
+        cc = cls(client=client, name=newid())
+        db.session.add(cc)
+        secret = cc.new_secret()
+        return cc, secret
 
 
 class UserFlashMessage(BaseMixin, db.Model):

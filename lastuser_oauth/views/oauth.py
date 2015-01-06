@@ -6,7 +6,7 @@ from coaster.utils import newsecret
 from lastuser_core.utils import make_redirect_url
 from lastuser_core import resource_registry
 from lastuser_core.models import (db, Client, AuthCode, AuthToken, UserFlashMessage,
-    UserClientPermissions, TeamClientPermissions, getuser, Resource)
+    UserClientPermissions, TeamClientPermissions, getuser, Resource, ClientCredential)
 from .. import lastuser_oauth
 from ..forms import AuthorizeForm
 from .helpers import requires_login_no_message, requires_client_login
@@ -150,9 +150,16 @@ def oauth_authorize():
     if not client_id:
         return oauth_auth_403(u"Missing client_id")
     # Validation 1.2: Client exists
+
+    # XXX: DEPRECATED
     client = Client.query.filter_by(key=client_id).first()
     if not client:
-        return oauth_auth_403(u"Unknown client_id")
+        #: XXX: Make this primary
+        credential = ClientCredential.get(client_id)
+        if credential:
+            client = credential.client
+        else:
+            return oauth_auth_403(u"Unknown client_id")
 
     # Validation 1.2.1: Is the client active?
     if not client.active:

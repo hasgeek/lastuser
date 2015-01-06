@@ -7,7 +7,7 @@ jsmin
 Flask-OpenID
 Flask-OAuth
 pytz
-py-bcrypt
+py-bcrypt>=0.4
 ordereddict
 Flask-WTF
 requests

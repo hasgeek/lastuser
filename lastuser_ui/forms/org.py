@@ -8,6 +8,8 @@ from baseframe.forms import Form, HiddenMultiField, AnnotatedTextField
 
 from lastuser_core.models import User, Organization
 
+__all__ = ['OrganizationForm', 'TeamForm']
+
 
 class OrganizationForm(Form):
     title = wtforms.TextField("Organization name", validators=[wtforms.validators.Required()])

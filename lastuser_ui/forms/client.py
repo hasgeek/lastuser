@@ -11,6 +11,10 @@ from coaster.utils import valid_username, domain_namespace_match
 from lastuser_core.models import Permission, Resource, getuser, Organization
 from lastuser_core import resource_registry
 
+__all__ = ['ConfirmDeleteForm', 'RegisterClientForm', 'ClientCredentialForm', 'PermissionForm',
+    'UserPermissionAssignForm', 'TeamPermissionAssignForm', 'PermissionEditForm', 'ResourceForm',
+    'ResourceActionForm', 'ClientTeamAccessForm']
+
 
 class ConfirmDeleteForm(Form):
     """
@@ -100,6 +104,15 @@ class RegisterClientForm(Form):
                 if client == self.edit_obj:
                     return
                 raise wtforms.ValidationError("This namespace has been claimed by another client app")
+
+
+class ClientCredentialForm(Form):
+    """
+    Generate new client credentials
+    """
+    title = wtforms.TextField(u"What’s this for?",
+        validators=[wtforms.validators.Required(), wtforms.validators.Length(max=250)],
+        description="Add a description to help yourself remember why this was generated")
 
 
 class PermissionForm(Form):

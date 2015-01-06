@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from datetime import datetime, timedelta
 from hashlib import md5
 from werkzeug import check_password_hash, cached_property
 import bcrypt
@@ -27,16 +28,26 @@ class USER_STATUS:
 class User(BaseMixin, db.Model):
     __tablename__ = 'user'
     __bind_key__ = 'lastuser'
+    #: The userid, a globally unique and permanent string to identify this user
     userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
+    #: The user's fullname
     fullname = db.Column(db.Unicode(80), default=u'', nullable=False)
+    #: Alias for the user's fullname
     title = db.synonym('fullname')
+    #: The user's username, backend store
     _username = db.Column('username', db.Unicode(80), unique=True, nullable=True)
+    #: Bcrypt hash of the user's password
     pw_hash = db.Column(db.String(80), nullable=True)
+    #: Timestamp for when the user's password last changed
+    pw_set_at = db.Column(db.DateTime, nullable=True)
+    #: Expiry date for the password (to prompt user to reset it)
+    pw_expires_at = db.Column(db.DateTime, nullable=True)
+    #: User's timezone
     timezone = db.Column(db.Unicode(40), nullable=True)
     #: Deprecated, but column preserved for existing data until migration
     description = deferred(db.Column(db.UnicodeText, default=u'', nullable=False))
+    #: User's status (active, suspended, merged, etc)
     status = db.Column(db.SmallInteger, nullable=False, default=USER_STATUS.ACTIVE)
-
     #: User avatar (URL to browser-ready image)
     avatar = db.Column(db.Unicode(250), nullable=True)
 
@@ -52,13 +63,18 @@ class User(BaseMixin, db.Model):
     #: User who invited this user
     referrer = db.relationship('User', foreign_keys=[referrer_id])
 
+    #: Other user accounts that were merged into this user account
     oldusers = association_proxy('oldids', 'olduser')
 
     _defercols = [
         defer('created_at'),
         defer('updated_at'),
         defer('pw_hash'),
+        defer('pw_set_at'),
+        defer('pw_expires_at'),
         defer('timezone'),
+        defer('client_id'),
+        defer('referrer_id'),
         ]
 
     def __init__(self, password=None, **kwargs):
@@ -81,6 +97,9 @@ class User(BaseMixin, db.Model):
             self.pw_hash = None
         else:
             self.pw_hash = bcrypt.hashpw(password, bcrypt.gensalt())
+        self.pw_set_at = datetime.utcnow()
+        # Expire passwords after one year. TODO: make this configurable
+        self.pw_expires_at = self.pw_set_at + timedelta(days=365)
 
     #: Write-only property (passwords cannot be read back in plain text)
     password = property(fset=_set_password)
@@ -115,13 +134,17 @@ class User(BaseMixin, db.Model):
             return False
         return True
 
+    def password_has_expired(self):
+        return self.pw_hash is not None and self.pw_expires_at is not None and self.pw_expires_at <= datetime.utcnow()
+
     def password_is(self, password):
         if self.pw_hash is None:
             return False
-        if self.pw_hash.startswith('sha1$'):
+
+        if self.pw_hash.startswith('sha1$'):  # XXX: DEPRECATED
             return check_password_hash(self.pw_hash, password)
         else:
-            return bcrypt.hashpw(password, self.pw_hash) == self.pw_hash
+            return bcrypt.checkpw(password, self.pw_hash)
 
     def __repr__(self):
         return u'<User {username} "{fullname}">'.format(username=self.username or self.userid,

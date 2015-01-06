@@ -7,7 +7,7 @@ from urllib import unquote
 from pytz import common_timezones
 from flask import g, current_app, request, session, flash, redirect, url_for, Response
 from coaster.views import get_current_url
-from lastuser_core.models import db, User, Client, UserSession
+from lastuser_core.models import db, User, Client, ClientCredential, UserSession
 from lastuser_core.signals import user_login, user_logout, user_registered
 from .. import lastuser_oauth
 
@@ -140,10 +140,19 @@ def _client_login_inner():
     if request.authorization is None or not request.authorization.username:
         return Response(u"Client credentials required.", 401,
             {'WWW-Authenticate': 'Basic realm="Client credentials"'})
-    client = Client.get(key=request.authorization.username)
-    if client is None or not client.secret_is(request.authorization.password):
+    client = Client.get(key=request.authorization.username)  # XXX: DEPRECATED
+    if not client:
+        credential = ClientCredential.get(name=request.authorization.username)
+        if credential:
+            client = credential.client
+    else:  # XXX: DEPRECATED
+        credential = None
+    if client is None or not client.secret_is(request.authorization.password, credential.name if credential else None):
         return Response(u"Invalid client credentials.", 401,
             {'WWW-Authenticate': 'Basic realm="Client credentials"'})
+    if credential:
+        credential.accessed_at = datetime.utcnow()
+        db.session.commit()
     g.client = client
 
 
