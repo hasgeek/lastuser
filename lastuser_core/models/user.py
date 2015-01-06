@@ -903,7 +903,7 @@ class UserExternalId(BaseMixin, db.Model):
     __table_args__ = (db.UniqueConstraint("service", "userid"), {})
 
     def __repr__(self):
-        return u'<UserExternalId {service}:{username} of {user}'.format(
+        return u'<UserExternalId {service}:{username} of {user}>'.format(
             service=self.service, username=self.username, user=repr(self.user)[1:-1])
 
     @classmethod
