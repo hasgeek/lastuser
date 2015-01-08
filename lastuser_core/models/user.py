@@ -8,7 +8,7 @@ from sqlalchemy import or_, event, DDL
 from sqlalchemy.orm import defer, deferred, foreign, remote
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
-from coaster.utils import newid, newsecret, newpin, valid_username
+from coaster.utils import buid, newsecret, newpin, valid_username
 from coaster.sqlalchemy import Query as CoasterQuery, make_timestamp_columns
 
 from . import db, TimestampMixin, BaseMixin
@@ -29,7 +29,7 @@ class User(BaseMixin, db.Model):
     __tablename__ = 'user'
     __bind_key__ = 'lastuser'
     #: The userid, a globally unique and permanent string to identify this user
-    userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
+    userid = db.Column(db.String(22), unique=True, nullable=False, default=buid)
     #: The user's fullname
     fullname = db.Column(db.Unicode(80), default=u'', nullable=False)
     #: Alias for the user's fullname
@@ -78,7 +78,7 @@ class User(BaseMixin, db.Model):
         ]
 
     def __init__(self, password=None, **kwargs):
-        self.userid = newid()
+        self.userid = buid()
         self.password = password
         super(User, self).__init__(**kwargs)
 
@@ -375,7 +375,7 @@ class UserOldId(TimestampMixin, db.Model):
         backref=db.backref('oldid', uselist=False))
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref=db.backref('oldids', cascade="all, delete-orphan"))
+        backref=db.backref('oldids', cascade='all, delete-orphan'))
 
     def __repr__(self):
         return u'<UserOldId {userid} of {user}>'.format(
@@ -407,7 +407,7 @@ class Organization(BaseMixin, db.Model):
         use_alter=True, name='fk_organization_owners_id'), nullable=True)
     owners = db.relationship('Team', primaryjoin='Organization.owners_id == Team.id',
         uselist=False, cascade='all', post_update=True)  # No delete-orphan cascade here
-    userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
+    userid = db.Column(db.String(22), unique=True, nullable=False, default=buid)
     _name = db.Column('name', db.Unicode(80), unique=True, nullable=True)
     title = db.Column(db.Unicode(80), default=u'', nullable=False)
     #: Deprecated, but column preserved for existing data until migration
@@ -534,7 +534,7 @@ class Team(BaseMixin, db.Model):
     __tablename__ = 'team'
     __bind_key__ = 'lastuser'
     #: Unique and non-changing id
-    userid = db.Column(db.String(22), unique=True, nullable=False, default=newid)
+    userid = db.Column(db.String(22), unique=True, nullable=False, default=buid)
     #: Displayed name
     title = db.Column(db.Unicode(250), nullable=False)
     #: Organization
@@ -617,7 +617,7 @@ class UserEmail(OwnerMixin, BaseMixin, db.Model):
     __bind_key__ = 'lastuser'
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref=db.backref('emails', cascade="all, delete-orphan"))
+        backref=db.backref('emails', cascade='all, delete-orphan'))
 
     org_id = db.Column(None, db.ForeignKey('organization.id'), nullable=True)
     org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
@@ -689,7 +689,7 @@ class UserEmailClaim(OwnerMixin, BaseMixin, db.Model):
     __bind_key__ = 'lastuser'
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref=db.backref('emailclaims', cascade="all, delete-orphan"))
+        backref=db.backref('emailclaims', cascade='all, delete-orphan'))
 
     org_id = db.Column(None, db.ForeignKey('organization.id'), nullable=True)
     org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
@@ -769,7 +769,7 @@ class UserPhone(OwnerMixin, BaseMixin, db.Model):
     __bind_key__ = 'lastuser'
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref=db.backref('phones', cascade="all, delete-orphan"))
+        backref=db.backref('phones', cascade='all, delete-orphan'))
 
     org_id = db.Column(None, db.ForeignKey('organization.id'), nullable=True)
     org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
@@ -824,7 +824,7 @@ class UserPhoneClaim(OwnerMixin, BaseMixin, db.Model):
     __bind_key__ = 'lastuser'
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref=db.backref('phoneclaims', cascade="all, delete-orphan"))
+        backref=db.backref('phoneclaims', cascade='all, delete-orphan'))
 
     org_id = db.Column(None, db.ForeignKey('organization.id'), nullable=True)
     org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
@@ -915,7 +915,7 @@ class UserExternalId(BaseMixin, db.Model):
     __at_username_services__ = []
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref=db.backref('externalids', cascade="all, delete-orphan"))
+        backref=db.backref('externalids', cascade='all, delete-orphan'))
     service = db.Column(db.String(20), nullable=False)
     userid = db.Column(db.String(250), nullable=False)  # Unique id (or OpenID)
     username = db.Column(db.Unicode(80), nullable=True)

@@ -27,14 +27,8 @@
   <dt>Allow anyone to login?</dt>
   <dd>{{ client.allow_any_login }}</dd>
   <dt>Registered date</dt>
-  <dd>{{ client.created_at }}</dd>
+  <dd>{{ client.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</dd>
   {%- if client.owner_is(g.user) %}
-{#- XXX: DEPRECATED
-    <dt>Client id (key)</dt>
-    <dd>{{ client.key }}</dd>
-    <dt>Client secret</dt>
-    <dd><span id="client-secret" class="jshidden">{{ client.secret }}</span><a id="client-secret-reveal" href="" class="btn btn-default btn-xs js-only">Reveal</a></dd>
-#}
     <dt>Users</dt>
     <dd>{{ client.authtokens.count() }}</dd>
   {%- endif %}
@@ -45,7 +39,7 @@
     <a class="btn btn-danger" href="{{ url_for('.client_delete', key=client.key) }}">Delete</a>
     <a class="btn btn-default" href="{{ url_for('.client_cred_new', key=client.key) }}">New access key</a>
   </p>
-  <h2>Credentials</h2>
+  <h2>Access Keys</h2>
   <table class="table table-condensed table-responsive">
     <thead>
       <tr>

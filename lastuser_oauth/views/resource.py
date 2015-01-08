@@ -7,7 +7,7 @@ from coaster.utils import getbool
 from coaster.views import jsonp, requestargs
 
 from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Resource,
-    ResourceAction, UserClientPermissions, TeamClientPermissions, UserSession, Client)
+    ResourceAction, UserClientPermissions, TeamClientPermissions, UserSession, Client, ClientCredential)
 from lastuser_core import resource_registry
 from .. import lastuser_oauth
 from .helpers import requires_client_login, requires_user_or_client_login
@@ -413,7 +413,10 @@ def org_team_get():
 @lastuser_oauth.route('/api/1/login/beacon.html')
 @requestargs('client_id', 'login_url')
 def login_beacon_iframe(client_id, login_url):
-    client = Client.get(key=client_id)
+    cred = ClientCredential.get(client_id)
+    client = cred.client if cred else None
+    if not client:  # XXX: DEPRECATED
+        client = Client.get(key=client_id)
     if client is None:
         abort(404)
     if not client.host_matches(login_url):
@@ -427,7 +430,10 @@ def login_beacon_iframe(client_id, login_url):
 @lastuser_oauth.route('/api/1/login/beacon.json')
 @requestargs('client_id')
 def login_beacon_json(client_id):
-    client = Client.get(key=client_id)
+    cred = ClientCredential.get(client_id)
+    client = cred.client if cred else None
+    if not client:  # XXX: DEPRECATED
+        client = Client.get(key=client_id)
     if client is None:
         abort(404)
     if g.user:

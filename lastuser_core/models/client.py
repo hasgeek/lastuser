@@ -5,7 +5,7 @@ import urlparse
 from hashlib import sha256
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm.collections import attribute_mapped_collection
-from coaster.utils import newid, newsecret
+from coaster.utils import buid, newsecret
 
 from . import db, BaseMixin, BaseScopedNameMixin
 from .user import User, Organization, Team
@@ -47,7 +47,7 @@ class Client(BaseMixin, db.Model):
     #: Team access flag
     team_access = db.Column(db.Boolean, nullable=False, default=False)
     #: OAuth client key/id
-    key = db.Column(db.String(22), nullable=False, unique=True, default=newid)
+    key = db.Column(db.String(22), nullable=False, unique=True, default=buid)
     #: OAuth client secret XXX: DEPRECATED
     secret = db.Column(db.String(44), nullable=False, default=newsecret)
     #: Trusted flag: trusted clients are authorized to access user data
@@ -135,7 +135,9 @@ class ClientCredential(BaseMixin, db.Model):
        per minute. The hash needs to be fast (MD5 or SHA) and reasonably
        safe from collision attacks (eliminating MD5, SHA0 and SHA1). SHA256
        is the fastest available candidate meeting this criteria.
-    3. To allow for a different hash to be used in future, hashes are stored
+    3. We are stepping up from an industry standard of plain text client
+       secrets, not stepping down from stronger hashing.
+    4. To allow for a different hash to be used in future, hashes are stored
        prefixed with 'sha256$'.
     """
     __tablename__ = 'client_credential'
@@ -146,18 +148,13 @@ class ClientCredential(BaseMixin, db.Model):
             collection_class=attribute_mapped_collection("name")))
 
     #: OAuth client key
-    name = db.Column(db.String(22), nullable=False, unique=True, default=newid)
+    name = db.Column(db.String(22), nullable=False, unique=True, default=buid)
     #: User description for this credential
     title = db.Column(db.Unicode(250), nullable=False, default=u'')
     #: OAuth client secret, hashed (64 chars hash plus 7 chars id prefix = 71 chars)
     secret_hash = db.Column(db.String(71), nullable=False)
     #: When was this credential last used for an API call?
     accessed_at = db.Column(db.DateTime, nullable=True)
-
-    def new_secret(self):
-        secret = newsecret()
-        self.secret_hash = 'sha256$' + sha256(secret).hexdigest()
-        return secret
 
     def secret_is(self, candidate):
         return self.secret_hash == 'sha256$' + sha256(candidate).hexdigest()
@@ -174,10 +171,11 @@ class ClientCredential(BaseMixin, db.Model):
 
         :param client: The client for which a name/secret pair is being generated
         """
-        cc = cls(client=client, name=newid())
-        db.session.add(cc)
-        secret = cc.new_secret()
-        return cc, secret
+        cred = cls(client=client, name=buid())
+        db.session.add(cred)
+        secret = newsecret()
+        cred.secret_hash = 'sha256$' + sha256(secret).hexdigest()
+        return cred, secret
 
 
 class UserFlashMessage(BaseMixin, db.Model):
@@ -206,7 +204,7 @@ class Resource(BaseScopedNameMixin, db.Model):
     name = db.Column(db.Unicode(20), nullable=False)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
-        backref=db.backref('resources', cascade="all, delete-orphan"))
+        backref=db.backref('resources', cascade='all, delete-orphan'))
     parent = db.synonym('client')
     title = db.Column(db.Unicode(250), nullable=False)
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
@@ -256,7 +254,7 @@ class ResourceAction(BaseMixin, db.Model):
     name = db.Column(db.Unicode(20), nullable=False)
     resource_id = db.Column(db.Integer, db.ForeignKey('resource.id'), nullable=False)
     resource = db.relationship(Resource, primaryjoin=resource_id == Resource.id,
-        backref=db.backref('actions', cascade="all, delete-orphan"))
+        backref=db.backref('actions', cascade='all, delete-orphan'))
     title = db.Column(db.Unicode(250), nullable=False)
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
 
@@ -312,7 +310,7 @@ class AuthCode(ScopeMixin, BaseMixin, db.Model):
     user = db.relationship(User, primaryjoin=user_id == User.id)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
-        backref=db.backref("authcodes", cascade="all, delete-orphan"))
+        backref=db.backref("authcodes", cascade='all, delete-orphan'))
     session_id = db.Column(None, db.ForeignKey('user_session.id'), nullable=True)
     session = db.relationship(UserSession)
     code = db.Column(db.String(44), default=newsecret, nullable=False)
@@ -331,12 +329,12 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
     __bind_key__ = 'lastuser'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Null for client-only tokens
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref=db.backref("authtokens", lazy='dynamic', cascade="all, delete-orphan"))
+        backref=db.backref("authtokens", lazy='dynamic', cascade='all, delete-orphan'))
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
-        backref=db.backref("authtokens", lazy='dynamic', cascade="all, delete-orphan"))
-    token = db.Column(db.String(22), default=newid, nullable=False, unique=True)
-    token_type = db.Column(db.String(250), default='bearer', nullable=False)  # 'bearer', 'mac' or a URL
+        backref=db.backref("authtokens", lazy='dynamic', cascade='all, delete-orphan'))
+    token = db.Column(db.String(22), default=buid, nullable=False, unique=True)
+    token_type = db.Column(db.String(250), default=u'bearer', nullable=False)  # 'bearer', 'mac' or a URL
     secret = db.Column(db.String(44), nullable=True)
     _algorithm = db.Column('algorithm', db.String(20), nullable=True)
     validity = db.Column(db.Integer, nullable=False, default=0)  # Validity period in seconds
@@ -347,9 +345,9 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
 
     def __init__(self, **kwargs):
         super(AuthToken, self).__init__(**kwargs)
-        self.token = newid()
+        self.token = buid()
         if self.user:
-            self.refresh_token = newid()
+            self.refresh_token = buid()
         self.secret = newsecret()
 
     def __repr__(self):
@@ -361,7 +359,7 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
         Create a new token while retaining the refresh token.
         """
         if self.refresh_token is not None:
-            self.token = newid()
+            self.token = buid()
             self.secret = newsecret()
 
     @property
@@ -439,11 +437,11 @@ class Permission(BaseMixin, db.Model):
     #: User who created this permission
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref=db.backref('permissions_created', cascade="all, delete-orphan"))
+        backref=db.backref('permissions_created', cascade='all, delete-orphan'))
     #: Organization which created this permission
     org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
     org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
-        backref=db.backref('permissions_created', cascade="all, delete-orphan"))
+        backref=db.backref('permissions_created', cascade='all, delete-orphan'))
     #: Name token
     name = db.Column(db.Unicode(80), nullable=False)
     #: Human-friendly title
@@ -506,7 +504,7 @@ class UserClientPermissions(BaseMixin, db.Model):
     #: Client app they are assigned on
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
-        backref=db.backref('user_permissions', cascade="all, delete-orphan"))
+        backref=db.backref('user_permissions', cascade='all, delete-orphan'))
     #: The permissions as a string of tokens
     access_permissions = db.Column('permissions', db.Unicode(250), default=u'', nullable=False)
 
@@ -552,7 +550,7 @@ class TeamClientPermissions(BaseMixin, db.Model):
     #: Client app they are assigned on
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
-        backref=db.backref('team_permissions', cascade="all, delete-orphan"))
+        backref=db.backref('team_permissions', cascade='all, delete-orphan'))
     #: The permissions as a string of tokens
     access_permissions = db.Column('permissions', db.Unicode(250), default=u'', nullable=False)
 
@@ -582,11 +580,11 @@ class ClientTeamAccess(BaseMixin, db.Model):
     #: Organization whose teams are exposed to the client app
     org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
     org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
-        backref=db.backref('client_team_access', cascade="all, delete-orphan"))
+        backref=db.backref('client_team_access', cascade='all, delete-orphan'))
     #: Client app they are exposed to
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
-        backref=db.backref('org_team_access', cascade="all, delete-orphan"))
+        backref=db.backref('org_team_access', cascade='all, delete-orphan'))
     access_level = db.Column(db.Integer, default=CLIENT_TEAM_ACCESS.NONE, nullable=False)
 
 
@@ -596,7 +594,7 @@ class NoticeType(BaseMixin, db.Model):
     #: User who created this notice type
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref=db.backref('noticetypes_created', cascade="all, delete-orphan"))
+        backref=db.backref('noticetypes_created', cascade='all, delete-orphan'))
     #: Name token
     name = db.Column(db.Unicode(80), nullable=False)
     #: Human-friendly title

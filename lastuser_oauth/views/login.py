@@ -11,7 +11,7 @@ from baseframe.forms import render_form, render_message, render_redirect
 from lastuser_core import login_registry
 from .. import lastuser_oauth
 from ..mailclient import send_email_verify_link, send_password_reset_link
-from lastuser_core.models import db, User, UserEmailClaim, PasswordResetRequest, Client, UserSession
+from lastuser_core.models import db, User, UserEmailClaim, PasswordResetRequest, Client, ClientCredential, UserSession
 from ..forms import LoginForm, RegisterForm, PasswordResetForm, PasswordResetRequestForm
 from .helpers import login_internal, logout_internal, register_internal, set_loginmethod_cookie
 
@@ -88,7 +88,12 @@ def logout_client():
     """
     Client-initiated logout
     """
-    client = Client.get(key=request.args['client_id'])
+    cred = ClientCredential.get(request.args['client_id'])
+    client = cred.client if cred else None
+
+    if not client:  # XXX: DEPRECATED
+        client = Client.get(key=request.args['client_id'])
+
     if client is None or not request.referrer or not client.host_matches(request.referrer):
         # No referrer or such client, or request didn't come from the client website.
         # Possible CSRF. Don't logout and don't send them back
