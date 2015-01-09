@@ -16,6 +16,7 @@ from ..forms import (RegisterClientForm, PermissionForm, UserPermissionAssignFor
 
 
 @lastuser_ui.route('/apps')
+@requires_login
 def client_list():
     if g.user:
         return render_template('client_list.html', clients=Client.query.filter(db.or_(Client.user == g.user,
