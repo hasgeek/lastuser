@@ -46,7 +46,7 @@ class UserSession(BaseMixin, db.Model):
 
     def access(self, client=None):
         """
-        Mark as a session as currently active.
+        Mark a session as currently active.
 
         :param bool client: For API calls from clients, save the client instead of IP address and User-Agent.
         """
