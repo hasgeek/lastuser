@@ -91,9 +91,6 @@ def logout_client():
     cred = ClientCredential.get(request.args['client_id'])
     client = cred.client if cred else None
 
-    if not client:  # XXX: DEPRECATED
-        client = Client.get(key=request.args['client_id'])
-
     if client is None or not request.referrer or not client.host_matches(request.referrer):
         # No referrer or such client, or request didn't come from the client website.
         # Possible CSRF. Don't logout and don't send them back

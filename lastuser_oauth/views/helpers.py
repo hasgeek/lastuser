@@ -140,20 +140,14 @@ def _client_login_inner():
     if request.authorization is None or not request.authorization.username:
         return Response(u"Client credentials required.", 401,
             {'WWW-Authenticate': 'Basic realm="Client credentials"'})
-    client = Client.get(key=request.authorization.username)  # XXX: DEPRECATED
-    if not client:
-        credential = ClientCredential.get(name=request.authorization.username)
-        if credential:
-            client = credential.client
-    else:  # XXX: DEPRECATED
-        credential = None
-    if client is None or not client.secret_is(request.authorization.password, credential.name if credential else None):
+    credential = ClientCredential.get(name=request.authorization.username)
+    if credential is None or not credential.secret_is(request.authorization.password):
         return Response(u"Invalid client credentials.", 401,
             {'WWW-Authenticate': 'Basic realm="Client credentials"'})
     if credential:
         credential.accessed_at = datetime.utcnow()
         db.session.commit()
-    g.client = client
+    g.client = credential.client
 
 
 def requires_client_login(f):

@@ -151,15 +151,11 @@ def oauth_authorize():
         return oauth_auth_403(u"Missing client_id")
     # Validation 1.2: Client exists
 
-    # XXX: DEPRECATED
-    client = Client.query.filter_by(key=client_id).first()
-    if not client:
-        #: XXX: Make this primary
-        credential = ClientCredential.get(client_id)
-        if credential:
-            client = credential.client
-        else:
-            return oauth_auth_403(u"Unknown client_id")
+    credential = ClientCredential.get(client_id)
+    if credential:
+        client = credential.client
+    else:
+        return oauth_auth_403(u"Unknown client_id")
 
     # Validation 1.2.1: Is the client active?
     if not client.active:

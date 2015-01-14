@@ -415,8 +415,6 @@ def org_team_get():
 def login_beacon_iframe(client_id, login_url):
     cred = ClientCredential.get(client_id)
     client = cred.client if cred else None
-    if not client:  # XXX: DEPRECATED
-        client = Client.get(key=client_id)
     if client is None:
         abort(404)
     if not client.host_matches(login_url):
@@ -432,8 +430,6 @@ def login_beacon_iframe(client_id, login_url):
 def login_beacon_json(client_id):
     cred = ClientCredential.get(client_id)
     client = cred.client if cred else None
-    if not client:  # XXX: DEPRECATED
-        client = Client.get(key=client_id)
     if client is None:
         abort(404)
     if g.user:

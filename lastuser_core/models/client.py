@@ -48,8 +48,6 @@ class Client(BaseMixin, db.Model):
     team_access = db.Column(db.Boolean, nullable=False, default=False)
     #: OAuth client key/id
     key = db.Column(db.String(22), nullable=False, unique=True, default=buid)
-    #: OAuth client secret XXX: DEPRECATED
-    secret = db.Column(db.String(44), nullable=False, default=newsecret)
     #: Trusted flag: trusted clients are authorized to access user data
     #: without user consent, but the user must still login and identify themself.
     #: When a single provider provides multiple services, each can be declared
@@ -65,15 +63,12 @@ class Client(BaseMixin, db.Model):
     def __repr__(self):
         return u'<Client "{title}" {key}>'.format(title=self.title, key=self.key)
 
-    def secret_is(self, candidate, name=None):
+    def secret_is(self, candidate, name):
         """
         Check if the provided client secret is valid.
         """
-        if name:
-            credential = self.credentials[name]
-            return credential.secret_is(candidate)
-        else:  # XXX: DEPRECATED
-            return self.secret == candidate
+        credential = self.credentials[name]
+        return credential.secret_is(candidate)
 
     def host_matches(self, url):
         return urlparse.urlsplit(url or '').netloc == urlparse.urlsplit(self.redirect_uri or self.website).netloc
