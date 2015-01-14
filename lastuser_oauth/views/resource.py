@@ -7,7 +7,7 @@ from coaster.utils import getbool
 from coaster.views import jsonp, requestargs
 
 from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Resource,
-    ResourceAction, UserClientPermissions, TeamClientPermissions, UserSession, Client, ClientCredential)
+    ResourceAction, UserClientPermissions, TeamClientPermissions, UserSession, ClientCredential)
 from lastuser_core import resource_registry
 from .. import lastuser_oauth
 from .helpers import requires_client_login, requires_user_or_client_login
@@ -464,7 +464,7 @@ def session_verify(authtoken, args, files=None):
     sessionid = args['sessionid']
     session = UserSession.authenticate(buid=sessionid)
     if session and session.user == authtoken.user:
-        session.access(api=True)
+        session.access(client=authtoken.client)
         db.session.commit()
         return {
             'active': True,

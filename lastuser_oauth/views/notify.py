@@ -12,9 +12,9 @@ user_changes_to_notify = set(['merge', 'profile', 'email', 'email-claim', 'email
 
 @session_revoked.connect
 def notify_session_revoked(session):
-    for token in session.user.authtokens:
-        if token.is_valid() and token.client.notification_uri:
-            send_notice.delay(token.client.notification_uri, data={
+    for client in session.clients:
+        if client.notification_uri:
+            send_notice.delay(client.notification_uri, data={
                 'userid': session.user.userid,
                 'type': 'user',
                 'changes': ['logout'],

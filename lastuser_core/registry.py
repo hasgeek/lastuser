@@ -11,6 +11,7 @@ try:
 except ImportError:
     from ordereddict import OrderedDict
 from flask import Response, request, jsonify, abort
+from baseframe.signals import exception_catchall
 from .models import AuthToken, UserExternalId
 
 # Bearer token, as per http://tools.ietf.org/html/draft-ietf-oauth-v2-bearer-15#section-2.1
@@ -71,10 +72,12 @@ class ResourceRegistry(OrderedDict):
                     result = f(authtoken, args, request.files)
                     response = jsonify({'status': 'ok', 'result': result})
                 except Exception as exception:
+                    exception_catchall.send(exception)
                     response = jsonify({'status': 'error',
                                         'error': exception.__class__.__name__,
                                         'error_description': unicode(exception)
                                         })
+                    response.status_code = 500
                 # XXX: Let resources control how they return?
                 response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
                 response.headers['Pragma'] = 'no-cache'

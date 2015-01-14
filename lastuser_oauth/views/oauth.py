@@ -5,7 +5,7 @@ from coaster.utils import newsecret
 
 from lastuser_core.utils import make_redirect_url
 from lastuser_core import resource_registry
-from lastuser_core.models import (db, Client, AuthCode, AuthToken, UserFlashMessage,
+from lastuser_core.models import (db, AuthCode, AuthToken, UserFlashMessage,
     UserClientPermissions, TeamClientPermissions, getuser, Resource, ClientCredential)
 from .. import lastuser_oauth
 from ..forms import AuthorizeForm
