@@ -48,7 +48,7 @@ class UserSession(BaseMixin, db.Model):
         """
         Mark a session as currently active.
 
-        :param bool client: For API calls from clients, save the client instead of IP address and User-Agent.
+        :param client: For API calls from clients, save the client instead of IP address and User-Agent
         """
         # `accessed_at` will be different from the automatic `updated_at` in one
         # crucial context: when the session was revoked remotely. `accessed_at` won't
