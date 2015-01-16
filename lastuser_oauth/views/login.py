@@ -5,14 +5,15 @@ import urlparse
 from openid import oidutil
 from flask import g, current_app, redirect, request, flash, render_template, url_for, Markup, escape, abort
 from flask.ext.openid import OpenID
+from coaster.utils import getbool
 from coaster.views import get_next_url, load_model
 from baseframe.forms import render_form, render_message, render_redirect
 
 from lastuser_core import login_registry
 from .. import lastuser_oauth
 from ..mailclient import send_email_verify_link, send_password_reset_link
-from lastuser_core.models import db, User, UserEmailClaim, PasswordResetRequest, Client, ClientCredential, UserSession
-from ..forms import LoginForm, RegisterForm, PasswordResetForm, PasswordResetRequestForm
+from lastuser_core.models import db, User, UserEmailClaim, PasswordResetRequest, ClientCredential, UserSession
+from ..forms import LoginForm, RegisterForm, PasswordResetForm, PasswordResetRequestForm, LoginPasswordResetException
 from .helpers import login_internal, logout_internal, register_internal, set_loginmethod_cookie
 
 oid = OpenID()
@@ -45,13 +46,16 @@ def login():
 
     formid = request.form.get('form.id')
     if request.method == 'POST' and formid == 'passwordlogin':
-        if loginform.validate():
-            user = loginform.user
-            login_internal(user)
-            db.session.commit()
-            flash('You are now logged in', category='success')
-            return set_loginmethod_cookie(render_redirect(get_next_url(session=True), code=303),
-                'password')
+        try:
+            if loginform.validate():
+                user = loginform.user
+                login_internal(user)
+                db.session.commit()
+                flash('You are now logged in', category='success')
+                return set_loginmethod_cookie(render_redirect(get_next_url(session=True), code=303),
+                    'password')
+        except LoginPasswordResetException:
+            return render_redirect(url_for('.reset', expired=1, username=loginform.username.data))
     elif request.method == 'POST' and formid in service_forms:
         form = service_forms[formid]['form']
         if form.validate():
@@ -162,6 +166,15 @@ def reset():
     # User wants to reset password
     # Ask for username or email, verify it, and send a reset code
     form = PasswordResetRequestForm()
+    if getbool(request.args.get('expired')):
+        message = (u"Your password has expired. Please enter your username "
+            "or email address to request a reset code to set a new password")
+    else:
+        message = None
+
+    if request.method == 'GET':
+        form.username.data = request.args.get('username')
+
     if form.validate_on_submit():
         username = form.username.data
         user = form.user
@@ -200,7 +213,7 @@ def reset():
             The reset link is valid for 24 hours.
             """)
 
-    return render_form(form=form, title="Reset password", submit="Send reset code", ajax=True)
+    return render_form(form=form, title="Reset password", message=message, submit="Send reset code", ajax=False)
 
 
 @lastuser_oauth.route('/reset/<userid>/<secret>', methods=['GET', 'POST'])

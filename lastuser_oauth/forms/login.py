@@ -10,6 +10,10 @@ from baseframe.forms import Form
 from lastuser_core.models import User, UserEmail, getuser
 
 
+class LoginPasswordResetException(Exception):
+    pass
+
+
 class LoginForm(Form):
     username = wtforms.TextField('Username or Email', validators=[wtforms.validators.Required()])
     password = wtforms.PasswordField('Password', validators=[wtforms.validators.Required()])
@@ -21,6 +25,8 @@ class LoginForm(Form):
 
     def validate_password(self, field):
         user = getuser(self.username.data)
+        if user and not user.pw_hash:
+            raise LoginPasswordResetException()
         if user is None or not user.password_is(field.data):
             if not self.username.errors:
                 raise wtforms.ValidationError("Incorrect password")
