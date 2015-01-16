@@ -30,6 +30,8 @@ def verifyscope(scope, client):
             if not client.trusted:
                 raise ScopeException(u"Full access is only available to trusted clients")
         elif item in resource_registry:
+            if resource_registry[item]['trusted'] and not client.trusted:
+                raise ScopeException(u"The resource {scope} is only available to trusted clients".format(scope=item))
             internal_resources.append(item)
         else:  # Validation is only required for non-internal resources
 
@@ -39,6 +41,9 @@ def verifyscope(scope, client):
                 wildcard_base = item[:-2]
                 for key in resource_registry:
                     if key == wildcard_base or key.startswith(wildcard_base + '/'):
+                        if resource_registry[key]['trusted'] and not client.trusted:
+                            # Skip over trusted resources if the client is not trusted
+                            continue
                         internal_resources.append(key)
                         found_internal = True
                 if found_internal:
@@ -59,6 +64,7 @@ def verifyscope(scope, client):
             else:
                 resource_name = subitem
                 action_name = None
+            # TODO: Add support for wildcard scopes in here (using Resource.name.like(resource_name + '/%'))
             resource = Resource.get(name=resource_name, namespace=namespace)
 
             # Validation 2: Resource exists and client has access to it

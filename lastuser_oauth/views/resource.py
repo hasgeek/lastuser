@@ -123,6 +123,7 @@ def token_verify():
     if not authtoken:
         # No such auth token
         return api_result('error', error='no_token')
+    # TODO: Add support for wildcard scopes in here
     if g.client.namespace + ':' + client_resource not in authtoken.scope:
         # Token does not grant access to this resource
         return api_result('error', error='access_denied')

@@ -98,6 +98,7 @@ class ResourceRegistry(OrderedDict):
                 'name': name,
                 'scope': usescope,
                 'description': description,
+                'trusted': trusted,
                 'f': f,
                 }
             return decorated_function
