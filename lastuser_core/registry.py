@@ -29,11 +29,16 @@ class ResourceRegistry(OrderedDict):
         :param unicode name: Name of the resource
         :param unicode description: User-friendly description
         :param bool trusted: Restrict access to trusted clients?
-        :param unicode scope: Grant access via this other resource name
+        :param unicode scope: Grant access via this other resource name (which must also exist)
         """
+        usescope = scope or name
+        if '*' in usescope or ' ' in usescope:
+            # Don't allow resources to be declared with '*' or ' ' in the name
+            raise ValueError(usescope)
+
         def resource_auth_error(message):
             return Response(message, 401,
-                {'WWW-Authenticate': 'Bearer realm="Token Required" scope="%s"' % name})
+                {'WWW-Authenticate': 'Bearer realm="Token Required" scope="%s"' % usescope})
 
         def wrapper(f):
             @wraps(f)
@@ -63,8 +68,14 @@ class ResourceRegistry(OrderedDict):
                     return resource_auth_error(u"Unknown access token.")
                 if not authtoken.is_valid():
                     return resource_auth_error(u"Access token has expired.")
-                if (scope and scope not in authtoken.scope) or (not scope and name not in authtoken.scope):
-                    return resource_auth_error(u"Token does not provide access to this resource.")
+
+                tokenscope = set(authtoken.scope)  # Read once to avoid reparsing below
+                wildcardscope = usescope.split('/', 1)[0] + '/*'
+                if not (authtoken.client.trusted and '*' in tokenscope):
+                    # If a trusted client has '*' in token scope, all good, else check further
+                    if (usescope not in tokenscope) and (wildcardscope not in tokenscope):
+                        # Client doesn't have access to this scope either directly or via a wildcard
+                        return resource_auth_error(u"Token does not provide access to this resource.")
                 if trusted and not authtoken.client.trusted:
                     return resource_auth_error(u"This resource can only be accessed by trusted clients.")
                 # All good. Return the result value
@@ -85,7 +96,7 @@ class ResourceRegistry(OrderedDict):
 
             self[name] = {
                 'name': name,
-                'scope': scope or name,
+                'scope': usescope,
                 'description': description,
                 'f': f,
                 }

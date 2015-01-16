@@ -21,24 +21,43 @@ def verifyscope(scope, client):
     """
     Verify if requested scope is valid for this client. Scope must be a list.
     """
-    resources = {}  # resource_object: [action_object, ...]
+    internal_resources = []  # Names of internal resources
+    external_resources = {}  # resource_object: [action_object, ...]
 
     for item in scope:
-        if item not in resource_registry:  # Validation is only required for non-internal resources
+        if item == '*':
+            # The '*' resource (full access) is only available to trusted clients
+            if not client.trusted:
+                raise ScopeException(u"Full access is only available to trusted clients")
+        elif item in resource_registry:
+            internal_resources.append(item)
+        else:  # Validation is only required for non-internal resources
+
+            # Validation 0: Is this an internal wildcard resource?
+            if item.endswith('/*'):
+                found_internal = False
+                wildcard_base = item[:-2]
+                for key in resource_registry:
+                    if key == wildcard_base or key.startswith(wildcard_base + '/'):
+                        internal_resources.append(key)
+                        found_internal = True
+                if found_internal:
+                    continue  # Continue to next item in scope, skipping the following
+
             # Validation 1: namespace:resource/action is properly formatted
             if ':' not in item:
                 raise ScopeException(u"No namespace specified for external resource ‘{scope}’ in scope".format(scope=item))
             itemparts = item.split(':')
             if len(itemparts) != 2:
                 raise ScopeException(u"Too many ‘:’ characters in ‘{scope}’ in scope".format(scope=item))
-            namespace, item = itemparts
-            if '/' in item:
-                parts = item.split('/')
+            namespace, subitem = itemparts
+            if '/' in subitem:
+                parts = subitem.split('/')
                 if len(parts) != 2:
                     raise ScopeException(u"Too many / characters in ‘{scope}’ in scope".format(scope=item))
                 resource_name, action_name = parts
             else:
-                resource_name = item
+                resource_name = subitem
                 action_name = None
             resource = Resource.get(name=resource_name, namespace=namespace)
 
@@ -55,10 +74,12 @@ def verifyscope(scope, client):
                 if not action:
                     raise ScopeException(u"Unknown action ‘{action}’ on resource ‘{resource}’ under namespace ‘{namespace}’".format(
                         action=action_name, resource=resource_name, namespace=namespace))
-                resources.setdefault(resource, []).append(action)
+                external_resources.setdefault(resource, []).append(action)
             else:
-                resources.setdefault(resource, [])
-    return resources
+                external_resources.setdefault(resource, [])
+
+    internal_resources.sort()
+    return internal_resources, external_resources
 
 
 def oauth_auth_403(reason):
@@ -193,7 +214,7 @@ def oauth_authorize():
 
     # Validation 3.2: Is scope valid?
     try:
-        resources = verifyscope(scope, client)
+        internal_resources, external_resources = verifyscope(scope, client)
     except ScopeException as scopeex:
         return oauth_auth_error(redirect_uri, state, 'invalid_scope', unicode(scopeex))
 
@@ -224,8 +245,8 @@ def oauth_authorize():
         form=form,
         client=client,
         redirect_uri=redirect_uri,
-        scope=scope,
-        resources=resources,
+        internal_resources=internal_resources,
+        external_resources=external_resources,
         resource_registry=resource_registry,
         ), 200, {'X-Frame-Options': 'SAMEORIGIN'}
 

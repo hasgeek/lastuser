@@ -17,20 +17,18 @@
   <dt>Access scope</dt>
   <dd>
     <ol>
-      {% for key in resource_registry -%}
-        {% if key in scope -%}
-          <li>{{ resource_registry[key]['description'] }}</li>
-        {%- endif %}
+      {% for key in internal_resources -%}
+        <li>{{ resource_registry[key]['description'] }}</li>
       {%- endfor %}
-      {% for resource in resources %}
+      {% for resource in external_resources %}
         <li>{{ resource.title }}
-          {% if resources[resource] %}
+          {% if external_resources[resource] -%}
             <ul>
-              {% for action in resources[resource] %}
+              {%- for action in external_resources[resource] %}
                 <li>{{ action.title }}</li>
-              {% endfor %}
+              {%- endfor %}
             </ul>
-          {% endif %}
+          {%- endif %}
         </li>
       {% endfor %}
     </ol>
@@ -44,11 +42,15 @@
   <input type="hidden" name="_charset_"/>
   <input type="hidden" name="form.id" value="authorize"/>
   {{ form.hidden_tag() }}
-  {% if form.csrf_token.errors %}
-    {% for error in form.csrf_token.errors %}<div class="error">{{ error }}</div>{% endfor %}
-  {% endif %}
-  <input class="btn btn-primary" type="submit" name="accept" value="Authorize"/>
-  <input class="btn btn-danger" type="submit" name="deny" value="Deny"/>
+  <p>
+    <input class="btn btn-primary" type="submit" name="accept" value="Authorize"/>
+    <input class="btn btn-danger" type="submit" name="deny" value="Deny"/>
+  </p>
+  {%- if form.csrf_token.errors %}
+    <div><p class="help-error">{% trans -%}
+      This form has timed out. Please submit again to confirm
+    {%- endtrans %}</p></div>
+  {%- endif %}
 </form>
   
 {% endblock %}

@@ -17,7 +17,7 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
 
     teams = {}
 
-    if 'id' in scope:
+    if '*' in scope or 'id' in scope or 'id/*' in scope:
         userinfo = {'userid': user.userid,
                     'username': user.username,
                     'fullname': user.fullname,
@@ -30,17 +30,17 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
     if session:
         userinfo['sessionid'] = session.buid
 
-    if 'email' in scope:
+    if '*' in scope or 'email' in scope or 'email/*' in scope:
         userinfo['email'] = unicode(user.email)
-    if 'phone' in scope:
+    if '*' in scope or 'phone' in scope or 'phone/*' in scope:
         userinfo['phone'] = unicode(user.phone)
-    if 'organizations' in scope:
+    if '*' in scope or 'organizations' in scope or 'organizations/*' in scope:
         userinfo['organizations'] = {
             'owner': [{'userid': org.userid, 'name': org.name, 'title': org.title} for org in user.organizations_owned()],
             'member': [{'userid': org.userid, 'name': org.name, 'title': org.title} for org in user.organizations()],
             }
 
-    if 'organizations' in scope or 'teams' in scope:
+    if '*' in scope or 'organizations' in scope or 'teams' in scope or 'organizations/*' in scope or 'teams/*' in scope:
         for team in user.teams:
             teams[team.userid] = {
                 'userid': team.userid,
@@ -49,7 +49,7 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                 'owners': team == team.org.owners,
                 'member': True}
 
-    if 'teams' in scope:
+    if '*' in scope or 'teams' in scope or 'teams/*' in scope:
         for org in user.organizations_owned():
             for team in org.teams:
                 if team.userid not in teams:
@@ -447,7 +447,7 @@ def login_beacon_json(client_id):
 # --- Token-based resource endpoints ------------------------------------------
 
 @lastuser_oauth.route('/api/1/id')
-@resource_registry.resource('id', u"Read your name and username")
+@resource_registry.resource('id', u"Read your name and basic profile data")
 def resource_id(authtoken, args, files=None):
     """
     Return user's id

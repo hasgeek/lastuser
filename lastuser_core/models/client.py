@@ -198,7 +198,7 @@ class Resource(BaseScopedNameMixin, db.Model):
     """
     __tablename__ = 'resource'
     __bind_key__ = 'lastuser'
-    # Resource names are unique across client apps
+    # Resource names are unique within client apps
     name = db.Column(db.Unicode(20), nullable=False)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
@@ -283,7 +283,7 @@ class ScopeMixin(object):
         return db.Column('scope', db.UnicodeText, nullable=False)
 
     def _scope_get(self):
-        return sorted([t.strip() for t in self._scope.replace('\r', ' ').replace('\n', ' ').split(u' ') if t])
+        return tuple(sorted([t.strip() for t in self._scope.replace('\r', ' ').replace('\n', ' ').split(u' ') if t]))
 
     def _scope_set(self, value):
         if isinstance(value, basestring):
