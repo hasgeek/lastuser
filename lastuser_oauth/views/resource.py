@@ -135,8 +135,8 @@ def token_verify():
     else:
         resource_name = client_resource
         action_name = None
-    resource = Resource.query.filter_by(name=resource_name).first()
-    if not resource or resource.client != g.client:
+    resource = Resource.get(resource_name, client=g.client)
+    if not resource:
         # Resource does not exist or does not belong to this client
         return api_result('error', error='access_denied')
     if action_name:
