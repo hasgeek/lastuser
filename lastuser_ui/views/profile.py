@@ -45,7 +45,8 @@ def add_email():
     if form.validate_on_submit():
         useremail = UserEmailClaim.get(user=g.user, email=form.email.data)
         if useremail is None:
-            useremail = UserEmailClaim(user=g.user, email=form.email.data)
+            print type(form.type.data)
+            useremail = UserEmailClaim(user=g.user, email=form.email.data, type=form.type.data)
             db.session.add(useremail)
             db.session.commit()
         send_email_verify_link(useremail)
@@ -81,7 +82,7 @@ def add_phone():
     if form.validate_on_submit():
         userphone = UserPhoneClaim.get(user=g.user, phone=form.phone.data)
         if userphone is None:
-            userphone = UserPhoneClaim(user=g.user, phone=form.phone.data)
+            userphone = UserPhoneClaim(user=g.user, phone=form.phone.data, type=form.type.data)
             db.session.add(userphone)
         send_phone_verify_code(userphone)
         db.session.commit()  # Commit after sending because send_phone_verify_code saves the message sent

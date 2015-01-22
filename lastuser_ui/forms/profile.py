@@ -13,6 +13,10 @@ __all__ = ['NewEmailAddressForm', 'NewPhoneForm', 'VerifyPhoneForm']
 
 class NewEmailAddressForm(Form):
     email = wtforms.fields.html5.EmailField("Email address", validators=[wtforms.validators.Required(), ValidEmail()])
+    type = wtforms.RadioField("Type", validators=[wtforms.validators.Required()], choices=[
+        (u"Home", u"Home"),
+        (u"Work", u"Work"),
+        (u"Other", u"Other")])
 
     # TODO: Move to function and place before ValidEmail()
     def validate_email(self, field):
@@ -34,6 +38,11 @@ class NewPhoneForm(Form):
             wtforms.validators.Required(),
             wtforms.validators.Length(min=1, max=16, message="This is too long to be a valid phone number")],
         description="Indian mobile numbers only")
+    type = wtforms.RadioField("Type", validators=[wtforms.validators.Required()], choices=[
+        (u"Mobile", u"Mobile"),
+        (u"Home", u"Home"),
+        (u"Work", u"Work"),
+        (u"Other", u"Other")])
 
     def validate_phone(self, field):
         existing = UserPhone.get(phone=field.data)

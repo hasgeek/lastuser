@@ -502,7 +502,7 @@ def resource_email(authtoken, args, files=None):
     """
     if 'all' in args and getbool(args['all']):
         return {'email': unicode(authtoken.user.email),
-                'all': [unicode(email) for email in authtoken.user.emails]}
+                'all': [unicode(email) for email in authtoken.user.emails if not email.private]}
     else:
         return {'email': unicode(authtoken.user.email)}
 

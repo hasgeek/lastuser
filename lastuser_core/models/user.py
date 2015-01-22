@@ -166,12 +166,12 @@ class User(BaseMixin, db.Model):
         else:
             return self.fullname
 
-    def add_email(self, email, primary=False):
+    def add_email(self, email, primary=False, type=None, private=False):
         if primary:
             for emailob in self.emails:
                 if emailob.primary:
                     emailob.primary = False
-        useremail = UserEmail(user=self, email=email, primary=primary)
+        useremail = UserEmail(user=self, email=email, primary=primary, type=type, private=private)
         db.session.add(useremail)
         with db.session.no_autoflush:
             for team in Team.query.filter_by(domain=useremail.domain):
@@ -683,6 +683,9 @@ class UserEmail(OwnerMixin, BaseMixin, db.Model):
     primary = db.Column(db.Boolean, nullable=False, default=False)
     domain = db.Column(db.Unicode(253), nullable=False, index=True)
 
+    private = db.Column(db.Boolean, nullable=False, default=False)
+    type = db.Column(db.Unicode(30), nullable=True)
+
     __table_args__ = (db.CheckConstraint(
         db.case([(user_id != None, 1)], else_=0) +
         db.case([(org_id != None, 1)], else_=0) +
@@ -756,6 +759,9 @@ class UserEmailClaim(OwnerMixin, BaseMixin, db.Model):
     verification_code = db.Column(db.String(44), nullable=False, default=newsecret)
     md5sum = db.Column(db.String(32), nullable=False, index=True)
     domain = db.Column(db.Unicode(253), nullable=False, index=True)
+
+    private = db.Column(db.Boolean, nullable=False, default=False)
+    type = db.Column(db.Unicode(30), nullable=True)
 
     __table_args__ = (
         # Only one of these three unique constraints will apply as null values
@@ -838,6 +844,9 @@ class UserPhone(OwnerMixin, BaseMixin, db.Model):
     _phone = db.Column('phone', db.Unicode(16), unique=True, nullable=False)
     gets_text = db.Column(db.Boolean, nullable=False, default=True)
 
+    private = db.Column(db.Boolean, nullable=False, default=False)
+    type = db.Column(db.Unicode(30), nullable=True)
+
     __table_args__ = (db.CheckConstraint(
         db.case([(user_id != None, 1)], else_=0) +
         db.case([(org_id != None, 1)], else_=0) +
@@ -892,6 +901,9 @@ class UserPhoneClaim(OwnerMixin, BaseMixin, db.Model):
     _phone = db.Column('phone', db.Unicode(16), nullable=False, index=True)
     gets_text = db.Column(db.Boolean, nullable=False, default=True)
     verification_code = db.Column(db.Unicode(4), nullable=False, default=newpin)
+
+    private = db.Column(db.Boolean, nullable=False, default=False)
+    type = db.Column(db.Unicode(30), nullable=True)
 
     __table_args__ = (
         # Only one of these three unique constraints will apply as null values

@@ -82,9 +82,13 @@ def confirm_email(md5sum, secret):
                             u"Your email address <code>{email}</code> has already been verified.".format(
                                 fullname=escape(claimed_user.fullname), email=escape(claimed_email))))
 
-            useremail = emailclaim.user.add_email(emailclaim.email.lower(), primary=emailclaim.user.email is None)
+            useremail = emailclaim.user.add_email(emailclaim.email.lower(),
+                primary=emailclaim.user.email is None,
+                type=emailclaim.type,
+                private=emailclaim.private)
             db.session.delete(emailclaim)
-            for claim in UserEmailClaim.query.filter(UserEmailClaim.email.in_([useremail.email, useremail.email.lower()])).all():
+            for claim in UserEmailClaim.query.filter(
+                    UserEmailClaim.email.in_([useremail.email, useremail.email.lower()])).all():
                 db.session.delete(claim)
             db.session.commit()
             user_data_changed.send(g.user, changes=['email'])
