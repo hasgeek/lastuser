@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import urlparse
 from hashlib import sha256
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.orm import load_only
+from sqlalchemy.orm.query import Query as QueryBaseClass
 from sqlalchemy.orm.collections import attribute_mapped_collection
 from coaster.utils import buid, newsecret
 
@@ -421,12 +423,20 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
         """
         Return all AuthToken for the specified users.
         """
-        if len(users) == 0:
-            return []
-        elif len(users) == 1:
-            return cls.query.filter_by(user=users[0]).all()
+        if isinstance(users, QueryBaseClass):
+            count = users.count()
+            if count == 1:
+                return cls.query.filter_by(user=users.first()).all()
+            elif count > 1:
+                return cls.query.filter(AuthToken.user_id.in_(users.options(load_only('id')))).all()
         else:
-            return cls.query.filter(AuthToken.user_id.in_([u.id for u in users])).all()
+            count = len(users)
+            if count == 1:
+                return cls.query.filter_by(user=users[0]).all()
+            elif count > 1:
+                return cls.query.filter(AuthToken.user_id.in_([u.id for u in users])).all()
+
+        return []
 
 
 class Permission(BaseMixin, db.Model):

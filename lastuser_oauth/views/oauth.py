@@ -33,7 +33,7 @@ def verifyscope(scope, client):
             if resource_registry[item]['trusted'] and not client.trusted:
                 raise ScopeException(u"The resource {scope} is only available to trusted clients".format(scope=item))
             internal_resources.append(item)
-        else:  # Validation is only required for non-internal resources
+        else:
 
             # Validation 0: Is this an internal wildcard resource?
             if item.endswith('/*'):
@@ -49,6 +49,7 @@ def verifyscope(scope, client):
                 if found_internal:
                     continue  # Continue to next item in scope, skipping the following
 
+            # Further validation is only required for non-internal resources
             # Validation 1: namespace:resource/action is properly formatted
             if ':' not in item:
                 raise ScopeException(u"No namespace specified for external resource ‘{scope}’ in scope".format(scope=item))

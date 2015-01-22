@@ -20,12 +20,12 @@ class NewEmailAddressForm(Form):
         existing = UserEmail.get(email=field.data)
         if existing is not None:
             if existing.user == g.user:
-                raise wtforms.ValidationError("You have already registered this email address.")
+                raise wtforms.ValidationError("You have already registered this email address")
             else:
-                raise wtforms.ValidationError("This email address has already been claimed.")
+                raise wtforms.ValidationError("This email address has already been claimed")
         existing = UserEmailClaim.get(email=field.data, user=g.user)
         if existing is not None:
-            raise wtforms.ValidationError("This email address is pending verification.")
+            raise wtforms.ValidationError("This email address is pending verification")
 
 
 class NewPhoneForm(Form):
@@ -39,12 +39,12 @@ class NewPhoneForm(Form):
         existing = UserPhone.get(phone=field.data)
         if existing is not None:
             if existing.user == g.user:
-                raise wtforms.ValidationError("You have already registered this phone number.")
+                raise wtforms.ValidationError("You have already registered this phone number")
             else:
-                raise wtforms.ValidationError("This phone number has already been claimed.")
+                raise wtforms.ValidationError("This phone number has already been claimed")
         existing = UserPhoneClaim.get(phone=field.data, user=g.user)
         if existing is not None:
-            raise wtforms.ValidationError("This phone number is pending verification.")
+            raise wtforms.ValidationError("This phone number is pending verification")
         # Step 1: Remove punctuation in number
         field.data = strip_phone(field.data)
         # Step 2: Validate number format
@@ -60,4 +60,4 @@ class VerifyPhoneForm(Form):
 
     def validate_verification_code(self, field):
         if self.phoneclaim.verification_code != field.data:
-            raise wtforms.ValidationError("Verification code does not match.")
+            raise wtforms.ValidationError("Verification code does not match")

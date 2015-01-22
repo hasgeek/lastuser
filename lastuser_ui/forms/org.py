@@ -15,6 +15,9 @@ class OrganizationForm(Form):
     title = wtforms.TextField("Organization name", validators=[wtforms.validators.Required()])
     name = AnnotatedTextField("Username", validators=[wtforms.validators.Required()],
         prefix=u"https://hasgeek.com/…")
+    domain = wtforms.RadioField("Domain",
+        description=u"Users with an email address at this domain will automatically become members of this organization",
+        validators=[wtforms.validators.Optional()])
 
     def validate_name(self, field):
         if not valid_username(field.data):

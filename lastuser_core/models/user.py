@@ -173,6 +173,10 @@ class User(BaseMixin, db.Model):
                     emailob.primary = False
         useremail = UserEmail(user=self, email=email, primary=primary)
         db.session.add(useremail)
+        with db.session.no_autoflush:
+            for team in Team.query.filter_by(domain=useremail.domain):
+                if self not in team.users:
+                    team.users.append(self)
         return useremail
 
     def del_email(self, email):
@@ -249,6 +253,20 @@ class User(BaseMixin, db.Model):
         for database queries.
         """
         return list(set([team.org.id for team in self.teams if team.org.owners == team]))
+
+    def organizations_memberof(self):
+        """
+        Return the organizations this user is an owner of.
+        """
+        return sorted(set([team.org for team in self.teams if team.org.members == team]),
+            key=lambda o: o.title)
+
+    def organizations_memberof_ids(self):
+        """
+        Return the database ids of the organizations this user is an owner of. This is used
+        for database queries.
+        """
+        return list(set([team.org.id for team in self.teams if team.org.members == team]))
 
     def is_profile_complete(self):
         """
@@ -404,8 +422,12 @@ class Organization(BaseMixin, db.Model):
     # a circular dependency. The post_update flag on the relationship tackles the circular
     # dependency within SQLAlchemy.
     owners_id = db.Column(None, db.ForeignKey('team.id',
-        use_alter=True, name='fk_organization_owners_id'), nullable=True)
+        use_alter=True, name='organization_owners_id_fkey'), nullable=True)
     owners = db.relationship('Team', primaryjoin='Organization.owners_id == Team.id',
+        uselist=False, cascade='all', post_update=True)  # No delete-orphan cascade here
+    members_id = db.Column(None, db.ForeignKey('team.id',
+        use_alter=True, name='organization_members_id_fkey'), nullable=True)
+    members = db.relationship('Team', primaryjoin='Organization.members_id == Team.id',
         uselist=False, cascade='all', post_update=True)  # No delete-orphan cascade here
     userid = db.Column(db.String(22), unique=True, nullable=False, default=buid)
     _name = db.Column('name', db.Unicode(80), unique=True, nullable=True)
@@ -426,8 +448,33 @@ class Organization(BaseMixin, db.Model):
 
     def __init__(self, *args, **kwargs):
         super(Organization, self).__init__(*args, **kwargs)
+        self.make_teams()
+
+    def make_teams(self):
         if self.owners is None:
             self.owners = Team(title=u"Owners", org=self)
+        if self.members is None:
+            self.members = Team(title=u"Members", org=self)
+
+    @property
+    def domain(self):
+        if self.members:
+            return self.members.domain
+
+    @domain.setter
+    def domain(self, value):
+        if not value:
+            value = None
+        if not self.members:
+            self.make_teams()
+        if value and value != self.members.domain:
+            # Look for team members based on domain, but only if the domain value was
+            # changed
+            with db.session.no_autoflush:
+                for useremail in UserEmail.query.filter_by(domain=value).join(User):
+                    if useremail.user not in self.members.users:
+                        self.members.users.append(useremail.user)
+        self.members.domain = value
 
     @hybrid_property
     def name(self):
@@ -541,8 +588,12 @@ class Team(BaseMixin, db.Model):
     org_id = db.Column(None, db.ForeignKey('organization.id'), nullable=False)
     org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
         backref=db.backref('teams', order_by=title, cascade='all, delete-orphan'))
-    users = db.relationship(User, secondary='team_membership',
+    users = db.relationship(User, secondary='team_membership', lazy='dynamic',
         backref='teams')  # No cascades here! Cascades will delete users
+
+    #: Email domain for this team. Any users with a matching email address
+    #: will be auto-added to this team
+    domain = db.Column(db.Unicode(253), nullable=True, index=True)
 
     #: Client id that created this team
     client_id = db.Column(None, db.ForeignKey('client.id',

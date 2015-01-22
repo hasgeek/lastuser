@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from flask import g, current_app, render_template, url_for, abort, redirect, make_response, request
+from flask import g, current_app, render_template, url_for, abort, redirect, make_response, request, Markup, escape
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
+from baseframe.staticdata import webmail_domains
 from coaster.views import load_model, load_models
 
 from lastuser_core.models import db, Organization, Team, User
@@ -10,8 +11,20 @@ from lastuser_oauth.views.helpers import requires_login
 from .. import lastuser_ui
 from ..forms.org import OrganizationForm, TeamForm
 
-# --- Routes: Organizations ---------------------------------------------------
 
+def user_org_domains(user, org=None):
+    domains = [email.domain for email in user.emails if email.domain not in webmail_domains]
+    choices = [(d, d) for d in domains]
+    if org and org.domain and org.domain not in domains:
+        choices.insert(0, (org.domain, Markup("%s <em>(Current setting)</em>" % escape(org.domain))))
+    if not domains:
+        choices.insert(0, (u'', Markup("<em>(You do not have a verified non-webmail email address yet)</em>")))
+    else:
+        choices.insert(0, (u'', Markup("<em>(No domain associated with this organization)</em>")))
+    return choices
+
+
+# --- Routes: Organizations ---------------------------------------------------
 
 @lastuser_ui.route('/organizations')
 @requires_login
@@ -23,17 +36,19 @@ def org_list():
 @requires_login
 def org_new():
     form = OrganizationForm()
+    form.domain.choices = user_org_domains(g.user)
     form.name.description = current_app.config.get('ORG_NAME_REASON')
     form.title.description = current_app.config.get('ORG_TITLE_REASON')
     if form.validate_on_submit():
         org = Organization()
         form.populate_obj(org)
         org.owners.users.append(g.user)
+        org.members.users.append(g.user)
         db.session.add(org)
         db.session.commit()
         org_data_changed.send(org, changes=['new'], user=g.user)
         return render_redirect(url_for('.org_info', name=org.name), code=303)
-    return render_form(form=form, title="New Organization", formid="org_new", submit="Create", ajax=False)
+    return render_form(form=form, title="New organization", formid="org_new", submit="Create", ajax=False)
 
 
 @lastuser_ui.route('/organizations/<name>')
@@ -48,6 +63,7 @@ def org_info(org):
 @load_model(Organization, {'name': 'name'}, 'org', permission='edit')
 def org_edit(org):
     form = OrganizationForm(obj=org)
+    form.domain.choices = user_org_domains(g.user, org)
     form.name.description = current_app.config.get('ORG_NAME_REASON')
     form.title.description = current_app.config.get('ORG_TITLE_REASON')
     if form.validate_on_submit():
@@ -55,7 +71,7 @@ def org_edit(org):
         db.session.commit()
         org_data_changed.send(org, changes=['edit'], user=g.user)
         return render_redirect(url_for('.org_info', name=org.name), code=303)
-    return render_form(form=form, title="New Organization", formid="org_edit", submit="Save", ajax=False)
+    return render_form(form=form, title="Edit organization", formid="org_edit", submit="Save", ajax=False)
 
 
 @lastuser_ui.route('/organizations/<name>/delete', methods=['GET', 'POST'])
@@ -129,7 +145,7 @@ def team_edit(org, team):
     permission='delete'
     )
 def team_delete(org, team):
-    if team == org.owners:
+    if team == org.owners or team == org.members:
         abort(403)
     if request.method == 'POST':
         team_data_changed.send(team, changes=['delete'], user=g.user)
