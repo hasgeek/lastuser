@@ -630,6 +630,7 @@ class UserEmail(OwnerMixin, BaseMixin, db.Model):
     _email = db.Column('email', db.Unicode(254), unique=True, nullable=False)
     md5sum = db.Column(db.String(32), unique=True, nullable=False)
     primary = db.Column(db.Boolean, nullable=False, default=False)
+    domain = db.Column(db.Unicode(253), nullable=False, index=True)
 
     __table_args__ = (db.CheckConstraint(
         db.case([(user_id != None, 1)], else_=0) +
@@ -641,6 +642,7 @@ class UserEmail(OwnerMixin, BaseMixin, db.Model):
         super(UserEmail, self).__init__(**kwargs)
         self._email = email
         self.md5sum = md5(self._email).hexdigest()
+        self.domain = email.split('@')[-1]
 
     # XXX: Are hybrid_property and synonym both required?
     # Shouldn't one suffice?
@@ -702,6 +704,7 @@ class UserEmailClaim(OwnerMixin, BaseMixin, db.Model):
     _email = db.Column('email', db.Unicode(254), nullable=True, index=True)
     verification_code = db.Column(db.String(44), nullable=False, default=newsecret)
     md5sum = db.Column(db.String(32), nullable=False, index=True)
+    domain = db.Column(db.Unicode(253), nullable=False, index=True)
 
     __table_args__ = (
         # Only one of these three unique constraints will apply as null values
@@ -720,6 +723,7 @@ class UserEmailClaim(OwnerMixin, BaseMixin, db.Model):
         self.verification_code = newsecret()
         self._email = email
         self.md5sum = md5(self._email).hexdigest()
+        self.domain = email.split('@')[-1]
 
     @hybrid_property
     def email(self):
