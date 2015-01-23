@@ -212,6 +212,7 @@ def sync_resources():
                 else:
                     results[resource.name]['actions'][action.name] = {'status': 'exists'}
             else:
+                # FIXME: What is "title" here? This assignment doesn't seem right
                 action = ResourceAction(resource=resource, name=action_name,
                     title=resources[name].get('title') or action_name.title() + " " + resource.title,
                     description=description)
