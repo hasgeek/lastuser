@@ -89,7 +89,7 @@ class ChannelTwitter(Channel):
 
 class ChannelSMS(Channel):
     name = u'sms'
-    name = __(u'SMS')
+    title = __(u"SMS")
     flags = [NOTIFICATION_FLAGS.DELIVERY, NOTIFICATION_FLAGS.BOUNCE]
 
     delivery_flag = True
