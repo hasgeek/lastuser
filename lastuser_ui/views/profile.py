@@ -45,7 +45,6 @@ def add_email():
     if form.validate_on_submit():
         useremail = UserEmailClaim.get(user=g.user, email=form.email.data)
         if useremail is None:
-            print type(form.type.data)
             useremail = UserEmailClaim(user=g.user, email=form.email.data, type=form.type.data)
             db.session.add(useremail)
             db.session.commit()
