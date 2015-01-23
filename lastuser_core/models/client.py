@@ -260,7 +260,7 @@ class ResourceAction(BaseMixin, db.Model):
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
 
     # Action names are unique per client app
-    __table_args__ = (db.UniqueConstraint('name', 'resource_id'), {})
+    __table_args__ = (db.UniqueConstraint('resource_id', 'name'), {})
 
     def permissions(self, user, inherited=None):
         perms = super(ResourceAction, self).permissions(user, inherited)
@@ -331,7 +331,7 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Null for client-only tokens
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('authtokens', lazy='dynamic', cascade='all, delete-orphan'))
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False, index=True)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('authtokens', lazy='dynamic', cascade='all, delete-orphan'))
     token = db.Column(db.String(22), default=buid, nullable=False, unique=True)
@@ -511,7 +511,7 @@ class UserClientPermissions(BaseMixin, db.Model):
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('client_permissions', cascade='all, delete-orphan'))
     #: Client app they are assigned on
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False, index=True)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('user_permissions', cascade='all, delete-orphan'))
     #: The permissions as a string of tokens
@@ -557,7 +557,7 @@ class TeamClientPermissions(BaseMixin, db.Model):
     team = db.relationship(Team, primaryjoin=team_id == Team.id,
         backref=db.backref('client_permissions', cascade='all, delete-orphan'))
     #: Client app they are assigned on
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False, index=True)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('team_permissions', cascade='all, delete-orphan'))
     #: The permissions as a string of tokens
