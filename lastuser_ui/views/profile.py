@@ -2,6 +2,7 @@
 
 from flask import g, flash, render_template, url_for, request
 from coaster.views import load_model
+from baseframe import _
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
 
 from lastuser_core.models import db, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
@@ -33,9 +34,10 @@ def change_password():
     if form.validate_on_submit():
         g.user.password = form.password.data
         db.session.commit()
-        flash("Your new password has been saved", category='success')
+        flash(_("Your new password has been saved"), category='success')
         return render_redirect(url_for('.profile'), code=303)
-    return render_form(form=form, title="Change password", formid="changepassword", submit="Change password", ajax=True)
+    return render_form(form=form, title=_("Change password"), formid='changepassword',
+        submit=_("Change password"), ajax=True)
 
 
 @lastuser_ui.route('/profile/email/new', methods=['GET', 'POST'])
@@ -49,10 +51,11 @@ def add_email():
             db.session.add(useremail)
             db.session.commit()
         send_email_verify_link(useremail)
-        flash("We sent you an email to confirm your address", 'success')
+        flash(_("We sent you an email to confirm your address"), 'success')
         user_data_changed.send(g.user, changes=['email-claim'])
         return render_redirect(url_for('.profile'), code=303)
-    return render_form(form=form, title="Add an email address", formid="email_add", submit="Add email", ajax=True)
+    return render_form(form=form, title=_("Add an email address"), formid='email_add',
+        submit=_("Add email"), ajax=True)
 
 
 @lastuser_ui.route('/profile/email/<md5sum>/remove', methods=['GET', 'POST'])
@@ -62,15 +65,15 @@ def remove_email(md5sum):
     if not useremail:
         useremail = UserEmailClaim.query.filter_by(md5sum=md5sum, user=g.user).first_or_404()
     if isinstance(useremail, UserEmail) and useremail.primary:
-        flash("You cannot remove your primary email address", "error")
+        flash(_("You cannot remove your primary email address"), 'error')
         return render_redirect(url_for('.profile'), code=303)
     if request.method == 'POST':
         # FIXME: Confirm validation success
         user_data_changed.send(g.user, changes=['email-delete'])
-    return render_delete_sqla(useremail, db, title=u"Confirm removal",
-        message=u"Remove email address {email}?".format(
+    return render_delete_sqla(useremail, db, title=_(u"Confirm removal"),
+        message=_(u"Remove email address {email}?").format(
             email=useremail.email),
-        success=u"You have removed your email address {email}".format(email=useremail.email),
+        success=_(u"You have removed your email address {email}").format(email=useremail.email),
         next=url_for('.profile'))
 
 
@@ -85,10 +88,11 @@ def add_phone():
             db.session.add(userphone)
         send_phone_verify_code(userphone)
         db.session.commit()  # Commit after sending because send_phone_verify_code saves the message sent
-        flash("We sent a verification code to your phone number", 'success')
+        flash(_("We sent a verification code to your phone number"), 'success')
         user_data_changed.send(g.user, changes=['phone-claim'])
         return render_redirect(url_for('.verify_phone', number=userphone.phone), code=303)
-    return render_form(form=form, title="Add a phone number", formid="phone_add", submit="Add phone", ajax=True)
+    return render_form(form=form, title=_("Add a phone number"), formid='phone_add',
+        submit=_("Add phone"), ajax=True)
 
 
 @lastuser_ui.route('/profile/phone/<number>/remove', methods=['GET', 'POST'])
@@ -100,10 +104,10 @@ def remove_phone(number):
     if request.method == 'POST':
         # FIXME: Confirm validation success
         user_data_changed.send(g.user, changes=['phone-delete'])
-    return render_delete_sqla(userphone, db, title=u"Confirm removal",
-        message=u"Remove phone number {phone}?".format(
+    return render_delete_sqla(userphone, db, title=_(u"Confirm removal"),
+        message=_(u"Remove phone number {phone}?").format(
             phone=userphone.phone),
-        success=u"You have removed your number {phone}".format(phone=userphone.phone),
+        success=_(u"You have removed your number {phone}").format(phone=userphone.phone),
         next=url_for('.profile'))
 
 
@@ -123,11 +127,12 @@ def verify_phone(phoneclaim):
             db.session.add(userphone)
             db.session.delete(phoneclaim)
             db.session.commit()
-            flash("Your phone number has been verified", 'success')
+            flash(_("Your phone number has been verified"), 'success')
             user_data_changed.send(g.user, changes=['phone'])
             return render_redirect(url_for('.profile'), code=303)
         else:
             db.session.delete(phoneclaim)
             db.session.commit()
-            flash("This phone number has already been claimed by another user", 'danger')
-    return render_form(form=form, title="Verify phone number", formid="phone_verify", submit="Verify", ajax=True)
+            flash(_("This phone number has already been claimed by another user"), 'danger')
+    return render_form(form=form, title=_("Verify phone number"), formid='phone_verify',
+        submit=_("Verify"), ajax=True)

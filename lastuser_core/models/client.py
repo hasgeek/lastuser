@@ -8,6 +8,7 @@ from sqlalchemy.orm import load_only
 from sqlalchemy.orm.query import Query as QueryBaseClass
 from sqlalchemy.orm.collections import attribute_mapped_collection
 from coaster.utils import buid, newsecret
+from baseframe import _
 
 from . import db, BaseMixin, BaseScopedNameMixin
 from .user import User, Organization, Team
@@ -25,11 +26,11 @@ class Client(BaseMixin, db.Model):
     #: User who owns this client
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref=db.backref('clients', cascade="all"))
+        backref=db.backref('clients', cascade='all'))
     #: Organization that owns this client. Only one of this or user must be set
     org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
     org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
-        backref=db.backref('clients', cascade="all"))
+        backref=db.backref('clients', cascade='all'))
     #: Human-readable title
     title = db.Column(db.Unicode(250), nullable=False)
     #: Long description
@@ -145,7 +146,7 @@ class ClientCredential(BaseMixin, db.Model):
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('credentials', cascade='all, delete-orphan',
-            collection_class=attribute_mapped_collection("name")))
+            collection_class=attribute_mapped_collection('name')))
 
     #: OAuth client key
     name = db.Column(db.String(22), nullable=False, unique=True, default=buid)
@@ -186,7 +187,7 @@ class UserFlashMessage(BaseMixin, db.Model):
     __bind_key__ = 'lastuser'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref=db.backref("flashmessages", cascade="delete, delete-orphan"))
+        backref=db.backref('flashmessages', cascade='delete, delete-orphan'))
     seq = db.Column(db.Integer, default=0, nullable=False)
     category = db.Column(db.Unicode(20), nullable=False)
     message = db.Column(db.Unicode(250), nullable=False)
@@ -259,7 +260,7 @@ class ResourceAction(BaseMixin, db.Model):
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
 
     # Action names are unique per client app
-    __table_args__ = (db.UniqueConstraint("name", "resource_id"), {})
+    __table_args__ = (db.UniqueConstraint('name', 'resource_id'), {})
 
     def permissions(self, user, inherited=None):
         perms = super(ResourceAction, self).permissions(user, inherited)
@@ -310,7 +311,7 @@ class AuthCode(ScopeMixin, BaseMixin, db.Model):
     user = db.relationship(User, primaryjoin=user_id == User.id)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
-        backref=db.backref("authcodes", cascade='all, delete-orphan'))
+        backref=db.backref('authcodes', cascade='all, delete-orphan'))
     session_id = db.Column(None, db.ForeignKey('user_session.id'), nullable=True)
     session = db.relationship(UserSession)
     code = db.Column(db.String(44), default=newsecret, nullable=False)
@@ -329,10 +330,10 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
     __bind_key__ = 'lastuser'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Null for client-only tokens
     user = db.relationship(User, primaryjoin=user_id == User.id,
-        backref=db.backref("authtokens", lazy='dynamic', cascade='all, delete-orphan'))
+        backref=db.backref('authtokens', lazy='dynamic', cascade='all, delete-orphan'))
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
-        backref=db.backref("authtokens", lazy='dynamic', cascade='all, delete-orphan'))
+        backref=db.backref('authtokens', lazy='dynamic', cascade='all, delete-orphan'))
     token = db.Column(db.String(22), default=buid, nullable=False, unique=True)
     token_type = db.Column(db.String(250), default=u'bearer', nullable=False)  # 'bearer', 'mac' or a URL
     secret = db.Column(db.String(44), nullable=True)
@@ -341,7 +342,7 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
     refresh_token = db.Column(db.String(22), nullable=True, unique=True)
 
     # Only one authtoken per user and client. Add to scope as needed
-    __table_args__ = (db.UniqueConstraint("user_id", "client_id"), {})
+    __table_args__ = (db.UniqueConstraint('user_id', 'client_id'), {})
 
     def __init__(self, **kwargs):
         super(AuthToken, self).__init__(**kwargs)
@@ -374,7 +375,7 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
         elif value in ['hmac-sha-1', 'hmac-sha-256']:
             self._algorithm = value
         else:
-            raise ValueError(u"Unrecognized algorithm ‘{value}’".format(value=value))
+            raise ValueError(_(u"Unrecognized algorithm ‘{value}’").format(value=value))
 
     algorithm = db.synonym('_algorithm', descriptor=algorithm)
 
@@ -517,7 +518,7 @@ class UserClientPermissions(BaseMixin, db.Model):
     access_permissions = db.Column('permissions', db.Unicode(250), default=u'', nullable=False)
 
     # Only one assignment per user and client
-    __table_args__ = (db.UniqueConstraint("user_id", "client_id"), {})
+    __table_args__ = (db.UniqueConstraint('user_id', 'client_id'), {})
 
     # Used by lastuser_ui/client_info.html
     @property
@@ -563,7 +564,7 @@ class TeamClientPermissions(BaseMixin, db.Model):
     access_permissions = db.Column('permissions', db.Unicode(250), default=u'', nullable=False)
 
     # Only one assignment per team and client
-    __table_args__ = (db.UniqueConstraint("team_id", "client_id"), {})
+    __table_args__ = (db.UniqueConstraint('team_id', 'client_id'), {})
 
     # Used by lastuser_ui/client_info.html
     @property

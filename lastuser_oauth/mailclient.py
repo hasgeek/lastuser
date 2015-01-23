@@ -3,6 +3,7 @@
 from markdown import markdown
 from flask import render_template
 from flask.ext.mail import Mail, Message
+from baseframe import _
 
 mail = Mail()
 
@@ -11,16 +12,16 @@ def send_email_verify_link(useremail):
     """
     Mail a verification link to the user.
     """
-    msg = Message(subject="Confirm your email address",
+    msg = Message(subject=_("Confirm your email address"),
         recipients=[useremail.email])
-    msg.body = render_template("emailverify.md", useremail=useremail)
+    msg.body = render_template('emailverify.md', useremail=useremail)
     msg.html = markdown(msg.body)
     mail.send(msg)
 
 
 def send_password_reset_link(email, user, secret):
-    msg = Message(subject="Reset your password",
+    msg = Message(subject=_("Reset your password"),
         recipients=[email])
-    msg.body = render_template("emailreset.md", user=user, secret=secret)
+    msg.body = render_template('emailreset.md', user=user, secret=secret)
     msg.html = markdown(msg.body)
     mail.send(msg)

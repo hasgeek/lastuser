@@ -11,6 +11,7 @@ import requests
 # from urllib import urlencode
 
 from flask import current_app, flash, request
+from baseframe import _
 from lastuser_core.models import db, SMSMessage, SMS_STATUS
 from .. import lastuser_ui
 
@@ -21,10 +22,10 @@ SMSGUPSHUP_TIMEZONE = timezone('Asia/Kolkata')
 def send_message(msg):
     if msg.phone_number.startswith('+91'):  # Indian number. Use Exotel
         if len(msg.phone_number) != 13:
-            raise ValueError("Invalid Indian mobile number")
+            raise ValueError(_("Invalid Indian mobile number"))
         # All okay. Send!
         if not (current_app.config.get('SMS_EXOTEL_SID') and current_app.config.get('SMS_EXOTEL_TOKEN')):
-            raise ValueError("This server is not configured to send SMS")
+            raise ValueError(_("This server is not configured to send SMS"))
         else:
             sid = current_app.config['SMS_EXOTEL_SID']
             token = current_app.config['SMS_EXOTEL_TOKEN']
@@ -45,9 +46,9 @@ def send_message(msg):
                         msg.transaction_id = jsonresponse.get('SMSMessage', {}).get('Sid')
                 else:
                     # FIXME: This function should not be sending messages to the UI
-                    flash("Message could not be sent", 'danger')
+                    flash(_("Message could not be sent"), 'danger')
             except requests.ConnectionError:
-                flash("The SMS delivery engine is not reachable at the moment. Please try again", 'danger')
+                flash(_("The SMS delivery engine is not reachable at the moment. Please try again"), 'danger')
 
         # # TODO: Also check if we have SMS GupShup credentials in settings.py
         # params = urlencode(dict(
@@ -73,7 +74,7 @@ def send_message(msg):
         #     flash("Message could not be sent. Error: %s" % e)
     else:
         # Unsupported at this time
-        raise ValueError("Unsupported phone number")
+        raise ValueError(_("Unsupported phone number"))
 
 
 def send_phone_verify_code(phoneclaim):
@@ -95,9 +96,9 @@ def report_smsgupshup():
     # Find a corresponding message and ensure the parameters match
     msg = SMSMessage.query.filter_by(transaction_id=externalId).first()
     if not msg:
-        return "No such message", 404
+        return _("No such message"), 404
     elif msg.phone_number != '+' + phoneNo:
-        return "Incorrect phone number", 404
+        return _("Incorrect phone number"), 404
     else:
         if status == 'SUCCESS':
             msg.status = SMS_STATUS.DELIVERED
@@ -113,4 +114,4 @@ def report_smsgupshup():
         local_status_at = datetime.fromtimestamp(deliveredTS)
         msg.status_at = local_status_at - SMSGUPSHUP_TIMEZONE.utcoffset(local_status_at)
     db.session.commit()
-    return "Status updated"
+    return _("Status updated")

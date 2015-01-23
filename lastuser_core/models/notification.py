@@ -49,7 +49,7 @@ class NOTIFICATION_FREQUENCY(LabeledEnum):
 
 class Channel(object):
     name = u''
-    title = u''
+    title = u""
     flags = []
 
     delivery_flag = False
@@ -59,7 +59,7 @@ class Channel(object):
 
 class ChannelBrowser(Channel):
     name = u'browser'
-    title = __(u'In app')
+    title = __(u"In app")
     flags = [NOTIFICATION_FLAGS.DELIVERY, NOTIFICATION_FLAGS.READ]
 
     delivery_flag = True
@@ -69,7 +69,7 @@ class ChannelBrowser(Channel):
 
 class ChannelEmail(Channel):
     name = u'email'
-    title = __(u'Email')
+    title = __(u"Email")
     flags = [NOTIFICATION_FLAGS.BOUNCE, NOTIFICATION_FLAGS.READ]
 
     delivery_flag = False
@@ -79,7 +79,7 @@ class ChannelEmail(Channel):
 
 class ChannelTwitter(Channel):
     name = u'twitter'
-    title = __(u'Twitter')
+    title = __(u"Twitter")
     flags = [NOTIFICATION_FLAGS.DELIVERY, NOTIFICATION_FLAGS.BOUNCE]
 
     delivery_flag = True

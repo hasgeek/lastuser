@@ -6,6 +6,7 @@ from httplib import BadStatusLine
 from ssl import SSLError
 from socket import error as socket_error, gaierror
 from flask.ext.oauth import OAuth, OAuthException  # OAuth 1.0a
+from baseframe import _
 from lastuser_core.registry import LoginProvider, LoginInitError, LoginCallbackError
 
 __all__ = ['TwitterProvider']
@@ -57,7 +58,7 @@ class TwitterProvider(LoginProvider):
 
     def unwrapped_callback(self, resp):
         if resp is None:
-            raise LoginCallbackError("You denied the request to login")
+            raise LoginCallbackError(_("You denied the request to login"))
 
         # Try to read more from the user's Twitter profile
         auth = TwitterOAuthHandler(self.consumer_key, self.consumer_secret)

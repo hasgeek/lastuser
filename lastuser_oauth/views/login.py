@@ -7,6 +7,7 @@ from flask import g, current_app, redirect, request, flash, render_template, url
 from flask.ext.openid import OpenID
 from coaster.utils import getbool
 from coaster.views import get_next_url, load_model
+from baseframe import _, __
 from baseframe.forms import render_form, render_message, render_redirect
 
 from lastuser_core import login_registry
@@ -51,7 +52,7 @@ def login():
                 user = loginform.user
                 login_internal(user)
                 db.session.commit()
-                flash('You are now logged in', category='success')
+                flash(_("You are now logged in"), category='success')
                 return set_loginmethod_cookie(render_redirect(get_next_url(session=True), code=303),
                     'password')
         except LoginPasswordResetException:
@@ -69,7 +70,7 @@ def login():
             service_forms=service_forms, Markup=Markup, login_registry=login_registry)
 
 
-logout_errormsg = ("We detected a possibly unauthorized attempt to log you out. "
+logout_errormsg = __("We detected a possibly unauthorized attempt to log you out. "
     "If you really did intend to logout, please click on the logout link again")
 
 
@@ -84,7 +85,7 @@ def logout_user():
     else:
         logout_internal()
         db.session.commit()
-        flash('You are now logged out', category='info')
+        flash(_("You are now logged out"), category='info')
         return redirect(get_next_url())
 
 
@@ -155,9 +156,9 @@ def register():
         send_email_verify_link(useremail)
         login_internal(user)
         db.session.commit()
-        flash("You are now one of us. Welcome aboard!", category='success')
+        flash(_("You are now one of us. Welcome aboard!"), category='success')
         return redirect(get_next_url(session=True), code=303)
-    return render_form(form=form, title='Create an account', formid='register', submit='Register',
+    return render_form(form=form, title=_("Create an account"), formid='register', submit=_("Register"),
         message=current_app.config.get('CREATE_ACCOUNT_MESSAGE'))
 
 
@@ -167,8 +168,8 @@ def reset():
     # Ask for username or email, verify it, and send a reset code
     form = PasswordResetRequestForm()
     if getbool(request.args.get('expired')):
-        message = (u"Your password has expired. Please enter your username "
-            "or email address to request a reset code to set a new password")
+        message = _(u"Your password has expired. Please enter your username "
+            "or email address to request a reset code and set a new password")
     else:
         message = None
 
@@ -190,30 +191,30 @@ def reset():
             # and set a local username and password, but no email. Could happen.
             if len(user.externalids) > 0:
                 extid = user.externalids[0]
-                return render_message(title="Cannot reset password", message=Markup(u"""
+                return render_message(title=_("Cannot reset password"), message=Markup(_(u"""
                     We do not have an email address for your account. However, your account
                     is linked to <strong>{service}</strong> with the id <strong>{username}</strong>.
                     You can use that to login.
-                    """.format(service=login_registry[extid.service].title, username=extid.username or extid.userid)))
+                    """).format(service=login_registry[extid.service].title, username=extid.username or extid.userid)))
             else:
-                return render_message(title="Cannot reset password", message=Markup(
+                return render_message(title=_("Cannot reset password"), message=Markup(_(
                     u"""
                     We do not have an email address for your account and therefore cannot
                     email you a reset link. Please contact
                     <a href="mailto:{email}">{email}</a> for assistance.
-                    """.format(email=escape(current_app.config['SITE_SUPPORT_EMAIL']))))
+                    """).format(email=escape(current_app.config['SITE_SUPPORT_EMAIL']))))
         resetreq = PasswordResetRequest(user=user)
         db.session.add(resetreq)
         send_password_reset_link(email=email, user=user, secret=resetreq.reset_code)
         db.session.commit()
-        return render_message(title="Reset password", message=u"""
+        return render_message(title=_("Reset password"), message=_(u"""
             We sent you an email with a link to reset your password.
             Please check your email. If it doesn’t arrive in a few minutes,
             it may have landed in your spam or junk folder.
             The reset link is valid for 24 hours.
-            """)
+            """))
 
-    return render_form(form=form, title="Reset password", message=message, submit="Send reset code", ajax=False)
+    return render_form(form=form, title=_("Reset password"), message=message, submit=_("Send reset code"), ajax=False)
 
 
 @lastuser_oauth.route('/reset/<userid>/<secret>', methods=['GET', 'POST'])
@@ -221,14 +222,14 @@ def reset():
 def reset_email(user, kwargs):
     resetreq = PasswordResetRequest.query.filter_by(user=user, reset_code=kwargs['secret']).first()
     if not resetreq:
-        return render_message(title="Invalid reset link",
-            message=u"The reset link you clicked on is invalid")
+        return render_message(title=_("Invalid reset link"),
+            message=_(u"The reset link you clicked on is invalid"))
     if resetreq.created_at < datetime.utcnow() - timedelta(days=1):
         # Reset code has expired (> 24 hours). Delete it
         db.session.delete(resetreq)
         db.session.commit()
-        return render_message(title="Expired reset link",
-            message=u"The reset link you clicked on has expired")
+        return render_message(title=_("Expired reset link"),
+            message=_(u"The reset link you clicked on has expired"))
 
     # Logout *after* validating the reset request to prevent DoS attacks on the user
     logout_internal()
@@ -240,10 +241,10 @@ def reset_email(user, kwargs):
         user.password = form.password.data
         db.session.delete(resetreq)
         db.session.commit()
-        return render_message(title="Password reset complete", message=Markup(
-            u'Your password has been reset. You may now <a href="{loginurl}">login</a> with your new password.'.format(
+        return render_message(title=_("Password reset complete"), message=Markup(
+            _(u"Your password has been reset. You may now <a href=\"{loginurl}\">login</a> with your new password.").format(
                 loginurl=escape(url_for('.login')))))
-    return render_form(form=form, title="Reset password", formid='reset', submit="Reset password",
-        message=Markup(u'Hello, <strong>{fullname}</strong>. You may now choose a new password.'.format(
+    return render_form(form=form, title=_("Reset password"), formid='reset', submit=_("Reset password"),
+        message=Markup(_(u"Hello, <strong>{fullname}</strong>. You may now choose a new password.").format(
             fullname=escape(user.fullname))),
         ajax=True)

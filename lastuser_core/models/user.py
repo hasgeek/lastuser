@@ -10,6 +10,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
 from coaster.utils import buid, newsecret, newpin, valid_username
 from coaster.sqlalchemy import Query as CoasterQuery, make_timestamp_columns
+from baseframe import _
 
 from . import db, TimestampMixin, BaseMixin
 
@@ -452,9 +453,9 @@ class Organization(BaseMixin, db.Model):
 
     def make_teams(self):
         if self.owners is None:
-            self.owners = Team(title=u"Owners", org=self)
+            self.owners = Team(title=_(u"Owners"), org=self)
         if self.members is None:
-            self.members = Team(title=u"Members", org=self)
+            self.members = Team(title=_(u"Members"), org=self)
 
     @property
     def domain(self):
@@ -990,7 +991,7 @@ class UserExternalId(BaseMixin, db.Model):
     oauth_token_secret = db.Column(db.String(250), nullable=True)
     oauth_token_type = db.Column(db.String(250), nullable=True)
 
-    __table_args__ = (db.UniqueConstraint("service", "userid"), {})
+    __table_args__ = (db.UniqueConstraint('service', 'userid'), {})
 
     def __repr__(self):
         return u'<UserExternalId {service}:{username} of {user}>'.format(

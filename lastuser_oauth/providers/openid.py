@@ -5,6 +5,7 @@ from __future__ import absolute_import
 from flask import Markup, session
 import wtforms
 import wtforms.fields.html5
+from baseframe import _, __
 from baseframe.forms import Form
 from lastuser_core.registry import LoginProvider, LoginInitError
 from ..views.login import oid
@@ -14,8 +15,9 @@ __all__ = ['OpenIdProvider']
 
 
 class OpenIdForm(Form):
-    openid = wtforms.fields.html5.URLField('Login with OpenID', validators=[wtforms.validators.Required()], default='http://',
-        description=Markup("Don't forget the <code>http://</code> or <code>https://</code> prefix"))
+    openid = wtforms.fields.html5.URLField(__("Login with OpenID"), validators=[wtforms.validators.Required()],
+        default='http://',
+        description=Markup(__("Don't forget the <code>http://</code> or <code>https://</code> prefix")))
 
 
 class OpenIdProvider(LoginProvider):
@@ -33,7 +35,7 @@ class OpenIdProvider(LoginProvider):
             session['openid_service'] = self.name
             return oid.try_login(form.openid.data,
                 ask_for=['email', 'fullname', 'nickname'])
-        raise LoginInitError("OpenID URL is invalid")
+        raise LoginInitError(_("OpenID URL is invalid"))
 
 
 @oid.after_login
