@@ -7,7 +7,7 @@ from urllib import unquote
 from pytz import common_timezones
 from flask import g, current_app, request, session, flash, redirect, url_for, Response
 from coaster.views import get_current_url
-from lastuser_core.models import db, User, Client, ClientCredential, UserSession
+from lastuser_core.models import db, User, ClientCredential, UserSession
 from lastuser_core.signals import user_login, user_logout, user_registered
 from .. import lastuser_oauth
 
