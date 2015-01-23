@@ -138,11 +138,11 @@ def requires_login_no_message(f):
 
 def _client_login_inner():
     if request.authorization is None or not request.authorization.username:
-        return Response(u"Client credentials required.", 401,
+        return Response(u"Client credentials required", 401,
             {'WWW-Authenticate': 'Basic realm="Client credentials"'})
     credential = ClientCredential.get(name=request.authorization.username)
     if credential is None or not credential.secret_is(request.authorization.password):
-        return Response(u"Invalid client credentials.", 401,
+        return Response(u"Invalid client credentials", 401,
             {'WWW-Authenticate': 'Basic realm="Client credentials"'})
     if credential:
         credential.accessed_at = datetime.utcnow()

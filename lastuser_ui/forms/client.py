@@ -52,7 +52,7 @@ class RegisterClientForm(Form):
     notification_uri = wtforms.fields.html5.URLField("Notification URL",
         validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
         description="When the user's data changes, Lastuser will POST a notice to this URL. "
-        "Other notices may be posted too.")
+        "Other notices may be posted too")
     iframe_uri = wtforms.fields.html5.URLField("IFrame URL",
         validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
         description="Front-end notifications URL. This is loaded in a hidden iframe to notify the app that the "
@@ -215,7 +215,7 @@ class ResourceForm(Form):
     name = wtforms.TextField("Resource name", validators=[wtforms.validators.Required()],
         description="Name of the resource as a single word in lower case. "
         "This is provided by applications as part of the scope "
-        "when requesting access to a user's resources.")
+        "when requesting access to a user's resources")
     title = wtforms.TextField("Title", validators=[wtforms.validators.Required()],
         description="Resource title that is displayed to users")
     description = wtforms.TextAreaField("Description",
@@ -229,7 +229,7 @@ class ResourceForm(Form):
 
     def validate_name(self, field):
         if not valid_username(field.data):
-            raise wtforms.ValidationError("Name contains invalid characters.")
+            raise wtforms.ValidationError("Name contains invalid characters")
 
         if field.data in resource_registry:
             raise wtforms.ValidationError("This name is reserved for internal use")
@@ -248,7 +248,7 @@ class ResourceActionForm(Form):
         "This is provided by applications as part of the scope in the form "
         "'resource/action' when requesting access to a user's resources. "
         "Read actions are implicit when applications request just 'resource' "
-        "in the scope and do not need to be specified as an explicit action.")
+        "in the scope and do not need to be specified as an explicit action")
     title = wtforms.TextField("Title", validators=[wtforms.validators.Required()],
         description="Action title that is displayed to users")
     description = wtforms.TextAreaField("Description",
@@ -256,7 +256,7 @@ class ResourceActionForm(Form):
 
     def validate_name(self, field):
         if not valid_username(field.data):
-            raise wtforms.ValidationError("Name contains invalid characters.")
+            raise wtforms.ValidationError("Name contains invalid characters")
 
         existing = self.edit_resource.get_action(field.data)
         if existing and existing.id != self.edit_id:

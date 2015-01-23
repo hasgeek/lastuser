@@ -84,7 +84,7 @@ def org_delete(org):
     return render_delete_sqla(org, db, title=u"Confirm delete",
         message=u"Delete organization ‘{title}’? ".format(
             title=org.title),
-        success=u"You have deleted organization ‘{title}’ and all its associated teams.".format(title=org.title),
+        success=u"You have deleted organization ‘{title}’ and all its associated teams".format(title=org.title),
         next=url_for('.org_list'))
 
 
@@ -150,5 +150,5 @@ def team_delete(org, team):
     if request.method == 'POST':
         team_data_changed.send(team, changes=['delete'], user=g.user)
     return render_delete_sqla(team, db, title=u"Confirm delete", message=u"Delete team {title}?".format(title=team.title),
-        success=u"You have deleted team ‘{team}’ from organization ‘{org}’.".format(team=team.title, org=org.title),
+        success=u"You have deleted team ‘{team}’ from organization ‘{org}’".format(team=team.title, org=org.title),
         next=url_for('.org_info', name=org.name))

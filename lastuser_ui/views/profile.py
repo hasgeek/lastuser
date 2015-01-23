@@ -33,7 +33,7 @@ def change_password():
     if form.validate_on_submit():
         g.user.password = form.password.data
         db.session.commit()
-        flash("Your new password has been saved.", category='success')
+        flash("Your new password has been saved", category='success')
         return render_redirect(url_for('.profile'), code=303)
     return render_form(form=form, title="Change password", formid="changepassword", submit="Change password", ajax=True)
 
@@ -49,7 +49,7 @@ def add_email():
             db.session.add(useremail)
             db.session.commit()
         send_email_verify_link(useremail)
-        flash("We sent you an email to confirm your address.", 'success')
+        flash("We sent you an email to confirm your address", 'success')
         user_data_changed.send(g.user, changes=['email-claim'])
         return render_redirect(url_for('.profile'), code=303)
     return render_form(form=form, title="Add an email address", formid="email_add", submit="Add email", ajax=True)
@@ -70,7 +70,7 @@ def remove_email(md5sum):
     return render_delete_sqla(useremail, db, title=u"Confirm removal",
         message=u"Remove email address {email}?".format(
             email=useremail.email),
-        success=u"You have removed your email address {email}.".format(email=useremail.email),
+        success=u"You have removed your email address {email}".format(email=useremail.email),
         next=url_for('.profile'))
 
 
@@ -85,7 +85,7 @@ def add_phone():
             db.session.add(userphone)
         send_phone_verify_code(userphone)
         db.session.commit()  # Commit after sending because send_phone_verify_code saves the message sent
-        flash("We sent a verification code to your phone number.", 'success')
+        flash("We sent a verification code to your phone number", 'success')
         user_data_changed.send(g.user, changes=['phone-claim'])
         return render_redirect(url_for('.verify_phone', number=userphone.phone), code=303)
     return render_form(form=form, title="Add a phone number", formid="phone_add", submit="Add phone", ajax=True)
@@ -103,7 +103,7 @@ def remove_phone(number):
     return render_delete_sqla(userphone, db, title=u"Confirm removal",
         message=u"Remove phone number {phone}?".format(
             phone=userphone.phone),
-        success=u"You have removed your number {phone}.".format(phone=userphone.phone),
+        success=u"You have removed your number {phone}".format(phone=userphone.phone),
         next=url_for('.profile'))
 
 
@@ -123,11 +123,11 @@ def verify_phone(phoneclaim):
             db.session.add(userphone)
             db.session.delete(phoneclaim)
             db.session.commit()
-            flash("Your phone number has been verified.", 'success')
+            flash("Your phone number has been verified", 'success')
             user_data_changed.send(g.user, changes=['phone'])
             return render_redirect(url_for('.profile'), code=303)
         else:
             db.session.delete(phoneclaim)
             db.session.commit()
-            flash("This phone number has already been claimed by another user.", 'danger')
+            flash("This phone number has already been claimed by another user", 'danger')
     return render_form(form=form, title="Verify phone number", formid="phone_verify", submit="Verify", ajax=True)

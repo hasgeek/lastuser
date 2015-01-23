@@ -303,7 +303,7 @@ class ScopeMixin(object):
 
 
 class AuthCode(ScopeMixin, BaseMixin, db.Model):
-    """Short-lived authorization tokens."""
+    """Short-lived authorization tokens"""
     __tablename__ = 'authcode'
     __bind_key__ = 'lastuser'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -324,7 +324,7 @@ class AuthCode(ScopeMixin, BaseMixin, db.Model):
 
 
 class AuthToken(ScopeMixin, BaseMixin, db.Model):
-    """Access tokens for access to data."""
+    """Access tokens for access to data"""
     __tablename__ = 'authtoken'
     __bind_key__ = 'lastuser'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Null for client-only tokens

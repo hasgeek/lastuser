@@ -144,7 +144,7 @@ def login_service_postcallback(service, userdata):
 
     if not g.user:  # If a user isn't already logged in, login now.
         login_internal(user)
-        flash(u"You have logged in via {service}.".format(service=login_registry[service].title), 'success')
+        flash(u"You have logged in via {service}".format(service=login_registry[service].title), 'success')
     next_url = get_next_url(session=True)
 
     db.session.commit()
@@ -176,7 +176,7 @@ def profile_merge():
             new_user = merge_users(g.user, other_user)
             login_internal(new_user)
             user_data_changed.send(new_user, changes=['merge'])
-            flash("Your accounts have been merged.", 'success')
+            flash("Your accounts have been merged", 'success')
             session.pop('merge_userid', None)
             db.session.commit()
             return redirect(get_next_url(), code=303)

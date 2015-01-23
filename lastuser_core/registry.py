@@ -55,19 +55,19 @@ class ResourceRegistry(OrderedDict):
                         token = token_match.group(1)
                     else:
                         # Unrecognized Authorization header
-                        return resource_auth_error(u"A Bearer token is required in the Authorization header.")
+                        return resource_auth_error(u"A Bearer token is required in the Authorization header")
                     if 'access_token' in args:
-                        return resource_auth_error(u"Access token specified in both header and body.")
+                        return resource_auth_error(u"Access token specified in both header and body")
                 else:
                     token = args.get('access_token')
                     if not token:
                         # No token provided in Authorization header or in request parameters
-                        return resource_auth_error(u"An access token is required to access this resource.")
+                        return resource_auth_error(u"An access token is required to access this resource")
                 authtoken = AuthToken.get(token=token)
                 if not authtoken:
-                    return resource_auth_error(u"Unknown access token.")
+                    return resource_auth_error(u"Unknown access token")
                 if not authtoken.is_valid():
-                    return resource_auth_error(u"Access token has expired.")
+                    return resource_auth_error(u"Access token has expired")
 
                 tokenscope = set(authtoken.scope)  # Read once to avoid reparsing below
                 wildcardscope = usescope.split('/', 1)[0] + '/*'
@@ -75,9 +75,9 @@ class ResourceRegistry(OrderedDict):
                     # If a trusted client has '*' in token scope, all good, else check further
                     if (usescope not in tokenscope) and (wildcardscope not in tokenscope):
                         # Client doesn't have access to this scope either directly or via a wildcard
-                        return resource_auth_error(u"Token does not provide access to this resource.")
+                        return resource_auth_error(u"Token does not provide access to this resource")
                 if trusted and not authtoken.client.trusted:
-                    return resource_auth_error(u"This resource can only be accessed by trusted clients.")
+                    return resource_auth_error(u"This resource can only be accessed by trusted clients")
                 # All good. Return the result value
                 try:
                     result = f(authtoken, args, request.files)
@@ -109,7 +109,7 @@ class LoginProviderRegistry(OrderedDict):
     """Registry of login providers"""
 
     def at_username_services(self):
-        """Services which typically use @username addressing."""
+        """Services which typically use @username addressing"""
         return [key for key in self if self[key].at_username]
 
     def __setitem__(self, key, value):

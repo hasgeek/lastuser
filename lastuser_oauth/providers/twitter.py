@@ -69,7 +69,7 @@ class TwitterProvider(LoginProvider):
         try:
             twinfo = api.lookup_users(user_ids=[resp['user_id']])[0]
             fullname = twinfo.name
-            avatar_url = twinfo.profile_image_url_https.replace("_normal.", "_bigger.")
+            avatar_url = twinfo.profile_image_url_https.replace('_normal.', '_bigger.')
         except TweepError:
             fullname = None
             avatar_url = None

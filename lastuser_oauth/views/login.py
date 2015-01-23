@@ -222,13 +222,13 @@ def reset_email(user, kwargs):
     resetreq = PasswordResetRequest.query.filter_by(user=user, reset_code=kwargs['secret']).first()
     if not resetreq:
         return render_message(title="Invalid reset link",
-            message=u"The reset link you clicked on is invalid.")
+            message=u"The reset link you clicked on is invalid")
     if resetreq.created_at < datetime.utcnow() - timedelta(days=1):
         # Reset code has expired (> 24 hours). Delete it
         db.session.delete(resetreq)
         db.session.commit()
         return render_message(title="Expired reset link",
-            message=u"The reset link you clicked on has expired.")
+            message=u"The reset link you clicked on has expired")
 
     # Logout *after* validating the reset request to prevent DoS attacks on the user
     logout_internal()

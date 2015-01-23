@@ -642,7 +642,7 @@ class OwnerMixin(object):
     """
     @property
     def owner(self):
-        """The owner of this object."""
+        """The owner of this object"""
         return self.user or self.org or self.team
 
     @owner.setter

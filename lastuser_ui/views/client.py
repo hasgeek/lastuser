@@ -477,6 +477,6 @@ def client_team_access(client):
             cta = ClientTeamAccess(org=org, client=client, access_level=CLIENT_TEAM_ACCESS.ALL)
             db.session.add(cta)
         db.session.commit()
-        flash("You have assigned access to teams in your organizations for this app.", 'success')
+        flash("You have assigned access to teams in your organizations for this app", 'success')
         return render_redirect(url_for('.client_info', key=client.key), code=303)
     return render_form(form=form, title="Select organizations", submit="Save", ajax=True)
