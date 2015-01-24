@@ -176,15 +176,10 @@ class UserPermissionAssignForm(Form):
     """
     Assign permissions to a user
     """
-    username = UserSelectField(__("User"), validators=[wtforms.validators.Required()],
+    user = UserSelectField(__("User"), validators=[wtforms.validators.Required()],
         description=__("Lookup a user by their username or email address"), lastuser=None, usermodel=User)
     perms = wtforms.SelectMultipleField(__("Permissions"), validators=[wtforms.validators.Required()])
 
-    def validate_username(self, field):
-        existing = getuser(field.data.name)
-        if existing is None:
-            raise wtforms.ValidationError("User does not exist")
-        self.user = existing
 
 
 class TeamPermissionAssignForm(Form):

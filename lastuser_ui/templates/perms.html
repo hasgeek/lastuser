@@ -12,7 +12,7 @@
   <script type="text/javascript">
     $(function(){
       Baseframe.Forms.lastuserAutocomplete({
-        id: "username",
+        id: "user",
         multiple: false,
         autocomplete_endpoint: "{{ url_for('lastuser_oauth.user_autocomplete') }}",
         getuser_endpoint: "{{ url_for('lastuser_oauth.user_get_by_userids') }}"
