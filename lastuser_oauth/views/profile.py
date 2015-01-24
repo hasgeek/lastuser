@@ -2,6 +2,7 @@
 
 from flask import g, current_app, flash, url_for, Markup, escape
 from coaster.views import get_next_url
+from baseframe import _
 from baseframe.forms import render_form, render_redirect, render_message
 
 from lastuser_core.models import db, UserEmail, UserEmailClaim
@@ -39,23 +40,23 @@ def profile_edit(newprofile=False):
             send_email_verify_link(useremail)
             db.session.commit()
             user_data_changed.send(g.user, changes=['profile', 'email-claim'])
-            flash("Your profile has been updated. We sent you an email to confirm your address", category='success')
+            flash(_("Your profile has been updated. We sent you an email to confirm your address"), category='success')
         else:
             db.session.commit()
             user_data_changed.send(g.user, changes=['profile'])
-            flash("Your profile has been updated.", category='success')
+            flash(_("Your profile has been updated"), category='success')
 
         if newprofile:
             return render_redirect(get_next_url(), code=303)
         else:
             return render_redirect(url_for('profile'), code=303)
     if newprofile:
-        return render_form(form, title="Update profile", formid="profile_new", submit="Continue",
-            message=Markup(u"Hello, <strong>{fullname}</strong>. Please spare a minute to fill out your profile.".format(
+        return render_form(form, title=_("Update profile"), formid='profile_new', submit=_("Continue"),
+            message=Markup(_(u"Hello, <strong>{fullname}</strong>. Please spare a minute to fill out your profile").format(
                 fullname=escape(g.user.fullname))),
             ajax=True)
     else:
-        return render_form(form, title="Edit profile", formid="profile_edit", submit="Save changes", ajax=True)
+        return render_form(form, title=_("Edit profile"), formid='profile_edit', submit=_("Save changes"), ajax=True)
 
 
 # FIXME: Don't modify db on GET. Autosubmit via JS and process on POST
@@ -72,35 +73,39 @@ def confirm_email(md5sum, secret):
                 db.session.delete(emailclaim)
                 db.session.commit()
                 if claimed_user != g.user:
-                    return render_message(title="Email address already claimed",
+                    return render_message(title=_("Email address already claimed"),
                         message=Markup(
-                            u"The email address <code>{email}</code> has already been verified by another user.".format(
+                            _(u"The email address <code>{email}</code> has already been verified by another user").format(
                                 email=escape(claimed_email))))
                 else:
-                    return render_message(title="Email address already verified",
-                        message=Markup(u"Hello <strong>{fullname}</strong>! "
-                            u"Your email address <code>{email}</code> has already been verified.".format(
+                    return render_message(title=_("Email address already verified"),
+                        message=Markup(_(u"Hello <strong>{fullname}</strong>! "
+                            u"Your email address <code>{email}</code> has already been verified").format(
                                 fullname=escape(claimed_user.fullname), email=escape(claimed_email))))
 
-            useremail = emailclaim.user.add_email(emailclaim.email.lower(), primary=emailclaim.user.email is None)
+            useremail = emailclaim.user.add_email(emailclaim.email.lower(),
+                primary=emailclaim.user.email is None,
+                type=emailclaim.type,
+                private=emailclaim.private)
             db.session.delete(emailclaim)
-            for claim in UserEmailClaim.query.filter(UserEmailClaim.email.in_([useremail.email, useremail.email.lower()])).all():
+            for claim in UserEmailClaim.query.filter(
+                    UserEmailClaim.email.in_([useremail.email, useremail.email.lower()])).all():
                 db.session.delete(claim)
             db.session.commit()
             user_data_changed.send(g.user, changes=['email'])
-            return render_message(title="Email address verified",
-                message=Markup(u"Hello <strong>{fullname}</strong>! "
-                    u"Your email address <code>{email}</code> has now been verified.".format(
+            return render_message(title=_("Email address verified"),
+                message=Markup(_(u"Hello <strong>{fullname}</strong>! "
+                    u"Your email address <code>{email}</code> has now been verified").format(
                         fullname=escape(emailclaim.user.fullname), email=escape(useremail.email))))
         else:
             return render_message(
-                title="This was not for you",
-                message=u"You’ve opened an email verification link that was meant for another user. "
+                title=_("This was not for you"),
+                message=_(u"You’ve opened an email verification link that was meant for another user. "
                         u"If you are managing multiple accounts, please login with the correct account "
-                        u"and open the link again.",
+                        u"and open the link again"),
                 code=403)
     else:
         return render_message(
-            title="Expired confirmation link",
-            message=u"The confirmation link you clicked on is either invalid or has expired.",
+            title=_("Expired confirmation link"),
+            message=_(u"The confirmation link you clicked on is either invalid or has expired"),
             code=404)

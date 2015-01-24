@@ -5,52 +5,59 @@ import wtforms
 import wtforms.fields.html5
 import flask.ext.wtf as wtf
 from coaster.utils import valid_username
+from baseframe import _, __
 from baseframe.forms import Form
 
 from lastuser_core.models import User, UserEmail, getuser
 
 
+class LoginPasswordResetException(Exception):
+    pass
+
+
 class LoginForm(Form):
-    username = wtforms.TextField('Username or Email', validators=[wtforms.validators.Required()])
-    password = wtforms.PasswordField('Password', validators=[wtforms.validators.Required()])
+    username = wtforms.TextField(__("Username or Email"), validators=[wtforms.validators.Required()])
+    password = wtforms.PasswordField(__("Password"), validators=[wtforms.validators.Required()])
 
     def validate_username(self, field):
         existing = getuser(field.data)
         if existing is None:
-            raise wtforms.ValidationError("User does not exist")
+            raise wtforms.ValidationError(_("User does not exist"))
 
     def validate_password(self, field):
         user = getuser(self.username.data)
+        if user and not user.pw_hash:
+            raise LoginPasswordResetException()
         if user is None or not user.password_is(field.data):
             if not self.username.errors:
-                raise wtforms.ValidationError("Incorrect password")
+                raise wtforms.ValidationError(_("Incorrect password"))
         self.user = user
 
 
 class RegisterForm(Form):
-    fullname = wtforms.TextField('Full name', validators=[wtforms.validators.Required()])
-    email = wtforms.fields.html5.EmailField('Email address', validators=[wtforms.validators.Required(), wtforms.validators.Email()])
-    username = wtforms.TextField('Username', validators=[wtforms.validators.Required()],
-        description="Single word that can contain letters, numbers and dashes")
-    password = wtforms.PasswordField('Password', validators=[wtforms.validators.Required()])
-    confirm_password = wtforms.PasswordField('Confirm password',
+    fullname = wtforms.TextField(__("Full name"), validators=[wtforms.validators.Required()])
+    email = wtforms.fields.html5.EmailField(__("Email address"), validators=[wtforms.validators.Required(), wtforms.validators.Email()])
+    username = wtforms.TextField(__("Username"), validators=[wtforms.validators.Required()],
+        description=__("Single word that can contain letters, numbers and dashes"))
+    password = wtforms.PasswordField(__("Password"), validators=[wtforms.validators.Required()])
+    confirm_password = wtforms.PasswordField(__("Confirm password"),
                           validators=[wtforms.validators.Required(), wtforms.validators.EqualTo('password')])
-    recaptcha = wtf.RecaptchaField('Are you human?',
-        description="Type both words into the text box to prove that you are a human and not a computer program")
+    recaptcha = wtf.RecaptchaField(__("Are you human?"),
+        description=__("Type both words into the text box to prove that you are a human and not a computer program"))
 
     def validate_username(self, field):
         if field.data in current_app.config['RESERVED_USERNAMES']:
-            raise wtforms.ValidationError, "This name is reserved"
+            raise wtforms.ValidationError, _("This name is reserved")
         if not valid_username(field.data):
-            raise wtforms.ValidationError(u"Invalid characters in name. Names must be made of ‘a-z’, ‘0-9’ and ‘-’, without trailing dashes")
+            raise wtforms.ValidationError(_(u"Invalid characters in name. Names must be made of ‘a-z’, ‘0-9’ and ‘-’, without trailing dashes"))
         existing = User.get(username=field.data)
         if existing is not None:
-            raise wtforms.ValidationError("This username is taken")
+            raise wtforms.ValidationError(_("This username is taken"))
 
     def validate_email(self, field):
         field.data = field.data.lower()  # Convert to lowercase
         existing = UserEmail.get(email=field.data)
         if existing is not None:
             raise wtforms.ValidationError(Markup(
-                u'This email address is already registered. Do you want to <a href="{loginurl}">login</a> instead?'.format(
+                _(u"This email address is already registered. Do you want to <a href=\"{loginurl}\">login</a> instead?").format(
                     loginurl=escape(url_for('.login')))))

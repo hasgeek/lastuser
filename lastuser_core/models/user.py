@@ -10,6 +10,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
 from coaster.utils import buid, newsecret, newpin, valid_username
 from coaster.sqlalchemy import Query as CoasterQuery, make_timestamp_columns
+from baseframe import _
 
 from . import db, TimestampMixin, BaseMixin
 
@@ -166,13 +167,17 @@ class User(BaseMixin, db.Model):
         else:
             return self.fullname
 
-    def add_email(self, email, primary=False):
+    def add_email(self, email, primary=False, type=None, private=False):
         if primary:
             for emailob in self.emails:
                 if emailob.primary:
                     emailob.primary = False
-        useremail = UserEmail(user=self, email=email, primary=primary)
+        useremail = UserEmail(user=self, email=email, primary=primary, type=type, private=private)
         db.session.add(useremail)
+        with db.session.no_autoflush:
+            for team in Team.query.filter_by(domain=useremail.domain):
+                if self not in team.users:
+                    team.users.append(self)
         return useremail
 
     def del_email(self, email):
@@ -249,6 +254,20 @@ class User(BaseMixin, db.Model):
         for database queries.
         """
         return list(set([team.org.id for team in self.teams if team.org.owners == team]))
+
+    def organizations_memberof(self):
+        """
+        Return the organizations this user is an owner of.
+        """
+        return sorted(set([team.org for team in self.teams if team.org.members == team]),
+            key=lambda o: o.title)
+
+    def organizations_memberof_ids(self):
+        """
+        Return the database ids of the organizations this user is an owner of. This is used
+        for database queries.
+        """
+        return list(set([team.org.id for team in self.teams if team.org.members == team]))
 
     def is_profile_complete(self):
         """
@@ -404,8 +423,12 @@ class Organization(BaseMixin, db.Model):
     # a circular dependency. The post_update flag on the relationship tackles the circular
     # dependency within SQLAlchemy.
     owners_id = db.Column(None, db.ForeignKey('team.id',
-        use_alter=True, name='fk_organization_owners_id'), nullable=True)
+        use_alter=True, name='organization_owners_id_fkey'), nullable=True)
     owners = db.relationship('Team', primaryjoin='Organization.owners_id == Team.id',
+        uselist=False, cascade='all', post_update=True)  # No delete-orphan cascade here
+    members_id = db.Column(None, db.ForeignKey('team.id',
+        use_alter=True, name='organization_members_id_fkey'), nullable=True)
+    members = db.relationship('Team', primaryjoin='Organization.members_id == Team.id',
         uselist=False, cascade='all', post_update=True)  # No delete-orphan cascade here
     userid = db.Column(db.String(22), unique=True, nullable=False, default=buid)
     _name = db.Column('name', db.Unicode(80), unique=True, nullable=True)
@@ -426,8 +449,33 @@ class Organization(BaseMixin, db.Model):
 
     def __init__(self, *args, **kwargs):
         super(Organization, self).__init__(*args, **kwargs)
+        self.make_teams()
+
+    def make_teams(self):
         if self.owners is None:
-            self.owners = Team(title=u"Owners", org=self)
+            self.owners = Team(title=_(u"Owners"), org=self)
+        if self.members is None:
+            self.members = Team(title=_(u"Members"), org=self)
+
+    @property
+    def domain(self):
+        if self.members:
+            return self.members.domain
+
+    @domain.setter
+    def domain(self, value):
+        if not value:
+            value = None
+        if not self.members:
+            self.make_teams()
+        if value and value != self.members.domain:
+            # Look for team members based on domain, but only if the domain value was
+            # changed
+            with db.session.no_autoflush:
+                for useremail in UserEmail.query.filter_by(domain=value).join(User):
+                    if useremail.user not in self.members.users:
+                        self.members.users.append(useremail.user)
+        self.members.domain = value
 
     @hybrid_property
     def name(self):
@@ -541,8 +589,12 @@ class Team(BaseMixin, db.Model):
     org_id = db.Column(None, db.ForeignKey('organization.id'), nullable=False)
     org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
         backref=db.backref('teams', order_by=title, cascade='all, delete-orphan'))
-    users = db.relationship(User, secondary='team_membership',
+    users = db.relationship(User, secondary='team_membership', lazy='dynamic',
         backref='teams')  # No cascades here! Cascades will delete users
+
+    #: Email domain for this team. Any users with a matching email address
+    #: will be auto-added to this team
+    domain = db.Column(db.Unicode(253), nullable=True, index=True)
 
     #: Client id that created this team
     client_id = db.Column(None, db.ForeignKey('client.id',
@@ -591,7 +643,7 @@ class OwnerMixin(object):
     """
     @property
     def owner(self):
-        """The owner of this object."""
+        """The owner of this object"""
         return self.user or self.org or self.team
 
     @owner.setter
@@ -630,6 +682,10 @@ class UserEmail(OwnerMixin, BaseMixin, db.Model):
     _email = db.Column('email', db.Unicode(254), unique=True, nullable=False)
     md5sum = db.Column(db.String(32), unique=True, nullable=False)
     primary = db.Column(db.Boolean, nullable=False, default=False)
+    domain = db.Column(db.Unicode(253), nullable=False, index=True)
+
+    private = db.Column(db.Boolean, nullable=False, default=False)
+    type = db.Column(db.Unicode(30), nullable=True)
 
     __table_args__ = (db.CheckConstraint(
         db.case([(user_id != None, 1)], else_=0) +
@@ -641,6 +697,7 @@ class UserEmail(OwnerMixin, BaseMixin, db.Model):
         super(UserEmail, self).__init__(**kwargs)
         self._email = email
         self.md5sum = md5(self._email).hexdigest()
+        self.domain = email.split('@')[-1]
 
     # XXX: Are hybrid_property and synonym both required?
     # Shouldn't one suffice?
@@ -702,6 +759,10 @@ class UserEmailClaim(OwnerMixin, BaseMixin, db.Model):
     _email = db.Column('email', db.Unicode(254), nullable=True, index=True)
     verification_code = db.Column(db.String(44), nullable=False, default=newsecret)
     md5sum = db.Column(db.String(32), nullable=False, index=True)
+    domain = db.Column(db.Unicode(253), nullable=False, index=True)
+
+    private = db.Column(db.Boolean, nullable=False, default=False)
+    type = db.Column(db.Unicode(30), nullable=True)
 
     __table_args__ = (
         # Only one of these three unique constraints will apply as null values
@@ -720,6 +781,7 @@ class UserEmailClaim(OwnerMixin, BaseMixin, db.Model):
         self.verification_code = newsecret()
         self._email = email
         self.md5sum = md5(self._email).hexdigest()
+        self.domain = email.split('@')[-1]
 
     @hybrid_property
     def email(self):
@@ -783,6 +845,9 @@ class UserPhone(OwnerMixin, BaseMixin, db.Model):
     _phone = db.Column('phone', db.Unicode(16), unique=True, nullable=False)
     gets_text = db.Column(db.Boolean, nullable=False, default=True)
 
+    private = db.Column(db.Boolean, nullable=False, default=False)
+    type = db.Column(db.Unicode(30), nullable=True)
+
     __table_args__ = (db.CheckConstraint(
         db.case([(user_id != None, 1)], else_=0) +
         db.case([(org_id != None, 1)], else_=0) +
@@ -837,6 +902,9 @@ class UserPhoneClaim(OwnerMixin, BaseMixin, db.Model):
     _phone = db.Column('phone', db.Unicode(16), nullable=False, index=True)
     gets_text = db.Column(db.Boolean, nullable=False, default=True)
     verification_code = db.Column(db.Unicode(4), nullable=False, default=newpin)
+
+    private = db.Column(db.Boolean, nullable=False, default=False)
+    type = db.Column(db.Unicode(30), nullable=True)
 
     __table_args__ = (
         # Only one of these three unique constraints will apply as null values
@@ -923,7 +991,7 @@ class UserExternalId(BaseMixin, db.Model):
     oauth_token_secret = db.Column(db.String(250), nullable=True)
     oauth_token_type = db.Column(db.String(250), nullable=True)
 
-    __table_args__ = (db.UniqueConstraint("service", "userid"), {})
+    __table_args__ = (db.UniqueConstraint('service', 'userid'), {})
 
     def __repr__(self):
         return u'<UserExternalId {service}:{username} of {user}>'.format(

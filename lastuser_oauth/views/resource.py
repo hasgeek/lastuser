@@ -5,9 +5,10 @@ from werkzeug.exceptions import BadRequest
 from flask import request, g, abort, render_template, jsonify
 from coaster.utils import getbool
 from coaster.views import jsonp, requestargs
+from baseframe import _, __
 
 from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Resource,
-    ResourceAction, UserClientPermissions, TeamClientPermissions, UserSession, Client, ClientCredential)
+    ResourceAction, UserClientPermissions, TeamClientPermissions, UserSession, ClientCredential)
 from lastuser_core import resource_registry
 from .. import lastuser_oauth
 from .helpers import requires_client_login, requires_user_or_client_login
@@ -17,7 +18,7 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
 
     teams = {}
 
-    if 'id' in scope:
+    if '*' in scope or 'id' in scope or 'id/*' in scope:
         userinfo = {'userid': user.userid,
                     'username': user.username,
                     'fullname': user.fullname,
@@ -30,17 +31,17 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
     if session:
         userinfo['sessionid'] = session.buid
 
-    if 'email' in scope:
+    if '*' in scope or 'email' in scope or 'email/*' in scope:
         userinfo['email'] = unicode(user.email)
-    if 'phone' in scope:
+    if '*' in scope or 'phone' in scope or 'phone/*' in scope:
         userinfo['phone'] = unicode(user.phone)
-    if 'organizations' in scope:
+    if '*' in scope or 'organizations' in scope or 'organizations/*' in scope:
         userinfo['organizations'] = {
             'owner': [{'userid': org.userid, 'name': org.name, 'title': org.title} for org in user.organizations_owned()],
             'member': [{'userid': org.userid, 'name': org.name, 'title': org.title} for org in user.organizations()],
             }
 
-    if 'organizations' in scope or 'teams' in scope:
+    if '*' in scope or 'organizations' in scope or 'teams' in scope or 'organizations/*' in scope or 'teams/*' in scope:
         for team in user.teams:
             teams[team.userid] = {
                 'userid': team.userid,
@@ -49,7 +50,7 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                 'owners': team == team.org.owners,
                 'member': True}
 
-    if 'teams' in scope:
+    if '*' in scope or 'teams' in scope or 'teams/*' in scope:
         for org in user.organizations_owned():
             for team in org.teams:
                 if team.userid not in teams:
@@ -123,6 +124,7 @@ def token_verify():
     if not authtoken:
         # No such auth token
         return api_result('error', error='no_token')
+    # TODO: Add support for wildcard scopes in here
     if g.client.namespace + ':' + client_resource not in authtoken.scope:
         # Token does not grant access to this resource
         return api_result('error', error='access_denied')
@@ -134,8 +136,8 @@ def token_verify():
     else:
         resource_name = client_resource
         action_name = None
-    resource = Resource.query.filter_by(name=resource_name).first()
-    if not resource or resource.client != g.client:
+    resource = Resource.get(resource_name, client=g.client)
+    if not resource:
         # Resource does not exist or does not belong to this client
         return api_result('error', error='access_denied')
     if action_name:
@@ -171,7 +173,7 @@ def sync_resources():
         if '/' in name:
             parts = name.split('/')
             if len(parts) != 2:
-                results[name] = {'status': 'error', 'error': u"Invalid resource name {name}".format(name=name)}
+                results[name] = {'status': 'error', 'error': _(u"Invalid resource name {name}").format(name=name)}
                 continue
             resource_name, action_name = parts
         else:
@@ -211,6 +213,7 @@ def sync_resources():
                 else:
                     results[resource.name]['actions'][action.name] = {'status': 'exists'}
             else:
+                # FIXME: What is "title" here? This assignment doesn't seem right
                 action = ResourceAction(resource=resource, name=action_name,
                     title=resources[name].get('title') or action_name.title() + " " + resource.title,
                     description=description)
@@ -415,8 +418,6 @@ def org_team_get():
 def login_beacon_iframe(client_id, login_url):
     cred = ClientCredential.get(client_id)
     client = cred.client if cred else None
-    if not client:  # XXX: DEPRECATED
-        client = Client.get(key=client_id)
     if client is None:
         abort(404)
     if not client.host_matches(login_url):
@@ -432,8 +433,6 @@ def login_beacon_iframe(client_id, login_url):
 def login_beacon_json(client_id):
     cred = ClientCredential.get(client_id)
     client = cred.client if cred else None
-    if not client:  # XXX: DEPRECATED
-        client = Client.get(key=client_id)
     if client is None:
         abort(404)
     if g.user:
@@ -451,7 +450,7 @@ def login_beacon_json(client_id):
 # --- Token-based resource endpoints ------------------------------------------
 
 @lastuser_oauth.route('/api/1/id')
-@resource_registry.resource('id', u"Read your name and username")
+@resource_registry.resource('id', __(u"Read your name and basic profile data"))
 def resource_id(authtoken, args, files=None):
     """
     Return user's id
@@ -463,12 +462,12 @@ def resource_id(authtoken, args, files=None):
 
 
 @lastuser_oauth.route('/api/1/session/verify', methods=['POST'])
-@resource_registry.resource('session/verify', u"Verify user session", scope='id')
+@resource_registry.resource('session/verify', __(u"Verify user session"), scope='id')
 def session_verify(authtoken, args, files=None):
     sessionid = args['sessionid']
     session = UserSession.authenticate(buid=sessionid)
     if session and session.user == authtoken.user:
-        session.access(api=True)
+        session.access(client=authtoken.client)
         db.session.commit()
         return {
             'active': True,
@@ -481,7 +480,7 @@ def session_verify(authtoken, args, files=None):
 
 
 @lastuser_oauth.route('/api/1/avatar/edit', methods=['POST'])
-@resource_registry.resource('avatar/edit', u"Update your profile picture")
+@resource_registry.resource('avatar/edit', __(u"Update your profile picture"))
 def resource_avatar_edit(authtoken, args, files=None):
     """
     Set a user's avatar image
@@ -494,24 +493,24 @@ def resource_avatar_edit(authtoken, args, files=None):
         authtoken.user.avatar = avatar
         return {'avatar': authtoken.user.avatar}
     else:
-        raise BadRequest("Invalid avatar URL")
+        raise BadRequest(_("Invalid avatar URL"))
 
 
 @lastuser_oauth.route('/api/1/email')
-@resource_registry.resource('email', u"Read your email address")
+@resource_registry.resource('email', __(u"Read your email address"))
 def resource_email(authtoken, args, files=None):
     """
     Return user's email addresses.
     """
     if 'all' in args and getbool(args['all']):
         return {'email': unicode(authtoken.user.email),
-                'all': [unicode(email) for email in authtoken.user.emails]}
+                'all': [unicode(email) for email in authtoken.user.emails if not email.private]}
     else:
         return {'email': unicode(authtoken.user.email)}
 
 
 @lastuser_oauth.route('/api/1/email/add', methods=['POST'])
-@resource_registry.resource('email/add', u"Add an email address to your profile")
+@resource_registry.resource('email/add', __(u"Add an email address to your profile"))
 def resource_email_add(authtoken, args, files=None):
     """
     TODO: Add an email address to the user's profile.
@@ -521,7 +520,7 @@ def resource_email_add(authtoken, args, files=None):
 
 
 @lastuser_oauth.route('/api/1/phone')
-@resource_registry.resource('phone', u"Read your phone number")
+@resource_registry.resource('phone', __(u"Read your phone number"))
 def resource_phone(authtoken, args, files=None):
     """
     Return user's phone numbers.
@@ -534,7 +533,8 @@ def resource_phone(authtoken, args, files=None):
 
 
 @lastuser_oauth.route('/api/1/user/externalids')
-@resource_registry.resource('user/externalids', u"Access your external account information such as Twitter and Google", trusted=True)
+@resource_registry.resource('user/externalids',
+    __(u"Access your external account information such as Twitter and Google"), trusted=True)
 def resource_login_providers(authtoken, args, files=None):
     """
     Return user's login providers' data.
@@ -544,24 +544,24 @@ def resource_login_providers(authtoken, args, files=None):
     for extid in authtoken.user.externalids:
         if service is None or extid.service == service:
             response[extid.service] = {
-                "userid": unicode(extid.userid),
-                "username": unicode(extid.username),
-                "oauth_token": unicode(extid.oauth_token),
-                "oauth_token_secret": unicode(extid.oauth_token_secret),
-                "oauth_token_type": unicode(extid.oauth_token_type)
+                'userid': unicode(extid.userid),
+                'username': unicode(extid.username),
+                'oauth_token': unicode(extid.oauth_token),
+                'oauth_token_secret': unicode(extid.oauth_token_secret),
+                'oauth_token_type': unicode(extid.oauth_token_type)
             }
     return response
 
 
 @lastuser_oauth.route('/api/1/user/new', methods=['POST'])
-@resource_registry.resource('user/new', u"Create a new user account", trusted=True)
+@resource_registry.resource('user/new', __(u"Create a new user account"), trusted=True)
 def resource_user_new(authtoken, args, files=None):
     # Set User.client to authtoken.client and User.referrer to authtoken.user
     pass
 
 
 @lastuser_oauth.route('/api/1/organizations')
-@resource_registry.resource('organizations', u"Read the organizations you are a member of")
+@resource_registry.resource('organizations', __(u"Read the organizations you are a member of"))
 def resource_organizations(authtoken, args, files=None):
     """
     Return user's organizations and teams that they are a member of.
@@ -570,19 +570,19 @@ def resource_organizations(authtoken, args, files=None):
 
 
 @lastuser_oauth.route('/api/1/organizations/new', methods=['POST'])
-@resource_registry.resource('organizations/new', u"Create a new organization", trusted=True)
+@resource_registry.resource('organizations/new', __(u"Create a new organization"), trusted=True)
 def resource_organizations_new(authtoken, args, files=None):
     pass
 
 
 @lastuser_oauth.route('/api/1/organizations/edit', methods=['POST'])
-@resource_registry.resource('organizations/edit', u"Edit your organizations", trusted=True)
+@resource_registry.resource('organizations/edit', __(u"Edit your organizations"), trusted=True)
 def resource_organizations_edit(authtoken, args, files=None):
     pass
 
 
 @lastuser_oauth.route('/api/1/teams')
-@resource_registry.resource('teams', u"Read the list of teams in your organizations")
+@resource_registry.resource('teams', __(u"Read the list of teams in your organizations"))
 def resource_teams(authtoken, args, files=None):
     """
     Return user's organizations' teams.
@@ -591,19 +591,19 @@ def resource_teams(authtoken, args, files=None):
 
 
 @lastuser_oauth.route('/api/1/teams/new', methods=['POST'])
-@resource_registry.resource('teams/new', u"Create a new team in your organizations", trusted=True)
+@resource_registry.resource('teams/new', __(u"Create a new team in your organizations"), trusted=True)
 def resource_teams_new(authtoken, args, files=None):
     pass
 
 
 # GET to read member list, POST to write to it
 @lastuser_oauth.route('/api/1/teams/edit', methods=['GET', 'POST'])
-@resource_registry.resource('teams/edit', u"Edit your organizations' teams", trusted=True)
+@resource_registry.resource('teams/edit', __(u"Edit your organizations' teams"), trusted=True)
 def resource_teams_edit(authtoken, args, files=None):
     pass
 
 
 @lastuser_oauth.route('/api/1/notice/send')
-@resource_registry.resource('notice/send', u"Send you notifications")
+@resource_registry.resource('notice/send', __(u"Send you notifications"))
 def resource_notice_send(authtoken, args, files=None):
     pass

@@ -2,4 +2,4 @@
 import sys
 if not hasattr(sys, 'setdefaultencoding'):
     reload(sys)
-sys.setdefaultencoding("utf-8")
+sys.setdefaultencoding('utf-8')

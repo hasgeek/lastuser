@@ -201,16 +201,3 @@
   </p>
 {% endif %}
 {% endblock %}
-
-{% block footerscripts %}{# XXX: DEPRECATED
-  <script type="text/javascript">
-    $(function() {
-      $("#client-secret-reveal").click(function(e) {
-        $("#client-secret").removeClass('jshidden');
-        $(this).hide();
-        e.stopPropagation();
-        return false;
-      })
-    });
-  </script> -#}
-{% endblock %}

@@ -5,11 +5,21 @@ from werkzeug import cached_property
 from werkzeug.useragents import UserAgent
 from flask import request
 from coaster.utils import buid as make_buid
+from coaster.sqlalchemy import make_timestamp_columns
 from . import db, BaseMixin
 from .user import User
 from ..signals import session_revoked
 
 __all__ = ['UserSession']
+
+
+session_client = db.Table(
+    'session_client', db.Model.metadata,
+    *(make_timestamp_columns() + (
+        db.Column('user_session_id', None, db.ForeignKey('user_session.id'), nullable=False, primary_key=True),
+        db.Column('client_id', None, db.ForeignKey('client.id'), nullable=False, primary_key=True))),
+    info={'bind_key': 'lastuser'}
+    )
 
 
 class UserSession(BaseMixin, db.Model):
@@ -34,18 +44,29 @@ class UserSession(BaseMixin, db.Model):
         if not self.buid:
             self.buid = make_buid()
 
-    def access(self, api=False):
+    def access(self, client=None):
         """
-        Mark as a session as currently active.
+        Mark a session as currently active.
 
-        :param bool api: Is this an API access call? Don't save the IP address and browser then.
+        :param client: For API calls from clients, save the client instead of IP address and User-Agent
         """
         # `accessed_at` will be different from the automatic `updated_at` in one
-        # crucial context: when the session was revoked remotely
+        # crucial context: when the session was revoked remotely. `accessed_at` won't
+        # be updated at that time.
         self.accessed_at = datetime.utcnow()
-        if not api:
-            self.ipaddr = request.remote_addr or u''
-            self.user_agent = unicode(request.user_agent.string[:250]) or u''
+        with db.session.no_autoflush:
+            if client:
+                if client not in self.clients:  # self.clients is defined via Client.sessions
+                    self.clients.append(client)
+                else:
+                    # If we've seen this client in this session before, only update the timestamp
+                    db.session.execute(session_client.update().where(
+                        session_client.c.user_session_id == self.id).where(
+                        session_client.c.client_id == client.id).values(
+                        updated_at=datetime.utcnow()))
+            else:
+                self.ipaddr = request.remote_addr or u''
+                self.user_agent = unicode(request.user_agent.string[:250]) or u''
 
     @cached_property
     def ua(self):

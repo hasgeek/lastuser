@@ -3,6 +3,7 @@
 from urllib import quote
 import requests
 from flask import redirect, request
+from baseframe import _
 from lastuser_core.registry import LoginProvider, LoginCallbackError
 
 __all__ = ['GitHubProvider']
@@ -10,10 +11,10 @@ __all__ = ['GitHubProvider']
 
 class GitHubProvider(LoginProvider):
     at_username = True
-    auth_url = "https://github.com/login/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}"
-    token_url = "https://github.com/login/oauth/access_token"
-    user_info = "https://api.github.com/user"
-    user_emails = "https://api.github.com/user/emails"
+    auth_url = 'https://github.com/login/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}'
+    token_url = 'https://github.com/login/oauth/access_token'
+    user_info = 'https://api.github.com/user'
+    user_emails = 'https://api.github.com/user/emails'
 
     def __init__(self, name, title, key, secret, at_login=True, priority=False, icon=None):
         self.name = name
@@ -34,12 +35,12 @@ class GitHubProvider(LoginProvider):
     def callback(self):
         if request.args.get('error'):
             if request.args['error'] == 'user_denied':
-                raise LoginCallbackError(u"You denied the GitHub login request")
+                raise LoginCallbackError(_(u"You denied the GitHub login request"))
             elif request.args['error'] == 'redirect_uri_mismatch':
                 # TODO: Log this as an exception for the server admin to look at
-                raise LoginCallbackError(u"This server's callback URL is misconfigured")
+                raise LoginCallbackError(_(u"This server's callback URL is misconfigured"))
             else:
-                raise LoginCallbackError(u"Unknown failure")
+                raise LoginCallbackError(_(u"Unknown failure"))
         code = request.args.get('code', None)
         try:
             response = requests.post(self.token_url, headers={'Accept': 'application/json'},
@@ -50,7 +51,7 @@ class GitHubProvider(LoginProvider):
                     }
                 ).json()
         except requests.ConnectionError as e:
-            raise LoginCallbackError(u"Unable to authenticate via GitHub. Internal details: {error}".format(error=e))
+            raise LoginCallbackError(_(u"Unable to authenticate via GitHub. Internal details: {error}").format(error=e))
         if 'error' in response:
             raise LoginCallbackError(response['error'])
         ghinfo = requests.get(self.user_info,

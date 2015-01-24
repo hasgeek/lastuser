@@ -3,6 +3,7 @@ from flask import abort, url_for, flash, redirect, g, session, render_template, 
 
 from coaster.utils import valid_username
 from coaster.views import get_next_url
+from baseframe import _
 from baseframe.signals import exception_catchall
 from lastuser_core import login_registry
 from lastuser_core.models import db, getextid, merge_users, User, UserEmail, UserExternalId, UserEmailClaim
@@ -27,7 +28,7 @@ def login_service(service):
     try:
         return provider.do(callback_url=callback_url)
     except (LoginInitError, LoginCallbackError) as e:
-        msg = u"{service} login failed: {error}".format(service=provider.title, error=unicode(e))
+        msg = _(u"{service} login failed: {error}").format(service=provider.title, error=unicode(e))
         exception_catchall.send(e, message=msg)
         flash(msg, category='danger')
         return redirect(next_url or get_next_url(referrer=True))
@@ -44,7 +45,7 @@ def login_service_callback(service):
     try:
         userdata = provider.callback()
     except (LoginInitError, LoginCallbackError) as e:
-        msg = u"{service} login failed: {error}".format(service=provider.title, error=unicode(e))
+        msg = _(u"{service} login failed: {error}").format(service=provider.title, error=unicode(e))
         exception_catchall.send(e, message=msg)
         flash(msg, category='danger')
         if g.user:
@@ -144,7 +145,7 @@ def login_service_postcallback(service, userdata):
 
     if not g.user:  # If a user isn't already logged in, login now.
         login_internal(user)
-        flash(u"You have logged in via {service}.".format(service=login_registry[service].title), 'success')
+        flash(_(u"You have logged in via {service}").format(service=login_registry[service].title), 'success')
     next_url = get_next_url(session=True)
 
     db.session.commit()
@@ -176,12 +177,12 @@ def profile_merge():
             new_user = merge_users(g.user, other_user)
             login_internal(new_user)
             user_data_changed.send(new_user, changes=['merge'])
-            flash("Your accounts have been merged.", 'success')
+            flash(_("Your accounts have been merged"), 'success')
             session.pop('merge_userid', None)
             db.session.commit()
             return redirect(get_next_url(), code=303)
         else:
             session.pop('merge_userid', None)
             return redirect(get_next_url(), code=303)
-    return render_template("merge.html", form=form, user=g.user, other_user=other_user,
+    return render_template('merge.html', form=form, user=g.user, other_user=other_user,
         login_registry=login_registry)

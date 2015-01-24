@@ -7,7 +7,7 @@
     <li>
       <strong>{{ team.title }}</strong>
       (<a href="{{ url_for('.team_edit', name=org.name, userid=team.userid) }}">edit</a>
-      {%- if team != org.owners %},
+      {%- if team != org.owners and team != org.members %},
         <a href="{{ url_for('.team_delete', name=org.name, userid=team.userid) }}">delete</a>
       {%- endif %})
       <ol>{% for user in team.users %}<li>{{ user.pickername }}</li>{% endfor %}</ol>

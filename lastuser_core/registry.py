@@ -11,10 +11,12 @@ try:
 except ImportError:
     from ordereddict import OrderedDict
 from flask import Response, request, jsonify, abort
+from baseframe import _
+from baseframe.signals import exception_catchall
 from .models import AuthToken, UserExternalId
 
 # Bearer token, as per http://tools.ietf.org/html/draft-ietf-oauth-v2-bearer-15#section-2.1
-auth_bearer_re = re.compile("^Bearer ([a-zA-Z0-9_.~+/-]+=*)$")
+auth_bearer_re = re.compile('^Bearer ([a-zA-Z0-9_.~+/-]+=*)$')
 
 
 class ResourceRegistry(OrderedDict):
@@ -28,11 +30,16 @@ class ResourceRegistry(OrderedDict):
         :param unicode name: Name of the resource
         :param unicode description: User-friendly description
         :param bool trusted: Restrict access to trusted clients?
-        :param unicode scope: Grant access via this other resource name
+        :param unicode scope: Grant access via this other resource name (which must also exist)
         """
+        usescope = scope or name
+        if '*' in usescope or ' ' in usescope:
+            # Don't allow resources to be declared with '*' or ' ' in the name
+            raise ValueError(usescope)
+
         def resource_auth_error(message):
             return Response(message, 401,
-                {'WWW-Authenticate': 'Bearer realm="Token Required" scope="%s"' % name})
+                {'WWW-Authenticate': 'Bearer realm="Token Required" scope="%s"' % usescope})
 
         def wrapper(f):
             @wraps(f)
@@ -49,32 +56,40 @@ class ResourceRegistry(OrderedDict):
                         token = token_match.group(1)
                     else:
                         # Unrecognized Authorization header
-                        return resource_auth_error(u"A Bearer token is required in the Authorization header.")
+                        return resource_auth_error(_(u"A Bearer token is required in the Authorization header"))
                     if 'access_token' in args:
-                        return resource_auth_error(u"Access token specified in both header and body.")
+                        return resource_auth_error(_(u"Access token specified in both header and body"))
                 else:
                     token = args.get('access_token')
                     if not token:
                         # No token provided in Authorization header or in request parameters
-                        return resource_auth_error(u"An access token is required to access this resource.")
+                        return resource_auth_error(_(u"An access token is required to access this resource"))
                 authtoken = AuthToken.get(token=token)
                 if not authtoken:
-                    return resource_auth_error(u"Unknown access token.")
+                    return resource_auth_error(_(u"Unknown access token"))
                 if not authtoken.is_valid():
-                    return resource_auth_error(u"Access token has expired.")
-                if (scope and scope not in authtoken.scope) or (not scope and name not in authtoken.scope):
-                    return resource_auth_error(u"Token does not provide access to this resource.")
+                    return resource_auth_error(_(u"Access token has expired"))
+
+                tokenscope = set(authtoken.scope)  # Read once to avoid reparsing below
+                wildcardscope = usescope.split('/', 1)[0] + '/*'
+                if not (authtoken.client.trusted and '*' in tokenscope):
+                    # If a trusted client has '*' in token scope, all good, else check further
+                    if (usescope not in tokenscope) and (wildcardscope not in tokenscope):
+                        # Client doesn't have access to this scope either directly or via a wildcard
+                        return resource_auth_error(_(u"Token does not provide access to this resource"))
                 if trusted and not authtoken.client.trusted:
-                    return resource_auth_error(u"This resource can only be accessed by trusted clients.")
+                    return resource_auth_error(_(u"This resource can only be accessed by trusted clients"))
                 # All good. Return the result value
                 try:
                     result = f(authtoken, args, request.files)
                     response = jsonify({'status': 'ok', 'result': result})
                 except Exception as exception:
+                    exception_catchall.send(exception)
                     response = jsonify({'status': 'error',
                                         'error': exception.__class__.__name__,
                                         'error_description': unicode(exception)
                                         })
+                    response.status_code = 500
                 # XXX: Let resources control how they return?
                 response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
                 response.headers['Pragma'] = 'no-cache'
@@ -82,8 +97,9 @@ class ResourceRegistry(OrderedDict):
 
             self[name] = {
                 'name': name,
-                'scope': scope or name,
+                'scope': usescope,
                 'description': description,
+                'trusted': trusted,
                 'f': f,
                 }
             return decorated_function
@@ -94,7 +110,7 @@ class LoginProviderRegistry(OrderedDict):
     """Registry of login providers"""
 
     def at_username_services(self):
-        """Services which typically use @username addressing."""
+        """Services which typically use @username addressing"""
         return [key for key in self if self[key].at_username]
 
     def __setitem__(self, key, value):
