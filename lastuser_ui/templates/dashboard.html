@@ -18,6 +18,40 @@
 
   <script type="text/javascript">
     c3.generate({
+      bindto: '#monthly-users',
+      size: {
+        height: 600
+      },
+      data: {
+        url: {{ url_for('.dashboard_data_users_by_client')|tojson }},
+        keys: {
+          value: ['hour', 'day', 'week', 'month', 'quarter', 'halfyear', 'year']
+        },
+        x: 'title',
+        type: 'bar',
+        groups: [
+          ['hour', 'day', 'week', 'month', 'quarter', 'halfyear', 'year']
+        ],
+        order: null,
+        colors: {
+          hour:     '#dd0029',
+          day:      '#e1203f',
+          week:     '#e64158',
+          month:    '#eb6473',
+          quarter:  '#f08891',
+          halfyear: '#f5afb3',
+          year:     '#fad6d7'
+        }
+      },
+      axis: {
+        rotated: true,
+        x: {
+          type: 'category'
+        }
+      }
+    });
+
+    c3.generate({
       bindto: '#total-users',
       data: {
         url: {{ url_for('.dashboard_data_users_by_month')|tojson }},
@@ -35,44 +69,7 @@
             format: '%Y-%m'
           }
         }
-      },
-      zoom: {
-        enabled: true
       }
     });
-
-    c3.generate({
-      bindto: '#monthly-users',
-      size: {
-        height: 600
-      },
-      data: {
-        url: {{ url_for('.dashboard_data_users_by_client')|tojson }},
-        keys: {
-          value: ['hour', 'day', 'week', 'month', 'quarter', 'halfyear', 'year']
-        },
-        x: 'title',
-        type: 'bar',
-        groups: [
-          ['hour', 'day', 'week', 'month', 'quarter', 'halfyear', 'year']
-        ],
-        order: null,
-        colors: {
-          hour:     '#ff0000',
-          day:      '#ff0055',
-          week:     '#ff00aa',
-          month:    '#ff00ff',
-          quarter:  '#aa00ff',
-          halfyear: '#5400ff',
-          year:     '#0000ff'
-        }
-      },
-      axis: {
-        rotated: true,
-        x: {
-          type: 'category'
-        }
-      }
-    })
   </script>
 {% endblock %}
