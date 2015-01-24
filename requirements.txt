@@ -15,6 +15,7 @@ blinker
 Flask-RQ
 Flask-Script==0.5.3
 tweepy
+unicodecsv
 https://github.com/hasgeek/coaster/archive/master.zip
 https://github.com/hasgeek/baseframe/archive/master.zip
 https://github.com/jace/flask-alembic/archive/master.zip
