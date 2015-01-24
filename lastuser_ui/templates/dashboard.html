@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+  <p>
+    Total users: {{ user_count }}<br>
+    Last month active: {{ mau }}
+  </p>
+  {%- for month, count in users_by_month %}
+    [{{ month.strftime('%Y-%m') }}: {{ count }}]
+  {%- endfor %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Client application</th>
+        <th>Users</th>
+      </tr>
+    </thead>
+    <tbody>
+    {%- for row in client_active_users %}
+      <tr>
+        <td><a href="{{ row.website }}" target="_blank">{{ row.title }}</a></td>
+        <td>{{ row.count }}</td>
+      </tr>
+    {%- endfor %}
+    </tbody>
+  </table>
+
+{% endblock %}
+
+{% block footerscripts %}
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.3/d3.min.js"></script>
+{% endblock %}
