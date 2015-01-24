@@ -30,6 +30,30 @@ def dashboard():
         '''SELECT COUNT(DISTINCT(user_session.user_id)) AS mau FROM user_session, "user" WHERE user_session.user_id = "user".id AND "user".status = :status AND user_session.accessed_at >= (NOW() AT TIME ZONE 'UTC') - INTERVAL '30 days' '''
         )).params(status=USER_STATUS.ACTIVE).first()[0]
 
+    return render_template('dashboard.html',
+        user_count=user_count,
+        mau=mau
+        )
+
+
+@lastuser_ui.route('/dashboard/data/users_by_month.csv')
+@requires_dashboard
+def dashboard_data_users_by_month():
+    users_by_month = db.session.query('month', 'count').from_statement(db.text(
+        '''SELECT date_trunc('month', "user".created_at) AS month, count(*) AS count FROM "user" WHERE status=:status GROUP BY month ORDER BY month'''
+        )).params(status=USER_STATUS.ACTIVE)
+
+    outfile = StringIO()
+    out = unicodecsv.writer(outfile, 'excel')
+    out.writerow(['month', 'count'])
+    for month, count in users_by_month:
+        out.writerow([month.strftime('%Y-%m-%d'), count])
+    return outfile.getvalue(), 200, {'Content-Type': 'text/plain'}
+
+
+@lastuser_ui.route('/dashboard/data/users_by_client.csv')
+@requires_dashboard
+def dashboard_data_users_by_client():
     client_users = defaultdict(lambda: {'counts': {'hour': 0, 'day': 0, 'week': 0, 'month': 0, 'quarter': 0, 'halfyear': 0, 'year': 0}})
 
     for label, interval in (
@@ -50,23 +74,21 @@ def dashboard():
             client_users[row.client_id]['id'] = row.client_id
             client_users[row.client_id]['counts'][label] = row.count - sum(client_users[row.client_id]['counts'].values())
 
-    return render_template('dashboard.html',
-        user_count=user_count,
-        mau=mau,
-        client_users=sorted(client_users.values(), key=lambda r: sum(r['counts'].values()), reverse=True),
-        )
-
-
-@lastuser_ui.route('/dashboard/data/users_by_month.tsv')
-@requires_dashboard
-def dashboard_data_users_by_month():
-    users_by_month = db.session.query('month', 'count').from_statement(db.text(
-        '''SELECT date_trunc('month', "user".created_at) AS month, count(*) AS count FROM "user" WHERE status=:status GROUP BY month ORDER BY month'''
-        )).params(status=USER_STATUS.ACTIVE)
+    users_by_client = sorted(client_users.values(), key=lambda r: sum(r['counts'].values()), reverse=True)
 
     outfile = StringIO()
-    out = unicodecsv.writer(outfile, 'excel-tab')
-    out.writerow(['month', 'count'])
-    for month, count in users_by_month:
-        out.writerow([month.strftime('%Y-%m'), count])
+    out = unicodecsv.writer(outfile, 'excel')
+    out.writerow(['title', 'hour', 'day', 'week', 'month', 'quarter', 'halfyear', 'year'])
+
+    for row in users_by_client:
+        out.writerow([
+            row['title'],
+            row['counts']['hour'],
+            row['counts']['day'],
+            row['counts']['week'],
+            row['counts']['month'],
+            row['counts']['quarter'],
+            row['counts']['halfyear'],
+            row['counts']['year']
+            ])
     return outfile.getvalue(), 200, {'Content-Type': 'text/plain'}
