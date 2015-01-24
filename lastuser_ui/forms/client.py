@@ -5,10 +5,10 @@ from urlparse import urlparse
 from flask import Markup
 import wtforms
 import wtforms.fields.html5
-from baseframe.forms import Form, NullTextField
+from baseframe.forms import Form, NullTextField, UserSelectField
 from coaster.utils import valid_username, domain_namespace_match
 
-from lastuser_core.models import Permission, Resource, getuser, Organization
+from lastuser_core.models import Permission, Resource, getuser, Organization, User
 from lastuser_core import resource_registry
 
 __all__ = ['ConfirmDeleteForm', 'RegisterClientForm', 'ClientCredentialForm', 'PermissionForm',
@@ -175,12 +175,12 @@ class UserPermissionAssignForm(Form):
     """
     Assign permissions to a user
     """
-    username = wtforms.TextField("User", validators=[wtforms.validators.Required()],
-        description="Lookup a user by their username or email address")
+    username = UserSelectField("User", validators=[wtforms.validators.Required()],
+        description="Lookup a user by their username or email address", lastuser=None, usermodel=User)
     perms = wtforms.SelectMultipleField("Permissions", validators=[wtforms.validators.Required()])
 
     def validate_username(self, field):
-        existing = getuser(field.data)
+        existing = getuser(field.data.name)
         if existing is None:
             raise wtforms.ValidationError("User does not exist")
         self.user = existing

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import g, request, render_template, url_for, flash, abort
+from flask import g, request, render_template, url_for, flash, abort, make_response
 from coaster.views import load_model, load_models
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
 
@@ -269,7 +269,8 @@ def permission_user_new(client):
         else:
             flash(u"Permissions have been assigned to team ‘{pname}’".format(pname=permassign.team.pickername), 'success')
         return render_redirect(url_for('.client_info', key=client.key), code=303)
-    return render_form(form=form, title="Assign permissions", formid="perm_assign", submit="Assign permissions", ajax=True)
+    return make_response(render_template('perms.html', form=form, title=u"Assign permissions",
+        formid="perm_assign", submit="Create"))
 
 
 @lastuser_ui.route('/apps/<key>/perms/<userid>/edit', methods=['GET', 'POST'])
