@@ -5,6 +5,7 @@ from coaster.views import load_model
 from baseframe import _
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
 
+from lastuser_core import login_registry
 from lastuser_core.models import db, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
 from lastuser_core.signals import user_data_changed
 from lastuser_oauth.mailclient import send_email_verify_link
@@ -18,7 +19,7 @@ from .sms import send_phone_verify_code
 @lastuser_ui.route('/profile')
 @requires_login
 def profile():
-    return render_template('profile.html')
+    return render_template('profile.html', login_registry=login_registry)
 
 
 @lastuser_ui.route('/profile/password', methods=['GET', 'POST'])
