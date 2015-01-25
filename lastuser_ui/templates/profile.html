@@ -1,75 +1,115 @@
 {% extends "layout.html" %}
 {% from "baseframe/forms.html" import renderfield, rendersubmit %}
-{% block title %}My profile{% endblock %}
+{% block title %}Profile{% endblock %}
 
 {% block content %}
 <p>
   This page is work-in-progress.
 </p>
 <dl class="infobox">
-  <dt>My name</dt>
+  <dt>Name</dt>
   <dd>{{ g.user.fullname }}</dd>
-  <dt>My username</dt>
+  <dt>Username</dt>
   <dd>{% if g.user.username %}{{ g.user.username }}{% else %}<em>(none)</em>{% endif %}</dd>
 </dl>
 <p>
   <a class="btn btn-info" href="{{ url_for('lastuser_oauth.profile_edit') }}">Edit this</a>
   <a class="btn btn-warning" href="{{ url_for('.change_password') }}">Change password</a>
 </p>
-<h2>My email addresses</h2>
-<ul>
+<h2>Email addresses</h2>
+{% if g.user.emails %}
+  <table class="table">
   {% for useremail in g.user.emails %}
-    <li>{{ useremail }} {% if useremail.primary %} <em>(primary)</em> {% endif -%}
-      <a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}">(remove)</a></li>
-  {% else %}
-    <li><em>(no verified addresses)</em></li>
+    <tr>
+      <td>{{ useremail }} {% if useremail.primary %} <em>(primary)</em> {% endif -%}</td>
+      <td><a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a></td>
+    </tr>
   {% endfor %}
   {% for useremail in g.user.emailclaims %}
-    <li>{{ useremail }} <em>(pending verification)</em>
-      <a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}">(remove)</a></li>
+    <tr>
+      <td>{{ useremail }} <em>(pending verification)</em></td>
+      <td><a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a></td>
+    </tr>
   {% endfor %}
-  <li><a href="{{ url_for('.add_email') }}">Add another email address &rarr;</a></li>
-</ul>
+    <tr>
+      <td><a href="{{ url_for('.add_email') }}">Add another email address &rarr;</a></td>
+      <td></td>
+    </tr>
+  </table>
+{% else %}
+  <p>No verified addresses</p>
+  <a class="btn btn-info" href="{{ url_for('.add_email') }}">Add an email address</a>
+{% endif %}
 
-<h2>My mobile numbers</h2>
-<ul>
-  {% for userphone in g.user.phones %}
-    <li>{{ userphone }} {% if userphone.primary %} <em>(primary)</em> {% endif -%}
-      <a href="{{ url_for('.remove_phone', number=userphone.phone) }}">(remove)</a></li>
-  {% else %}
-    <li><em>(no verified numbers)</em></li>
-  {% endfor %}
-  {% for userphone in g.user.phoneclaims %}
-    <li>{{ userphone }} <em>(<a href="{{ url_for('.verify_phone', number=userphone) }}">pending verification</a>)</em>
-      <a href="{{ url_for('.remove_phone', number=userphone.phone) }}">(remove)</a></li>
-  {% endfor %}
-  <li><a href="{{ url_for('.add_phone') }}">Add a mobile number &rarr;</a></li>
-</ul>
+<h2>Mobile numbers</h2>
+{% if g.user.phones %}
+  <table class="table">
+    {% for userphone in g.user.phones %}
+    <tr>
+      <td>{{ userphone }} {% if userphone.primary %} <em>(primary)</em> {% endif -%}</td>
+      <td><a href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a></td>
+    </tr>
+    {% endfor %}
+    {% for userphone in g.user.phoneclaims %}
+    <tr>
+      <td>{{ userphone }} <em>(<a href="{{ url_for('.verify_phone', number=userphone) }}">pending verification</a>)</td>
+      <td><a href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a></td>
+    </tr>
+    {% endfor %}
+    <tr>
+      <td><a href="{{ url_for('.add_phone') }}">Add another mobile number &rarr;</a></td>
+      <td></td>
+    </tr>
+  </table>
+{% else %}
+  <p><em>(No verified numbers)</em></p>
+  <a class="btn btn-info" href="{{ url_for('.add_phone') }}">Add a mobile number</a>
+{% endif %}
 
-<h2>My external ids</h2>
-<ul>
+<h2>Connected IDs</h2>
+<table class="table">
   {% for extid in g.user.externalids %}
-    <li>Service: <b>{{ extid.service }}</b>, Userid: <b>{{ extid.userid }}</b>, Username: <b>{{ extid.username }}</b></li>
+    <li><i class="fa fa-{{ extid.service }}"></i> {{ extid.username }}</li>
   {% else %}
-    <li><em>(none)</em></li>
+    <em>(none)</em>
   {% endfor %}
-</ul>
-<h2>My applications</h2>
-<ul>
-  {% for client in g.user.clients %}
-    <li><a href="{{ url_for('.client_info', key=client.key) }}">{{ client.title }}</a></li>
-  {% else %}
-  <li><em>(you do not have any applications)</em></li>
-  {% endfor %}
-  <li><a href="{{ url_for('.client_new') }}">Register an application &rarr;</a></li>
-</ul>
-<h2>My organizations</h2>
-<ul>
-  {%- for org in g.user.organizations_owned() %}
-    <li><a href="{{ url_for('.org_info', name=org.name) }}">{{ org.title }}</a></li>
-  {%- endfor %}
-  <li><a href="{{ url_for('.org_new') }}">Create a new organization &rarr;</a></li>
-</ul>
+</table>
+{% for provider in login_registry %}
+  <a class="btn btn-social btn-{{ login_registry[provider].icon }}">
+    <i class="fa fa-{{ login_registry[provider].icon }}"></i>
+    Sign in with {{ login_registry[provider].title }}
+  </a>
+{% endfor %}
+<h2>Organizations</h2>
+{% if g.user.organizations_owned() %}
+  <table class="table">
+    {% for org in g.user.organizations_owned() %}
+      <tr><td><a href="{{ url_for('.org_info', name=org.name) }}">{{ org.title }}</a></td></tr>
+    {% endfor %}
+    <tr><td><a href="{{ url_for('.org_new') }}">Create another organization &rarr;</a></td></tr>
+  </table>
+{% else %}
+  <p><em>(No organizations)</em></p>
+  <a class="btn btn-info" href="{{ url_for('.org_new') }}">Create an organization</a>
+{% endif %}
+
+<a href="javascript:void();"><h2 data-toggle="collapse" data-target="#developerTools">Developer Options <i class="fa fa-caret-down"></i></h2></a>
+<div id="developerTools" class="panel panel-default collapse">
+  <div class="panel-heading"><h3>Applications</h3></div>
+  <div class="panel-body">
+    {% if g.user.clients %}
+      <table class="table">
+        {% for client in g.user.clients %}
+          <tr><td><a href="{{ url_for('.client_info', key=client.key) }}">{{ client.title }}</a></td></tr>
+        {% endfor %}
+          <tr><td><a href="{{ url_for('.client_new') }}">Register another application &rarr;</a></td></tr>
+      </table>
+    {% else %}
+      <p><em>(No client applications)</em></p>
+    <a class="btn btn-info" href="{{ url_for('.org_new') }}">Register an application</a>
+    {% endif %}
+  </div>
+</div>
 <h2>My sessions</h2>
 <ul>
   {%- for session in g.user.active_sessions() %}

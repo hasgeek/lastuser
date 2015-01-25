@@ -33,7 +33,7 @@ def init_for(env):
     db.app = app  # To make it work without an app context
     RQ(app)  # Pick up RQ configuration from the app
     baseframe.init_app(app, requires=['lastuser-oauth'],
-        ext_requires=['baseframe-bs3', 'fontawesome>=4.0.0', 'jquery.cookie', 'timezone'])
+        ext_requires=['baseframe-bs3', 'fontawesome>=4.0.0', 'jquery.cookie', 'timezone', 'bootstrap-social'])
 
     lastuser_oauth.mailclient.mail.init_app(app)
     lastuser_oauth.views.login.oid.init_app(app)
@@ -47,7 +47,7 @@ def init_for(env):
             access_key=app.config.get('OAUTH_TWITTER_ACCESS_KEY'),
             access_secret=app.config.get('OAUTH_TWITTER_ACCESS_SECRET'))
     login_registry['google'] = providers.GoogleProvider('google', 'Google',
-        at_login=True, priority=True, icon='google')
+        at_login=True, priority=True, icon='google-plus')
     if app.config.get('OAUTH_LINKEDIN_KEY') and app.config.get('OAUTH_LINKEDIN_SECRET'):
         login_registry['linkedin'] = providers.LinkedInProvider('linkedin', 'LinkedIn',
             at_login=True, priority=False, icon='linkedin',
