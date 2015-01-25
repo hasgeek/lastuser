@@ -4,7 +4,7 @@ from flask import g, current_app, Markup, url_for
 import wtforms
 from coaster.utils import valid_username
 from baseframe import _, __
-from baseframe.forms import Form, HiddenMultiField, AnnotatedTextField
+from baseframe.forms import Form, UserSelectMultiField, AnnotatedTextField
 
 from lastuser_core.models import User, Organization
 
@@ -40,4 +40,8 @@ class OrganizationForm(Form):
 
 class TeamForm(Form):
     title = wtforms.TextField(__("Team name"), validators=[wtforms.validators.Required()])
-    users = HiddenMultiField(__("Users"), validators=[wtforms.validators.Required()])
+    users = UserSelectMultiField(__("Users"), validators=[wtforms.validators.Required()],
+        description=__("Lookup a user by their username or email address"),
+                        lastuser=None, usermodel=User,
+                        autocomplete_endpoint=lambda: url_for('lastuser_oauth.user_autocomplete'),
+                        getuser_endpoint=lambda: url_for('lastuser_oauth.user_get_by_userids'))

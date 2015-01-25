@@ -2,7 +2,7 @@
 
 from urlparse import urlparse
 
-from flask import Markup
+from flask import Markup, url_for
 import wtforms
 import wtforms.fields.html5
 from baseframe import _, __
@@ -177,7 +177,10 @@ class UserPermissionAssignForm(Form):
     Assign permissions to a user
     """
     user = UserSelectField(__("User"), validators=[wtforms.validators.Required()],
-        description=__("Lookup a user by their username or email address"), lastuser=None, usermodel=User)
+        description=__("Lookup a user by their username or email address"),
+                        lastuser=None, usermodel=User,
+                        autocomplete_endpoint=lambda: url_for('lastuser_oauth.user_autocomplete'),
+                        getuser_endpoint=lambda: url_for('lastuser_oauth.user_get_by_userids'))
     perms = wtforms.SelectMultipleField(__("Permissions"), validators=[wtforms.validators.Required()])
 
 

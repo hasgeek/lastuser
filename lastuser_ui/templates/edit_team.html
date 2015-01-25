@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% from "baseframe/forms.html" import renderform, ajaxform %}
+{% from "baseframe/forms.html" import renderform, ajaxform, widgetscripts %}
 
 {% block content %}
   {%- if message %}
@@ -9,14 +9,5 @@
 {% endblock %}
 
 {% block footerscripts %}
-  <script type="text/javascript">
-    $(function(){
-      Baseframe.Forms.lastuserAutocomplete({
-        id: "users",
-        multiple: true,
-        autocomplete_endpoint: "{{ url_for('lastuser_oauth.user_autocomplete') }}",
-        getuser_endpoint: "{{ url_for('lastuser_oauth.user_get_by_userids') }}"
-      });
-    });
-  </script>
+  {{ widgetscripts(form) }}
 {% endblock %}
