@@ -19,7 +19,7 @@
     <div class="clearfix">
       <p style="line-height: 2.5">
       {% for provider in login_registry %}
-        <a class="btn btn-default login-{{ provider }} {%- if lastused==provider %} lastused{% elif not login_registry[provider].priority %} optional jshidden{% endif %}" href="{{ url_for('.login_service', service=provider, next=request.args.get('next')) }}"><i class="fa fa-{{ login_registry[provider].icon }}"></i>&nbsp;&nbsp;{{ login_registry[provider]['title'] }}</a>
+        <a class="btn btn-social btn-{{ login_registry[provider].icon }} {%- if lastused==provider %} lastused{% elif not login_registry[provider].priority %} optional jshidden{% endif %}" href="{{ url_for('.login_service', service=provider, next=request.args.get('next')) }}"><i class="fa fa-{{ login_registry[provider].icon }}"></i>Login with {{ login_registry[provider]['title'] }}</a>
       {% endfor %}
         <a class="btn btn-default caption no-jshidden" id="showmore" href="#">Show more...</a>
       </p>
