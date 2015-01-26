@@ -249,11 +249,11 @@ def permission_user_new(client):
     if form.validate_on_submit():
         perms = set()
         if client.user:
-            permassign = UserClientPermissions.query.filter_by(user=form.user, client=client).first()
+            permassign = UserClientPermissions.query.filter_by(user=form.user.data, client=client).first()
             if permassign:
                 perms.update(permassign.access_permissions.split(u' '))
             else:
-                permassign = UserClientPermissions(user=form.user, client=client)
+                permassign = UserClientPermissions(user=form.user.data, client=client)
                 db.session.add(permassign)
         else:
             permassign = TeamClientPermissions.query.filter_by(team=form.team, client=client).first()
@@ -266,12 +266,12 @@ def permission_user_new(client):
         permassign.access_permissions = u' '.join(sorted(perms))
         db.session.commit()
         if client.user:
-            flash(_(u"Permissions have been assigned to user {pname}").format(pname=form.user.pickername), 'success')
+            flash(_(u"Permissions have been assigned to user {pname}").format(pname=form.user.data.pickername), 'success')
         else:
             flash(_(u"Permissions have been assigned to team ‘{pname}’").format(pname=permassign.team.pickername), 'success')
         return render_redirect(url_for('.client_info', key=client.key), code=303)
     return render_form(form=form, title=_("Assign permissions"), formid='perm_assign',
-        submit=_("Assign permissions"), ajax=True)
+        submit=_("Assign permissions"))
 
 
 @lastuser_ui.route('/apps/<key>/perms/<userid>/edit', methods=['GET', 'POST'])

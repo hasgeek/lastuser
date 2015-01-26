@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% from "baseframe/forms.html" import renderform, ajaxform %}
+
+{% block content %}
+  {%- if message %}
+    <p>{{ message }}</p>
+  {%- endif %}
+  {{ renderform(form=form, formid=formid, submit=submit) }}
+{% endblock %}
+
+{% block footerscripts %}
+  {{ widgetscripts(form) }}
+{% endblock %}
