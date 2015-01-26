@@ -11,7 +11,7 @@ from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Re
     ResourceAction, UserClientPermissions, TeamClientPermissions, UserSession, ClientCredential)
 from lastuser_core import resource_registry
 from .. import lastuser_oauth
-from .helpers import requires_client_login, requires_user_or_client_login
+from .helpers import requires_client_login, requires_user_or_client_login, requires_client_id_or_user_or_client_login
 
 
 def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
@@ -274,7 +274,7 @@ def user_get_by_userid():
 
 
 @lastuser_oauth.route('/api/1/user/get_by_userids', methods=['GET', 'POST'])
-@requires_user_or_client_login
+@requires_client_id_or_user_or_client_login
 @requestargs('userid[]')
 def user_get_by_userids(userid):
     """
@@ -362,7 +362,7 @@ def user_getall(name):
 
 
 @lastuser_oauth.route('/api/1/user/autocomplete', methods=['GET', 'POST'])
-@requires_user_or_client_login
+@requires_client_id_or_user_or_client_login
 def user_autocomplete():
     """
     Returns users (userid, username, fullname, twitter, github or email) matching the search term.

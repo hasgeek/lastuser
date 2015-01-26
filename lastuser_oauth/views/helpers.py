@@ -11,6 +11,7 @@ from baseframe import _
 from lastuser_core.models import db, User, ClientCredential, UserSession
 from lastuser_core.signals import user_login, user_logout, user_registered
 from .. import lastuser_oauth
+from urlparse import urlparse
 
 valid_timezones = set(common_timezones)
 
@@ -183,6 +184,39 @@ def requires_user_or_client_login(f):
             return result
     return decorated_function
 
+def get_scheme_netloc(uri):
+    parsed_uri = urlparse(uri)
+    return (parsed_uri.scheme, parsed_uri.netloc)
+
+def requires_client_id_or_user_or_client_login(f):
+    """
+    Decorator to require a user or client login (user by cookie, client by HTTP Basic).
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        g.login_required = True
+
+        # Check if request is local
+        if request.referrer and urlparse(request.referrer).netloc == current_app.config.get('SERVER_NAME'):
+            return f(*args, **kwargs)
+
+        # Check if http referrer and given client id match a registered client
+        if request.referrer and request.args['client_id']:
+            client_cred = ClientCredential.query.filter_by(name=request.args['client_id']).first()
+            if client_cred and get_scheme_netloc(client_cred.client.website) == get_scheme_netloc(request.referrer):
+                return f(*args, **kwargs)
+
+        # Check for user first:
+        if g.user is not None:
+            return f(*args, **kwargs)
+
+        # If user is not logged in, check for client
+        result = _client_login_inner()
+        if result is None:
+            return f(*args, **kwargs)
+        else:
+            return result
+    return decorated_function
 
 def login_internal(user):
     g.user = user
