@@ -7,7 +7,7 @@ from lastuser_core.signals import user_data_changed, org_data_changed, team_data
 
 
 user_changes_to_notify = set(['merge', 'profile', 'email', 'email-claim', 'email-delete',
-    'phone', 'phone-claim', 'phone-delete'])
+    'phone', 'phone-claim', 'phone-delete', 'team-membership'])
 
 
 @session_revoked.connect
@@ -38,10 +38,14 @@ def notify_user_data_changed(user, changes):
                     if change in ['merge', 'profile']:
                         notify_changes.append(change)
                     elif change in ['email', 'email-claim', 'email-delete']:
-                        if 'email' in token.scope:
+                        if 'email' in token.scope or 'email/*' in token.scope:
                             notify_changes.append(change)
                     elif change in ['phone', 'phone-claim', 'phone-delete']:
-                        if 'phone' in token.scope:
+                        if 'phone' in token.scope or 'phone/*' in token.scope:
+                            notify_changes.append(change)
+                    elif change in ['team-membership']:
+                        if ('organizations' in token.scope or 'organizations/*' in token.scope or
+                                'teams' in token.scope or 'teams/*' in token.scope):
                             notify_changes.append(change)
                 if notify_changes:
                     send_notice.delay(token.client.notification_uri, data={
@@ -59,18 +63,18 @@ def notify_org_data_changed(org, user, changes, team=None):
     """
     client_users = {}
     if team is not None:
-        team_access = set(org.clients_with_team_access()) | set(user.clients_with_team_access())
+        team_access = set(org.clients_with_team_access()) | (set(user.clients_with_team_access()) if user else set())
     else:
         team_access = []
     for token in AuthToken.all(users=org.owners.users):
-        if 'organizations' in token.scope and token.client.notification_uri and token.is_valid():
+        if ('organizations' in token.scope or 'organizations/*' in token.scope) and token.client.notification_uri and token.is_valid():
             if team is not None:
                 if token.client not in team_access:
                     continue
             client_users.setdefault(token.client, []).append(token.user)
     # Now we have a list of clients to notify and a list of users to notify them with
     for client, users in client_users.items():
-        if user in users:
+        if user is not None and user in users:
             notify_user = user
         else:
             notify_user = users[0]  # First user available

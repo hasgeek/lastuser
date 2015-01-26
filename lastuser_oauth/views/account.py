@@ -134,6 +134,19 @@ def login_service_postcallback(service, userdata):
     if userdata.get('email') and not useremail:
         user.add_email(userdata['email'])
 
+    # If there are multiple email addresses, add any that are not already claimed.
+    # If they are already claimed by another user, this calls for an account merge
+    # request, but we can only merge two users at a time. Ask for a merge if there
+    # isn't already one pending
+    if userdata.get('emails'):
+        for email in userdata['emails']:
+            existing = UserEmail.get(email)
+            if existing:
+                if existing.user != user and 'merge_userid' not in session:
+                    session['merge_userid'] = existing.user.userid
+            else:
+                user.add_email(email)
+
     if userdata.get('emailclaim'):
         emailclaim = UserEmailClaim(user=user, email=userdata['emailclaim'])
         db.session.add(emailclaim)

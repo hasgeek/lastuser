@@ -61,12 +61,15 @@ class GitHubProvider(LoginProvider):
             headers={'Accept': 'application/vnd.github.v3+json'}).json()
 
         email = None
+        emails = []
         if ghemails and isinstance(ghemails, (list, tuple)):
             for result in ghemails:
-                if result.get('verified'):
-                    email = result['email']
-                    break  # TODO: Support multiple emails in login providers
+                if result.get('verified') and not result['email'].endswith('@users.noreply.github.com'):
+                    emails.append(result['email'])
+        if emails:
+            email = emails[0]
         return {'email': email,
+                'emails': emails,
                 'userid': ghinfo['login'],
                 'username': ghinfo['login'],
                 'fullname': ghinfo.get('name'),

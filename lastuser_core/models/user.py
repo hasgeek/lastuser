@@ -464,6 +464,7 @@ class Organization(BaseMixin, db.Model):
 
     @domain.setter
     def domain(self, value):
+        from ..signals import user_data_changed, team_data_changed  # Import here as we can't import at top-level
         if not value:
             value = None
         if not self.members:
@@ -475,6 +476,8 @@ class Organization(BaseMixin, db.Model):
                 for useremail in UserEmail.query.filter_by(domain=value).join(User):
                     if useremail.user not in self.members.users:
                         self.members.users.append(useremail.user)
+                        user_data_changed.send(useremail.user, changes=['team-membership'])
+            team_data_changed.send(self.members, user=None, changes=['membership'])  # The team /edit view sends 'edit'
         self.members.domain = value
 
     @hybrid_property

@@ -2,7 +2,7 @@
 
 from flask.signals import Namespace
 from sqlalchemy import event as sqla_event
-from .models import User, Organization, Team
+from .models import User, Organization, Team, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
 
 
 lastuser_signals = Namespace()
@@ -18,6 +18,22 @@ model_org_deleted = lastuser_signals.signal('model-org-deleted')
 model_team_new = lastuser_signals.signal('model-team-new')
 model_team_edited = lastuser_signals.signal('model-team-edited')
 model_team_deleted = lastuser_signals.signal('model-team-deleted')
+
+model_useremail_new = lastuser_signals.signal('model-useremail-new')
+model_useremail_edited = lastuser_signals.signal('model-useremail-edited')
+model_useremail_deleted = lastuser_signals.signal('model-useremail-deleted')
+
+model_useremailclaim_new = lastuser_signals.signal('model-useremail-new')
+model_useremailclaim_edited = lastuser_signals.signal('model-useremail-edited')
+model_useremailclaim_deleted = lastuser_signals.signal('model-useremail-deleted')
+
+model_userphone_new = lastuser_signals.signal('model-useremail-new')
+model_userphone_edited = lastuser_signals.signal('model-useremail-edited')
+model_userphone_deleted = lastuser_signals.signal('model-useremail-deleted')
+
+model_userphoneclaim_new = lastuser_signals.signal('model-useremail-new')
+model_userphoneclaim_edited = lastuser_signals.signal('model-useremail-edited')
+model_userphoneclaim_deleted = lastuser_signals.signal('model-useremail-deleted')
 
 resource_access_granted = lastuser_signals.signal('resource-access-granted')
 
@@ -74,3 +90,63 @@ def _team_edited(mapper, connection, target):
 @sqla_event.listens_for(Team, 'after_delete')
 def _team_deleted(mapper, connection, target):
     model_team_deleted.send(target)
+
+
+@sqla_event.listens_for(UserEmail, 'after_insert')
+def _useremail_new(mapper, connection, target):
+    model_useremail_new.send(target)
+
+
+@sqla_event.listens_for(UserEmail, 'after_update')
+def _useremail_edited(mapper, connection, target):
+    model_useremail_edited.send(target)
+
+
+@sqla_event.listens_for(UserEmail, 'after_delete')
+def _useremail_deleted(mapper, connection, target):
+    model_useremail_deleted.send(target)
+
+
+@sqla_event.listens_for(UserEmailClaim, 'after_insert')
+def _useremailclaim_new(mapper, connection, target):
+    model_useremailclaim_new.send(target)
+
+
+@sqla_event.listens_for(UserEmailClaim, 'after_update')
+def _useremailclaim_edited(mapper, connection, target):
+    model_useremailclaim_edited.send(target)
+
+
+@sqla_event.listens_for(UserEmailClaim, 'after_delete')
+def _useremailclaim_deleted(mapper, connection, target):
+    model_useremailclaim_deleted.send(target)
+
+
+@sqla_event.listens_for(UserPhone, 'after_insert')
+def _userphone_new(mapper, connection, target):
+    model_userphone_new.send(target)
+
+
+@sqla_event.listens_for(UserPhone, 'after_update')
+def _userphone_edited(mapper, connection, target):
+    model_userphone_edited.send(target)
+
+
+@sqla_event.listens_for(UserPhone, 'after_delete')
+def _userphone_deleted(mapper, connection, target):
+    model_userphone_deleted.send(target)
+
+
+@sqla_event.listens_for(UserPhoneClaim, 'after_insert')
+def _userphoneclaim_new(mapper, connection, target):
+    model_userphoneclaim_new.send(target)
+
+
+@sqla_event.listens_for(UserPhoneClaim, 'after_update')
+def _userphoneclaim_edited(mapper, connection, target):
+    model_userphoneclaim_edited.send(target)
+
+
+@sqla_event.listens_for(UserPhoneClaim, 'after_delete')
+def _userphoneclaim_deleted(mapper, connection, target):
+    model_userphoneclaim_deleted.send(target)
