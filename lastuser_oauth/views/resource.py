@@ -38,7 +38,7 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
     if '*' in scope or 'organizations' in scope or 'organizations/*' in scope:
         userinfo['organizations'] = {
             'owner': [{'userid': org.userid, 'name': org.name, 'title': org.title, 'domain': org.domain} for org in user.organizations_owned()],
-            'member': [{'userid': org.userid, 'name': org.name, 'title': org.title, 'domain': org.domain} for org in user.organizations()],
+            'member': [{'userid': org.userid, 'name': org.name, 'title': org.title, 'domain': org.domain} for org in user.organizations_memberof()],
             }
 
     if '*' in scope or 'organizations' in scope or 'teams' in scope or 'organizations/*' in scope or 'teams/*' in scope:

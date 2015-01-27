@@ -257,14 +257,14 @@ class User(BaseMixin, db.Model):
 
     def organizations_memberof(self):
         """
-        Return the organizations this user is an owner of.
+        Return the organizations this user is a member of.
         """
         return sorted(set([team.org for team in self.teams if team.org.members == team]),
             key=lambda o: o.title)
 
     def organizations_memberof_ids(self):
         """
-        Return the database ids of the organizations this user is an owner of. This is used
+        Return the database ids of the organizations this user is a member of. This is used
         for database queries.
         """
         return list(set([team.org.id for team in self.teams if team.org.members == team]))
