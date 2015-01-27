@@ -2,14 +2,14 @@
 
 from urlparse import urlparse
 
-from flask import Markup
+from flask import Markup, url_for
 import wtforms
 import wtforms.fields.html5
 from baseframe import _, __
-from baseframe.forms import Form, NullTextField
+from baseframe.forms import Form, NullTextField, UserSelectField
 from coaster.utils import valid_username, domain_namespace_match
 
-from lastuser_core.models import Permission, Resource, getuser, Organization
+from lastuser_core.models import Permission, Resource, getuser, Organization, User
 from lastuser_core import resource_registry
 
 __all__ = ['ConfirmDeleteForm', 'RegisterClientForm', 'ClientCredentialForm', 'PermissionForm',
@@ -176,15 +176,12 @@ class UserPermissionAssignForm(Form):
     """
     Assign permissions to a user
     """
-    username = wtforms.TextField(__("User"), validators=[wtforms.validators.Required()],
-        description=__("Lookup a user by their username or email address"))
+    user = UserSelectField(__("User"), validators=[wtforms.validators.Required()],
+        description=__("Lookup a user by their username or email address"),
+        lastuser=None, usermodel=User,
+        autocomplete_endpoint=lambda: url_for('lastuser_oauth.user_autocomplete'),
+        getuser_endpoint=lambda: url_for('lastuser_oauth.user_get_by_userids'))
     perms = wtforms.SelectMultipleField(__("Permissions"), validators=[wtforms.validators.Required()])
-
-    def validate_username(self, field):
-        existing = getuser(field.data)
-        if existing is None:
-            raise wtforms.ValidationError(_("User does not exist"))
-        self.user = existing
 
 
 class TeamPermissionAssignForm(Form):

@@ -106,15 +106,13 @@ def team_new(org):
     form = TeamForm()
     if form.validate_on_submit():
         team = Team(org=org)
-        team.title = form.title.data
-        if form.users.data:
-            team.users = User.query.filter(User.userid.in_(form.users.data)).all()
         db.session.add(team)
+        form.populate_obj(team)
         db.session.commit()
         team_data_changed.send(team, changes=['new'], user=g.user)
         return render_redirect(url_for('.org_info', name=org.name), code=303)
-    return make_response(render_template('edit_team.html', form=form, title=_(u"Create new team"),
-        formid='team_new', submit=_("Create")))
+    return render_form(form=form, title=_(u"Create new team"),
+        formid='team_new', submit=_("Create"))
 
 
 @lastuser_ui.route('/organizations/<name>/teams/<userid>', methods=['GET', 'POST'])
@@ -126,18 +124,14 @@ def team_new(org):
     )
 def team_edit(org, team):
     form = TeamForm(obj=team)
-    if request.method == 'GET':
-        form.users.data = [u.userid for u in team.users]
     if form.validate_on_submit():
-        team.title = form.title.data
-        if form.users.data:
-            team.users = User.query.filter(User.userid.in_(form.users.data)).all()
+        form.populate_obj(team)
         db.session.commit()
         team_data_changed.send(team, changes=['edit'], user=g.user)
         return render_redirect(url_for('.org_info', name=org.name), code=303)
-    return make_response(render_template(u'edit_team.html', form=form,
+    return render_form(form=form,
         title=_(u"Edit team: {title}").format(title=team.title),
-        formid='team_edit', submit=_("Save"), ajax=False))
+        formid='team_edit', submit=_("Save"), ajax=False)
 
 
 @lastuser_ui.route('/organizations/<name>/teams/<userid>/delete', methods=['GET', 'POST'])
