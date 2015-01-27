@@ -107,8 +107,8 @@ def team_new(org):
     if form.validate_on_submit():
         team = Team(org=org)
         team.title = form.title.data
-        if form.users.data:
-            team.users = User.query.filter(User.userid.in_(form.users.data)).all()
+        if form.users:
+            team.users = form.users.data
         db.session.add(team)
         db.session.commit()
         team_data_changed.send(team, changes=['new'], user=g.user)
