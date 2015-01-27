@@ -184,39 +184,41 @@ def requires_user_or_client_login(f):
             return result
     return decorated_function
 
+
 def get_scheme_netloc(uri):
     parsed_uri = urlparse(uri)
     return (parsed_uri.scheme, parsed_uri.netloc)
 
+
 def requires_client_id_or_user_or_client_login(f):
     """
-    Decorator to require a user or client login (user by cookie, client by HTTP Basic).
+    Decorator to require a client_id and session or a user or client login
+    (client_id and session in the request args, user by cookie, client by HTTP Basic).
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         g.login_required = True
 
-        # Check if request is local
-        if request.referrer and urlparse(request.referrer).netloc == current_app.config.get('SERVER_NAME'):
-            return f(*args, **kwargs)
-
         # Check if http referrer and given client id match a registered client
-        if request.referrer and request.args['client_id']:
-            client_cred = ClientCredential.query.filter_by(name=request.args['client_id']).first()
-            if client_cred and get_scheme_netloc(client_cred.client.website) == get_scheme_netloc(request.referrer):
-                return f(*args, **kwargs)
+        if 'client_id' in request.values and 'session' in request.values and request.referrer:
+            client_cred = ClientCredential.get(request.values['client_id'])
+            if client_cred is not None and get_scheme_netloc(client_cred.client.website) == get_scheme_netloc(request.referrer):
+                if UserSession.authenticate(buid=request.values['session']) is not None:
+                    return f(*args, **kwargs)
 
-        # Check for user first:
+        # If we didn't get a valid client_id and session, maybe there's a user?
         if g.user is not None:
             return f(*args, **kwargs)
 
-        # If user is not logged in, check for client
+        # If user is not logged in, check for client credentials in the request authorization header.
+        # If no error reported, call the function, else return error.
         result = _client_login_inner()
         if result is None:
             return f(*args, **kwargs)
         else:
             return result
     return decorated_function
+
 
 def login_internal(user):
     g.user = user

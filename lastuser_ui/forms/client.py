@@ -178,11 +178,10 @@ class UserPermissionAssignForm(Form):
     """
     user = UserSelectField(__("User"), validators=[wtforms.validators.Required()],
         description=__("Lookup a user by their username or email address"),
-                        lastuser=None, usermodel=User,
-                        autocomplete_endpoint=lambda: url_for('lastuser_oauth.user_autocomplete'),
-                        getuser_endpoint=lambda: url_for('lastuser_oauth.user_get_by_userids'))
+        lastuser=None, usermodel=User,
+        autocomplete_endpoint=lambda: url_for('lastuser_oauth.user_autocomplete'),
+        getuser_endpoint=lambda: url_for('lastuser_oauth.user_get_by_userids'))
     perms = wtforms.SelectMultipleField(__("Permissions"), validators=[wtforms.validators.Required()])
-
 
 
 class TeamPermissionAssignForm(Form):
