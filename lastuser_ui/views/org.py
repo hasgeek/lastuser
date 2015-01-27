@@ -43,8 +43,10 @@ def org_new():
     if form.validate_on_submit():
         org = Organization()
         form.populate_obj(org)
-        org.owners.users.append(g.user)
-        org.members.users.append(g.user)
+        if g.user not in org.owners.users:
+            org.owners.users.append(g.user)
+        if g.user not in org.members.users:
+            org.members.users.append(g.user)
         db.session.add(org)
         db.session.commit()
         org_data_changed.send(org, changes=['new'], user=g.user)
