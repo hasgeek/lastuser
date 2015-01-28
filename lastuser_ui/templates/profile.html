@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% from "baseframe/forms.html" import renderfield, rendersubmit %}
+{% from "baseframe/forms.html" import renderfield, rendersubmit, renderform %}
 {% block title %}Profile{% endblock %}
 
 {% block content %}
@@ -32,7 +32,7 @@
     </tr>
   {% endfor %}
     <tr>
-      <td><a href="{{ url_for('.add_email') }}">Add another email address &rarr;</a></td>
+      <td><a  data-toggle="collapse" data-target="#emailFromNew">Add another email address &rarr;</a></td>
       <td></td>
     </tr>
   </table>
@@ -40,7 +40,29 @@
   <p>No verified addresses</p>
   <a class="btn btn-info" href="{{ url_for('.add_email') }}">Add an email address</a>
 {% endif %}
-
+<div id="emailFromNew" class="well collapse in">
+  <form class="form-horizontal" id="{{ email_form_id }}" action="{{ email_form_action }}" method="POST">
+    {{ email_form.hidden_tag() }}
+    {{ renderfield(email_form.email) }}
+    <div class="form-group control-group listwidget" id="field-type">
+      <label class="col-xs-12 col-sm-3 col-md-2 control-label" for="type">Type</label>
+        <div class="col-xs-12 col-sm-9 col-md-10 controls">
+        {% for choice in email_form.type.choices %}
+          <label class="radio-inline">
+            <input type="radio" name="type" value="{{ choice[0] }}"> {{ choice[0] }}
+          </label>
+        {% endfor %}
+        </div>
+    </div>
+    <div class="form-group form-actions clearfix">
+      <div class="col-sm-offset-3 col-sm-9 col-md-offset-2 col-md-10">
+        <button type="submit"  class="btn btn-primary" >{{ email_form_submit }}</button>
+        <span class="loading hidden">&nbsp;</span>
+      </div>
+    </div>
+  </form>
+<!-- {{ renderform(form=email_form, formid=email_form_id, submit=email_form_submit, message="", action=email_form_action) }} -->
+</div>
 <h2>Mobile numbers</h2>
 {% if g.user.phones %}
   <table class="table">

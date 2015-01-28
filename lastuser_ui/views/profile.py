@@ -19,7 +19,9 @@ from .sms import send_phone_verify_code
 @lastuser_ui.route('/profile')
 @requires_login
 def profile():
-    return render_template('profile.html', login_registry=login_registry)
+    form = NewEmailAddressForm()
+    return render_template('profile.html', login_registry=login_registry, email_form=form, email_form_id='emailform',
+            email_form_submit=_("Add Email"), email_form_action=url_for('.email_json'))
 
 
 @lastuser_ui.route('/profile/password', methods=['GET', 'POST'])
