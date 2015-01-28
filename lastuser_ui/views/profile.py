@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import json
+
 from flask import g, flash, render_template, url_for, request
 from coaster.views import load_model
 from baseframe import _
@@ -19,9 +21,13 @@ from .sms import send_phone_verify_code
 @lastuser_ui.route('/profile')
 @requires_login
 def profile():
+<<<<<<< HEAD
     form = NewEmailAddressForm()
     return render_template('profile.html', login_registry=login_registry, email_form=form, email_form_id='emailform',
             email_form_submit=_("Add Email"), email_form_action=url_for('.email_json'))
+=======
+    return render_template('profile.html', login_registry=login_registry)
+>>>>>>> 0c36d41e1e9ca0085845635a6853cdc2984a42a1
 
 
 @lastuser_ui.route('/profile/password', methods=['GET', 'POST'])
@@ -42,6 +48,28 @@ def change_password():
     return render_form(form=form, title=_("Change password"), formid='changepassword',
         submit=_("Change password"), ajax=True)
 
+
+@lastuser_ui.route('/profile/email/json', methods=['GET', 'POST'])
+@requires_login
+def email_json():
+    form = NewEmailAddressForm()
+    response = {}
+    if form.validate_on_submit():
+        useremail = UserEmailClaim.get(user=g.user, email=form.email.data)
+        if useremail is None:
+            useremail = UserEmailClaim(user=g.user, email=form.email.data, type=form.type.data)
+            db.session.add(useremail)
+            db.session.commit()
+        send_email_verify_link(useremail)
+        response.update({
+            'modal': _("We send you an email to confirm your address")
+            })
+        user_data_changed.send(g.user, changes=['email-claim'])
+        return json.dumps(response)
+    response.update({
+        'errors': json.dumps(form.errors)
+        })
+    return json.dumps(response)
 
 @lastuser_ui.route('/profile/email/new', methods=['GET', 'POST'])
 @requires_login
