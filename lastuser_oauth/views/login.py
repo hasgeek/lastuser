@@ -186,6 +186,8 @@ def reset():
             # Send to their existing address
             # User.email is a UserEmail object
             email = unicode(user.email)
+        if not email and user.emailclaims:
+            email = user.emailclaims[0].email
         if not email:
             # They don't have an email address. Maybe they logged in via Twitter
             # and set a local username and password, but no email. Could happen.
