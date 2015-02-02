@@ -32,22 +32,23 @@
     </tr>
   {% endfor %}
     <tr>
-      <td><a  data-toggle="collapse" data-target="#emailFromNew">Add another email address &rarr;</a></td>
+      <td><a href="javascript:void(0);" data-toggle="collapse" data-target="#emailFormNew">Add another email address &rarr;</a></td>
       <td></td>
     </tr>
   </table>
 {% else %}
   <p>No verified addresses</p>
-  <a class="btn btn-info" href="{{ url_for('.add_email') }}">Add an email address</a>
+  <a class="btn btn-info" href="{{ url_for('.add_email') }}" data-toggle="collapse" data-target="#emailFormNew">Add an email address</a>
 {% endif %}
-<div id="emailFromNew" class="well collapse in">
-  <form class="form-horizontal" id="{{ email_form_id }}" action="{{ email_form_action }}" method="POST">
-    {{ email_form.hidden_tag() }}
-    {{ renderfield(email_form.email) }}
+<div class="margin-box">
+<div id="emailFormNew" class="well collapse">
+  <form class="form-horizontal" id="{{ context.email_form_id }}" action="{{ context.email_form_action }}" method="POST">
+    {{ context.email_form.hidden_tag() }}
+    {{ renderfield(context.email_form.email) }}
     <div class="form-group control-group listwidget" id="field-type">
       <label class="col-xs-12 col-sm-3 col-md-2 control-label" for="type">Type</label>
         <div class="col-xs-12 col-sm-9 col-md-10 controls">
-        {% for choice in email_form.type.choices %}
+        {% for choice in context.email_form.type.choices %}
           <label class="radio-inline">
             <input type="radio" name="type" value="{{ choice[0] }}"> {{ choice[0] }}
           </label>
@@ -56,12 +57,12 @@
     </div>
     <div class="form-group form-actions clearfix">
       <div class="col-sm-offset-3 col-sm-9 col-md-offset-2 col-md-10">
-        <button type="submit"  class="btn btn-primary" >{{ email_form_submit }}</button>
+        <button type="submit"  class="btn btn-primary" >{{ context.email_form_submit }}</button>
         <span class="loading hidden">&nbsp;</span>
       </div>
     </div>
   </form>
-<!-- {{ renderform(form=email_form, formid=email_form_id, submit=email_form_submit, message="", action=email_form_action) }} -->
+</div>
 </div>
 <h2>Mobile numbers</h2>
 {% if g.user.phones %}
@@ -74,19 +75,49 @@
     {% endfor %}
     {% for userphone in g.user.phoneclaims %}
     <tr>
-      <td>{{ userphone }} <em>(<a href="{{ url_for('.verify_phone', number=userphone) }}">pending verification</a>)</td>
+      <td>{{ userphone }} <em>(<a href="{{ url_for('.verify_phone', number=userphone) }}">pending verification</a>)
+      <form action="{{ url_for('.verify_phone', number=userphone) }}" method="POST">
+        {{ context.email_form.hidden_tag() }} {# Because CSRF can be rendered from any form #}
+        <label for="verification_code">Verification code</label>
+        <input type="text" maxlength="4" name="verification_code" id="verification_code">
+      </form>
+      </td>
       <td><a href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a></td>
     </tr>
     {% endfor %}
     <tr>
-      <td><a href="{{ url_for('.add_phone') }}">Add another mobile number &rarr;</a></td>
+      <td><a href="javascript:void();" data-toggle="collapse" data-target="#phoneFormNew">Add another mobile number &rarr;</a></td>
       <td></td>
     </tr>
   </table>
 {% else %}
   <p><em>(No verified numbers)</em></p>
-  <a class="btn btn-info" href="{{ url_for('.add_phone') }}">Add a mobile number</a>
+  <a class="btn btn-info"  data-toggle="collapse" data-target="#phoneFormNew">Add a mobile number</a>
 {% endif %}
+<div class="margin-box">
+<div id="phoneFormNew" class="well collapse">
+  <form class="form-horizontal" id="{{ context.phone_form_id }}" action="{{ context.phone_form_action }}" method="POST">
+    {{ context.phone_form.hidden_tag() }}
+    {{ renderfield(context.phone_form.phone) }}
+    <div class="form-group control-group listwidget" id="field-type">
+      <label class="col-xs-12 col-sm-3 col-md-2 control-label" for="type">Type</label>
+        <div class="col-xs-12 col-sm-9 col-md-10 controls">
+        {% for choice in context.phone_form.type.choices %}
+          <label class="radio-inline">
+            <input type="radio" name="type" value="{{ choice[0] }}"> {{ choice[0] }}
+          </label>
+        {% endfor %}
+        </div>
+    </div>
+    <div class="form-group form-actions clearfix">
+      <div class="col-sm-offset-3 col-sm-9 col-md-offset-2 col-md-10">
+        <button type="submit"  class="btn btn-primary" >{{ context.phone_form_submit }}</button>
+        <span class="loading hidden">&nbsp;</span>
+      </div>
+    </div>
+  </form>
+</div>
+</div>
 
 <h2>Connected IDs</h2>
 <table class="table">
@@ -138,4 +169,50 @@
     <li>From {{ session.ipaddr }} since {{ session.created_at|age }} with {{ session.ua.browser}}/{{ session.ua.platform }}/{{ session.ua.version }}, last active {{ session.accessed_at|age }} {% if session == g.usersession -%} (current) {%- else -%} (<a href="{{ url_for('lastuser_oauth.logout_session', session=session.buid) }}">logout</a>) {%- endif %}</li>
   {%- endfor %}
 </ul>
+{% endblock %}
+
+{% block footerscripts %}
+<script type="text/javascript">
+
+  (function($){
+    $("#"+"{{ context.email_form_id }}").on("submit", function(e){
+      e.preventDefault();
+      var form = $(e.target);
+      $.post( form.attr("action"), form.serialize(), function(res){
+        data=$.parseJSON(res);
+        if(data['errors'].length === 0) {
+          window.alert(data['modal']);
+        }
+        else {
+          data['errors'].forEach(function(error) {
+            console.log(error);
+            Object.keys(error).forEach(function(key){
+              $(form).find(key).append('<div><p class="help-error">'+error[key]+'</p></div>');
+            });
+            
+          });
+        };
+      });
+    });
+    $("#"+"{{ context.phone_form_id }}").on("submit", function(e){
+      e.preventDefault();
+      var form = $(e.target);
+      $.post( form.attr("action"), form.serialize(), function(res){
+        data=$.parseJSON(res);
+        if(data['errors'].length === 0) {
+          window.alert(data['modal']);
+        }
+        else {
+          data['errors'].forEach(function(error) {
+            console.log(error);
+            Object.keys(error).forEach(function(key){
+              $(form).find(key).append('<div><p class="help-error">'+error[key]+'</p></div>');
+            });
+            
+          });
+        };
+      });
+    });
+  })(jQuery);
+</script>
 {% endblock %}

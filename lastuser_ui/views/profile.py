@@ -21,13 +21,24 @@ from .sms import send_phone_verify_code
 @lastuser_ui.route('/profile')
 @requires_login
 def profile():
-<<<<<<< HEAD
-    form = NewEmailAddressForm()
-    return render_template('profile.html', login_registry=login_registry, email_form=form, email_form_id='emailform',
-            email_form_submit=_("Add Email"), email_form_action=url_for('.email_json'))
-=======
-    return render_template('profile.html', login_registry=login_registry)
->>>>>>> 0c36d41e1e9ca0085845635a6853cdc2984a42a1
+    email_form = NewEmailAddressForm()
+    phone_form = NewPhoneForm()
+    context = {
+        'login_registry': login_registry,
+
+        #Email Form
+        'email_form': email_form,
+        'email_form_id': 'email_form',
+        'email_form_submit': _("Add Email"),
+        'email_form_action': url_for('.email_json'),
+
+        #Phone Form
+        'phone_form': phone_form,
+        'phone_form_id': 'phone_form',
+        'phone_form_submit': _("Add Phone"),
+        'phone_form_action': url_for('.phone_json')
+    }
+    return render_template('profile.html', context=context)
 
 
 @lastuser_ui.route('/profile/password', methods=['GET', 'POST'])
@@ -53,7 +64,10 @@ def change_password():
 @requires_login
 def email_json():
     form = NewEmailAddressForm()
-    response = {}
+    response = {
+        'errors': [],
+        'modal': ''
+    }
     if form.validate_on_submit():
         useremail = UserEmailClaim.get(user=g.user, email=form.email.data)
         if useremail is None:
@@ -62,14 +76,41 @@ def email_json():
             db.session.commit()
         send_email_verify_link(useremail)
         response.update({
-            'modal': _("We send you an email to confirm your address")
-            })
+            'modal': _("We sent you an email to confirm your address")
+        })
         user_data_changed.send(g.user, changes=['email-claim'])
         return json.dumps(response)
     response.update({
-        'errors': json.dumps(form.errors)
-        })
+        'errors': [{key: form.errors[key]} for key in form.errors]
+    })
     return json.dumps(response)
+
+
+@lastuser_ui.route('/profile/phone/json', methods=['GET', 'POST'])
+@requires_login
+def phone_json():
+    form = NewPhoneForm()
+    response = {
+        'errors': [],
+        'modal': ''
+    }
+    if form.validate_on_submit():
+        userphone = UserPhoneClaim.get(user=g.user, phone=form.phone.data)
+        if userphone is None:
+            userphone = UserPhoneClaim(user=g.user, phone=form.phone.data, type=form.type.data)
+            db.session.add(userphone)
+        send_phone_verify_code(userphone)
+        db.session.commit()  # Commit after sending because send_phone_verify_code saves the message sent
+        response.update({
+            'modal': _("We sent you a verification code to your phone")
+        })
+        user_data_changed.send(g.user, changes=['phone-claim'])
+        return json.dumps(response)
+    response.update({
+        'errors': json.dumps(form.errors)
+    })
+    return json.dumps(response)
+
 
 @lastuser_ui.route('/profile/email/new', methods=['GET', 'POST'])
 @requires_login
