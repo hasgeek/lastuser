@@ -26,13 +26,15 @@ from . import views  # NOQA
 assets['lastuser-oauth.js'][version] = lastuser_oauth.lastuser_oauth_js,
 assets['lastuser-oauth.css'][version] = lastuser_oauth.lastuser_oauth_css
 
+assets['lastuser-ui.js'][version] = lastuser_ui.lastuser_ui_js,
+assets['lastuser-ui.css'][version] = lastuser_ui.lastuser_ui_css
 
 def init_for(env):
     coaster.app.init_app(app, env)
     db.init_app(app)
     db.app = app  # To make it work without an app context
     RQ(app)  # Pick up RQ configuration from the app
-    baseframe.init_app(app, requires=['lastuser-oauth'],
+    baseframe.init_app(app, requires=['lastuser-oauth', 'lastuser-ui'],
         ext_requires=['baseframe-bs3', 'fontawesome>=4.0.0', 'jquery.cookie', 'timezone', 'bootstrap-social'])
 
     lastuser_oauth.mailclient.mail.init_app(app)
