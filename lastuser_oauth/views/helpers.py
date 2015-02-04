@@ -9,7 +9,7 @@ from flask import g, current_app, request, session, flash, redirect, url_for, Re
 from coaster.views import get_current_url
 from baseframe import _
 from lastuser_core.models import db, User, ClientCredential, UserSession
-from lastuser_core.signals import user_login, user_logout, user_registered
+from lastuser_core.signals import user_login, user_registered
 from .. import lastuser_oauth
 from urlparse import urlparse
 
@@ -240,7 +240,6 @@ def autoset_timezone(user):
 
 
 def logout_internal():
-    user = g.user
     g.user = None
     if g.usersession:
         g.usersession.revoke()
@@ -251,8 +250,6 @@ def logout_internal():
     session.pop('userid_external', None)
     session.pop('avatar_url', None)
     session.permanent = False
-    if user is not None:
-        user_logout.send(user)
 
 
 def register_internal(username, fullname, password):

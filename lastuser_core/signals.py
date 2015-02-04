@@ -39,7 +39,6 @@ resource_access_granted = lastuser_signals.signal('resource-access-granted')
 
 # Higher level signals
 user_login = lastuser_signals.signal('user-login')
-user_logout = lastuser_signals.signal('user-logout')
 user_registered = lastuser_signals.signal('user-registered')
 user_data_changed = lastuser_signals.signal('user-data-changed')
 org_data_changed = lastuser_signals.signal('org-data-changed')
