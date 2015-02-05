@@ -75,8 +75,6 @@ def send_message(msg):
                     flash(_("Message could not be sent"), 'danger')
             except requests.ConnectionError:
                 flash(_("The SMS delivery engine is not reachable at the moment. Please try again"), 'danger')
-        # Unsupported at this time
-        raise ValueError(_("Unsupported phone number"))
 
         # # TODO: Also check if we have SMS GupShup credentials in settings.py
         # params = urlencode(dict(
