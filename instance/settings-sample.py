@@ -102,7 +102,11 @@ SMS_SMSGUPSHUP_PASS = ''
 #: Exotel support is active
 SMS_EXOTEL_SID = ''
 SMS_EXOTEL_TOKEN = ''
-SMS_FROM = ''
+SMS_EXOTEL_FROM = ''
+#: Twilio support for non-indian numbers
+SMS_TWILIO_SID = ''
+SMS_TWILIO_TOKEN = ''
+SMS_TWILIO_FROM = ''
 
 #: Messages (text or HTML)
 MESSAGE_FOOTER = Markup('Copyright &copy; <a href="http://hasgeek.com/">HasGeek</a>. Powered by <a href="https://github.com/hasgeek/lastuser" title="GitHub project page">Lastuser</a>, open source software from <a href="https://github.com/hasgeek">HasGeek</a>.')
