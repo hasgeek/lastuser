@@ -2,6 +2,7 @@ Flask
 markdown
 Flask-Assets
 Flask-Mail
+SQLAlchemy>=0.9
 Flask-SQLAlchemy
 jsmin
 Flask-OpenID
