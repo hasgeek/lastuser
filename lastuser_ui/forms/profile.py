@@ -39,7 +39,7 @@ class NewPhoneForm(Form):
         validators=[
             wtforms.validators.Required(),
             wtforms.validators.Length(min=1, max=16, message=__("This is too long to be a valid phone number"))],
-        description=__("Indian mobile numbers only"))
+        description=__("Mobile numbers only"))
     type = wtforms.RadioField(__("Type"), coerce=nullunicode, validators=[wtforms.validators.Optional()], choices=[
         (__(u"Mobile"), __(u"Mobile")),
         (__(u"Home"), __(u"Home")),
