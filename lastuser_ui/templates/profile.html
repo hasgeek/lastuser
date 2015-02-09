@@ -3,9 +3,6 @@
 {% block title %}Profile{% endblock %}
 
 {% block content %}
-<p>
-  This page is work-in-progress.
-</p>
 <dl class="infobox">
   <dt>Name</dt>
   <dd>{{ g.user.fullname }}</dd>
@@ -40,6 +37,7 @@
   <p>No verified addresses</p>
   <a class="btn btn-info" href="{{ url_for('.add_email') }}" data-toggle="collapse" data-target="#emailFormNew">Add an email address</a>
 {% endif %}
+<div id="email-form-response"></div>
 <div class="margin-box">
 <div id="emailFormNew" class="well collapse">
   <form class="form-horizontal" id="{{ context.email_form_id }}" action="{{ context.email_form_action }}" method="POST">
@@ -95,6 +93,7 @@
   <a class="btn btn-info"  data-toggle="collapse" data-target="#phoneFormNew">Add a mobile number</a>
 {% endif %}
 <div class="margin-box">
+<div id="phone-form-response"></div>
 <div id="phoneFormNew" class="well collapse">
   <form class="form-horizontal" id="{{ context.phone_form_id }}" action="{{ context.phone_form_action }}" method="POST">
     {{ context.phone_form.hidden_tag() }}
@@ -127,10 +126,10 @@
     <em>(none)</em>
   {% endfor %}
 </table>
-{% for provider in login_registry %}
-  <a class="btn btn-social btn-{{ login_registry[provider].icon }}">
-    <i class="fa fa-{{ login_registry[provider].icon }}"></i>
-    Sign in with {{ login_registry[provider].title }}
+{% for provider in context.login_registry %}
+  <a class="btn btn-social btn-{{ context.login_registry[provider].icon }}" href="{{ url_for('lastuser_oauth.login_service', service=provider, next=url_for('.profile')) }}">
+    <i class="fa fa-{{ context.login_registry[provider].icon }}"></i>
+    Sign in with {{ context.login_registry[provider].title }}
   </a>
 {% endfor %}
 <h2>Organizations</h2>
@@ -181,7 +180,12 @@
       $.post( form.attr("action"), form.serialize(), function(res){
         data=$.parseJSON(res);
         if(data['errors'].length === 0) {
-          window.alert(data['modal']);
+          $('#email-form-response').append(
+            "<div class='alert alert-success fade in'>"+
+              "<a href='#' class='close' data-dismiss='alert'>&times;</a>"
+              +data['modal']+
+            "</div>")
+          $('#emailFormNew').collapse('hide');
         }
         else {
           data['errors'].forEach(function(error) {
@@ -200,7 +204,12 @@
       $.post( form.attr("action"), form.serialize(), function(res){
         data=$.parseJSON(res);
         if(data['errors'].length === 0) {
-          window.alert(data['modal']);
+          $('#phone-form-response').append(
+            "<div class='alert alert-success fade in'>"+
+              "<a href='#' class='close' data-dismiss='alert'>&times;</a>"
+              +data['modal']+
+            "</div>")
+          $('#phoneFormNew').collapse('hide');
         }
         else {
           data['errors'].forEach(function(error) {
