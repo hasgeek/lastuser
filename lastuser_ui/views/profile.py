@@ -158,11 +158,15 @@ def add_phone():
         if userphone is None:
             userphone = UserPhoneClaim(user=g.user, phone=form.phone.data, type=form.type.data)
             db.session.add(userphone)
-        send_phone_verify_code(userphone)
-        db.session.commit()  # Commit after sending because send_phone_verify_code saves the message sent
-        flash(_("We sent a verification code to your phone number"), 'success')
-        user_data_changed.send(g.user, changes=['phone-claim'])
-        return render_redirect(url_for('.verify_phone', number=userphone.phone), code=303)
+        try:
+            send_phone_verify_code(userphone)
+            db.session.commit()  # Commit after sending because send_phone_verify_code saves the message sent
+            flash(_("We sent a verification code to your phone number"), 'success')
+            user_data_changed.send(g.user, changes=['phone-claim'])
+            return render_redirect(url_for('.verify_phone', number=userphone.phone), code=303)
+        except ValueError as e:
+            db.session.rollback()
+            form.phone.errors.append(unicode(e))
     return render_form(form=form, title=_("Add a phone number"), formid='phone_add',
         submit=_("Add phone"), ajax=True)
 
