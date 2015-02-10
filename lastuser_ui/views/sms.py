@@ -33,7 +33,7 @@ def send_message(msg):
                 r = requests.post('https://twilix.exotel.in/v1/Accounts/{sid}/Sms/send.json'.format(sid=sid),
                     auth=(sid, token),
                     data={
-                        'From': current_app.config.get('SMS_FROM'),
+                        'From': current_app.config.get('SMS_EXOTEL_FROM'),
                         'To': msg.phone_number,
                         'Body': msg.message
                     })
@@ -44,6 +44,31 @@ def send_message(msg):
                         msg.transaction_id = jsonresponse[0].get('SMSMessage', {}).get('Sid')
                     else:
                         msg.transaction_id = jsonresponse.get('SMSMessage', {}).get('Sid')
+                else:
+                    # FIXME: This function should not be sending messages to the UI
+                    flash(_("Message could not be sent"), 'danger')
+            except requests.ConnectionError:
+                flash(_("The SMS delivery engine is not reachable at the moment. Please try again"), 'danger')
+    else:
+        # No number validation
+        # All okay. Send!
+        if not (current_app.config.get('SMS_TWILIO_SID') and current_app.config.get('SMS_TWILIO_TOKEN')):
+            raise ValueError(_("This server is not configured to send SMS"))
+        else:
+            sid = current_app.config['SMS_TWILIO_SID']
+            token = current_app.config['SMS_TWILIO_TOKEN']
+            try:
+                r = requests.post('https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json'.format(sid=sid),
+                    auth=(sid, token),
+                    data={
+                        'From': current_app.config.get('SMS_TWILIO_FROM'),
+                        'To': msg.phone_number,
+                        'Body': msg.message
+                    })
+                if r.status_code in (200, 201):
+                    # All good
+                    jsonresponse = r.json()
+                    msg.transaction_id = jsonresponse.get('sid', '')
                 else:
                     # FIXME: This function should not be sending messages to the UI
                     flash(_("Message could not be sent"), 'danger')
@@ -72,9 +97,6 @@ def send_message(msg):
         # except URLError, e:
         #     # FIXME: This function should not be sending messages to the UI
         #     flash("Message could not be sent. Error: %s" % e)
-    else:
-        # Unsupported at this time
-        raise ValueError(_("Unsupported phone number"))
 
 
 def send_phone_verify_code(phoneclaim):
