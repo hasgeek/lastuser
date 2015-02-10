@@ -50,8 +50,7 @@ def send_message(msg):
             except requests.ConnectionError:
                 flash(_("The SMS delivery engine is not reachable at the moment. Please try again"), 'danger')
     else:
-        if len(msg.phone_number) != 13:
-            raise ValueError(_("Invalid mobile number"))
+        # No number validation
         # All okay. Send!
         if not (current_app.config.get('SMS_TWILIO_SID') and current_app.config.get('SMS_TWILIO_TOKEN')):
             raise ValueError(_("This server is not configured to send SMS"))
