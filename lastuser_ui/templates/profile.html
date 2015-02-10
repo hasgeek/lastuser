@@ -15,134 +15,139 @@
 </p>
 <h2>Email addresses</h2>
 {% if g.user.emails %}
-  <table class="table">
+<table class="table">
   {% for useremail in g.user.emails %}
-    <tr>
-      <td>{{ useremail }} {% if useremail.primary %} <em>(primary)</em> {% endif -%}</td>
-      <td><a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a></td>
-    </tr>
+  <tr>
+    <td>{{ useremail }} {% if useremail.primary %} <em>(primary)</em> {% endif -%}</td>
+    <td><a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a></td>
+  </tr>
   {% endfor %}
   {% for useremail in g.user.emailclaims %}
-    <tr>
-      <td>{{ useremail }} <em>(pending verification)</em></td>
-      <td><a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a></td>
-    </tr>
+  <tr>
+    <td>{{ useremail }} <em>(pending verification)</em></td>
+    <td><a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a></td>
+  </tr>
   {% endfor %}
-    <tr>
-      <td><a href="javascript:void(0);" data-toggle="collapse" data-target="#emailFormNew">Add another email address &rarr;</a></td>
-      <td></td>
-    </tr>
-  </table>
+  <tr>
+    <td><a href="javascript:void(0);" data-toggle="collapse" data-target="#emailFormNew">Add another email address &rarr;</a></td>
+    <td></td>
+  </tr>
+</table>
 {% else %}
-  <p>No verified addresses</p>
-  <a class="btn btn-info" href="{{ url_for('.add_email') }}" data-toggle="collapse" data-target="#emailFormNew">Add an email address</a>
+<p>No verified addresses</p>
+<a class="btn btn-info" href="{{ url_for('.add_email') }}" data-toggle="collapse" data-target="#emailFormNew">Add an email address</a>
 {% endif %}
 <div id="email-form-response"></div>
 <div class="margin-box">
-<div id="emailFormNew" class="well collapse">
-  <form class="form-horizontal" id="{{ context.email_form_id }}" action="{{ context.email_form_action }}" method="POST">
-    {{ context.email_form.hidden_tag() }}
-    {{ renderfield(context.email_form.email) }}
-    <div class="form-group control-group listwidget" id="field-type">
-      <label class="col-xs-12 col-sm-3 col-md-2 control-label" for="type">Type</label>
+  <div id="emailFormNew" class="well collapse">
+    <form class="form-horizontal" id="{{ context.email_form_id }}" action="{{ context.email_form_action }}" method="POST">
+      {{ context.email_form.hidden_tag() }}
+      {{ renderfield(context.email_form.email) }}
+      <div class="form-group control-group listwidget" id="field-type">
+        <label class="col-xs-12 col-sm-3 col-md-2 control-label" for="type">Type</label>
         <div class="col-xs-12 col-sm-9 col-md-10 controls">
-        {% for choice in context.email_form.type.choices %}
+          {% for choice in context.email_form.type.choices %}
           <label class="radio-inline">
             <input type="radio" name="type" value="{{ choice[0] }}"> {{ choice[0] }}
           </label>
-        {% endfor %}
+          {% endfor %}
         </div>
-    </div>
-    <div class="form-group form-actions clearfix">
-      <div class="col-sm-offset-3 col-sm-9 col-md-offset-2 col-md-10">
-        <button type="submit"  class="btn btn-primary" >{{ context.email_form_submit }}</button>
-        <span class="loading hidden">&nbsp;</span>
       </div>
-    </div>
-  </form>
-</div>
+      <div class="form-group form-actions clearfix">
+        <div class="col-sm-offset-3 col-sm-9 col-md-offset-2 col-md-10">
+          <button type="submit"  class="btn btn-primary" >{{ context.email_form_submit }}</button>
+          <span class="loading hidden">&nbsp;</span>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 <h2>Mobile numbers</h2>
 {% if g.user.phones %}
-  <table class="table">
-    {% for userphone in g.user.phones %}
-    <tr>
-      <td>{{ userphone }} {% if userphone.primary %} <em>(primary)</em> {% endif -%}</td>
-      <td><a href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a></td>
-    </tr>
-    {% endfor %}
-    {% for userphone in g.user.phoneclaims %}
-    <tr>
-      <td>{{ userphone }} <em>(<a href="{{ url_for('.verify_phone', number=userphone) }}">pending verification</a>)
+<table class="table">
+  {% for userphone in g.user.phones %}
+  <tr>
+    <td>{{ userphone }} {% if userphone.primary %} <em>(primary)</em> {% endif -%}
+      <form action="{{ url_for('.verify_phone', number=userphone) }}" method="POST">
+        <label for="verification_code">Verification code</label>
+        <input type="text" maxlength="4" name="verification_code" id="verification_code">
+      </form>
+    </td>
+    <td><a href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a></td>
+  </tr>
+  {% endfor %}
+  {% for userphone in g.user.phoneclaims %}
+  <tr>
+    <td>{{ userphone }} <em>(<a href="{{ url_for('.verify_phone', number=userphone) }}">pending verification</a>)
       <form action="{{ url_for('.verify_phone', number=userphone) }}" method="POST">
         {{ context.email_form.hidden_tag() }} {# Because CSRF can be rendered from any form #}
         <label for="verification_code">Verification code</label>
         <input type="text" maxlength="4" name="verification_code" id="verification_code">
       </form>
-      </td>
-      <td><a href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a></td>
-    </tr>
-    {% endfor %}
-    <tr>
-      <td><a href="javascript:void();" data-toggle="collapse" data-target="#phoneFormNew">Add another mobile number &rarr;</a></td>
-      <td></td>
-    </tr>
-  </table>
+    </td>
+    <td><a href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a></td>
+  </tr>
+  {% endfor %}
+  <tr>
+    <td><a href="javascript:void();" data-toggle="collapse" data-target="#phoneFormNew">Add another mobile number &rarr;</a></td>
+    <td></td>
+  </tr>
+</table>
 {% else %}
-  <p><em>(No verified numbers)</em></p>
-  <a class="btn btn-info"  data-toggle="collapse" data-target="#phoneFormNew">Add a mobile number</a>
+<p><em>(No verified numbers)</em></p>
+<a class="btn btn-info"  data-toggle="collapse" data-target="#phoneFormNew">Add a mobile number</a>
 {% endif %}
 <div class="margin-box">
-<div id="phone-form-response"></div>
-<div id="phoneFormNew" class="well collapse">
-  <form class="form-horizontal" id="{{ context.phone_form_id }}" action="{{ context.phone_form_action }}" method="POST">
-    {{ context.phone_form.hidden_tag() }}
-    {{ renderfield(context.phone_form.phone) }}
-    <div class="form-group control-group listwidget" id="field-type">
-      <label class="col-xs-12 col-sm-3 col-md-2 control-label" for="type">Type</label>
+  <div id="phone-form-response"></div>
+  <div id="phoneFormNew" class="well collapse">
+    <form class="form-horizontal" id="{{ context.phone_form_id }}" action="{{ context.phone_form_action }}" method="POST">
+      {{ context.phone_form.hidden_tag() }}
+      {{ renderfield(context.phone_form.phone) }}
+      <div class="form-group control-group listwidget" id="field-type">
+        <label class="col-xs-12 col-sm-3 col-md-2 control-label" for="type">Type</label>
         <div class="col-xs-12 col-sm-9 col-md-10 controls">
-        {% for choice in context.phone_form.type.choices %}
+          {% for choice in context.phone_form.type.choices %}
           <label class="radio-inline">
             <input type="radio" name="type" value="{{ choice[0] }}"> {{ choice[0] }}
           </label>
-        {% endfor %}
+          {% endfor %}
         </div>
-    </div>
-    <div class="form-group form-actions clearfix">
-      <div class="col-sm-offset-3 col-sm-9 col-md-offset-2 col-md-10">
-        <button type="submit"  class="btn btn-primary" >{{ context.phone_form_submit }}</button>
-        <span class="loading hidden">&nbsp;</span>
       </div>
-    </div>
-  </form>
-</div>
+      <div class="form-group form-actions clearfix">
+        <div class="col-sm-offset-3 col-sm-9 col-md-offset-2 col-md-10">
+          <button type="submit"  class="btn btn-primary" >{{ context.phone_form_submit }}</button>
+          <span class="loading hidden">&nbsp;</span>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 
 <h2>Connected IDs</h2>
 <table class="table">
   {% for extid in g.user.externalids %}
-    <li><i class="fa fa-{{ extid.service }}"></i> {{ extid.username }}</li>
+  <li><i class="fa fa-{{ extid.service }}"></i> {{ extid.username }}</li>
   {% else %}
-    <em>(none)</em>
+  <em>(none)</em>
   {% endfor %}
 </table>
 {% for provider in context.login_registry %}
-  <a class="btn btn-social btn-{{ context.login_registry[provider].icon }}" href="{{ url_for('lastuser_oauth.login_service', service=provider, next=url_for('.profile')) }}">
-    <i class="fa fa-{{ context.login_registry[provider].icon }}"></i>
-    Sign in with {{ context.login_registry[provider].title }}
-  </a>
+<a class="btn btn-social btn-{{ context.login_registry[provider].icon }}" href="{{ url_for('lastuser_oauth.login_service', service=provider, next=url_for('.profile')) }}">
+  <i class="fa fa-{{ context.login_registry[provider].icon }}"></i>
+  Sign in with {{ context.login_registry[provider].title }}
+</a>
 {% endfor %}
 <h2>Organizations</h2>
 {% if g.user.organizations_owned() %}
-  <table class="table">
-    {% for org in g.user.organizations_owned() %}
-      <tr><td><a href="{{ url_for('.org_info', name=org.name) }}">{{ org.title }}</a></td></tr>
-    {% endfor %}
-    <tr><td><a href="{{ url_for('.org_new') }}">Create another organization &rarr;</a></td></tr>
-  </table>
+<table class="table">
+  {% for org in g.user.organizations_owned() %}
+  <tr><td><a href="{{ url_for('.org_info', name=org.name) }}">{{ org.title }}</a></td></tr>
+  {% endfor %}
+  <tr><td><a href="{{ url_for('.org_new') }}">Create another organization &rarr;</a></td></tr>
+</table>
 {% else %}
-  <p><em>(No organizations)</em></p>
-  <a class="btn btn-info" href="{{ url_for('.org_new') }}">Create an organization</a>
+<p><em>(No organizations)</em></p>
+<a class="btn btn-info" href="{{ url_for('.org_new') }}">Create an organization</a>
 {% endif %}
 
 <a href="javascript:void();"><h2 data-toggle="collapse" data-target="#developerTools">Developer Options <i class="fa fa-caret-down"></i></h2></a>
@@ -150,14 +155,14 @@
   <div class="panel-heading"><h3>Applications</h3></div>
   <div class="panel-body">
     {% if g.user.clients %}
-      <table class="table">
-        {% for client in g.user.clients %}
-          <tr><td><a href="{{ url_for('.client_info', key=client.key) }}">{{ client.title }}</a></td></tr>
-        {% endfor %}
-          <tr><td><a href="{{ url_for('.client_new') }}">Register another application &rarr;</a></td></tr>
-      </table>
+    <table class="table">
+      {% for client in g.user.clients %}
+      <tr><td><a href="{{ url_for('.client_info', key=client.key) }}">{{ client.title }}</a></td></tr>
+      {% endfor %}
+      <tr><td><a href="{{ url_for('.client_new') }}">Register another application &rarr;</a></td></tr>
+    </table>
     {% else %}
-      <p><em>(No client applications)</em></p>
+    <p><em>(No client applications)</em></p>
     <a class="btn btn-info" href="{{ url_for('.org_new') }}">Register an application</a>
     {% endif %}
   </div>
@@ -165,7 +170,7 @@
 <h2>My sessions</h2>
 <ul>
   {%- for session in g.user.active_sessions() %}
-    <li>From {{ session.ipaddr }} since {{ session.created_at|age }} with {{ session.ua.browser}}/{{ session.ua.platform }}/{{ session.ua.version }}, last active {{ session.accessed_at|age }} {% if session == g.usersession -%} (current) {%- else -%} (<a href="{{ url_for('lastuser_oauth.logout_session', session=session.buid) }}">logout</a>) {%- endif %}</li>
+  <li>From {{ session.ipaddr }} since {{ session.created_at|age }} with {{ session.ua.browser}}/{{ session.ua.platform }}/{{ session.ua.version }}, last active {{ session.accessed_at|age }} {% if session == g.usersession -%} (current) {%- else -%} (<a href="{{ url_for('lastuser_oauth.logout_session', session=session.buid) }}">logout</a>) {%- endif %}</li>
   {%- endfor %}
 </ul>
 {% endblock %}
@@ -177,51 +182,76 @@
     $("#"+"{{ context.email_form_id }}").on("submit", function(e){
       e.preventDefault();
       var form = $(e.target);
-      $.post( form.attr("action"), form.serialize(), function(res){
-        data=$.parseJSON(res);
-        if(data['errors'].length === 0) {
-          $('#email-form-response').append(
-            "<div class='alert alert-success fade in'>"+
+      $('#email_form_error').remove();
+      $.post( form.attr("action"), form.serialize(), function(res, status){
+        if(status == 200) {
+          data=$.parseJSON(res);
+          if(data['errors'].length === 0) {
+            $('#email-form-response').append(
+              "<div class='alert alert-success fade in'>"+
               "<a href='#' class='close' data-dismiss='alert'>&times;</a>"
               +data['modal']+
+              "</div>")
+            $('#emailFormNew').collapse('hide');
+          }
+          else {
+            data['errors'].forEach(function(error) {
+              Object.keys(error).forEach(function(key){
+                $(form).find('input[name="'+key+'"]').parent().append('<div id="email_form_error"><p class="help-error">'+error[key]+'</p></div>');
+              });
+              
+            });
+          };
+        }
+        else {
+          $('#email-form-response').append(
+            "<div class='alert alert-danger fade in'>"+
+            "<a href='#' class='close' data-dismiss='alert'>&times;</a>"
+            +"There was an error submitting the form"+
             "</div>")
           $('#emailFormNew').collapse('hide');
-        }
-        else {
-          data['errors'].forEach(function(error) {
-            console.log(error);
-            Object.keys(error).forEach(function(key){
-              $(form).find(key).append('<div><p class="help-error">'+error[key]+'</p></div>');
-            });
-            
-          });
         };
-      });
+      }
     });
-    $("#"+"{{ context.phone_form_id }}").on("submit", function(e){
-      e.preventDefault();
-      var form = $(e.target);
-      $.post( form.attr("action"), form.serialize(), function(res){
-        data=$.parseJSON(res);
-        if(data['errors'].length === 0) {
-          $('#phone-form-response').append(
-            "<div class='alert alert-success fade in'>"+
-              "<a href='#' class='close' data-dismiss='alert'>&times;</a>"
-              +data['modal']+
-            "</div>")
-          $('#phoneFormNew').collapse('hide');
-        }
-        else {
-          data['errors'].forEach(function(error) {
-            console.log(error);
-            Object.keys(error).forEach(function(key){
-              $(form).find(key).append('<div><p class="help-error">'+error[key]+'</p></div>');
-            });
-            
+});
+$("#"+"{{ context.phone_form_id }}").on("submit", function(e){
+  e.preventDefault();
+  var form = $(e.target);
+  $('#phone_form_error').remove();
+  $.post( form.attr("action"), form.serialize(), function(res, status){
+    if(status == 200) {
+      data=$.parseJSON(res);
+      console.log("this")
+      if(data['errors'].length === 0) {
+        $('#phone-form-response').append(
+          "<div class='alert alert-success fade in'>"+
+          "<a href='#' class='close' data-dismiss='alert'>&times;</a>"
+          +data['modal']+
+          "</div>")
+        $('#phoneFormNew').collapse('hide');
+      }
+      else {
+        data['errors'].forEach(function(error) {
+          console.log(error.keys());
+          Object.keys(error).forEach(function(key){
+            console.log(key);
+            console.log($(form).find('input[name="'+key+'"]'));
+            $(form).find('input[name="'+key+'"]').parent().append('<div id="phone_form_error"><p class="help-error">'+error[key]+'</p></div>');
           });
-        };
-      });
-    });
-  })(jQuery);
+          
+        });
+      }
+    }
+    else {
+      $('#phone-form-response').append(
+        "<div class='alert alert-danger fade in'>"+
+        "<a href='#' class='close' data-dismiss='alert'>&times;</a>"
+        +"There was an error submitting the form"+
+        "</div>")
+      $('#phoneFormNew').collapse('hide');
+    }
+  });
+});
+})(jQuery);
 </script>
 {% endblock %}
