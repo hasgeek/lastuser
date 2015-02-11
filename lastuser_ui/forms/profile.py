@@ -5,7 +5,7 @@ import wtforms
 import wtforms.fields.html5
 from coaster.utils import nullunicode
 from baseframe import _, __
-from baseframe.forms import Form, ValidEmail
+import baseframe.forms as forms
 
 from lastuser_core.utils import strip_phone, valid_phone
 from lastuser_core.models import UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
@@ -13,9 +13,9 @@ from lastuser_core.models import UserEmail, UserEmailClaim, UserPhone, UserPhone
 __all__ = ['NewEmailAddressForm', 'NewPhoneForm', 'VerifyPhoneForm']
 
 
-class NewEmailAddressForm(Form):
-    email = wtforms.fields.html5.EmailField(__("Email address"), validators=[wtforms.validators.Required(), ValidEmail()])
-    type = wtforms.RadioField(__("Type"), coerce=nullunicode, validators=[wtforms.validators.Optional()], choices=[
+class NewEmailAddressForm(forms.Form):
+    email = forms.EmailField(__("Email address"), validators=[wtforms.validators.DataRequired(), forms.ValidEmail()])
+    type = forms.RadioField(__("Type"), coerce=nullunicode, validators=[wtforms.validators.Optional()], choices=[
         (__(u"Home"), __(u"Home")),
         (__(u"Work"), __(u"Work")),
         (__(u"Other"), __(u"Other"))])
@@ -34,11 +34,11 @@ class NewEmailAddressForm(Form):
             raise wtforms.ValidationError(_("This email address is pending verification"))
 
 
-class NewPhoneForm(Form):
-    phone = wtforms.TextField(__("Phone number"), default='+91',
-        validators=[wtforms.validators.Required()],
+class NewPhoneForm(forms.Form):
+    phone = forms.StringField(__("Phone number"), default='+91',
+        validators=[wtforms.validators.DataRequired()],
         description=__("In international calling format starting with '+' and country code. Mobile numbers only at this time"))
-    type = wtforms.RadioField(__("Type"), coerce=nullunicode, validators=[wtforms.validators.Optional()], choices=[
+    type = forms.RadioField(__("Type"), coerce=nullunicode, validators=[wtforms.validators.Optional()], choices=[
         (__(u"Mobile"), __(u"Mobile")),
         # (__(u"Home"), __(u"Home")),
         # (__(u"Work"), __(u"Work")),
@@ -69,8 +69,8 @@ class NewPhoneForm(Form):
         field.data = number  # Save stripped number
 
 
-class VerifyPhoneForm(Form):
-    verification_code = wtforms.TextField(__("Verification code"), validators=[wtforms.validators.Required()])
+class VerifyPhoneForm(forms.Form):
+    verification_code = forms.StringField(__("Verification code"), validators=[wtforms.validators.DataRequired()])
 
     def validate_verification_code(self, field):
         # self.phoneclaim is set by the view before calling form.validate()

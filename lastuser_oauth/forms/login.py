@@ -6,7 +6,7 @@ import wtforms.fields.html5
 import flask.ext.wtf as wtf
 from coaster.utils import valid_username
 from baseframe import _, __
-from baseframe.forms import Form
+import baseframe.forms as forms
 
 from lastuser_core.models import User, UserEmail, getuser
 
@@ -15,9 +15,9 @@ class LoginPasswordResetException(Exception):
     pass
 
 
-class LoginForm(Form):
-    username = wtforms.TextField(__("Username or Email"), validators=[wtforms.validators.Required()])
-    password = wtforms.PasswordField(__("Password"), validators=[wtforms.validators.Required()])
+class LoginForm(forms.Form):
+    username = forms.StringField(__("Username or Email"), validators=[wtforms.validators.DataRequired()])
+    password = forms.PasswordField(__("Password"), validators=[wtforms.validators.DataRequired()])
 
     def validate_username(self, field):
         existing = getuser(field.data)
@@ -34,14 +34,14 @@ class LoginForm(Form):
         self.user = user
 
 
-class RegisterForm(Form):
-    fullname = wtforms.TextField(__("Full name"), validators=[wtforms.validators.Required()])
-    email = wtforms.fields.html5.EmailField(__("Email address"), validators=[wtforms.validators.Required(), wtforms.validators.Email()])
-    username = wtforms.TextField(__("Username"), validators=[wtforms.validators.Required()],
+class RegisterForm(forms.Form):
+    fullname = forms.StringField(__("Full name"), validators=[wtforms.validators.DataRequired()])
+    email = forms.EmailField(__("Email address"), validators=[wtforms.validators.DataRequired(), wtforms.validators.Email()])
+    username = forms.StringField(__("Username"), validators=[wtforms.validators.DataRequired()],
         description=__("Single word that can contain letters, numbers and dashes"))
-    password = wtforms.PasswordField(__("Password"), validators=[wtforms.validators.Required()])
-    confirm_password = wtforms.PasswordField(__("Confirm password"),
-                          validators=[wtforms.validators.Required(), wtforms.validators.EqualTo('password')])
+    password = forms.PasswordField(__("Password"), validators=[wtforms.validators.DataRequired()])
+    confirm_password = forms.PasswordField(__("Confirm password"),
+                          validators=[wtforms.validators.DataRequired(), wtforms.validators.EqualTo('password')])
     recaptcha = wtf.RecaptchaField(__("Are you human?"),
         description=__("Type both words into the text box to prove that you are a human and not a computer program"))
 

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from baseframe.forms import Form
+import baseframe.forms as forms
 
 
-class AuthorizeForm(Form):
+class AuthorizeForm(forms.Form):
     """
     OAuth authorization form. Has no fields and is only used for CSRF protection.
     """

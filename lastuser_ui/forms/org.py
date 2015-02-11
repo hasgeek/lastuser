@@ -4,18 +4,18 @@ from flask import g, current_app, Markup, url_for
 import wtforms
 from coaster.utils import valid_username
 from baseframe import _, __
-from baseframe.forms import Form, UserSelectMultiField, AnnotatedTextField
+import baseframe.forms as forms
 
 from lastuser_core.models import User, Organization
 
 __all__ = ['OrganizationForm', 'TeamForm']
 
 
-class OrganizationForm(Form):
-    title = wtforms.TextField(__("Organization name"), validators=[wtforms.validators.Required()])
-    name = AnnotatedTextField(__("Username"), validators=[wtforms.validators.Required()],
+class OrganizationForm(forms.Form):
+    title = forms.StringField(__("Organization name"), validators=[wtforms.validators.DataRequired()])
+    name = forms.AnnotatedTextField(__("Username"), validators=[wtforms.validators.DataRequired()],
         prefix=u"https://hasgeek.com/…")
-    domain = wtforms.RadioField(__("Domain"),
+    domain = forms.RadioField(__("Domain"),
         description=__(u"Users with an email address at this domain will automatically become members of this organization"),
         validators=[wtforms.validators.Optional()])
 
@@ -38,9 +38,9 @@ class OrganizationForm(Form):
             raise wtforms.ValidationError(_("This name is taken"))
 
 
-class TeamForm(Form):
-    title = wtforms.TextField(__("Team name"), validators=[wtforms.validators.Required()])
-    users = UserSelectMultiField(__("Users"), validators=[wtforms.validators.Required()],
+class TeamForm(forms.Form):
+    title = forms.StringField(__("Team name"), validators=[wtforms.validators.DataRequired()])
+    users = forms.UserSelectMultiField(__("Users"), validators=[wtforms.validators.DataRequired()],
         description=__("Lookup a user by their username or email address"),
         lastuser=None, usermodel=User,
         autocomplete_endpoint=lambda: url_for('lastuser_oauth.user_autocomplete'),

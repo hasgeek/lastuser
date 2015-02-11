@@ -6,7 +6,7 @@ from flask import Markup, session
 import wtforms
 import wtforms.fields.html5
 from baseframe import _, __
-from baseframe.forms import Form
+import baseframe.forms as forms
 from lastuser_core.registry import LoginProvider, LoginInitError
 from ..views.login import oid
 from ..views.account import login_service_postcallback
@@ -14,8 +14,8 @@ from ..views.account import login_service_postcallback
 __all__ = ['OpenIdProvider']
 
 
-class OpenIdForm(Form):
-    openid = wtforms.fields.html5.URLField(__("Login with OpenID"), validators=[wtforms.validators.Required()],
+class OpenIdForm(forms.Form):
+    openid = forms.URLField(__("Login with OpenID"), validators=[wtforms.validators.DataRequired()],
         default='http://',
         description=Markup(__("Don't forget the <code>http://</code> or <code>https://</code> prefix")))
 

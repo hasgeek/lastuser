@@ -6,10 +6,10 @@ from flask import Markup, url_for
 import wtforms
 import wtforms.fields.html5
 from baseframe import _, __
-from baseframe.forms import Form, NullTextField, UserSelectField
+import baseframe.forms as forms
 from coaster.utils import valid_username, domain_namespace_match
 
-from lastuser_core.models import Permission, Resource, getuser, Organization, User
+from lastuser_core.models import Permission, Resource, Organization, User
 from lastuser_core import resource_registry
 
 __all__ = ['ConfirmDeleteForm', 'RegisterClientForm', 'ClientCredentialForm', 'PermissionForm',
@@ -17,52 +17,52 @@ __all__ = ['ConfirmDeleteForm', 'RegisterClientForm', 'ClientCredentialForm', 'P
     'ResourceActionForm', 'ClientTeamAccessForm']
 
 
-class ConfirmDeleteForm(Form):
+class ConfirmDeleteForm(forms.Form):
     """
     Confirm a delete operation
     """
-    delete = wtforms.SubmitField(__("Delete"))
-    cancel = wtforms.SubmitField(__("Cancel"))
+    delete = forms.SubmitField(__("Delete"))
+    cancel = forms.SubmitField(__("Cancel"))
 
 
-class RegisterClientForm(Form):
+class RegisterClientForm(forms.Form):
     """
     Register a new OAuth client application
     """
-    title = wtforms.TextField(__("Application title"),
-        validators=[wtforms.validators.Required()],
+    title = forms.StringField(__("Application title"),
+        validators=[wtforms.validators.DataRequired()],
         description=__("The name of your application"))
-    description = wtforms.TextAreaField(__("Description"),
-        validators=[wtforms.validators.Required()],
+    description = forms.TextAreaField(__("Description"),
+        validators=[wtforms.validators.DataRequired()],
         description=__("A description to help users recognize your application"))
-    client_owner = wtforms.RadioField(__("Owner"),
-        validators=[wtforms.validators.Required()],
+    client_owner = forms.RadioField(__("Owner"),
+        validators=[wtforms.validators.DataRequired()],
         description=__("User or organization that owns this application. Changing the owner "
         "will revoke all currently assigned permissions for this app"))
-    website = wtforms.fields.html5.URLField(__("Application website"),
-        validators=[wtforms.validators.Required(), wtforms.validators.URL()],
+    website = forms.URLField(__("Application website"),
+        validators=[wtforms.validators.DataRequired(), wtforms.validators.URL()],
         description=__("Website where users may access this application"))
-    namespace = NullTextField(__("Client namespace"),
+    namespace = forms.NullTextField(__("Client namespace"),
         validators=[wtforms.validators.Optional()],
         description=Markup(__(u"A dot-based namespace that uniquely identifies your client application. "
             u"For example, if your client website is <code>https://auth.hasgeek.com</code>, "
             u"use <code>com.hasgeek.auth</code>. Only required if your client app provides resources")))
-    redirect_uri = wtforms.fields.html5.URLField(__("Redirect URL"),
+    redirect_uri = forms.URLField(__("Redirect URL"),
         validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
         description=__("OAuth2 Redirect URL"))
-    notification_uri = wtforms.fields.html5.URLField(__("Notification URL"),
+    notification_uri = forms.URLField(__("Notification URL"),
         validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
         description=__("When the user's data changes, Lastuser will POST a notice to this URL. "
         "Other notices may be posted too"))
-    iframe_uri = wtforms.fields.html5.URLField(__("IFrame URL"),
+    iframe_uri = forms.URLField(__("IFrame URL"),
         validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
         description=__("Front-end notifications URL. This is loaded in a hidden iframe to notify the app that the "
         "user updated their profile in some way (not yet implemented)"))
-    allow_any_login = wtforms.BooleanField(__("Allow anyone to login"),
+    allow_any_login = forms.BooleanField(__("Allow anyone to login"),
         default=True,
         description=__("If your application requires access to be restricted to specific users, uncheck this, "
         "and only users who have been assigned a permission to the app will be able to login"))
-    team_access = wtforms.BooleanField(__("Requires access to teams"),
+    team_access = forms.BooleanField(__("Requires access to teams"),
         default=False,
         description=__("If your application is capable of assigning access permissions to teams, check this. "
         "Organization owners will then able to grant access to teams in their organizations"))
@@ -107,29 +107,29 @@ class RegisterClientForm(Form):
                 raise wtforms.ValidationError(_("This namespace has been claimed by another client app"))
 
 
-class ClientCredentialForm(Form):
+class ClientCredentialForm(forms.Form):
     """
     Generate new client credentials
     """
-    title = wtforms.TextField(__(u"What’s this for?"),
-        validators=[wtforms.validators.Required(), wtforms.validators.Length(max=250)],
+    title = forms.StringField(__(u"What’s this for?"),
+        validators=[wtforms.validators.DataRequired(), wtforms.validators.Length(max=250)],
         description=__("Add a description to help yourself remember why this was generated"))
 
 
-class PermissionForm(Form):
+class PermissionForm(forms.Form):
     """
     Create or edit a permission
     """
-    name = wtforms.TextField(__("Permission name"), validators=[wtforms.validators.Required()],
+    name = forms.StringField(__("Permission name"), validators=[wtforms.validators.DataRequired()],
         description=__("Name of the permission as a single word in lower case. "
         "This is passed to the application when a user logs in. "
         "Changing the name will not automatically update it everywhere. "
         "You must reassign the permission to users who had it with the old name"))
-    title = wtforms.TextField(__("Title"), validators=[wtforms.validators.Required()],
+    title = forms.StringField(__("Title"), validators=[wtforms.validators.DataRequired()],
         description=__("Permission title that is displayed to users"))
-    description = wtforms.TextAreaField(__("Description"),
+    description = forms.TextAreaField(__("Description"),
         description=__("An optional description of what the permission is for"))
-    context = wtforms.RadioField(__("Context"), validators=[wtforms.validators.Required()],
+    context = forms.RadioField(__("Context"), validators=[wtforms.validators.DataRequired()],
         description=__("Context where this permission is available"))
 
     def validate(self):
@@ -172,25 +172,25 @@ class PermissionForm(Form):
             self.org = orgs[0]
 
 
-class UserPermissionAssignForm(Form):
+class UserPermissionAssignForm(forms.Form):
     """
     Assign permissions to a user
     """
-    user = UserSelectField(__("User"), validators=[wtforms.validators.Required()],
+    user = forms.UserSelectField(__("User"), validators=[wtforms.validators.DataRequired()],
         description=__("Lookup a user by their username or email address"),
         lastuser=None, usermodel=User,
         autocomplete_endpoint=lambda: url_for('lastuser_oauth.user_autocomplete'),
         getuser_endpoint=lambda: url_for('lastuser_oauth.user_get_by_userids'))
-    perms = wtforms.SelectMultipleField(__("Permissions"), validators=[wtforms.validators.Required()])
+    perms = forms.SelectMultipleField(__("Permissions"), validators=[wtforms.validators.DataRequired()])
 
 
-class TeamPermissionAssignForm(Form):
+class TeamPermissionAssignForm(forms.Form):
     """
     Assign permissions to a team
     """
-    team_id = wtforms.RadioField(__("Team"), validators=[wtforms.validators.Required()],
+    team_id = forms.RadioField(__("Team"), validators=[wtforms.validators.DataRequired()],
         description=__("Select a team to assign permissions to"))
-    perms = wtforms.SelectMultipleField(__("Permissions"), validators=[wtforms.validators.Required()])
+    perms = forms.SelectMultipleField(__("Permissions"), validators=[wtforms.validators.DataRequired()])
 
     def validate_team_id(self, field):
         teams = [team for team in self.org.teams if team.userid == field.data]
@@ -199,28 +199,28 @@ class TeamPermissionAssignForm(Form):
         self.team = teams[0]
 
 
-class PermissionEditForm(Form):
+class PermissionEditForm(forms.Form):
     """
     Edit a user or team's permissions
     """
-    perms = wtforms.SelectMultipleField(__("Permissions"), validators=[wtforms.validators.Required()])
+    perms = forms.SelectMultipleField(__("Permissions"), validators=[wtforms.validators.DataRequired()])
 
 
-class ResourceForm(Form):
+class ResourceForm(forms.Form):
     """
     Edit a resource provided by an application
     """
-    name = wtforms.TextField(__("Resource name"), validators=[wtforms.validators.Required()],
+    name = forms.StringField(__("Resource name"), validators=[wtforms.validators.DataRequired()],
         description=__("Name of the resource as a single word in lower case. "
         "This is provided by applications as part of the scope "
         "when requesting access to a user's resources"))
-    title = wtforms.TextField(__("Title"), validators=[wtforms.validators.Required()],
+    title = forms.StringField(__("Title"), validators=[wtforms.validators.DataRequired()],
         description=__("Resource title that is displayed to users"))
-    description = wtforms.TextAreaField(__("Description"),
+    description = forms.TextAreaField(__("Description"),
         description=__("An optional description of what the resource is"))
-    siteresource = wtforms.BooleanField(__("Site resource"),
+    siteresource = forms.BooleanField(__("Site resource"),
         description=__("Enable if this resource is generic to the site and not owned by specific users"))
-    restricted = wtforms.BooleanField(__("Restrict access to your apps"),
+    restricted = forms.BooleanField(__("Restrict access to your apps"),
         description=__("Enable if access to the resource should be restricted to client apps "
             "that share the same owner. You may want to do this for sensitive resources "
             "that should only be available to your own apps"))
@@ -237,19 +237,19 @@ class ResourceForm(Form):
             raise wtforms.ValidationError(_("A resource with that name already exists"))
 
 
-class ResourceActionForm(Form):
+class ResourceActionForm(forms.Form):
     """
     Edit an action associated with a resource
     """
-    name = wtforms.TextField(__("Action name"), validators=[wtforms.validators.Required()],
+    name = forms.StringField(__("Action name"), validators=[wtforms.validators.DataRequired()],
         description=__("Name of the action as a single word in lower case. "
         "This is provided by applications as part of the scope in the form "
         "'resource/action' when requesting access to a user's resources. "
         "Read actions are implicit when applications request just 'resource' "
         "in the scope and do not need to be specified as an explicit action"))
-    title = wtforms.TextField(__("Title"), validators=[wtforms.validators.Required()],
+    title = forms.StringField(__("Title"), validators=[wtforms.validators.DataRequired()],
         description=__("Action title that is displayed to users"))
-    description = wtforms.TextAreaField(__("Description"),
+    description = forms.TextAreaField(__("Description"),
         description=__("An optional description of what the action is"))
 
     def validate_name(self, field):
@@ -261,8 +261,8 @@ class ResourceActionForm(Form):
             raise wtforms.ValidationError(_("An action with that name already exists for this resource"))
 
 
-class ClientTeamAccessForm(Form):
+class ClientTeamAccessForm(forms.Form):
     """
     Select organizations that the client has access to the teams of
     """
-    organizations = wtforms.SelectMultipleField(__("Organizations"))
+    organizations = forms.SelectMultipleField(__("Organizations"))

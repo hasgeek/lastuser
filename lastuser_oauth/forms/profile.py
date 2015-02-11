@@ -5,15 +5,15 @@ import wtforms
 import wtforms.fields.html5
 from coaster.utils import valid_username, sorted_timezones
 from baseframe import _, __
-from baseframe.forms import Form, ValidEmail, AnnotatedNullTextField
+import baseframe.forms as forms
 
 from lastuser_core.models import UserEmail, getuser
 
 timezones = sorted_timezones()
 
 
-class PasswordResetRequestForm(Form):
-    username = wtforms.TextField(__("Username or Email"), validators=[wtforms.validators.Required()])
+class PasswordResetRequestForm(forms.Form):
+    username = forms.StringField(__("Username or Email"), validators=[wtforms.validators.DataRequired()])
 
     def validate_username(self, field):
         user = getuser(field.data)
@@ -22,12 +22,12 @@ class PasswordResetRequestForm(Form):
         self.user = user
 
 
-class PasswordResetForm(Form):
-    username = wtforms.TextField(__("Username or Email"), validators=[wtforms.validators.Required()],
+class PasswordResetForm(forms.Form):
+    username = forms.StringField(__("Username or Email"), validators=[wtforms.validators.DataRequired()],
         description=__("Please reconfirm your username or email address"))
-    password = wtforms.PasswordField(__("New password"), validators=[wtforms.validators.Required()])
-    confirm_password = wtforms.PasswordField(__("Confirm password"),
-        validators=[wtforms.validators.Required(), wtforms.validators.EqualTo('password')])
+    password = forms.PasswordField(__("New password"), validators=[wtforms.validators.DataRequired()])
+    confirm_password = forms.PasswordField(__("Confirm password"),
+        validators=[wtforms.validators.DataRequired(), wtforms.validators.EqualTo('password')])
 
     def validate_username(self, field):
         user = getuser(field.data)
@@ -36,11 +36,11 @@ class PasswordResetForm(Form):
                 _("This username or email does not match the user the reset code is for"))
 
 
-class PasswordChangeForm(Form):
-    old_password = wtforms.PasswordField(__("Current password"), validators=[wtforms.validators.Required()])
-    password = wtforms.PasswordField(__("New password"), validators=[wtforms.validators.Required()])
-    confirm_password = wtforms.PasswordField(__("Confirm password"),
-        validators=[wtforms.validators.Required(), wtforms.validators.EqualTo('password')])
+class PasswordChangeForm(forms.Form):
+    old_password = forms.PasswordField(__("Current password"), validators=[wtforms.validators.DataRequired()])
+    password = forms.PasswordField(__("New password"), validators=[wtforms.validators.DataRequired()])
+    confirm_password = forms.PasswordField(__("Confirm password"),
+        validators=[wtforms.validators.DataRequired(), wtforms.validators.EqualTo('password')])
 
     def validate_old_password(self, field):
         if self.edit_user is None:
@@ -49,13 +49,13 @@ class PasswordChangeForm(Form):
             raise wtforms.ValidationError(_("Incorrect password"))
 
 
-class ProfileForm(Form):
-    fullname = wtforms.TextField(__("Full name"), validators=[wtforms.validators.Required()])
-    email = wtforms.fields.html5.EmailField(__("Email address"),
-        validators=[wtforms.validators.Required(), ValidEmail()])
-    username = AnnotatedNullTextField(__("Username"), validators=[wtforms.validators.Required()],
+class ProfileForm(forms.Form):
+    fullname = forms.StringField(__("Full name"), validators=[wtforms.validators.DataRequired()])
+    email = forms.EmailField(__("Email address"),
+        validators=[wtforms.validators.DataRequired(), forms.ValidEmail()])
+    username = forms.AnnotatedNullTextField(__("Username"), validators=[wtforms.validators.DataRequired()],
         prefix=u"https://hasgeek.com/…")
-    timezone = wtforms.SelectField(__("Timezone"), validators=[wtforms.validators.Required()], choices=timezones)
+    timezone = forms.SelectField(__("Timezone"), validators=[wtforms.validators.DataRequired()], choices=timezones)
 
     def validate_username(self, field):
         # # Usernames are now mandatory. This should be commented out:
@@ -78,5 +78,5 @@ class ProfileForm(Form):
             raise wtforms.ValidationError(_("This email address has been claimed by another user"))
 
 
-class ProfileMergeForm(Form):
+class ProfileMergeForm(forms.Form):
     pass
