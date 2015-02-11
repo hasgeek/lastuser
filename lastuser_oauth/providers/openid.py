@@ -3,8 +3,6 @@
 from __future__ import absolute_import
 
 from flask import Markup, session
-import wtforms
-import wtforms.fields.html5
 from baseframe import _, __
 import baseframe.forms as forms
 from lastuser_core.registry import LoginProvider, LoginInitError
@@ -15,7 +13,7 @@ __all__ = ['OpenIdProvider']
 
 
 class OpenIdForm(forms.Form):
-    openid = forms.URLField(__("Login with OpenID"), validators=[wtforms.validators.DataRequired()],
+    openid = forms.URLField(__("Login with OpenID"), validators=[forms.validators.DataRequired()],
         default='http://',
         description=Markup(__("Don't forget the <code>http://</code> or <code>https://</code> prefix")))
 

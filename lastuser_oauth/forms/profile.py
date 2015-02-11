@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from flask import current_app
-import wtforms
-import wtforms.fields.html5
 from coaster.utils import valid_username, sorted_timezones
 from baseframe import _, __
 import baseframe.forms as forms
@@ -13,49 +11,49 @@ timezones = sorted_timezones()
 
 
 class PasswordResetRequestForm(forms.Form):
-    username = forms.StringField(__("Username or Email"), validators=[wtforms.validators.DataRequired()])
+    username = forms.StringField(__("Username or Email"), validators=[forms.validators.DataRequired()])
 
     def validate_username(self, field):
         user = getuser(field.data)
         if user is None:
-            raise wtforms.ValidationError(_("Could not find a user with that id"))
+            raise forms.ValidationError(_("Could not find a user with that id"))
         self.user = user
 
 
 class PasswordResetForm(forms.Form):
-    username = forms.StringField(__("Username or Email"), validators=[wtforms.validators.DataRequired()],
+    username = forms.StringField(__("Username or Email"), validators=[forms.validators.DataRequired()],
         description=__("Please reconfirm your username or email address"))
-    password = forms.PasswordField(__("New password"), validators=[wtforms.validators.DataRequired()])
+    password = forms.PasswordField(__("New password"), validators=[forms.validators.DataRequired()])
     confirm_password = forms.PasswordField(__("Confirm password"),
-        validators=[wtforms.validators.DataRequired(), wtforms.validators.EqualTo('password')])
+        validators=[forms.validators.DataRequired(), forms.validators.EqualTo('password')])
 
     def validate_username(self, field):
         user = getuser(field.data)
         if user is None or user != self.edit_user:
-            raise wtforms.ValidationError(
+            raise forms.ValidationError(
                 _("This username or email does not match the user the reset code is for"))
 
 
 class PasswordChangeForm(forms.Form):
-    old_password = forms.PasswordField(__("Current password"), validators=[wtforms.validators.DataRequired()])
-    password = forms.PasswordField(__("New password"), validators=[wtforms.validators.DataRequired()])
+    old_password = forms.PasswordField(__("Current password"), validators=[forms.validators.DataRequired()])
+    password = forms.PasswordField(__("New password"), validators=[forms.validators.DataRequired()])
     confirm_password = forms.PasswordField(__("Confirm password"),
-        validators=[wtforms.validators.DataRequired(), wtforms.validators.EqualTo('password')])
+        validators=[forms.validators.DataRequired(), forms.validators.EqualTo('password')])
 
     def validate_old_password(self, field):
         if self.edit_user is None:
-            raise wtforms.ValidationError(_("Not logged in"))
+            raise forms.ValidationError(_("Not logged in"))
         if not self.edit_user.password_is(field.data):
-            raise wtforms.ValidationError(_("Incorrect password"))
+            raise forms.ValidationError(_("Incorrect password"))
 
 
 class ProfileForm(forms.Form):
-    fullname = forms.StringField(__("Full name"), validators=[wtforms.validators.DataRequired()])
+    fullname = forms.StringField(__("Full name"), validators=[forms.validators.DataRequired()])
     email = forms.EmailField(__("Email address"),
-        validators=[wtforms.validators.DataRequired(), forms.ValidEmail()])
-    username = forms.AnnotatedNullTextField(__("Username"), validators=[wtforms.validators.DataRequired()],
+        validators=[forms.validators.DataRequired(), forms.ValidEmail()])
+    username = forms.AnnotatedNullTextField(__("Username"), validators=[forms.validators.DataRequired()],
         prefix=u"https://hasgeek.com/…")
-    timezone = forms.SelectField(__("Timezone"), validators=[wtforms.validators.DataRequired()], choices=timezones)
+    timezone = forms.SelectField(__("Timezone"), validators=[forms.validators.DataRequired()], choices=timezones)
 
     def validate_username(self, field):
         # # Usernames are now mandatory. This should be commented out:
@@ -64,18 +62,18 @@ class ProfileForm(forms.Form):
         #     return
         field.data = field.data.lower()  # Usernames can only be lowercase
         if not valid_username(field.data):
-            raise wtforms.ValidationError(_("Usernames can only have alphabets, numbers and dashes (except at the ends)"))
+            raise forms.ValidationError(_("Usernames can only have alphabets, numbers and dashes (except at the ends)"))
         if field.data in current_app.config.get('RESERVED_USERNAMES', []):
-            raise wtforms.ValidationError(_("This name is reserved"))
+            raise forms.ValidationError(_("This name is reserved"))
         if not self.edit_user.is_valid_username(field.data):
-            raise wtforms.ValidationError(_("This username is taken"))
+            raise forms.ValidationError(_("This username is taken"))
 
     # TODO: Move to function and place before ValidEmail()
     def validate_email(self, field):
         field.data = field.data.lower()  # Convert to lowercase
         existing = UserEmail.get(email=field.data)
         if existing is not None and existing.user != self.edit_obj:
-            raise wtforms.ValidationError(_("This email address has been claimed by another user"))
+            raise forms.ValidationError(_("This email address has been claimed by another user"))
 
 
 class ProfileMergeForm(forms.Form):

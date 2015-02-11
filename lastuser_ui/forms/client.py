@@ -3,8 +3,6 @@
 from urlparse import urlparse
 
 from flask import Markup, url_for
-import wtforms
-import wtforms.fields.html5
 from baseframe import _, __
 import baseframe.forms as forms
 from coaster.utils import valid_username, domain_namespace_match
@@ -30,32 +28,32 @@ class RegisterClientForm(forms.Form):
     Register a new OAuth client application
     """
     title = forms.StringField(__("Application title"),
-        validators=[wtforms.validators.DataRequired()],
+        validators=[forms.validators.DataRequired()],
         description=__("The name of your application"))
     description = forms.TextAreaField(__("Description"),
-        validators=[wtforms.validators.DataRequired()],
+        validators=[forms.validators.DataRequired()],
         description=__("A description to help users recognize your application"))
     client_owner = forms.RadioField(__("Owner"),
-        validators=[wtforms.validators.DataRequired()],
+        validators=[forms.validators.DataRequired()],
         description=__("User or organization that owns this application. Changing the owner "
         "will revoke all currently assigned permissions for this app"))
     website = forms.URLField(__("Application website"),
-        validators=[wtforms.validators.DataRequired(), wtforms.validators.URL()],
+        validators=[forms.validators.DataRequired(), forms.validators.URL()],
         description=__("Website where users may access this application"))
     namespace = forms.NullTextField(__("Client namespace"),
-        validators=[wtforms.validators.Optional()],
+        validators=[forms.validators.Optional()],
         description=Markup(__(u"A dot-based namespace that uniquely identifies your client application. "
             u"For example, if your client website is <code>https://auth.hasgeek.com</code>, "
             u"use <code>com.hasgeek.auth</code>. Only required if your client app provides resources")))
     redirect_uri = forms.URLField(__("Redirect URL"),
-        validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
+        validators=[forms.validators.Optional(), forms.validators.URL()],
         description=__("OAuth2 Redirect URL"))
     notification_uri = forms.URLField(__("Notification URL"),
-        validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
+        validators=[forms.validators.Optional(), forms.validators.URL()],
         description=__("When the user's data changes, Lastuser will POST a notice to this URL. "
         "Other notices may be posted too"))
     iframe_uri = forms.URLField(__("IFrame URL"),
-        validators=[wtforms.validators.Optional(), wtforms.validators.URL()],
+        validators=[forms.validators.Optional(), forms.validators.URL()],
         description=__("Front-end notifications URL. This is loaded in a hidden iframe to notify the app that the "
         "user updated their profile in some way (not yet implemented)"))
     allow_any_login = forms.BooleanField(__("Allow anyone to login"),
@@ -74,7 +72,7 @@ class RegisterClientForm(forms.Form):
         else:
             orgs = [org for org in self.edit_user.organizations_owned() if org.userid == field.data]
             if len(orgs) != 1:
-                raise wtforms.ValidationError(_("Invalid owner"))
+                raise forms.ValidationError(_("Invalid owner"))
             self.user = None
             self.org = orgs[0]
 
@@ -86,25 +84,25 @@ class RegisterClientForm(forms.Form):
 
     def validate_redirect_uri(self, field):
         if not self._urls_match(self.website.data, field.data):
-            raise wtforms.ValidationError(_("The scheme, domain and port must match that of the website URL"))
+            raise forms.ValidationError(_("The scheme, domain and port must match that of the website URL"))
 
     def validate_notification_uri(self, field):
         if not self._urls_match(self.website.data, field.data):
-            raise wtforms.ValidationError(_("The scheme, domain and port must match that of the website URL"))
+            raise forms.ValidationError(_("The scheme, domain and port must match that of the website URL"))
 
     def validate_resource_uri(self, field):
         if not self._urls_match(self.website.data, field.data):
-            raise wtforms.ValidationError(_("The scheme, domain and port must match that of the website URL"))
+            raise forms.ValidationError(_("The scheme, domain and port must match that of the website URL"))
 
     def validate_namespace(self, field):
         if field.data:
             if not domain_namespace_match(self.website.data, field.data):
-                raise wtforms.ValidationError(_(u"The namespace should be derived from your application’s website domain"))
+                raise forms.ValidationError(_(u"The namespace should be derived from your application’s website domain"))
             client = self.edit_model.get(namespace=field.data)
             if client:
                 if client == self.edit_obj:
                     return
-                raise wtforms.ValidationError(_("This namespace has been claimed by another client app"))
+                raise forms.ValidationError(_("This namespace has been claimed by another client app"))
 
 
 class ClientCredentialForm(forms.Form):
@@ -112,7 +110,7 @@ class ClientCredentialForm(forms.Form):
     Generate new client credentials
     """
     title = forms.StringField(__(u"What’s this for?"),
-        validators=[wtforms.validators.DataRequired(), wtforms.validators.Length(max=250)],
+        validators=[forms.validators.DataRequired(), forms.validators.Length(max=250)],
         description=__("Add a description to help yourself remember why this was generated"))
 
 
@@ -120,16 +118,16 @@ class PermissionForm(forms.Form):
     """
     Create or edit a permission
     """
-    name = forms.StringField(__("Permission name"), validators=[wtforms.validators.DataRequired()],
+    name = forms.StringField(__("Permission name"), validators=[forms.validators.DataRequired()],
         description=__("Name of the permission as a single word in lower case. "
         "This is passed to the application when a user logs in. "
         "Changing the name will not automatically update it everywhere. "
         "You must reassign the permission to users who had it with the old name"))
-    title = forms.StringField(__("Title"), validators=[wtforms.validators.DataRequired()],
+    title = forms.StringField(__("Title"), validators=[forms.validators.DataRequired()],
         description=__("Permission title that is displayed to users"))
     description = forms.TextAreaField(__("Description"),
         description=__("An optional description of what the permission is for"))
-    context = forms.RadioField(__("Context"), validators=[wtforms.validators.DataRequired()],
+    context = forms.RadioField(__("Context"), validators=[forms.validators.DataRequired()],
         description=__("Context where this permission is available"))
 
     def validate(self):
@@ -167,7 +165,7 @@ class PermissionForm(forms.Form):
         else:
             orgs = [org for org in self.edit_user.organizations_owned() if org.userid == field.data]
             if len(orgs) != 1:
-                raise wtforms.ValidationError(_("Invalid context"))
+                raise forms.ValidationError(_("Invalid context"))
             self.user = None
             self.org = orgs[0]
 
@@ -176,26 +174,26 @@ class UserPermissionAssignForm(forms.Form):
     """
     Assign permissions to a user
     """
-    user = forms.UserSelectField(__("User"), validators=[wtforms.validators.DataRequired()],
+    user = forms.UserSelectField(__("User"), validators=[forms.validators.DataRequired()],
         description=__("Lookup a user by their username or email address"),
         lastuser=None, usermodel=User,
         autocomplete_endpoint=lambda: url_for('lastuser_oauth.user_autocomplete'),
         getuser_endpoint=lambda: url_for('lastuser_oauth.user_get_by_userids'))
-    perms = forms.SelectMultipleField(__("Permissions"), validators=[wtforms.validators.DataRequired()])
+    perms = forms.SelectMultipleField(__("Permissions"), validators=[forms.validators.DataRequired()])
 
 
 class TeamPermissionAssignForm(forms.Form):
     """
     Assign permissions to a team
     """
-    team_id = forms.RadioField(__("Team"), validators=[wtforms.validators.DataRequired()],
+    team_id = forms.RadioField(__("Team"), validators=[forms.validators.DataRequired()],
         description=__("Select a team to assign permissions to"))
-    perms = forms.SelectMultipleField(__("Permissions"), validators=[wtforms.validators.DataRequired()])
+    perms = forms.SelectMultipleField(__("Permissions"), validators=[forms.validators.DataRequired()])
 
     def validate_team_id(self, field):
         teams = [team for team in self.org.teams if team.userid == field.data]
         if len(teams) != 1:
-            raise wtforms.ValidationError(_("Unknown team"))
+            raise forms.ValidationError(_("Unknown team"))
         self.team = teams[0]
 
 
@@ -203,18 +201,18 @@ class PermissionEditForm(forms.Form):
     """
     Edit a user or team's permissions
     """
-    perms = forms.SelectMultipleField(__("Permissions"), validators=[wtforms.validators.DataRequired()])
+    perms = forms.SelectMultipleField(__("Permissions"), validators=[forms.validators.DataRequired()])
 
 
 class ResourceForm(forms.Form):
     """
     Edit a resource provided by an application
     """
-    name = forms.StringField(__("Resource name"), validators=[wtforms.validators.DataRequired()],
+    name = forms.StringField(__("Resource name"), validators=[forms.validators.DataRequired()],
         description=__("Name of the resource as a single word in lower case. "
         "This is provided by applications as part of the scope "
         "when requesting access to a user's resources"))
-    title = forms.StringField(__("Title"), validators=[wtforms.validators.DataRequired()],
+    title = forms.StringField(__("Title"), validators=[forms.validators.DataRequired()],
         description=__("Resource title that is displayed to users"))
     description = forms.TextAreaField(__("Description"),
         description=__("An optional description of what the resource is"))
@@ -227,38 +225,38 @@ class ResourceForm(forms.Form):
 
     def validate_name(self, field):
         if not valid_username(field.data):
-            raise wtforms.ValidationError(_("Name contains invalid characters"))
+            raise forms.ValidationError(_("Name contains invalid characters"))
 
         if field.data in resource_registry:
-            raise wtforms.ValidationError(_("This name is reserved for internal use"))
+            raise forms.ValidationError(_("This name is reserved for internal use"))
 
         existing = Resource.get(name=field.data, client=self.client)
         if existing and existing.id != self.edit_id:
-            raise wtforms.ValidationError(_("A resource with that name already exists"))
+            raise forms.ValidationError(_("A resource with that name already exists"))
 
 
 class ResourceActionForm(forms.Form):
     """
     Edit an action associated with a resource
     """
-    name = forms.StringField(__("Action name"), validators=[wtforms.validators.DataRequired()],
+    name = forms.StringField(__("Action name"), validators=[forms.validators.DataRequired()],
         description=__("Name of the action as a single word in lower case. "
         "This is provided by applications as part of the scope in the form "
         "'resource/action' when requesting access to a user's resources. "
         "Read actions are implicit when applications request just 'resource' "
         "in the scope and do not need to be specified as an explicit action"))
-    title = forms.StringField(__("Title"), validators=[wtforms.validators.DataRequired()],
+    title = forms.StringField(__("Title"), validators=[forms.validators.DataRequired()],
         description=__("Action title that is displayed to users"))
     description = forms.TextAreaField(__("Description"),
         description=__("An optional description of what the action is"))
 
     def validate_name(self, field):
         if not valid_username(field.data):
-            raise wtforms.ValidationError(_("Name contains invalid characters"))
+            raise forms.ValidationError(_("Name contains invalid characters"))
 
         existing = self.edit_resource.get_action(field.data)
         if existing and existing.id != self.edit_id:
-            raise wtforms.ValidationError(_("An action with that name already exists for this resource"))
+            raise forms.ValidationError(_("An action with that name already exists for this resource"))
 
 
 class ClientTeamAccessForm(forms.Form):

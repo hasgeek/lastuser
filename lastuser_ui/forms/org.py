@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from flask import g, current_app, Markup, url_for
-import wtforms
 from coaster.utils import valid_username
 from baseframe import _, __
 import baseframe.forms as forms
@@ -12,35 +11,35 @@ __all__ = ['OrganizationForm', 'TeamForm']
 
 
 class OrganizationForm(forms.Form):
-    title = forms.StringField(__("Organization name"), validators=[wtforms.validators.DataRequired()])
-    name = forms.AnnotatedTextField(__("Username"), validators=[wtforms.validators.DataRequired()],
+    title = forms.StringField(__("Organization name"), validators=[forms.validators.DataRequired()])
+    name = forms.AnnotatedTextField(__("Username"), validators=[forms.validators.DataRequired()],
         prefix=u"https://hasgeek.com/…")
     domain = forms.RadioField(__("Domain"),
         description=__(u"Users with an email address at this domain will automatically become members of this organization"),
-        validators=[wtforms.validators.Optional()])
+        validators=[forms.validators.Optional()])
 
     def validate_name(self, field):
         if not valid_username(field.data):
-            raise wtforms.ValidationError(_("Invalid characters in name"))
+            raise forms.ValidationError(_("Invalid characters in name"))
         if field.data in current_app.config['RESERVED_USERNAMES']:
-            raise wtforms.ValidationError(_("This name is reserved"))
+            raise forms.ValidationError(_("This name is reserved"))
         existing = User.get(username=field.data)
         if existing is not None:
             if existing == g.user:
-                raise wtforms.ValidationError(Markup(_(u"This is <em>your</em> current username. "
+                raise forms.ValidationError(Markup(_(u"This is <em>your</em> current username. "
                     u'You must change it first from <a href="{profile}">your profile</a> '
                     u"before you can assign it to an organization").format(
                         profile=url_for('profile'))))
             else:
-                raise wtforms.ValidationError(_("This name is taken"))
+                raise forms.ValidationError(_("This name is taken"))
         existing = Organization.get(name=field.data)
         if existing is not None and existing.id != self.edit_id:
-            raise wtforms.ValidationError(_("This name is taken"))
+            raise forms.ValidationError(_("This name is taken"))
 
 
 class TeamForm(forms.Form):
-    title = forms.StringField(__("Team name"), validators=[wtforms.validators.DataRequired()])
-    users = forms.UserSelectMultiField(__("Users"), validators=[wtforms.validators.DataRequired()],
+    title = forms.StringField(__("Team name"), validators=[forms.validators.DataRequired()])
+    users = forms.UserSelectMultiField(__("Users"), validators=[forms.validators.DataRequired()],
         description=__("Lookup a user by their username or email address"),
         lastuser=None, usermodel=User,
         autocomplete_endpoint=lambda: url_for('lastuser_oauth.user_autocomplete'),
