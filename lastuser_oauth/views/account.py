@@ -3,7 +3,7 @@ from flask import abort, url_for, flash, redirect, g, session, render_template, 
 
 from coaster.utils import valid_username
 from coaster.views import get_next_url
-from baseframe import _
+from baseframe import _, csrf
 from baseframe.signals import exception_catchall
 from lastuser_core import login_registry
 from lastuser_core.models import db, getextid, merge_users, User, UserEmail, UserExternalId, UserEmailClaim
@@ -15,6 +15,7 @@ from ..mailclient import send_email_verify_link
 from ..views.helpers import login_internal, register_internal, set_loginmethod_cookie, requires_login
 
 
+@csrf.exempt
 @lastuser_oauth.route('/login/<service>', methods=['GET', 'POST'])
 def login_service(service):
     """
@@ -34,6 +35,7 @@ def login_service(service):
         return redirect(next_url or get_next_url(referrer=True))
 
 
+@csrf.exempt
 @lastuser_oauth.route('/login/<service>/callback', methods=['GET', 'POST'])
 def login_service_callback(service):
     """

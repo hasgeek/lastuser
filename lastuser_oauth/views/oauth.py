@@ -2,7 +2,7 @@
 
 from flask import g, render_template, redirect, request, jsonify, get_flashed_messages
 from coaster.utils import newsecret
-from baseframe import _
+from baseframe import _, csrf
 
 from lastuser_core.utils import make_redirect_url
 from lastuser_core import resource_registry
@@ -309,6 +309,7 @@ def oauth_token_success(token, **params):
     return response
 
 
+@csrf.exempt
 @lastuser_oauth.route('/token', methods=['POST'])
 @requires_client_login
 def oauth_token():

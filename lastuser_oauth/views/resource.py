@@ -5,7 +5,7 @@ from werkzeug.exceptions import BadRequest
 from flask import request, g, abort, render_template, jsonify
 from coaster.utils import getbool
 from coaster.views import jsonp, requestargs
-from baseframe import _, __
+from baseframe import _, __, csrf
 
 from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Resource,
     ResourceAction, UserClientPermissions, TeamClientPermissions, UserSession, ClientCredential)
@@ -112,6 +112,7 @@ def api_result(status, **params):
 
 # --- Client access endpoints -------------------------------------------------
 
+@csrf.exempt
 @lastuser_oauth.route('/api/1/token/verify', methods=['POST'])
 @requires_client_login
 def token_verify():
@@ -166,6 +167,7 @@ def token_verify():
     return api_result('ok', **params)
 
 
+@csrf.exempt
 @lastuser_oauth.route('/api/1/resource/sync', methods=['POST'])
 @requires_client_login
 def sync_resources():
@@ -244,6 +246,7 @@ def sync_resources():
     return api_result('ok', results=results)
 
 
+@csrf.exempt
 @lastuser_oauth.route('/api/1/user/get_by_userid', methods=['GET', 'POST'])
 @requires_user_or_client_login
 def user_get_by_userid():
@@ -277,6 +280,7 @@ def user_get_by_userid():
     return api_result('error', error='not_found')
 
 
+@csrf.exempt
 @lastuser_oauth.route('/api/1/user/get_by_userids', methods=['GET', 'POST'])
 @requires_client_id_or_user_or_client_login
 @requestargs('userid[]')
@@ -309,6 +313,7 @@ def user_get_by_userids(userid):
         )
 
 
+@csrf.exempt
 @lastuser_oauth.route('/api/1/user/get', methods=['GET', 'POST'])
 @requires_user_or_client_login
 @requestargs('name')
@@ -333,6 +338,7 @@ def user_get(name):
         return api_result('error', error='not_found')
 
 
+@csrf.exempt
 @lastuser_oauth.route('/api/1/user/getusers', methods=['GET', 'POST'])
 @requires_user_or_client_login
 @requestargs('name[]')
@@ -365,6 +371,7 @@ def user_getall(name):
         return api_result('ok', results=results)
 
 
+@csrf.exempt
 @lastuser_oauth.route('/api/1/user/autocomplete', methods=['GET', 'POST'])
 @requires_client_id_or_user_or_client_login
 def user_autocomplete():
@@ -386,6 +393,7 @@ def user_autocomplete():
 
 # This is org/* instead of organizations/* because it's a client resource. TODO: Reconsider
 # DEPRECATED, to be removed soon
+@csrf.exempt
 @lastuser_oauth.route('/api/1/org/get_teams', methods=['GET', 'POST'])
 @requires_client_login
 def org_team_get():
@@ -465,6 +473,7 @@ def resource_id(authtoken, args, files=None):
         return get_userinfo(authtoken.user, authtoken.client, scope=['id'], get_permissions=False)
 
 
+@csrf.exempt
 @lastuser_oauth.route('/api/1/session/verify', methods=['POST'])
 @resource_registry.resource('session/verify', __(u"Verify user session"), scope='id')
 def session_verify(authtoken, args, files=None):
@@ -483,6 +492,7 @@ def session_verify(authtoken, args, files=None):
         return {'active': False}
 
 
+@csrf.exempt
 @lastuser_oauth.route('/api/1/avatar/edit', methods=['POST'])
 @resource_registry.resource('avatar/edit', __(u"Update your profile picture"))
 def resource_avatar_edit(authtoken, args, files=None):
@@ -513,6 +523,7 @@ def resource_email(authtoken, args, files=None):
         return {'email': unicode(authtoken.user.email)}
 
 
+@csrf.exempt
 @lastuser_oauth.route('/api/1/email/add', methods=['POST'])
 @resource_registry.resource('email/add', __(u"Add an email address to your profile"))
 def resource_email_add(authtoken, args, files=None):
@@ -557,6 +568,7 @@ def resource_login_providers(authtoken, args, files=None):
     return response
 
 
+@csrf.exempt
 @lastuser_oauth.route('/api/1/user/new', methods=['POST'])
 @resource_registry.resource('user/new', __(u"Create a new user account"), trusted=True)
 def resource_user_new(authtoken, args, files=None):
@@ -573,12 +585,14 @@ def resource_organizations(authtoken, args, files=None):
     return get_userinfo(authtoken.user, authtoken.client, scope=['organizations'], get_permissions=False)
 
 
+@csrf.exempt
 @lastuser_oauth.route('/api/1/organizations/new', methods=['POST'])
 @resource_registry.resource('organizations/new', __(u"Create a new organization"), trusted=True)
 def resource_organizations_new(authtoken, args, files=None):
     pass
 
 
+@csrf.exempt
 @lastuser_oauth.route('/api/1/organizations/edit', methods=['POST'])
 @resource_registry.resource('organizations/edit', __(u"Edit your organizations"), trusted=True)
 def resource_organizations_edit(authtoken, args, files=None):
@@ -594,6 +608,7 @@ def resource_teams(authtoken, args, files=None):
     return get_userinfo(authtoken.user, authtoken.client, scope=['teams'], get_permissions=False)
 
 
+@csrf.exempt
 @lastuser_oauth.route('/api/1/teams/new', methods=['POST'])
 @resource_registry.resource('teams/new', __(u"Create a new team in your organizations"), trusted=True)
 def resource_teams_new(authtoken, args, files=None):
@@ -601,6 +616,7 @@ def resource_teams_new(authtoken, args, files=None):
 
 
 # GET to read member list, POST to write to it
+@csrf.exempt
 @lastuser_oauth.route('/api/1/teams/edit', methods=['GET', 'POST'])
 @resource_registry.resource('teams/edit', __(u"Edit your organizations' teams"), trusted=True)
 def resource_teams_edit(authtoken, args, files=None):
