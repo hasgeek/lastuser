@@ -67,24 +67,13 @@
 <table class="table">
   {% for userphone in g.user.phones %}
   <tr>
-    <td>{{ userphone }} {% if userphone.primary %} <em>(primary)</em> {% endif -%}
-      <form action="{{ url_for('.verify_phone', number=userphone) }}" method="POST">
-        <label for="verification_code">Verification code</label>
-        <input type="text" maxlength="4" name="verification_code" id="verification_code">
-      </form>
-    </td>
+  <td>{{ userphone }} {% if userphone.primary %} <em>(primary)</em> {% endif -%}</td>
     <td><a href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a></td>
   </tr>
   {% endfor %}
   {% for userphone in g.user.phoneclaims %}
   <tr>
-    <td>{{ userphone }} <em>(<a href="{{ url_for('.verify_phone', number=userphone) }}">pending verification</a>)
-      <form action="{{ url_for('.verify_phone', number=userphone) }}" method="POST">
-        {{ context.email_form.hidden_tag() }} {# Because CSRF can be rendered from any form #}
-        <label for="verification_code">Verification code</label>
-        <input type="text" maxlength="4" name="verification_code" id="verification_code">
-      </form>
-    </td>
+    <td>{{ userphone }} <em>(<a href="{{ url_for('.verify_phone', number=userphone) }}">pending verification</a>)</td>
     <td><a href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a></td>
   </tr>
   {% endfor %}
@@ -238,7 +227,7 @@ $("#"+"{{ context.phone_form_id }}").on("submit", function(e){
             console.log($(form).find('input[name="'+key+'"]'));
             $(form).find('input[name="'+key+'"]').parent().append('<div id="phone_form_error"><p class="help-error">'+error[key]+'</p></div>');
           });
-          
+
         });
       }
     }
