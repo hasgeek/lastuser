@@ -53,8 +53,10 @@ input[name="field-openid"]
 #hg-networkbar.navbar .navbar-brand
   padding: 0
   display: block
-  @include replace-text-with-dimensions('logo@2x.png')
-  height: 48px
+  overflow: hidden
+  background-image: image-url('logo@2x.png')
+  background-repeat: no-repeat
+  +background-size(image-width('logo.png') image-height('logo.png'))
   background-position: left center
   background-size: auto 100%
   background-repeat: none
