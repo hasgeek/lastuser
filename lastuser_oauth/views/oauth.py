@@ -368,7 +368,7 @@ def oauth_token():
         token = oauth_make_token(user=authcode.user, client=client, scope=scope)
         db.session.delete(authcode)
         return oauth_token_success(token, userinfo=get_userinfo(
-            user=authcode.user, client=client, scope=scope, session=authcode.session))
+            user=authcode.user, client=client, scope=token.scope, session=authcode.session))
 
     elif grant_type == 'password':
         # Validations 4.1: password grant_type is only for trusted clients
