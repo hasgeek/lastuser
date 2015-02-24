@@ -989,7 +989,7 @@ class UserExternalId(BaseMixin, db.Model):
         backref=db.backref('externalids', cascade='all, delete-orphan'))
     service = db.Column(db.String(20), nullable=False)
     userid = db.Column(db.String(250), nullable=False)  # Unique id (or OpenID)
-    username = db.Column(db.Unicode(80), nullable=True)
+    username = db.Column(db.Unicode(250), nullable=True)  # LinkedIn returns full URLs
     oauth_token = db.Column(db.String(250), nullable=True)
     oauth_token_secret = db.Column(db.String(250), nullable=True)
     oauth_token_type = db.Column(db.String(250), nullable=True)
