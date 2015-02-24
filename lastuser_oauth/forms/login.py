@@ -14,7 +14,8 @@ class LoginPasswordResetException(Exception):
 
 
 class LoginForm(forms.Form):
-    username = forms.StringField(__("Username or Email"), validators=[forms.validators.DataRequired()])
+    username = forms.StringField(__("Username or Email"), validators=[forms.validators.DataRequired()],
+        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     password = forms.PasswordField(__("Password"), validators=[forms.validators.DataRequired()])
 
     def validate_username(self, field):
@@ -34,9 +35,11 @@ class LoginForm(forms.Form):
 
 class RegisterForm(forms.Form):
     fullname = forms.StringField(__("Full name"), validators=[forms.validators.DataRequired()])
-    email = forms.EmailField(__("Email address"), validators=[forms.validators.DataRequired(), forms.validators.ValidEmail()])
+    email = forms.EmailField(__("Email address"), validators=[forms.validators.DataRequired(), forms.validators.ValidEmail()],
+        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     username = forms.StringField(__("Username"), validators=[forms.validators.DataRequired()],
-        description=__("Single word that can contain letters, numbers and dashes"))
+        description=__("Single word that can contain letters, numbers and dashes"),
+        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     password = forms.PasswordField(__("Password"), validators=[forms.validators.DataRequired()])
     confirm_password = forms.PasswordField(__("Confirm password"),
         validators=[forms.validators.DataRequired(), forms.validators.EqualTo('password')])

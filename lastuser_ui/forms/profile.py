@@ -12,7 +12,8 @@ __all__ = ['NewEmailAddressForm', 'NewPhoneForm', 'VerifyPhoneForm']
 
 
 class NewEmailAddressForm(forms.Form):
-    email = forms.EmailField(__("Email address"), validators=[forms.validators.DataRequired(), forms.ValidEmail()])
+    email = forms.EmailField(__("Email address"), validators=[forms.validators.DataRequired(), forms.ValidEmail()],
+        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     type = forms.RadioField(__("Type"), coerce=nullunicode, validators=[forms.validators.Optional()], choices=[
         (__(u"Home"), __(u"Home")),
         (__(u"Work"), __(u"Work")),
@@ -33,7 +34,7 @@ class NewEmailAddressForm(forms.Form):
 
 
 class NewPhoneForm(forms.Form):
-    phone = forms.StringField(__("Phone number"), default='+91',
+    phone = forms.TelField(__("Phone number"), default='+91',
         validators=[forms.validators.DataRequired()],
         description=__("In international calling format starting with '+' and country code. Mobile numbers only at this time"))
     type = forms.RadioField(__("Type"), coerce=nullunicode, validators=[forms.validators.Optional()], choices=[
@@ -68,7 +69,8 @@ class NewPhoneForm(forms.Form):
 
 
 class VerifyPhoneForm(forms.Form):
-    verification_code = forms.StringField(__("Verification code"), validators=[forms.validators.DataRequired()])
+    verification_code = forms.StringField(__("Verification code"), validators=[forms.validators.DataRequired()],
+        widget_attrs={'pattern': '[0-9]*'})
 
     def validate_verification_code(self, field):
         # self.phoneclaim is set by the view before calling form.validate()

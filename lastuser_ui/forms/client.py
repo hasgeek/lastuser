@@ -44,7 +44,8 @@ class RegisterClientForm(forms.Form):
         validators=[forms.validators.Optional()],
         description=Markup(__(u"A dot-based namespace that uniquely identifies your client application. "
             u"For example, if your client website is <code>https://auth.hasgeek.com</code>, "
-            u"use <code>com.hasgeek.auth</code>. Only required if your client app provides resources")))
+            u"use <code>com.hasgeek.auth</code>. Only required if your client app provides resources")),
+        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     redirect_uri = forms.URLField(__("Redirect URL"),
         validators=[forms.validators.Optional(), forms.validators.URL()],
         description=__("OAuth2 Redirect URL"))
@@ -122,7 +123,8 @@ class PermissionForm(forms.Form):
         description=__("Name of the permission as a single word in lower case. "
         "This is passed to the application when a user logs in. "
         "Changing the name will not automatically update it everywhere. "
-        "You must reassign the permission to users who had it with the old name"))
+        "You must reassign the permission to users who had it with the old name"),
+        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     title = forms.StringField(__("Title"), validators=[forms.validators.DataRequired()],
         description=__("Permission title that is displayed to users"))
     description = forms.TextAreaField(__("Description"),
@@ -211,7 +213,8 @@ class ResourceForm(forms.Form):
     name = forms.StringField(__("Resource name"), validators=[forms.validators.DataRequired()],
         description=__("Name of the resource as a single word in lower case. "
         "This is provided by applications as part of the scope "
-        "when requesting access to a user's resources"))
+        "when requesting access to a user's resources"),
+        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     title = forms.StringField(__("Title"), validators=[forms.validators.DataRequired()],
         description=__("Resource title that is displayed to users"))
     description = forms.TextAreaField(__("Description"),
@@ -224,6 +227,7 @@ class ResourceForm(forms.Form):
             "that should only be available to your own apps"))
 
     def validate_name(self, field):
+        field.data = field.data.lower()
         if not valid_username(field.data):
             raise forms.ValidationError(_("Name contains invalid characters"))
 
@@ -244,13 +248,15 @@ class ResourceActionForm(forms.Form):
         "This is provided by applications as part of the scope in the form "
         "'resource/action' when requesting access to a user's resources. "
         "Read actions are implicit when applications request just 'resource' "
-        "in the scope and do not need to be specified as an explicit action"))
+        "in the scope and do not need to be specified as an explicit action"),
+        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     title = forms.StringField(__("Title"), validators=[forms.validators.DataRequired()],
         description=__("Action title that is displayed to users"))
     description = forms.TextAreaField(__("Description"),
         description=__("An optional description of what the action is"))
 
     def validate_name(self, field):
+        field.data = field.data.lower()
         if not valid_username(field.data):
             raise forms.ValidationError(_("Name contains invalid characters"))
 

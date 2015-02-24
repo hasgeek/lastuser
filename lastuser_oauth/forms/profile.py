@@ -11,7 +11,8 @@ timezones = sorted_timezones()
 
 
 class PasswordResetRequestForm(forms.Form):
-    username = forms.StringField(__("Username or Email"), validators=[forms.validators.DataRequired()])
+    username = forms.StringField(__("Username or Email"), validators=[forms.validators.DataRequired()],
+        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
 
     def validate_username(self, field):
         user = getuser(field.data)
@@ -22,7 +23,8 @@ class PasswordResetRequestForm(forms.Form):
 
 class PasswordResetForm(forms.Form):
     username = forms.StringField(__("Username or Email"), validators=[forms.validators.DataRequired()],
-        description=__("Please reconfirm your username or email address"))
+        description=__("Please reconfirm your username or email address"),
+        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     password = forms.PasswordField(__("New password"), validators=[forms.validators.DataRequired()])
     confirm_password = forms.PasswordField(__("Confirm password"),
         validators=[forms.validators.DataRequired(), forms.validators.EqualTo('password')])
@@ -50,9 +52,11 @@ class PasswordChangeForm(forms.Form):
 class ProfileForm(forms.Form):
     fullname = forms.StringField(__("Full name"), validators=[forms.validators.DataRequired()])
     email = forms.EmailField(__("Email address"),
-        validators=[forms.validators.DataRequired(), forms.ValidEmail()])
+        validators=[forms.validators.DataRequired(), forms.ValidEmail()],
+        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     username = forms.AnnotatedNullTextField(__("Username"), validators=[forms.validators.DataRequired()],
-        prefix=u"https://hasgeek.com/…")
+        prefix=u"https://hasgeek.com/…",
+        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     timezone = forms.SelectField(__("Timezone"), validators=[forms.validators.DataRequired()], choices=timezones)
 
     def validate_username(self, field):
