@@ -247,8 +247,7 @@ class Resource(BaseScopedNameMixin, db.Model):
 
 class ResourceAction(BaseMixin, db.Model):
     """
-    Actions that can be performed on resources. There should always be at minimum
-    a 'read' action.
+    Actions that can be performed on resources.
     """
     __tablename__ = 'resourceaction'
     __bind_key__ = 'lastuser'
@@ -260,7 +259,7 @@ class ResourceAction(BaseMixin, db.Model):
     description = db.Column(db.UnicodeText, default=u'', nullable=False)
 
     # Action names are unique per client app
-    __table_args__ = (db.UniqueConstraint('resource_id', 'name'), {})
+    __table_args__ = (db.UniqueConstraint('resource_id', 'name'),)
 
     def permissions(self, user, inherited=None):
         perms = super(ResourceAction, self).permissions(user, inherited)
