@@ -74,6 +74,9 @@ MAIL_DEFAULT_SENDER = DEFAULT_MAIL_SENDER  # For new versions of Flask-Mail
 #: Logging: recipients of error emails
 ADMINS = []
 
+#: Logging: recipients of error smses
+ADMIN_NUMBERS = []
+
 #: Log file
 LOGFILE = 'error.log'
 
