@@ -17,6 +17,7 @@ packed.css
 packed.js
 baseframe-packed.css
 baseframe-packed.js
+*/static/gen
 .idea
 *.sql
 *.sql.gz
