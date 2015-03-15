@@ -47,8 +47,12 @@ def init_for(env):
             secret=app.config['OAUTH_TWITTER_SECRET'],
             access_key=app.config.get('OAUTH_TWITTER_ACCESS_KEY'),
             access_secret=app.config.get('OAUTH_TWITTER_ACCESS_SECRET'))
-    login_registry['google'] = providers.GoogleProvider('google', 'Google',
-        at_login=True, priority=True, icon='google')
+    if app.config.get('GOOGLE_CLIENT_ID') and app.config.get('GOOGLE_CLIENT_SECRET'):
+        login_registry['google'] = providers.GoogleProvider('google', 'Google',
+            client_id=app.config['GOOGLE_CLIENT_ID'],
+            secret=app.config['GOOGLE_CLIENT_SECRET'],
+            scope=app.config.get('GOOGLE_SCOPE', ['email', 'profile']),
+            at_login=True, priority=True, icon='google')
     if app.config.get('OAUTH_LINKEDIN_KEY') and app.config.get('OAUTH_LINKEDIN_SECRET'):
         login_registry['linkedin'] = providers.LinkedInProvider('linkedin', 'LinkedIn',
             at_login=True, priority=False, icon='linkedin',

@@ -91,6 +91,11 @@ OAUTH_TWITTER_SECRET = ''
 OAUTH_GITHUB_KEY = ''
 OAUTH_GITHUB_SECRET = ''
 
+#: Google integration. Get an app here: https://console.developers.google.com/
+GOOGLE_CLIENT_ID = ''
+GOOGLE_CLIENT_SECRET = ''
+GOOGLE_SCOPE = ['email', 'profile'] # Minimum sccope = ['email', 'profile']
+
 #: Recaptcha for the registration form
 RECAPTCHA_USE_SSL = USE_SSL
 RECAPTCHA_PUBLIC_KEY = ''
