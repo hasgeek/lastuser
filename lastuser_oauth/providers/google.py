@@ -31,7 +31,10 @@ class GoogleProvider(LoginProvider):
         return redirect(self.flow(callback_url).step1_get_authorize_url())
 
     def callback(self):
-        callback_url = session.pop('google_callback')
+        if 'google_callback' in session:
+            callback_url = session.pop('google_callback')
+        else:
+            raise LoginCallbackError(_(u"Duplicate callback. Did you go back in your browser history?"))
         if request.args.get('error'):
             if request.args['error'] == 'access_denied':
                 raise LoginCallbackError(_(u"You denied the Google login request"))
