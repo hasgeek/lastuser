@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
-from functools import wraps
 import requests
-from urllib import quote
 from baseframe import _
 from flask import session, redirect, request
 from lastuser_core.registry import LoginProvider, LoginCallbackError
@@ -54,4 +52,3 @@ class GoogleProvider(LoginProvider):
                 'oauth_token_secret': None,  # OAuth 2 doesn't need token secrets
                 'oauth_token_type': credentials.token_response['token_type']
                 }
-
