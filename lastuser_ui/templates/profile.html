@@ -3,167 +3,211 @@
 {% block title %}Profile{% endblock %}
 
 {% block content %}
-<dl class="infobox">
-  <dt>Name</dt>
-  <dd>{{ g.user.fullname }}</dd>
-  <dt>Username</dt>
-  <dd>{% if g.user.username %}{{ g.user.username }}{% else %}<em>(none)</em>{% endif %}</dd>
-</dl>
-<p>
-  <a class="btn btn-info" href="{{ url_for('lastuser_oauth.profile_edit') }}">Edit this</a>
-  <a class="btn btn-warning" href="{{ url_for('.change_password') }}">Change password</a>
-</p>
-<h2>Email addresses</h2>
-{% if g.user.emails %}
-<table class="table">
-  {% for useremail in g.user.emails %}
-  <tr>
-    <td>{{ useremail }} {% if useremail.primary %} <em>(primary)</em> {% endif -%}</td>
-    <td><a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a></td>
-  </tr>
-  {% endfor %}
-  {% for useremail in g.user.emailclaims %}
-  <tr>
-    <td>{{ useremail }} <em>(pending verification)</em></td>
-    <td><a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a></td>
-  </tr>
-  {% endfor %}
-  <tr>
-    <td><a href="#" onclick="return false;" data-toggle="collapse" data-target="#emailFormNew">Add another email address &rarr;</a></td>
-    <td></td>
-  </tr>
-</table>
-{% else %}
-<p>No verified addresses</p>
-<a class="btn btn-info" href="{{ url_for('.add_email') }}" data-toggle="collapse" data-target="#emailFormNew">Add an email address</a>
-{% endif %}
-<div id="email-form-response"></div>
-<div class="margin-box">
-  <div id="emailFormNew" class="well collapse">
-    <form class="form-horizontal" id="{{ context.email_form_id }}" action="{{ context.email_form_action }}" method="POST">
-      {{ context.email_form.hidden_tag() }}
-      {{ renderfield(context.email_form.email) }}
-      <div class="form-group control-group listwidget" id="field-type">
-        <label class="col-xs-12 col-sm-3 col-md-2 control-label" for="type">Type</label>
-        <div class="col-xs-12 col-sm-9 col-md-10 controls">
-          {% for choice in context.email_form.type.choices %}
-          <label class="radio-inline">
-            <input type="radio" name="type" value="{{ choice[0] }}"> {{ choice[0] }}
-          </label>
-          {% endfor %}
+<div class="row detail">
+  <div class="col-xs-12 col-sm-12 col-md-6">
+    <div class="detail-box clearfix">
+      <h2 class="heading">Info</h2>
+      <table class="table detail-box-table">
+      <tr>
+        <td><strong>Name</strong></td>
+        <td>{{ g.user.fullname }}</td>
+      </tr>
+      <tr>
+        <td><strong>Username</strong></td>
+        <td>{% if g.user.username %}{{ g.user.username }}{% else %}<em>(none)</em>{% endif %}</td>
+      </tr>
+      </table>
+      <div class="button-box">
+        <a class="btn btn-sm btn-info" href="{{ url_for('lastuser_oauth.profile_edit') }}">Edit this</a>
+        <a class="btn btn-sm btn-warning" href="{{ url_for('.change_password') }}">Change password</a>
+      </div>
+    </div><!--eof detail-box-->
+  </div><!--eof info-->
+  <div class="col-xs-12 col-sm-12 col-md-6">
+    <div class="detail-box clearfix">
+      <h2 class="heading">Email addresses</h2>
+      {% if g.user.emails %}
+      <table class="table detail-box-table">
+        {% for useremail in g.user.emails %}
+        <tr>
+          <td>{{ useremail }} {% if useremail.primary %} <em>(primary)</em> {% endif -%}</td>
+          <td><a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a></td>
+        </tr>
+        {% endfor %}
+        {% for useremail in g.user.emailclaims %}
+        <tr>
+          <td>{{ useremail }} <em>(pending verification)</em></td>
+          <td><a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a></td>
+        </tr>
+        {% endfor %}
+        <tr>
+          <td><a href="#" onclick="return false;" data-toggle="collapse" data-target="#emailFormNew">Add another email address &rarr;</a></td>
+          <td></td>
+        </tr>
+      </table>
+      {% else %}
+      <p class="para">No verified addresses</p>
+      <div class="button-box">
+        <a class="btn btn-sm btn-info" href="#" onclick="return false;" data-toggle="collapse" data-target="#emailFormNew">Add an email address</a>
+      </div>
+      {% endif %}
+      <div id="emailFormNew" class="collapse detail-box-form">
+        <div id="email-form-response"></div>
+        <div class="well">
+          <form class="form-horizontal" id="{{ context.email_form_id }}" action="{{ context.email_form_action }}" method="POST">
+            {{ context.email_form.hidden_tag() }}
+            {{ renderfield(context.email_form.email) }}
+            <div class="form-group control-group" id="field-type">
+              <label class="col-xs-12 col-sm-3 col-md-2 control-label" for="type">Type</label>
+              <div class="col-xs-12 col-sm-9 col-md-10 controls">
+                {% for choice in context.email_form.type.choices %}
+                <label class="radio-inline">
+                  <input type="radio" name="type" value="{{ choice[0] }}"> {{ choice[0] }}
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="form-group form-actions clearfix">
+              <div class="col-sm-offset-3 col-sm-9 col-md-offset-2 col-md-10">
+                <button type="submit"  class="btn btn-sm btn-primary" >{{ context.email_form_submit }}</button>
+                <span class="loading hidden">&nbsp;</span>
+              </div>
+            </div>
+          </form>
         </div>
       </div>
-      <div class="form-group form-actions clearfix">
-        <div class="col-sm-offset-3 col-sm-9 col-md-offset-2 col-md-10">
-          <button type="submit"  class="btn btn-primary" >{{ context.email_form_submit }}</button>
-          <span class="loading hidden">&nbsp;</span>
+    </div><!--eof detail-box-->
+  </div><!--eof email-->
+  <div class="col-xs-12 col-sm-12 col-md-6">
+    <div class="detail-box clearfix">
+      <h2 class="heading">Mobile numbers</h2>
+      {% if g.user.phones %}
+      <table class="table detail-box-table">
+        {% for userphone in g.user.phones %}
+        <tr>
+        <td>{{ userphone }} {% if userphone.primary %} <em>(primary)</em> {% endif -%}</td>
+          <td><a href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a></td>
+        </tr>
+        {% endfor %}
+        {% for userphone in g.user.phoneclaims %}
+        <tr>
+          <td>{{ userphone }} <em>(<a href="{{ url_for('.verify_phone', number=userphone) }}">pending verification</a>)</em></td>
+          <td><a href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a></td>
+        </tr>
+        {% endfor %}
+        <tr>
+          <td><a href="#" onclick="return false;" data-toggle="collapse" data-target="#phoneFormNew">Add another mobile number &rarr;</a></td>
+          <td></td>
+        </tr>
+      </table>
+      {% else %}
+      <p class="para"><em>(No verified numbers)</em></p>
+      <div class="button-box">
+        <a class="btn btn-sm btn-info"  data-toggle="collapse" data-target="#phoneFormNew">Add a mobile number</a>
+      </div>
+      {% endif %}
+      <div id="phoneFormNew" class="detail-box-form collapse">
+        <div id="phone-form-response"></div>
+        <div class="well">
+          <form class="form-horizontal" id="{{ context.phone_form_id }}" action="{{ context.phone_form_action }}" method="POST">
+            {{ context.phone_form.hidden_tag() }}
+            {{ renderfield(context.phone_form.phone) }}
+            <div class="form-group control-group" id="field-type">
+              <label class="col-xs-12 col-sm-3 col-md-2 control-label" for="type">Type</label>
+              <div class="col-xs-12 col-sm-9 col-md-10 controls">
+                {% for choice in context.phone_form.type.choices %}
+                <label class="radio-inline">
+                  <input type="radio" name="type" value="{{ choice[0] }}"> {{ choice[0] }}
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="form-group form-actions clearfix">
+              <div class="col-sm-offset-3 col-sm-9 col-md-offset-2 col-md-10">
+                <button type="submit"  class="btn btn-sm btn-primary" >{{ context.phone_form_submit }}</button>
+                <span class="loading hidden">&nbsp;</span>
+              </div>
+            </div>
+          </form>
         </div>
       </div>
-    </form>
-  </div>
-</div>
-<h2>Mobile numbers</h2>
-{% if g.user.phones %}
-<table class="table">
-  {% for userphone in g.user.phones %}
-  <tr>
-  <td>{{ userphone }} {% if userphone.primary %} <em>(primary)</em> {% endif -%}</td>
-    <td><a href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a></td>
-  </tr>
-  {% endfor %}
-  {% for userphone in g.user.phoneclaims %}
-  <tr>
-    <td>{{ userphone }} <em>(<a href="{{ url_for('.verify_phone', number=userphone) }}">pending verification</a>)</td>
-    <td><a href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a></td>
-  </tr>
-  {% endfor %}
-  <tr>
-    <td><a href="#" onclick="return false;" data-toggle="collapse" data-target="#phoneFormNew">Add another mobile number &rarr;</a></td>
-    <td></td>
-  </tr>
-</table>
-{% else %}
-<p><em>(No verified numbers)</em></p>
-<a class="btn btn-info"  data-toggle="collapse" data-target="#phoneFormNew">Add a mobile number</a>
-{% endif %}
-<div class="margin-box">
-  <div id="phone-form-response"></div>
-  <div id="phoneFormNew" class="well collapse">
-    <form class="form-horizontal" id="{{ context.phone_form_id }}" action="{{ context.phone_form_action }}" method="POST">
-      {{ context.phone_form.hidden_tag() }}
-      {{ renderfield(context.phone_form.phone) }}
-      <div class="form-group control-group listwidget" id="field-type">
-        <label class="col-xs-12 col-sm-3 col-md-2 control-label" for="type">Type</label>
-        <div class="col-xs-12 col-sm-9 col-md-10 controls">
-          {% for choice in context.phone_form.type.choices %}
-          <label class="radio-inline">
-            <input type="radio" name="type" value="{{ choice[0] }}"> {{ choice[0] }}
-          </label>
-          {% endfor %}
-        </div>
-      </div>
-      <div class="form-group form-actions clearfix">
-        <div class="col-sm-offset-3 col-sm-9 col-md-offset-2 col-md-10">
-          <button type="submit"  class="btn btn-primary" >{{ context.phone_form_submit }}</button>
-          <span class="loading hidden">&nbsp;</span>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
-
-<h2>Connected IDs</h2>
-<table class="table">
-  {% for extid in g.user.externalids %}
-  <li><i class="fa fa-{{ extid.service }}"></i> {{ extid.username }}</li>
-  {% else %}
-  <em>(none)</em>
-  {% endfor %}
-</table>
-{% for provider in context.login_registry %}
-<a class="btn btn-social btn-{{ context.login_registry[provider].icon }}" href="{{ url_for('lastuser_oauth.login_service', service=provider, next=url_for('.profile')) }}">
-  <i class="fa fa-{{ context.login_registry[provider].icon }}"></i>
-  Sign in with {{ context.login_registry[provider].title }}
-</a>
-{% endfor %}
-<h2>Organizations</h2>
-{% if g.user.organizations_owned() %}
-<table class="table">
-  {% for org in g.user.organizations_owned() %}
-  <tr><td><a href="{{ url_for('.org_info', name=org.name) }}">{{ org.title }}</a></td></tr>
-  {% endfor %}
-  <tr><td><a href="{{ url_for('.org_new') }}">Create another organization &rarr;</a></td></tr>
-</table>
-{% else %}
-<p><em>(No organizations)</em></p>
-<a class="btn btn-info" href="{{ url_for('.org_new') }}">Create an organization</a>
-{% endif %}
-
-<a href="javascript:void();"><h2 data-toggle="collapse" data-target="#developerTools">Developer Options <i class="fa fa-caret-down"></i></h2></a>
-<div id="developerTools" class="panel panel-default collapse">
-  <div class="panel-heading"><h3>Applications</h3></div>
-  <div class="panel-body">
-    {% if g.user.clients %}
-    <table class="table">
-      {% for client in g.user.clients %}
-      <tr><td><a href="{{ url_for('.client_info', key=client.key) }}">{{ client.title }}</a></td></tr>
+    </div><!--eof detail-box-->
+  </div><!--eof phone-->
+  <div class="col-xs-12 col-sm-12 col-md-6">
+    <div class="detail-box clearfix">
+      <h2 class="heading">Connected IDs</h2>
+      {% if g.user.externalids %}
+      <table class="table detail-box-table">
+        {% for extid in g.user.externalids %}
+        <tr><td><i class="fa fa-{{ extid.service }}"></i> {{ extid.username }}</td></tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      <p class="para"><em>(none)</em></p>
+      {% endif %} 
+      <div class="button-box">
+      {% for provider in context.login_registry %}
+        <a class="btn btn-sm btn-social btn-{{ context.login_registry[provider].icon }} button-box-button" href="{{ url_for('lastuser_oauth.login_service', service=provider, next=url_for('.profile')) }}">
+          <i class="fa fa-{{ context.login_registry[provider].icon }}"></i>
+          Sign in with {{ context.login_registry[provider].title }}
+        </a>
       {% endfor %}
-      <tr><td><a href="{{ url_for('.client_new') }}">Register another application &rarr;</a></td></tr>
-    </table>
-    {% else %}
-    <p><em>(No client applications)</em></p>
-    <a class="btn btn-info" href="{{ url_for('.org_new') }}">Register an application</a>
-    {% endif %}
-  </div>
-</div>
-<h2>My sessions</h2>
-<ul>
-  {%- for session in g.user.active_sessions() %}
-  <li>From {{ session.ipaddr }} since {{ session.created_at|age }} with {{ session.ua.browser}}/{{ session.ua.platform }}/{{ session.ua.version }}, last active {{ session.accessed_at|age }} {% if session == g.usersession -%} (current) {%- else -%} (<a href="{{ url_for('lastuser_oauth.logout_session', session=session.buid) }}">logout</a>) {%- endif %}</li>
-  {%- endfor %}
-</ul>
+      </div>
+    </div><!--eof detail-box-->
+  </div><!--eof connected ids-->
+  <div class="col-xs-12 col-sm-12 col-md-6">
+    <div class="detail-box clearfix">
+      <h2 class="heading">Organizations</h2>
+      {% if g.user.organizations_owned() %}
+      <table class="table detail-box-table">
+        {% for org in g.user.organizations_owned() %}
+        <tr><td><a href="{{ url_for('.org_info', name=org.name) }}">{{ org.title }}</a></td></tr>
+        {% endfor %}
+        <tr><td><a href="{{ url_for('.org_new') }}">Create another organization &rarr;</a></td></tr>
+      </table>
+      {% else %}
+      <p><em>(No organizations)</em></p>
+      <div class="button-box">
+        <a class="btn btn-sm btn-info" href="{{ url_for('.org_new') }}">Create an organization</a>
+      </div>
+      {% endif %}
+    </div><!--eof detail-box-->
+  </div><!--eof organnizations-->
+  <div class="col-xs-12 col-sm-12 col-md-6">
+    <div class="detail-box clearfix">
+      <h2 data-toggle="collapse" data-target="#developerTools" class="heading-special">Developer Options <i class="fa fa-caret-down"></i></h2>
+      <div id="developerTools" class="panel panel-default collapse in detail-box-panel">
+        <div class="panel-heading"><h3 class="heading">Applications</h3></div>
+        {% if g.user.clients %}
+        <ul class="list-group">
+            {% for client in g.user.clients %}
+          <li class="list-group-item"><a href="{{ url_for('.client_info', key=client.key) }}">{{ client.title }}</a></li>
+            {% endfor %}
+          <li class="list-group-item"><a href="{{ url_for('.client_new') }}">Register another application &rarr;</a></li>
+        </ul>
+        {% else %}
+        <p class="para"><em>(No client applications)</em></p>
+        <div class="button-box">
+          <a class="btn btn-sm btn-info" href="{{ url_for('.org_new') }}">Register an application</a>
+        </div>
+        {% endif %}
+      </div>
+    </div><!--eof detail-box-->
+  </div><!--eof developer options-->
+  <div class="col-xs-12">
+    <div class="detail-box clearfix">
+      <h2 class="heading">My sessions</h2>
+      <div class="panel panel-default detail-box-panel">
+        <ul class="list-group">
+          {%- for session in g.user.active_sessions() %}
+          <li class="list-group-item">From {{ session.ipaddr }} since {{ session.created_at|age }} with {{ session.ua.browser}}/{{ session.ua.platform }}/{{ session.ua.version }}, last active {{ session.accessed_at|age }} {% if session == g.usersession -%} (current) {%- else -%} (<a href="{{ url_for('lastuser_oauth.logout_session', session=session.buid) }}">logout</a>) {%- endif %}</li>
+          {%- endfor %}
+        </ul>
+      </div>
+    </div><!--eof detail-box-->
+  </div><!--eof sessions-->
+</div><!--eof row-->
 {% endblock %}
-
 {% block footerscripts %}
 <script type="text/javascript">
 
