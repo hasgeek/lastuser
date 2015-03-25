@@ -50,7 +50,8 @@ class PasswordChangeForm(forms.Form):
 
 
 class ProfileForm(forms.Form):
-    fullname = forms.StringField(__("Full name"), validators=[forms.validators.DataRequired()])
+    fullname = forms.StringField(__("Full name"),
+        validators=[forms.validators.DataRequired(), forms.validators.Length(max=80)])
     email = forms.EmailField(__("Email address"),
         validators=[forms.validators.DataRequired(), forms.ValidEmail()],
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
