@@ -125,7 +125,7 @@ def save_flashed_messages():
         db.session.add(UserFlashMessage(user=g.user, seq=index, category=category, message=message))
 
 
-def oauth_auth_success(client, redirect_uri, state, code):
+def oauth_auth_success(client, redirect_uri, state, code, token=None):
     """
     Commit session and redirect to OAuth redirect URI
     """
@@ -134,10 +134,15 @@ def oauth_auth_success(client, redirect_uri, state, code):
     else:
         clear_flashed_messages()
     db.session.commit()
-    if state is None:
-        response = redirect(make_redirect_url(redirect_uri, code=code), code=302)
+    if client.confidential:
+        use_fragment = False
     else:
-        response = redirect(make_redirect_url(redirect_uri, code=code, state=state), code=302)
+        use_fragment = True
+    if token:
+        response = redirect(make_redirect_url(redirect_uri, use_fragment=use_fragment, access_token=token.token,
+            token_type=token.token_type, expires_in=token.validity, scope=token._scope, state=state), code=302)
+    else:
+        response = redirect(make_redirect_url(redirect_uri, use_fragment=use_fragment, code=code, state=state), code=302)
     response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     return response
@@ -213,7 +218,7 @@ def oauth_authorize():
     if not response_type:
         return oauth_auth_error(redirect_uri, state, 'invalid_request', _("response_type missing"))
     # Validation 2.2: Is response_type acceptable?
-    if response_type not in [u'code']:
+    if response_type not in [u'code', u'token']:
         return oauth_auth_error(redirect_uri, state, 'unsupported_response_type')
 
     # Validation 3.1: Is scope present?
@@ -231,18 +236,33 @@ def oauth_authorize():
     # The client does not get access to any data here -- they still have to authenticate to /token.
     if request.method == 'GET' and client.trusted:
         # Return auth token. No need for user confirmation
-        return oauth_auth_success(client, redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
+        if response_type == 'code':
+            return oauth_auth_success(client, redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
+        else:
+            return oauth_auth_success(client, redirect_uri, state, code=None,
+                token=oauth_make_token(g.user, client, scope, g.usersession))
 
     # If there is an existing auth token with the same or greater scope, don't ask user again; authorise silently
-    existing_token = AuthToken.query.filter_by(user=g.user, client=client).first()
+    if client.confidential:
+        existing_token = AuthToken.query.filter_by(user=g.user, client=client).first()
+    else:
+        existing_token = AuthToken.query.filter_by(user_session=g.usersession, client=client).first()
     if existing_token and set(scope).issubset(set(existing_token.scope)):
-        return oauth_auth_success(client, redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
+        if response_type == 'code':
+            return oauth_auth_success(client, redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
+        else:
+            return oauth_auth_success(client, redirect_uri, state, code=None,
+                token=oauth_make_token(g.user, client, scope, g.usersession))
 
     # First request. Ask user.
     if form.validate_on_submit():
         if 'accept' in request.form:
             # User said yes. Return an auth code to the client
-            return oauth_auth_success(client, redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
+            if response_type == 'code':
+                return oauth_auth_success(client, redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
+            else:
+                return oauth_auth_success(client, redirect_uri, state, code=None,
+                    token=oauth_make_token(g.user, client, scope, g.usersession))
         elif 'deny' in request.form:
             # User said no. Return "access_denied" error (OAuth2 spec)
             return oauth_auth_error(redirect_uri, state, 'access_denied')
@@ -272,12 +292,20 @@ def oauth_token_error(error, error_description=None, error_uri=None):
     return response
 
 
-def oauth_make_token(user, client, scope):
-    token = AuthToken.query.filter_by(user=user, client=client).first()
+def oauth_make_token(user, client, scope, user_session=None):
+    if client.confidential:
+        token = AuthToken.query.filter_by(user=user, client=client).first()
+    elif user_session:
+        token = AuthToken.query.filter_by(user_session=user_session, client=client).first()
     if token:
         token.add_scope(scope)
     else:
-        token = AuthToken(user=user, client=client, scope=scope, token_type='bearer')
+        if client.confidential:
+            token = AuthToken(user=user, client=client, scope=scope, token_type='bearer')
+        elif user_session:
+            token = AuthToken(user_session=user_session, client=client, scope=scope, token_type='bearer')
+        else:
+            raise ValueError("user_session not provided")
         db.session.add(token)
     # TODO: Look up Resources for items in scope; look up their providing clients apps,
     # and notify each client app of this token
@@ -314,7 +342,7 @@ def oauth_token_success(token, **params):
 @requires_client_login
 def oauth_token():
     """
-    OAuth2 server -- token endpoint
+    OAuth2 server -- token endpoint (confidential clients only)
     """
     # Always required parameters
     grant_type = request.form.get('grant_type')
