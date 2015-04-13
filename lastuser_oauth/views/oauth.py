@@ -7,7 +7,7 @@ from baseframe import _, csrf
 from lastuser_core.utils import make_redirect_url
 from lastuser_core import resource_registry
 from lastuser_core.models import (db, AuthCode, AuthToken, UserFlashMessage,
-    UserClientPermissions, TeamClientPermissions, getuser, Resource, ClientCredential)
+    UserClientPermissions, TeamClientPermissions, getuser, Client, Resource, ClientCredential)
 from .. import lastuser_oauth
 from ..forms import AuthorizeForm
 from .helpers import requires_login_no_message, requires_client_login
@@ -24,6 +24,7 @@ def verifyscope(scope, client):
     """
     internal_resources = []  # Names of internal resources
     external_resources = {}  # resource_object: [action_object, ...]
+    full_client_access = []  # Clients linked to namespace:* scope
 
     for item in scope:
         if item == '*':
@@ -66,28 +67,35 @@ def verifyscope(scope, client):
             else:
                 resource_name = subitem
                 action_name = None
-            # TODO: Add support for wildcard scopes in here (using Resource.name.like(resource_name + '/%'))
-            resource = Resource.get(name=resource_name, namespace=namespace)
-
-            # Validation 2: Resource exists and client has access to it
-            if not resource:
-                raise ScopeException(_(u"Unknown resource ‘{resource}’ under namespace ‘{namespace}’ in scope").format(resource=resource_name, namespace=namespace))
-            if resource.restricted and resource.client.owner != client.owner:
-                raise ScopeException(
-                    _(u"This application does not have access to resource ‘{resource}’ in scope").format(resource=resource_name))
-
-            # Validation 3: Action is valid
-            if action_name:
-                action = resource.get_action(action_name)
-                if not action:
-                    raise ScopeException(_(u"Unknown action ‘{action}’ on resource ‘{resource}’ under namespace ‘{namespace}’").format(
-                        action=action_name, resource=resource_name, namespace=namespace))
-                external_resources.setdefault(resource, []).append(action)
+            if resource_name == '*' and not action_name:
+                resource_client = Client.get(namespace=namespace)
+                if resource_client:
+                    full_client_access.append(resource_client)
+                else:
+                    raise ScopeException(_("Unknown resource namespace ‘{namespace}’ in scope").format(
+                        namespace=namespace))
             else:
-                external_resources.setdefault(resource, [])
+                resource = Resource.get(name=resource_name, namespace=namespace)
+
+                # Validation 2: Resource exists and client has access to it
+                if not resource:
+                    raise ScopeException(_(u"Unknown resource ‘{resource}’ under namespace ‘{namespace}’ in scope").format(resource=resource_name, namespace=namespace))
+                if resource.restricted and resource.client.owner != client.owner:
+                    raise ScopeException(
+                        _(u"This application does not have access to resource ‘{resource}’ in scope").format(resource=resource_name))
+
+                # Validation 3: Action is valid
+                if action_name:
+                    action = resource.get_action(action_name)
+                    if not action:
+                        raise ScopeException(_(u"Unknown action ‘{action}’ on resource ‘{resource}’ under namespace ‘{namespace}’").format(
+                            action=action_name, resource=resource_name, namespace=namespace))
+                    external_resources.setdefault(resource, []).append(action)
+                else:
+                    external_resources.setdefault(resource, [])
 
     internal_resources.sort()
-    return internal_resources, external_resources
+    return internal_resources, external_resources, full_client_access
 
 
 def oauth_auth_403(reason):
@@ -145,6 +153,7 @@ def oauth_auth_success(client, redirect_uri, state, code, token=None):
         response = redirect(make_redirect_url(redirect_uri, use_fragment=use_fragment, code=code, state=state), code=302)
     response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
+    print response.headers['Location']
     return response
 
 
@@ -163,6 +172,7 @@ def oauth_auth_error(redirect_uri, state, error, error_description=None, error_u
     response = redirect(make_redirect_url(redirect_uri, **params), code=302)
     response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
+    print response.headers['Location']
     return response
 
 
@@ -227,7 +237,7 @@ def oauth_authorize():
 
     # Validation 3.2: Is scope valid?
     try:
-        internal_resources, external_resources = verifyscope(scope, client)
+        internal_resources, external_resources, full_client_access = verifyscope(scope, client)
     except ScopeException as scopeex:
         return oauth_auth_error(redirect_uri, state, 'invalid_scope', unicode(scopeex))
 
@@ -275,6 +285,7 @@ def oauth_authorize():
         redirect_uri=redirect_uri,
         internal_resources=internal_resources,
         external_resources=external_resources,
+        full_client_access=full_client_access,
         resource_registry=resource_registry,
         ), 200, {'X-Frame-Options': 'SAMEORIGIN'}
 
