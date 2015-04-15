@@ -125,12 +125,12 @@ def token_verify():
         # No token specified by caller
         return resource_error('no_token')
 
-    authtoken = AuthToken.query.filter_by(token=token).first()
+    authtoken = AuthToken.get(token=token)
     if not authtoken:
         # No such auth token
         return api_result('error', error='no_token')
-    # TODO: Add support for wildcard scopes in here
-    if g.client.namespace + ':' + client_resource not in authtoken.scope:
+    if (g.client.namespace + ':' + client_resource not in authtoken.scope) and (
+            g.client.namespace + ':*' not in authtoken.scope):
         # Token does not grant access to this resource
         return api_result('error', error='access_denied')
     if '/' in client_resource:
@@ -141,14 +141,15 @@ def token_verify():
     else:
         resource_name = client_resource
         action_name = None
-    resource = Resource.get(resource_name, client=g.client)
-    if not resource:
-        # Resource does not exist or does not belong to this client
-        return api_result('error', error='access_denied')
-    if action_name:
-        action = ResourceAction.query.filter_by(name=action_name, resource=resource).first()
-        if not action:
+    if resource_name != '*':
+        resource = Resource.get(resource_name, client=g.client)
+        if not resource:
+            # Resource does not exist or does not belong to this client
             return api_result('error', error='access_denied')
+        if action_name and action_name != '*':
+            action = ResourceAction.query.filter_by(name=action_name, resource=resource).first()
+            if not action:
+                return api_result('error', error='access_denied')
 
     # All validations passed. Token is valid for this client and scope. Return with information on the token
     # TODO: Don't return validity. Set the HTTP cache headers instead.
