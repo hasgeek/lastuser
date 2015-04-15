@@ -14,7 +14,7 @@ PHONE_VALID_RE = re.compile(r'^\+[0-9]+$')
 # --- Utilities ---------------------------------------------------------------
 
 
-def make_redirect_url(url, **params):
+def make_redirect_url(url, use_fragment=False, **params):
     urlparts = list(urlparse.urlsplit(url))
     # URL parts:
     # 0: scheme
@@ -23,10 +23,14 @@ def make_redirect_url(url, **params):
     # 3: query -- appended to
     # 4: fragment
     queryparts = urlparse.parse_qsl(urlparts[3], keep_blank_values=True)
-    queryparts.extend(params.items())
+    queryparts.extend([(k, v) for k, v in params.items() if v is not None])
     queryparts = [(key.encode('utf-8') if isinstance(key, unicode) else key,
                    value.encode('utf-8') if isinstance(value, unicode) else value) for key, value in queryparts]
-    urlparts[3] = make_query_string(queryparts)
+    if use_fragment:
+        urlparts[3] = None
+        urlparts[4] = make_query_string(queryparts)
+    else:
+        urlparts[3] = make_query_string(queryparts)
     return urlparse.urlunsplit(urlparts)
 
 

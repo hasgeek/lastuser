@@ -35,8 +35,12 @@ class Client(BaseMixin, db.Model):
     title = db.Column(db.Unicode(250), nullable=False)
     #: Long description
     description = db.Column(db.UnicodeText, nullable=False, default=u'')
+    #: Confidential or public client? Public has no secret key
+    confidential = db.Column(db.Boolean, nullable=False)
     #: Website
     website = db.Column(db.Unicode(250), nullable=False)
+    #: Namespace: determines inter-app resource access
+    namespace = db.Column(db.Unicode(250), nullable=True, unique=True)
     #: Redirect URI
     redirect_uri = db.Column(db.Unicode(250), nullable=True, default=u'')
     #: Back-end notification URI
@@ -56,8 +60,6 @@ class Client(BaseMixin, db.Model):
     #: When a single provider provides multiple services, each can be declared
     #: as a trusted client to provide single sign-in across the services
     trusted = db.Column(db.Boolean, nullable=False, default=False)
-    #: Namespace: determines inter-app resource access
-    namespace = db.Column(db.Unicode(250), nullable=True, unique=True)
 
     sessions = db.relationship(UserSession, lazy='dynamic', secondary='session_client',
         backref=db.backref('clients', lazy='dynamic'))
@@ -104,8 +106,12 @@ class Client(BaseMixin, db.Model):
             perms.add('new-resource')
         return perms
 
-    def authtoken_for(self, user):
-        return AuthToken.query.filter_by(client=self, user=user).one_or_none()
+    def authtoken_for(self, user, user_session=None):
+        """Return the authtoken for this user and client. Only works for confidential clients."""
+        if self.confidential:
+            return AuthToken.query.filter_by(client=self, user=user).one_or_none()
+        elif user_session and user_session.user == user:
+            return AuthToken.query.filter_by(client=self, user_session=user_session).one_or_none()
 
     @classmethod
     def get(cls, key=None, namespace=None):
@@ -327,26 +333,53 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
     """Access tokens for access to data"""
     __tablename__ = 'authtoken'
     __bind_key__ = 'lastuser'
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Null for client-only tokens
-    user = db.relationship(User, primaryjoin=user_id == User.id,
+    # Null for client-only tokens and public clients (user is identified via user_session.user there)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    _user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('authtokens', lazy='dynamic', cascade='all, delete-orphan'))
+    #: The session in which this token was issued, null for confidential clients
+    user_session_id = db.Column(None, db.ForeignKey('user_session.id'), nullable=True)
+    user_session = db.relationship(UserSession, backref=db.backref('authtokens', lazy='dynamic'))
+    #: The client this authtoken is for
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False, index=True)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('authtokens', lazy='dynamic', cascade='all, delete-orphan'))
+    #: The token
     token = db.Column(db.String(22), default=buid, nullable=False, unique=True)
+    #: The token's type
     token_type = db.Column(db.String(250), default=u'bearer', nullable=False)  # 'bearer', 'mac' or a URL
+    #: Token secret for 'mac' type
     secret = db.Column(db.String(44), nullable=True)
+    #: Secret's algorithm (for 'mac' type)
     _algorithm = db.Column('algorithm', db.String(20), nullable=True)
+    #: Token's validity, 0 = unlimited
     validity = db.Column(db.Integer, nullable=False, default=0)  # Validity period in seconds
+    #: Refresh token, to obtain a new token
     refresh_token = db.Column(db.String(22), nullable=True, unique=True)
 
     # Only one authtoken per user and client. Add to scope as needed
-    __table_args__ = (db.UniqueConstraint('user_id', 'client_id'), {})
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'client_id'),
+        db.UniqueConstraint('user_session_id', 'client_id'),
+        )
+
+    @property
+    def user(self):
+        if self.user_session:
+            return self.user_session.user
+        else:
+            return self._user
+
+    @user.setter
+    def user(self, value):
+        self._user = value
+
+    user = db.synonym('_user', descriptor=user)
 
     def __init__(self, **kwargs):
         super(AuthToken, self).__init__(**kwargs)
         self.token = buid()
-        if self.user:
+        if self._user:
             self.refresh_token = buid()
         self.secret = newsecret()
 

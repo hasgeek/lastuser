@@ -5,7 +5,7 @@ from urlparse import urlparse
 from flask import Markup, url_for
 from baseframe import _, __
 import baseframe.forms as forms
-from coaster.utils import valid_username, domain_namespace_match
+from coaster.utils import valid_username, domain_namespace_match, getbool
 
 from lastuser_core.models import Permission, Resource, Organization, User
 from lastuser_core import resource_registry
@@ -37,6 +37,11 @@ class RegisterClientForm(forms.Form):
         validators=[forms.validators.DataRequired()],
         description=__("User or organization that owns this application. Changing the owner "
         "will revoke all currently assigned permissions for this app"))
+    confidential = forms.RadioField(__("Application type"), coerce=getbool, default=True,
+        choices=[
+            (True, __("Confidential (server-hosted app, capable of storing secret key securely)")),
+            (False, __("Public (native or in-browser app, not capable of storing secret key securely)"))
+            ])
     website = forms.URLField(__("Application website"),
         validators=[forms.validators.DataRequired(), forms.validators.URL()],
         description=__("Website where users may access this application"))
@@ -47,7 +52,7 @@ class RegisterClientForm(forms.Form):
             u"use <code>com.hasgeek.auth</code>. Only required if your client app provides resources")),
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     redirect_uri = forms.URLField(__("Redirect URL"),
-        validators=[forms.validators.Optional(), forms.validators.URL()],
+        validators=[forms.validators.OptionalIf('confidential')],
         description=__("OAuth2 Redirect URL"))
     notification_uri = forms.URLField(__("Notification URL"),
         validators=[forms.validators.Optional(), forms.validators.URL()],
@@ -84,7 +89,7 @@ class RegisterClientForm(forms.Form):
             p1.username == p2.username) and (p1.password == p2.password)
 
     def validate_redirect_uri(self, field):
-        if not self._urls_match(self.website.data, field.data):
+        if self.confidential.data and not self._urls_match(self.website.data, field.data):
             raise forms.ValidationError(_("The scheme, domain and port must match that of the website URL"))
 
     def validate_notification_uri(self, field):

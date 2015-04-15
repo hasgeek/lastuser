@@ -8,6 +8,8 @@
   <dd>{{ client.description }}</dd>
   <dt>Owner</dt>
   <dd>{{ client.owner.pickername }}</dd>
+  <dt>Type</dt>
+  <dd>{% if client.confidential %}Confidential{% else %}Public{% endif %}
   <dt>Website</dt>
   <dd><a rel="nofollow" href="{{ client.website }}">{{ client.website }}</a></dd>
   {%- if client.namespace %}
