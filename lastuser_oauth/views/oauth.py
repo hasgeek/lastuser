@@ -153,7 +153,6 @@ def oauth_auth_success(client, redirect_uri, state, code, token=None):
         response = redirect(make_redirect_url(redirect_uri, use_fragment=use_fragment, code=code, state=state), code=302)
     response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
-    print response.headers['Location']
     return response
 
 
@@ -172,7 +171,6 @@ def oauth_auth_error(redirect_uri, state, error, error_description=None, error_u
     response = redirect(make_redirect_url(redirect_uri, **params), code=302)
     response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
-    print response.headers['Location']
     return response
 
 
