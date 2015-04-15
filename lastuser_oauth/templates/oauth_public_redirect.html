@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block title %}Redirecting you back to {{ client.title }}…{% endblock %}
+{% block pageheaders %}
+  <meta http-equiv="refresh" content="0; {{ redirect_to }}"/>
+{% endblock %}
+
+{% block content %}
+<p>
+  <a id="continue" class="btn btn-primary" href="{{ redirect_to }}">Continue</a>
+</p>
+{% endblock %}
+{% block footerscripts %}
+  <script type="text/javascript">
+    $(function() {
+      // Scripts can't close the page, so redirect to website
+      $("#continue").click(function() {
+        setTimeout(function() {
+          window.location = {{ client.website|tojson }};
+        }, 100);
+      });
+      // Redirect anyway after 5 seconds (assuming meta refresh worked)
+      setTimeout(function() {
+        window.location = {{ client.website|tojson }};
+      }, 5000)
+    });
+  </script>
+{% endblock %}

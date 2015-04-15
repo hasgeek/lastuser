@@ -147,13 +147,17 @@ def oauth_auth_success(client, redirect_uri, state, code, token=None):
     else:
         use_fragment = True
     if token:
-        response = redirect(make_redirect_url(redirect_uri, use_fragment=use_fragment, access_token=token.token,
-            token_type=token.token_type, expires_in=token.validity, scope=token._scope, state=state), code=302)
+        redirect_to = make_redirect_url(redirect_uri, use_fragment=use_fragment, access_token=token.token,
+            token_type=token.token_type, expires_in=token.validity, scope=token._scope, state=state)
     else:
-        response = redirect(make_redirect_url(redirect_uri, use_fragment=use_fragment, code=code, state=state), code=302)
-    response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
-    response.headers['Pragma'] = 'no-cache'
-    return response
+        redirect_to = make_redirect_url(redirect_uri, use_fragment=use_fragment, code=code, state=state)
+    if use_fragment:
+        return render_template('oauth_public_redirect.html', client=client, redirect_to=redirect_to)
+    else:
+        response = redirect(redirect_to, code=302)
+        response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        return response
 
 
 def oauth_auth_error(redirect_uri, state, error, error_description=None, error_uri=None):
