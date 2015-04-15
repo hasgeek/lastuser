@@ -158,8 +158,8 @@ def token_verify():
         params['userinfo'] = get_userinfo(authtoken.user, g.client, scope=authtoken.scope)
     params['clientinfo'] = {
         'title': authtoken.client.title,
-        'userid': authtoken.client.user.userid,
-        'buid': authtoken.client.user.userid,
+        'userid': authtoken.client.owner.userid,
+        'buid': authtoken.client.owner.userid,
         'owner_title': authtoken.client.owner.pickername,
         'website': authtoken.client.website,
         'key': authtoken.client.key,
