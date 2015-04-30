@@ -1,0 +1,16 @@
+<div itemscope itemtype="http://schema.org/EmailMessage">
+	<div itemprop="action" itemscope itemtype="http://schema.org/ConfirmAction">
+		<meta itemprop="name" content="Confirm Email Address"/>
+		<div itemprop="handler" itemscope itemtype="http://schema.org/HttpActionHandler">
+			<link itemprop="url" href="{{ url_for('lastuser_oauth.confirm_email', _external=True, md5sum=useremail.md5sum, secret=useremail.verification_code) }}"/>
+		</div>
+	</div>
+	<meta itemprop="description" content="Confirm your email address"/>
+	<div itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+		<meta itemprop="name" content="Hasjob"/>
+		<link itemprop="url" href="https://hasjob.co/"/>
+	</div>
+</div>
+<p>Hello {{ useremail.owner.title }},</p>
+<p><a href="{{ url_for('lastuser_oauth.confirm_email', _external=True, md5sum=useremail.md5sum, secret=useremail.verification_code) }}">Click here to confirm your email address</a></p>
+<p>If you did not sign up, you may safely ignore this email.</p>
