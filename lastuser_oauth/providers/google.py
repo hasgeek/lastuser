@@ -46,6 +46,8 @@ class GoogleProvider(LoginProvider):
             response = requests.get(self.info_url, headers={'Authorization': credentials.token_response['token_type'] + ' ' + credentials.access_token}).json()
         except Exception as e:
             raise LoginCallbackError(_(u"Unable to authenticate via Google. Internal details: {error}").format(error=e))
+        if response.get('error'):
+            raise LoginCallbackError(_(u"Unable to login via Google: {error}").format(response['error'].get('message', u'')))
         return {'email': credentials.id_token['email'],
                 'userid': credentials.id_token['email'],
                 'username': credentials.id_token['email'],
