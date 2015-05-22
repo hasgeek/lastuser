@@ -47,7 +47,8 @@ class GoogleProvider(LoginProvider):
         except Exception as e:
             raise LoginCallbackError(_(u"Unable to authenticate via Google. Internal details: {error}").format(error=e))
         if response.get('error'):
-            raise LoginCallbackError(_(u"Unable to login via Google: {error}").format(response['error'].get('message', u'')))
+            raise LoginCallbackError(_(u"Unable to login via Google: {error}").format(
+                error=response['error'].get('message', u'')))
         return {'email': credentials.id_token['email'],
                 'userid': credentials.id_token['email'],
                 'username': credentials.id_token['email'],
