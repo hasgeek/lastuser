@@ -7,17 +7,7 @@
       <h1><a href="{{ url_for('index') }}">HasGeek Auth</a></h1>
     </div>
   {% endmacro %}
-  {% set links = [] %}
-  {% if g.user %}
-    {% with orgs = g.user.organization_links() %}
-      {% if orgs %}
-        {% for org in orgs %}
-          {% do links.append({'title': org.title, 'url': org.link }) %}
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-  {% endif %}
-  {{ hgnav(site_title=site_title(), links=links, loginbtntext="Login or sign up") }}
+  {{ hgnav(site_title=site_title(), loginbtntext="Login or sign up") }}
 {% endblock %}
 
 {% block baseheadline -%}
