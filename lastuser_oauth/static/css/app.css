@@ -1,9 +1,10 @@
 body {
-  padding-top: 50px;
+  padding-top: 70px;
 }
 
 header {
   min-height: 0;
+  margin-bottom: 0;
 }
 
 #hgnav {
