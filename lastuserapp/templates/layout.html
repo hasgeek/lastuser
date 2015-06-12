@@ -1,7 +1,18 @@
 {% extends "baseframe.html" -%}
-{% from "baseframe/components.html" import responsive_networkbar with context %}
+{% from "baseframe/components.html" import hgnav %}
 
-{% block networkbar %}{{ responsive_networkbar(siteid='auth', login=true) }}{% endblock %}
+{% block headerbox -%}
+<header>
+  {% block networkbar %}
+    {% macro site_title() %}
+      <div class="page-header">
+        <h1><a href="{{ url_for('index') }}">HasGeek Auth</a></h1>
+      </div>
+    {% endmacro %}
+    {{ hgnav(site_title=site_title(), loginbtntext="Login or sign up") }}
+  {% endblock %}
+</header>
+{%- endblock %}
 
 {% block baseheadline -%}
 {%- endblock %}

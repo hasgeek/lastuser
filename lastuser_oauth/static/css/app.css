@@ -1,3 +1,18 @@
+body {
+  padding-top: 70px;
+}
+
+header {
+  min-height: 0;
+  margin-bottom: 0;
+}
+
+#hgnav {
+  background: #F3F3F3;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.4);
+}
+
 a.loginbutton {
   display: block;
   float: left;
@@ -45,7 +60,7 @@ a.loginbutton:hover {
 }
 
 input[name="field-openid"] {
-  background: url('../img/openid.png?1366451008') 4px no-repeat;
+  background: url('../img/openid.png?1425290087') 4px no-repeat;
   width: 230px;
   padding-left: 25px;
 }
@@ -55,32 +70,16 @@ input[name="field-openid"] {
   overflow: hidden;
   text-align: left;
   text-transform: capitalize;
-  background-image: url('../img/logo.png?1372854153');
+  background-image: url('../img/logo.png?1425290087');
   background-repeat: no-repeat;
   background-position: 50% 50%;
   width: 113px;
   height: 75px;
 }
 
-#hg-networkbar.navbar .navbar-brand {
-  padding: 0;
-  display: block;
-  overflow: hidden;
-  background-image: url('../img/logo@2x.png?1372854195');
-  background-repeat: no-repeat;
-  -moz-background-size: 113px 75px;
-  -o-background-size: 113px 75px;
-  -webkit-background-size: 113px 75px;
-  background-size: 113px 75px;
-  background-position: left center;
-  background-size: auto 100%;
-  background-repeat: none;
-  text-indent: -1000px;
-}
-
 @media only screen and (-webkit-min-device-pixel-ratio: 2) {
   #logo {
-    background-image: url('../img/logo@2x.png?1372854195');
+    background-image: url('../img/logo@2x.png?1425290087');
     -moz-background-size: 113px 75px;
     -o-background-size: 113px 75px;
     -webkit-background-size: 113px 75px;
