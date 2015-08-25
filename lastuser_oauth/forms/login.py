@@ -24,6 +24,9 @@ class LoginForm(forms.Form):
             raise forms.ValidationError(_("User does not exist"))
 
     def validate_password(self, field):
+        if not self.username.data:
+            # Can't validate password without a user
+            return
         user = getuser(self.username.data)
         if user and not user.pw_hash:
             raise LoginPasswordResetException()
