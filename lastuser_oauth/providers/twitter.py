@@ -19,6 +19,11 @@ def twitter_exception_handler(f):
             return f(*args, **kwargs)
         except (OAuthException, BadStatusLine, AttributeError, socket_error, gaierror) as e:
             raise LoginCallbackError(e)
+        except KeyError:
+            # XXX: Twitter sometimes returns a 404 with no Content-Type header. This causes a
+            # KeyError in the Flask-OAuth library. Catching the KeyError here is a kludge.
+            # We need to get Flask-OAuth fixed or stop using it.
+            raise LoginCallbackError(_("Twitter had an intermittent error. Please try again"))
     return decorated_function
 
 
