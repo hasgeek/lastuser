@@ -73,7 +73,7 @@
 <h2>My sessions</h2>
 <ul>
   {%- for session in g.user.active_sessions() %}
-    <li>From {{ session.ipaddr }} since {{ session.created_at|age }} with {{ session.ua.browser}}/{{ session.ua.platform }}/{{ session.ua.version }}, last active {{ session.accessed_at|age }} {% if session == g.usersession -%} (current) {%- else -%} (<a href="{{ url_for('lastuser_oauth.logout_session', session=session.buid) }}">logout</a>) {%- endif %}</li>
+    <li>From {{ session.ipaddr }} since {{ session.created_at|age }} with {{ session.ua.user_agent.family}}/{{ session.ua.user_agent.major}}.{{ session.ua.user_agent.minor}}.{{ session.ua.user_agent.patch}} on {{ session.ua.os.family }}/{{ session.ua.os.major }}.{{ session.ua.os.minor }}.{{ session.ua.os.patch }}, last active {{ session.accessed_at|age }} {% if session == g.usersession -%} (current) {%- else -%} (<a href="{{ url_for('lastuser_oauth.logout_session', session=session.buid) }}">logout</a>) {%- endif %}<!-- {{ session.ua|tojson }} --></li>
   {%- endfor %}
 </ul>
 {% endblock %}

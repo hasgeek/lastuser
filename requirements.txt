@@ -18,6 +18,7 @@ Flask-Script==0.5.3
 tweepy
 unicodecsv
 oauth2client
+ua-parser
 git+https://github.com/hasgeek/coaster
 git+https://github.com/hasgeek/baseframe
 git+https://github.com/jace/flask-alembic

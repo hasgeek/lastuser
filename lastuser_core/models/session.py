@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 from werkzeug import cached_property
-from werkzeug.useragents import UserAgent
+from ua_parser import user_agent_parser
 from flask import request
 from coaster.utils import buid as make_buid
 from coaster.sqlalchemy import make_timestamp_columns
@@ -70,7 +70,7 @@ class UserSession(BaseMixin, db.Model):
 
     @cached_property
     def ua(self):
-        return UserAgent(self.user_agent)
+        return user_agent_parser.Parse(self.user_agent)
 
     @property
     def has_sudo(self):
