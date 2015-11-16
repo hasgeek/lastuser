@@ -50,15 +50,15 @@ class GitHubProvider(LoginProvider):
                     'code': code
                     }
                 ).json()
+            if 'error' in response:
+                raise LoginCallbackError(response['error'])
+            ghinfo = requests.get(self.user_info,
+                params={'access_token': response['access_token']}).json()
+            ghemails = requests.get(self.user_emails,
+                params={'access_token': response['access_token']},
+                headers={'Accept': 'application/vnd.github.v3+json'}).json()
         except requests.ConnectionError as e:
-            raise LoginCallbackError(_(u"Unable to authenticate via GitHub. Internal details: {error}").format(error=e))
-        if 'error' in response:
-            raise LoginCallbackError(response['error'])
-        ghinfo = requests.get(self.user_info,
-            params={'access_token': response['access_token']}).json()
-        ghemails = requests.get(self.user_emails,
-            params={'access_token': response['access_token']},
-            headers={'Accept': 'application/vnd.github.v3+json'}).json()
+            raise LoginCallbackError(_(u"GitHub appears to be having temporary issues. Please try again. Internal details: {error}").format(error=e))
 
         email = None
         emails = []
