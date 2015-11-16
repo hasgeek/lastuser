@@ -64,7 +64,7 @@ def login():
     elif request.method == 'POST':
         abort(500)
     if request.is_xhr and formid == 'passwordlogin':
-        return render_template('forms/loginform.html', loginform=loginform, Markup=Markup)
+        return render_template('loginform.html', loginform=loginform, Markup=Markup)
     else:
         return render_template('login.html', loginform=loginform, lastused=loginmethod,
             service_forms=service_forms, Markup=Markup, login_registry=login_registry)

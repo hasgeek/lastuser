@@ -1,0 +1,4 @@
+{% from "baseframe/forms.html" import ajaxform %}
+{% from "forms/login.html" import passwordlogin %}
+{{ passwordlogin(loginform, Markup) }}
+{{ ajaxform('passwordlogin', request) }}

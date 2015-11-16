@@ -1,5 +1,6 @@
 {% extends "layout.html" %}
 {% from "baseframe/forms.html" import renderfield, renderform_inner, rendersubmit, ajaxform %}
+{% from "forms/login.html" import passwordlogin %}
 {% block title %}Login{% endblock %}
 {% block headline %}{% endblock %}
 {% block content %}
@@ -41,7 +42,7 @@
           Or, login with a password
         {%- endif -%}
       </h2>
-      {% include "forms/loginform.html" %}
+      {{ passwordlogin(loginform, Markup) }}
     </div>
   </div>
 {% endblock %}
