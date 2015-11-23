@@ -60,6 +60,9 @@ class TwitterProvider(LoginProvider):
             return self.twitter.authorize(callback=callback_url)
         except (OAuthException, BadStatusLine, SSLError, socket_error, gaierror), e:
             raise LoginInitError(e)
+        except KeyError:
+            # As above, the lack of a Content-Type header in a 404 response breaks Flask-OAuth. Catch it.
+            raise LoginInitError(_("Twitter had an intermittent error. Please try again"))
 
     def unwrapped_callback(self, resp):
         if resp is None:
