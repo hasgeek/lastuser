@@ -173,7 +173,7 @@ class User(BaseMixin, db.Model):
                 if emailob.primary:
                     emailob.primary = False
         useremail = UserEmail(user=self, email=email, primary=primary, type=type, private=private)
-        db.session.add(useremail)
+        db.session().add_and_commit(useremail, user=self, email=email)
         with db.session.no_autoflush:
             for team in Team.query.filter_by(domain=useremail.domain):
                 if self not in team.users:

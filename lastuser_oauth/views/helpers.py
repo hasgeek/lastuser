@@ -256,7 +256,12 @@ def register_internal(username, fullname, password):
     user = User(username=username, fullname=fullname, password=password)
     if not username:
         user.username = None
-    db.session.add(user)
+    if user.username:
+        # We can only use add_and_commit when a unique identifier like username is present
+        user = db.session().add_and_commit(user, username=user.username)
+    else:
+        db.session.add(user)
+        db.session.commit()
     user_registered.send(user)
     return user
 

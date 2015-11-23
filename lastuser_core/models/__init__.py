@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from flask.ext.sqlalchemy import SQLAlchemy
 from coaster.sqlalchemy import TimestampMixin, BaseMixin, BaseScopedNameMixin  # Imported from here by other models  # NOQA
-
-db = SQLAlchemy()
+from coaster.db import db
 
 
 from .user import *          # NOQA

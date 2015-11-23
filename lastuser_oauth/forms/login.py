@@ -6,7 +6,7 @@ from coaster.utils import valid_username
 from baseframe import _, __
 import baseframe.forms as forms
 
-from lastuser_core.models import User, UserEmail, getuser
+from lastuser_core.models import User, UserEmail, getuser, Organization
 
 
 class LoginPasswordResetException(Exception):
@@ -54,7 +54,7 @@ class RegisterForm(forms.Form):
             raise forms.ValidationError, _("This name is reserved")
         if not valid_username(field.data):
             raise forms.ValidationError(_(u"Invalid characters in name. Names must be made of ‘a-z’, ‘0-9’ and ‘-’, without trailing dashes"))
-        existing = User.get(username=field.data)
+        existing = User.get(username=field.data) or Organization.get(name=field.data)
         if existing is not None:
             raise forms.ValidationError(_("This username is taken"))
 

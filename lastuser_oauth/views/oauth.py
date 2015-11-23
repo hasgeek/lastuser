@@ -315,11 +315,12 @@ def oauth_make_token(user, client, scope, user_session=None):
     else:
         if client.confidential:
             token = AuthToken(user=user, client=client, scope=scope, token_type='bearer')
+            token = db.session().add_and_commit(token, user=user, client=client)
         elif user_session:
             token = AuthToken(user_session=user_session, client=client, scope=scope, token_type='bearer')
+            token = db.session().add_and_commit(token, user_session=user_session, client=client)
         else:
             raise ValueError("user_session not provided")
-        db.session.add(token)
     # TODO: Look up Resources for items in scope; look up their providing clients apps,
     # and notify each client app of this token
     return token
