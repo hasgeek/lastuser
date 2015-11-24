@@ -63,11 +63,12 @@ def login():
             return set_loginmethod_cookie(login_registry[formid].do(form=form), formid)
     elif request.method == 'POST':
         abort(500)
+    iframe_block = {'X-Frame-Options': 'SAMEORIGIN'}
     if request.is_xhr and formid == 'passwordlogin':
-        return render_template('loginform.html', loginform=loginform, Markup=Markup)
+        return render_template('loginform.html', loginform=loginform, Markup=Markup), 200, iframe_block
     else:
         return render_template('login.html', loginform=loginform, lastused=loginmethod,
-            service_forms=service_forms, Markup=Markup, login_registry=login_registry)
+            service_forms=service_forms, Markup=Markup, login_registry=login_registry), 200, iframe_block
 
 
 logout_errormsg = __("We detected a possibly unauthorized attempt to log you out. "
