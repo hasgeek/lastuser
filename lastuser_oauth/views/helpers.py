@@ -261,7 +261,6 @@ def register_internal(username, fullname, password):
         user = db.session().add_and_commit(user, username=user.username)
     else:
         db.session.add(user)
-        db.session.commit()
     user_registered.send(user)
     return user
 
