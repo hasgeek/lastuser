@@ -249,4 +249,4 @@ def reset_email(user, kwargs):
     return render_form(form=form, title=_("Reset password"), formid='reset', submit=_("Reset password"),
         message=Markup(_(u"Hello, <strong>{fullname}</strong>. You may now choose a new password.").format(
             fullname=escape(user.fullname))),
-        ajax=True)
+        ajax=False)
