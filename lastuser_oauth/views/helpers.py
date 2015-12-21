@@ -6,6 +6,7 @@ from functools import wraps
 from urllib import unquote
 from pytz import common_timezones
 from flask import g, current_app, request, session, flash, redirect, url_for, Response
+from coaster.sqlalchemy import failsafe_add
 from coaster.views import get_current_url
 from baseframe import _
 from lastuser_core.models import db, User, ClientCredential, UserSession
@@ -257,8 +258,8 @@ def register_internal(username, fullname, password):
     if not username:
         user.username = None
     if user.username:
-        # We can only use add_and_commit when a unique identifier like username is present
-        user = db.session().add_and_commit(user, username=user.username)
+        # We can only use failsafe_add when a unique identifier like username is present
+        user = failsafe_add(db.session, user, username=user.username)
     else:
         db.session.add(user)
     user_registered.send(user)

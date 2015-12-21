@@ -9,7 +9,7 @@ from sqlalchemy.orm import defer, deferred, foreign, remote
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
 from coaster.utils import buid, newsecret, newpin, valid_username
-from coaster.sqlalchemy import Query as CoasterQuery, make_timestamp_columns
+from coaster.sqlalchemy import Query as CoasterQuery, make_timestamp_columns, failsafe_add
 from baseframe import _
 
 from . import db, TimestampMixin, BaseMixin
@@ -173,7 +173,7 @@ class User(BaseMixin, db.Model):
                 if emailob.primary:
                     emailob.primary = False
         useremail = UserEmail(user=self, email=email, primary=primary, type=type, private=private)
-        db.session().add_and_commit(useremail, user=self, email=email)
+        useremail = failsafe_add(db.session, useremail, user=self, email=email)
         with db.session.no_autoflush:
             for team in Team.query.filter_by(domain=useremail.domain):
                 if self not in team.users:

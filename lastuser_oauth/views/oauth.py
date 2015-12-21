@@ -2,6 +2,7 @@
 
 from flask import g, render_template, redirect, request, jsonify, get_flashed_messages
 from coaster.utils import newsecret
+from coaster.sqlalchemy import failsafe_add
 from baseframe import _, csrf
 
 from lastuser_core.utils import make_redirect_url
@@ -315,10 +316,10 @@ def oauth_make_token(user, client, scope, user_session=None):
     else:
         if client.confidential:
             token = AuthToken(user=user, client=client, scope=scope, token_type='bearer')
-            token = db.session().add_and_commit(token, user=user, client=client)
+            token = failsafe_add(db.session, token, user=user, client=client)
         elif user_session:
             token = AuthToken(user_session=user_session, client=client, scope=scope, token_type='bearer')
-            token = db.session().add_and_commit(token, user_session=user_session, client=client)
+            token = failsafe_add(db.session, token, user_session=user_session, client=client)
         else:
             raise ValueError("user_session not provided")
     # TODO: Look up Resources for items in scope; look up their providing clients apps,
