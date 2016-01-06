@@ -145,7 +145,7 @@ class User(BaseMixin, db.Model):
         if self.pw_hash.startswith('sha1$'):  # XXX: DEPRECATED
             return check_password_hash(self.pw_hash, password)
         else:
-            return bcrypt.checkpw(password, self.pw_hash)
+            return bcrypt.hashpw(password.encode('utf-8'), self.pw_hash.encode('utf-8')) == self.pw_hash.encode('utf-8')
 
     def __repr__(self):
         return u'<User {username} "{fullname}">'.format(username=self.username or self.userid,
