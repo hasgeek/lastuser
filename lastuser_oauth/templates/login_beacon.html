@@ -10,7 +10,7 @@
         // Send user back to the page they came from. document.referrer is our saviour!
         // Tip from http://www.nczonline.net/blog/2013/04/16/getting-the-url-of-an-iframes-parent/
       {%- if client.trusted %}
-        window.top.location.href = {{ login_url|tojson }} + '?next=' + encodeURIComponent(document.referrer);
+        window.top.location.href = {{ login_url|tojson }} + '?next=' + encodeURIComponent(document.referrer) + '&metarefresh=1';
       {%- else %}
         // getJSON code from https://mathiasbynens.be/notes/xhr-responsetype-json
         var getJSON = function(url, successHandler, errorHandler) {
