@@ -71,9 +71,14 @@ def verifyscope(scope, client):
             if resource_name == '*' and not action_name:
                 resource_client = Client.get(namespace=namespace)
                 if resource_client:
-                    full_client_access.append(resource_client)
+                    if resource_client.owner == client.owner:
+                        full_client_access.append(resource_client)
+                    else:
+                        raise ScopeException(
+                            _(u"This application does not have access to all resources of app ‘{client}’").format(
+                                client=resource_client.title))
                 else:
-                    raise ScopeException(_("Unknown resource namespace ‘{namespace}’ in scope").format(
+                    raise ScopeException(_(u"Unknown resource namespace ‘{namespace}’ in scope").format(
                         namespace=namespace))
             else:
                 resource = Resource.get(name=resource_name, namespace=namespace)
