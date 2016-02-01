@@ -326,14 +326,21 @@ class User(BaseMixin, db.Model):
         :param bool defercols: Defer loading non-critical columns
         """
         users = set()
-        if userids:
+        if userids and usernames:
+            query = cls.query.filter(or_(cls.userid.in_(userids), cls.username.in_(usernames)))
+        elif userids:
             query = cls.query.filter(cls.userid.in_(userids))
-            if defercols:
-                query = query.options(*cls._defercols)
-            for user in query.all():
-                user = user.merged_user()
-                if user.is_active:
-                    users.add(user)
+        elif usernames:
+            query = cls.query.filter(cls.username.in_(usernames))
+        else:
+            raise Exception
+
+        if defercols:
+            query = query.options(*cls._defercols)
+        for user in query.all():
+            user = user.merged_user()
+            if user.is_active:
+                users.add(user)
         return list(users)
 
     @classmethod
