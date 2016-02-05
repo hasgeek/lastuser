@@ -90,7 +90,7 @@ def resource_error(error, description=None, uri=None):
     if uri:
         params['error_uri'] = uri
 
-    response = jsonp(params)
+    response = jsonify(params)
     response.headers['Cache-Control'] = 'private, no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     response.status_code = 400
@@ -103,7 +103,7 @@ def api_result(status, **params):
         status_code = status
         status = 'ok'
     params['status'] = status
-    response = jsonp(params)
+    response = jsonify(params)
     response.status_code = status_code
     response.headers['Cache-Control'] = 'private, no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
