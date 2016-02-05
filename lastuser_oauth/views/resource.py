@@ -581,7 +581,9 @@ def resource_user_new(authtoken, args, files=None):
     username = args.get('username')
     template = args.get('template')
     if email is not None:
-        register_internal(username=username, email=email, authtoken=authtoken, emailclaim=True, template=template)
+        user = register_internal(username=username, email=email, authtoken=authtoken, emailclaim=True, template=template)
+        db.session.commit()
+        return get_userinfo(user, authtoken.client, scope=['id'], get_permissions=False)
     else:
         return jsonify({'error': 'Email not provided'})
 
