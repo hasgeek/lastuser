@@ -169,6 +169,47 @@ def token_verify():
 
 
 @csrf.exempt
+@lastuser_oauth.route('/api/1/token/get_scope', methods=['POST'])
+@requires_client_login
+def token_get_scope():
+    token = request.form.get('access_token')
+    if not token:
+        # No token specified by caller
+        return resource_error('no_token')
+
+    authtoken = AuthToken.get(token=token)
+    if not authtoken:
+        # No such auth token
+        return api_result('error', error='no_token')
+
+    client_resources = []
+    nsprefix = g.client.namespace + ':'
+    for item in authtoken.scope:
+        if item.startswith(nsprefix):
+            client_resources.append(item[len(nsprefix):])
+
+    if not client_resources:
+        return api_result('error', error='no_access')
+
+    # All validations passed. Token is valid for this client. Return with information on the token
+    # TODO: Don't return validity. Set the HTTP cache headers instead.
+    params = {'validity': 120}  # Period (in seconds) for which this assertion may be cached.
+    if authtoken.user:
+        params['userinfo'] = get_userinfo(authtoken.user, g.client, scope=authtoken.scope)
+    params['clientinfo'] = {
+        'title': authtoken.client.title,
+        'userid': authtoken.client.owner.userid,
+        'buid': authtoken.client.owner.userid,
+        'owner_title': authtoken.client.owner.pickername,
+        'website': authtoken.client.website,
+        'key': authtoken.client.key,
+        'trusted': authtoken.client.trusted,
+        'scope': client_resources,
+        }
+    return api_result('ok', **params)
+
+
+@csrf.exempt
 @lastuser_oauth.route('/api/1/resource/sync', methods=['POST'])
 @requires_client_login
 def sync_resources():
