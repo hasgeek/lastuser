@@ -11,7 +11,7 @@ from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Re
     ResourceAction, UserClientPermissions, TeamClientPermissions, UserSession, ClientCredential)
 from lastuser_core import resource_registry
 from .. import lastuser_oauth
-from .helpers import requires_client_login, requires_user_or_client_login, requires_client_id_or_user_or_client_login
+from .helpers import requires_client_login, requires_user_or_client_login, requires_client_id_or_user_or_client_login, register_internal
 
 
 def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
@@ -572,9 +572,18 @@ def resource_login_providers(authtoken, args, files=None):
 @csrf.exempt
 @lastuser_oauth.route('/api/1/user/new', methods=['POST'])
 @resource_registry.resource('user/new', __(u"Create a new user account"), trusted=True)
+@requires_client_login
 def resource_user_new(authtoken, args, files=None):
-    # Set User.client to authtoken.client and User.referrer to authtoken.user
-    pass
+    """
+    Creates a new user. Optionally adds email and name, if provided.
+    """
+    email = args.get('email')
+    username = args.get('username')
+    template = args.get('template')
+    if email is not None:
+        register_internal(username=username, email=email, authtoken=authtoken, emailclaim=True, template=template)
+    else:
+        return jsonify({'error': 'Email not provided'})
 
 
 @lastuser_oauth.route('/api/1/organizations')
