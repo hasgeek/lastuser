@@ -11,7 +11,7 @@ from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Re
     ResourceAction, UserClientPermissions, TeamClientPermissions, UserSession, ClientCredential)
 from lastuser_core import resource_registry
 from .. import lastuser_oauth
-from .helpers import requires_client_login, requires_user_or_client_login, requires_client_id_or_user_or_client_login
+from .helpers import requires_client_login, requires_user_or_client_login, requires_client_id_or_user_or_client_login, register_internal
 
 
 def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
@@ -286,6 +286,25 @@ def sync_resources():
     db.session.commit()
 
     return api_result('ok', results=results)
+
+
+@csrf.exempt
+@lastuser_oauth.route('/api/1/user/new', methods=['POST'])
+@requires_client_login
+def create_user():
+    """
+    Creates a new user given an email
+    """
+    email = request.form.get('email')
+    template = request.form.get('template') or None
+    if g.client.trusted:
+        if email is not None:
+            user = register_internal(username=None, fullname=None, password=None, email=email, client=g.client, emailclaim=True, template=template)
+            db.session.commit()
+            return api_result('ok', results=get_userinfo(user, g.client, scope=['id'], get_permissions=False))
+        return api_result('error', error='Email not provided')
+    else:
+        return api_result('error', error='access_denied')
 
 
 @csrf.exempt
@@ -608,14 +627,6 @@ def resource_login_providers(authtoken, args, files=None):
                 'oauth_token_type': unicode(extid.oauth_token_type)
             }
     return response
-
-
-@csrf.exempt
-@lastuser_oauth.route('/api/1/user/new', methods=['POST'])
-@resource_registry.resource('user/new', __(u"Create a new user account"), trusted=True)
-def resource_user_new(authtoken, args, files=None):
-    # Set User.client to authtoken.client and User.referrer to authtoken.user
-    pass
 
 
 @lastuser_oauth.route('/api/1/organizations')
