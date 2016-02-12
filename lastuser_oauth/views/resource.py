@@ -248,6 +248,25 @@ def sync_resources():
 
 
 @csrf.exempt
+@lastuser_oauth.route('/api/1/user/new', methods=['POST'])
+@requires_client_login
+def create_user():
+    """
+    Creates a new user given an email
+    """
+    email = request.form.get('email')
+    template = request.form.get('template') or None
+    if g.client.trusted:
+        if email is not None:
+            user = register_internal(username=None, fullname=None, password=None, email=email, client=g.client, emailclaim=True, template=template)
+            db.session.commit()
+            return api_result('ok', results=get_userinfo(user, g.client, scope=['id'], get_permissions=False))
+        return api_result('error', error='Email not provided')
+    else:
+        return api_result('error', error='access_denied')
+
+
+@csrf.exempt
 @lastuser_oauth.route('/api/1/user/get_by_userid', methods=['GET', 'POST'])
 @requires_user_or_client_login
 def user_get_by_userid():
@@ -567,25 +586,6 @@ def resource_login_providers(authtoken, args, files=None):
                 'oauth_token_type': unicode(extid.oauth_token_type)
             }
     return response
-
-
-@csrf.exempt
-@lastuser_oauth.route('/api/1/user/new', methods=['POST'])
-@resource_registry.resource('user/new', __(u"Create a new user account"), trusted=True)
-@requires_client_login
-def resource_user_new(authtoken, args, files=None):
-    """
-    Creates a new user. Optionally adds email and name, if provided.
-    """
-    email = args.get('email')
-    username = args.get('username')
-    template = args.get('template')
-    if email is not None:
-        user = register_internal(username=username, email=email, authtoken=authtoken, emailclaim=True, template=template)
-        db.session.commit()
-        return get_userinfo(user, authtoken.client, scope=['id'], get_permissions=False)
-    else:
-        return jsonify({'error': 'Email not provided'})
 
 
 @lastuser_oauth.route('/api/1/organizations')
