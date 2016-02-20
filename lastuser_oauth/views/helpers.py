@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from urllib import unquote
 from pytz import common_timezones
+import itsdangerous
 from flask import g, current_app, request, session, flash, redirect, url_for, Response
 from coaster.sqlalchemy import failsafe_add
 from coaster.views import get_current_url
@@ -26,41 +27,69 @@ def lookup_current_user():
     g.user = None
     g.usersession = None
 
+    lastuser_cookie = {}
+    lastuser_cookie_headers = {}  # Ignored for now, intended for future changes
+
+    # Migrate data from Flask cookie session
     if 'sessionid' in session:
-        usersession = UserSession.authenticate(buid=session['sessionid'])
-        g.usersession = usersession
-        if usersession:
-            usersession.access()
+        lastuser_cookie['sessionid'] = session.pop('sessionid')
+    if 'userid' in session:
+        lastuser_cookie['userid'] = session.pop('userid')
+
+    if 'lastuser' in request.cookies:
+        try:
+            lastuser_cookie, lastuser_cookie_headers = lastuser_oauth.serializer.loads(
+                request.cookies['lastuser'], return_header=True)
+        except itsdangerous.BadSignature:
+            lastuser_cookie = {}
+
+    if 'sessionid' in lastuser_cookie:
+        g.usersession = UserSession.authenticate(buid=lastuser_cookie['sessionid'])
+        if g.usersession:
+            g.usersession.access()
             db.session.commit()  # Save access
-            g.user = usersession.user
-        else:
-            session.pop('sessionid', None)
+            g.user = g.usersession.user
 
     # Transition users with 'userid' to 'sessionid'
-    if 'userid' in session:
-        if not g.usersession:
-            user = User.get(userid=session['userid'])
-            if user:
-                usersession = UserSession(user=user)
-                usersession.access()
-                db.session.commit()  # Save access
-                g.usersession = usersession
-                g.user = user
-                session['sessionid'] = usersession.buid
-        session.pop('userid', None)
+    if not g.usersession and 'userid' in lastuser_cookie:
+        g.user = User.get(userid=lastuser_cookie['userid'])
+        if g.user:
+            g.usersession = UserSession(user=g.user)
+            g.usersession.access()
+            db.session.commit()  # Save access
 
+    if g.usersession:
+        lastuser_cookie['sessionid'] = g.usersession.buid
+    else:
+        lastuser_cookie.pop('sessionid', None)
+    if g.user:
+        lastuser_cookie['userid'] = g.user.userid
+    else:
+        lastuser_cookie.pop('userid', None)
+
+    g.lastuser_cookie = lastuser_cookie
     # This will be set to True downstream by the requires_login decorator
     g.login_required = False
 
 
 @lastuser_oauth.after_app_request
-def hasuser_cookie(response):
+def lastuser_cookie(response):
     """
-    Add a userid cookie, for use from JS to check if a user is logged in.
+    Save lastuser login cookie and hasuser JS-readable flag cookie.
     """
-    response.set_cookie('hasuser', value='1' if g.user else '0', max_age=31557600,  # Keep this cookie for a year.
-        expires=datetime.utcnow() + timedelta(days=365),                            # Expire one year from now.
-        httponly=False)                                                             # Allow reading this from JS.
+    expires = datetime.utcnow() + timedelta(days=365)
+    response.set_cookie('lastuser',
+        value=lastuser_oauth.serializer.dumps(g.lastuser_cookie, header_fields={'v': 1}),
+        max_age=31557600,                                         # Keep this cookie for a year.
+        expires=expires,                                          # Expire one year from now.
+        domain=current_app.config.get('LASTUSER_COOKIE_DOMAIN'),  # Place cookie in master domain.
+        httponly=True)                                            # Don't allow reading this from JS.
+
+    response.set_cookie('hasuser',
+        value='1' if g.user else '0',
+        max_age=31557600,              # Keep this cookie for a year.
+        expires=expires,               # Expire one year from now.
+        httponly=False)                # Allow reading this from JS.
 
     return response
 
@@ -225,8 +254,9 @@ def login_internal(user):
     g.user = user
     usersession = UserSession(user=user)
     usersession.access()
-    session['sessionid'] = usersession.buid
-    session.permanent = True
+    g.lastuser_cookie['sessionid'] = usersession.buid
+    g.lastuser_cookie['userid'] = user.userid
+    session.permanent = False
     autoset_timezone(user)
     user_login.send(user)
 
@@ -250,6 +280,8 @@ def logout_internal():
     session.pop('merge_userid', None)
     session.pop('userid_external', None)
     session.pop('avatar_url', None)
+    g.lastuser_cookie.pop('sessionid', None)
+    g.lastuser_cookie.pop('userid', None)
     session.permanent = False
 
 

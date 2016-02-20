@@ -3,6 +3,7 @@
 from flask import Blueprint
 from .registry import ResourceRegistry, LoginProviderRegistry, OrderedDict
 
+
 lastuser_core = Blueprint('lastuser_core', __name__)
 
 #: Global resource registry

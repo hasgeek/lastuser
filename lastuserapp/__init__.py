@@ -36,6 +36,7 @@ def init_for(env):
         ext_requires=['baseframe-bs3', 'fontawesome>=4.0.0', 'jquery.cookie', 'timezone'],
         enable_csrf=True)
 
+    lastuser_oauth.lastuser_oauth.init_app(app)
     lastuser_oauth.mailclient.mail.init_app(app)
     lastuser_oauth.views.login.oid.init_app(app)
 

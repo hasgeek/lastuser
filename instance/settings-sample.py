@@ -24,8 +24,14 @@ CACHE_TYPE = 'redis'
 #: Secret key
 SECRET_KEY = 'make this something random'
 
+#: Lastuser secret key
+LASTUSER_SECRET_KEY = 'make this something random'
+
+#: Lastuser cookie domain
+LASTUSER_COOKIE_DOMAIN = '.mydomain.tld'
+
 #: Timezone
-TIMEZONE = 'Asia/Calcutta'
+TIMEZONE = 'Asia/Kolkata'
 
 #: Reserved usernames
 #: Add to this list but do not remove any unless you want to break
