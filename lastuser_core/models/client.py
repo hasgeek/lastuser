@@ -20,9 +20,11 @@ __all__ = ['Client', 'UserFlashMessage', 'Resource', 'ResourceAction', 'AuthCode
 
 
 class ScopeMixin(object):
+    __scope_null_allowed__ = False
+
     @declared_attr
-    def _scope(self):
-        return db.Column('scope', db.UnicodeText, nullable=False)
+    def _scope(cls):
+        return db.Column('scope', db.UnicodeText, nullable=cls.__scope_null_allowed__)
 
     def _scope_get(self):
         return tuple(sorted([t.strip() for t in self._scope.replace('\r', ' ').replace('\n', ' ').split(u' ') if t]))
@@ -33,8 +35,8 @@ class ScopeMixin(object):
         self._scope = u' '.join(sorted([t.strip() for t in value if t]))
 
     @declared_attr
-    def scope(self):
-        return db.synonym('_scope', descriptor=property(self._scope_get, self._scope_set))
+    def scope(cls):
+        return db.synonym('_scope', descriptor=property(cls._scope_get, cls._scope_set))
 
     def add_scope(self, additional):
         if isinstance(additional, basestring):
@@ -46,6 +48,7 @@ class Client(ScopeMixin, BaseMixin, db.Model):
     """OAuth client applications"""
     __tablename__ = 'client'
     __bind_key__ = 'lastuser'
+    __scope_null_allowed__ = True
     #: User who owns this client
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(User, primaryjoin=user_id == User.id,
