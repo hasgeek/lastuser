@@ -46,8 +46,7 @@ class RegisterForm(forms.Form):
     password = forms.PasswordField(__("Password"), validators=[forms.validators.DataRequired()])
     confirm_password = forms.PasswordField(__("Confirm password"),
         validators=[forms.validators.DataRequired(), forms.validators.EqualTo('password')])
-    recaptcha = wtf.RecaptchaField(__("Are you human?"),
-        description=__("Type both words into the text box to prove that you are a human and not a computer program"))
+    recaptcha = wtf.RecaptchaField(__("Are you human?"))
 
     def validate_username(self, field):
         if field.data in current_app.config['RESERVED_USERNAMES']:
