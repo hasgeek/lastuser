@@ -4,7 +4,7 @@ from urlparse import urlparse
 from werkzeug.exceptions import BadRequest
 from flask import request, g, abort, render_template, jsonify
 from coaster.utils import getbool
-from coaster.views import jsonp, requestargs
+from coaster.views import requestargs
 from baseframe import _, __, csrf
 
 from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Resource,
@@ -74,11 +74,12 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
             if perms:
                 userinfo['permissions'] = perms.access_permissions.split(u' ')
         else:
-            perms = TeamClientPermissions.query.filter_by(client=client).filter(
-                TeamClientPermissions.team_id.in_([team.id for team in user.teams])).all()
             permsset = set()
-            for permob in perms:
-                permsset.update(permob.access_permissions.split(u' '))
+            if user.teams:
+                perms = TeamClientPermissions.query.filter_by(client=client).filter(
+                    TeamClientPermissions.team_id.in_([team.id for team in user.teams])).all()
+                for permob in perms:
+                    permsset.update(permob.access_permissions.split(u' '))
             userinfo['permissions'] = sorted(permsset)
     return userinfo
 

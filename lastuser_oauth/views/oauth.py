@@ -7,7 +7,7 @@ from baseframe import _, csrf
 
 from lastuser_core.utils import make_redirect_url
 from lastuser_core import resource_registry
-from lastuser_core.models import (db, AuthCode, AuthToken, UserFlashMessage,
+from lastuser_core.models import (db, User, AuthCode, AuthToken, UserFlashMessage,
     UserClientPermissions, TeamClientPermissions, getuser, Client, Resource, ClientCredential)
 from .. import lastuser_oauth
 from ..forms import AuthorizeForm
@@ -63,7 +63,7 @@ def verifyscope(scope, client):
             if '/' in subitem:
                 parts = subitem.split('/')
                 if len(parts) != 2:
-                    raise ScopeException(_(u"Too many / characters in ‘{scope}’ in scope").format(scope=item))
+                    raise ScopeException(_(u"Too many ‘/’ characters in ‘{scope}’ in scope").format(scope=item))
                 resource_name, action_name = parts
             else:
                 resource_name = subitem
@@ -316,6 +316,9 @@ def oauth_make_token(user, client, scope, user_session=None):
         token = AuthToken.query.filter_by(user=user, client=client).first()
     elif user_session:
         token = AuthToken.query.filter_by(user_session=user_session, client=client).first()
+    else:
+        raise ValueError("user_session not provided")
+
     if token:
         token.add_scope(scope)
     else:
@@ -325,8 +328,6 @@ def oauth_make_token(user, client, scope, user_session=None):
         elif user_session:
             token = AuthToken(user_session=user_session, client=client, scope=scope, token_type='bearer')
             token = failsafe_add(db.session, token, user_session=user_session, client=client)
-        else:
-            raise ValueError("user_session not provided")
     # TODO: Look up Resources for items in scope; look up their providing clients apps,
     # and notify each client app of this token
     return token
@@ -371,9 +372,11 @@ def oauth_token():
     # if grant_type == 'authorization_code' (POST)
     code = request.form.get('code')
     redirect_uri = request.form.get('redirect_uri')
-    # if grant_type == 'password' (GET)
+    # if grant_type == 'password' (POST)
     username = request.form.get('username')
     password = request.form.get('password')
+    # if grant_type == 'client_credentials'
+    userid = request.form.get('userid')
 
     # Validations 1: Required parameters
     if not grant_type:
@@ -384,13 +387,26 @@ def oauth_token():
 
     # Validations 2: client scope
     if grant_type == 'client_credentials':
-        # Client data. User isn't part of it
+        # Client data; user isn't part of it OR trusted client and automatic scope
         try:
+            # FIXME: What is this verifyscope doing? That this scope is valid or that this client has access?
             verifyscope(scope, client)
         except ScopeException as scopeex:
             return oauth_token_error('invalid_scope', unicode(scopeex))
 
-        token = oauth_make_token(user=None, client=client, scope=scope)
+        if userid:
+            if client.trusted:
+                user = User.get(userid=userid)
+                if user:
+                    token = oauth_make_token(user=user, client=client, scope=client.scope)
+                    return oauth_token_success(token, userinfo=get_userinfo(
+                        user=token.user, client=client, scope=token.scope))
+                else:
+                    return oauth_token_error('invalid_grant', _("Unknown user"))
+            else:
+                return oauth_token_error('invalid_grant', _("Untrusted client"))
+        else:
+            token = oauth_make_token(user=None, client=client, scope=scope)
         return oauth_token_success(token)
 
     # Validations 3: auth code

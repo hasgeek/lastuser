@@ -19,7 +19,30 @@ __all__ = ['Client', 'UserFlashMessage', 'Resource', 'ResourceAction', 'AuthCode
     'CLIENT_TEAM_ACCESS', 'ClientTeamAccess', 'ClientCredential']
 
 
-class Client(BaseMixin, db.Model):
+class ScopeMixin(object):
+    @declared_attr
+    def _scope(self):
+        return db.Column('scope', db.UnicodeText, nullable=False)
+
+    def _scope_get(self):
+        return tuple(sorted([t.strip() for t in self._scope.replace('\r', ' ').replace('\n', ' ').split(u' ') if t]))
+
+    def _scope_set(self, value):
+        if isinstance(value, basestring):
+            value = [value]
+        self._scope = u' '.join(sorted([t.strip() for t in value if t]))
+
+    @declared_attr
+    def scope(self):
+        return db.synonym('_scope', descriptor=property(self._scope_get, self._scope_set))
+
+    def add_scope(self, additional):
+        if isinstance(additional, basestring):
+            additional = [additional]
+        self.scope = list(set(self.scope).union(set(additional)))
+
+
+class Client(ScopeMixin, BaseMixin, db.Model):
     """OAuth client applications"""
     __tablename__ = 'client'
     __bind_key__ = 'lastuser'
@@ -58,7 +81,9 @@ class Client(BaseMixin, db.Model):
     #: Trusted flag: trusted clients are authorized to access user data
     #: without user consent, but the user must still login and identify themself.
     #: When a single provider provides multiple services, each can be declared
-    #: as a trusted client to provide single sign-in across the services
+    #: as a trusted client to provide single sign-in across the services.
+    #: However, resources in the scope column (via ScopeMixin) are granted for
+    #: any arbitrary user without explicit user authorization.
     trusted = db.Column(db.Boolean, nullable=False, default=False)
 
     sessions = db.relationship(UserSession, lazy='dynamic', secondary='session_client',
@@ -283,29 +308,6 @@ class ResourceAction(BaseMixin, db.Model):
         :param Resource resource: Resource on which this action exists
         """
         return cls.query.filter_by(name=name, resource=resource).one_or_none()
-
-
-class ScopeMixin(object):
-    @declared_attr
-    def _scope(self):
-        return db.Column('scope', db.UnicodeText, nullable=False)
-
-    def _scope_get(self):
-        return tuple(sorted([t.strip() for t in self._scope.replace('\r', ' ').replace('\n', ' ').split(u' ') if t]))
-
-    def _scope_set(self, value):
-        if isinstance(value, basestring):
-            value = [value]
-        self._scope = u' '.join(sorted([t.strip() for t in value if t]))
-
-    @declared_attr
-    def scope(self):
-        return db.synonym('_scope', descriptor=property(self._scope_get, self._scope_set))
-
-    def add_scope(self, additional):
-        if isinstance(additional, basestring):
-            additional = [additional]
-        self.scope = list(set(self.scope).union(set(additional)))
 
 
 class AuthCode(ScopeMixin, BaseMixin, db.Model):
