@@ -4,7 +4,7 @@ from urlparse import urlparse
 from werkzeug.exceptions import BadRequest
 from flask import request, g, abort, render_template, jsonify
 from coaster.utils import getbool
-from coaster.views import requestargs
+from coaster.views import requestargs, jsonp
 from baseframe import _, __, csrf
 
 from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Resource,
@@ -98,13 +98,16 @@ def resource_error(error, description=None, uri=None):
     return response
 
 
-def api_result(status, **params):
+def api_result(status, _jsonp=False, **params):
     status_code = 200
     if status in (200, 201):
         status_code = status
         status = 'ok'
     params['status'] = status
-    response = jsonify(params)
+    if _jsonp:
+        response = jsonp(params)
+    else:
+        response = jsonify(params)
     response.status_code = status_code
     response.headers['Cache-Control'] = 'private, no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
@@ -431,7 +434,7 @@ def user_autocomplete():
         'name': u.username,
         'title': u.fullname,
         'label': u.pickername} for u in users]
-    return api_result('ok', users=result)
+    return api_result('ok', users=result, _jsonp=True)
 
 
 # This is org/* instead of organizations/* because it's a client resource. TODO: Reconsider
