@@ -305,6 +305,7 @@ def user_get_by_userid():
     user = User.get(userid=userid, defercols=True)
     if user:
         return api_result('ok',
+            _jsonp=True,
             type='user',
             userid=user.userid,
             buid=user.userid,
@@ -317,13 +318,14 @@ def user_get_by_userid():
         org = Organization.get(userid=userid, defercols=True)
         if org:
             return api_result('ok',
+                _jsonp=True,
                 type='organization',
                 userid=org.userid,
                 buid=org.userid,
                 name=org.name,
                 title=org.title,
                 label=org.pickername)
-    return api_result('error', error='not_found')
+    return api_result('error', error='not_found', _jsonp=True)
 
 
 @csrf.exempt
@@ -337,10 +339,11 @@ def user_get_by_userids(userid):
     of matching users and organizations
     """
     if not userid:
-        return api_result('error', error='no_userid_provided')
+        return api_result('error', error='no_userid_provided', _jsonp=True)
     users = User.all(userids=userid)
     orgs = Organization.all(userids=userid)
     return api_result('ok',
+        _jsonp=True,
         results=[
             {'type': 'user',
              'buid': u.userid,
