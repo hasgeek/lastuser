@@ -33,7 +33,7 @@ def init_for(env):
     db.app = app  # To make it work without an app context
     RQ(app)  # Pick up RQ configuration from the app
     baseframe.init_app(app, requires=['lastuser-oauth'],
-        ext_requires=['baseframe-bs3', 'fontawesome>=4.0.0', 'jquery.cookie', 'timezone'],
+        ext_requires=['baseframe-bs3', 'fontawesome>=4.3.0', 'jquery.cookie', 'timezone'],
         enable_csrf=True)
 
     lastuser_oauth.lastuser_oauth.init_app(app)
