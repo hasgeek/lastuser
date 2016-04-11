@@ -1,7 +1,7 @@
 <div itemscope itemtype="http://schema.org/EmailMessage">
 	<div itemprop="action" itemscope itemtype="http://schema.org/ViewAction">
 		<meta itemprop="name" content="Reset Password"/>
-		<link itemprop="url" href="{{ url_for('.reset_email', _external=True, userid=user.userid, secret=secret) }}"/>
+		<link itemprop="url" href="{{ reset_link }}"/>
 	</div>
 	<meta itemprop="description" content="Reset your password"/>
 	<div itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -9,8 +9,8 @@
 		<link itemprop="url" href="https://hasjob.co/"/>
 	</div>
 </div>
-<p>Hello {{ user.fullname }},</p>
+<p>Hello {{ name }},</p>
 <p>You or someone claiming to be you asked for your password to be reset.</p>
-<p><a href="{{ url_for('.reset_email', _external=True, userid=user.userid, secret=secret) }}">Click here to reset your password</a></p>
+<p><a href="{{ reset_link }}">Click here to reset your password</a></p>
 <p>If you did not ask for your password to be reset, you may safely ignore this
 email.</p>
