@@ -7,8 +7,8 @@
 	</div>
 	<meta itemprop="description" content="Confirm your email address"/>
 	<div itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-		<meta itemprop="name" content="HasGeek Auth"/>
-		<link itemprop="url" href="https://auth.hasgeek.com/"/>
+		<meta itemprop="name" content="{{ config['SITE_TITLE'] }}"/>
+		<link itemprop="url" href="{{ request.url_root }}"/>
 	</div>
 </div>
 <p>Hello {{ useremail.owner.title }},</p>

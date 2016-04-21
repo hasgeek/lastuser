@@ -5,8 +5,8 @@
 	</div>
 	<meta itemprop="description" content="Reset your password"/>
 	<div itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-		<meta itemprop="name" content="HasGeek Auth"/>
-		<link itemprop="url" href="https://auth.hasgeek.com/"/>
+		<meta itemprop="name" content="{{ config['SITE_TITLE'] }}"/>
+		<link itemprop="url" href="{{ request.url_root }}"/>
 	</div>
 </div>
 <p>Hello {{ user.fullname }},</p>
