@@ -1,6 +1,5 @@
 .DS_Store
 *.pyc
-settings.py
 test.db
 *.wpr
 .project
@@ -13,6 +12,7 @@ error.log
 .webassets-cache
 instance/development.py
 instance/production.py
+instance/settings.py
 packed.css
 packed.js
 baseframe-packed.css
