@@ -2,7 +2,7 @@
 from os import environ
 from flask import Markup
 
-SITE_TITLE = 'Lastuser'
+SITE_TITLE = 'Lastuser Testing'
 DEBUG_TB_ENABLED = False
 DEBUG_TB_INTERCEPT_REDIRECTS = False
 SERVER_NAME='test.lastuser.dev:7500'
@@ -14,6 +14,7 @@ SQLALCHEMY_ECHO = False
 SECRET_KEY = 'random_string_here'
 TIMEZONE = 'Asia/Calcutta'
 CACHE_TYPE = 'redis'
+GEOIP_PATH='/Users/sindhus/Documents/hasgeek/resources'
 
 #: Use SSL for some URLs
 USE_SSL = False
