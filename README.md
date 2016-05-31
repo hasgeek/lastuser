@@ -9,7 +9,7 @@ defer all user management to it. Use the API to integrate with your app.
 Usage
 -----
 
-To install and run LastUser on your computer:
+To install and run Lastuser on your computer:
 
 	$ git clone https://github.com/hasgeek/lastuser
 	$ cd lastuser
@@ -24,7 +24,7 @@ To install and run LastUser on your computer:
 	$ pip install -r requirements.txt
 	$ python runserver.py
 
-Your LastUser server will now be accessible at `http://localhost:7000`.
+Your Lastuser server will now be accessible at `http://localhost:7000`.
 
 Tests
 -----
