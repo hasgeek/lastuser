@@ -1,4 +1,4 @@
-var helpers = require('./helpers.js'),
+var helpers = require('helpers.js'),
     system = require('system'),
     host = "http://localhost:7500";
 
