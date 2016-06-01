@@ -4,12 +4,14 @@ python:
 install:
   - pip --default-timeout=180 install -r requirements.txt
   - pip --default-timeout=180 install -r test_requirements.txt
-
+  - npm install casperjs
 before_script:
   - psql -c 'create database lastuser_test_app;' -U postgres
-
 script:
   - nosetests --with-timer
+  - nohup python runtestserver.py &
+  - sleep 10
+  - casperjs test tests
 
 notifications:
   email: false
