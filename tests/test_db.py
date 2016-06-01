@@ -12,7 +12,6 @@ class TestDatabaseFixture(unittest.TestCase):
         db.app = app
         db.create_all()
         self.db = db
-        make_fixtures()
 
     def tearDown(self):
         db.session.rollback()

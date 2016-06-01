@@ -49,27 +49,18 @@ class TestResource(TestDatabaseFixture):
         super(TestResource, self).setUp()
         self.user = models.User.query.filter_by(username=u"user1").first()
         self.client = models.Client.query.filter_by(user=self.user).first()
-        self.create_fixtures()
 
     def create_fixtures(self):
         resource = models.Resource(name=u"resource", title=u"Resource", client=self.client)
         db.session.add(resource)
         db.session.commit()
 
-    def test_find_all(self):
-        resources = self.client.resources
-        self.assertEqual(len(resources), 2)
-        self.assertEqual(set([r.name for r in resources]), set([u'test_resource', u'resource']))
-
-
 class TestClientTeamAccess(TestDatabaseFixture):
     def setUp(self):
         super(TestClientTeamAccess, self).setUp()
         self.user = models.User.query.filter_by(username=u"user1").first()
         self.client = models.Client.query.filter_by(user=self.user).first()
-        self.client.team_access = True
         db.session.commit()
-        self.create_fixtures()
 
     def create_fixtures(self):
         self.org = models.Organization(title=u"test", name=u"Test")
@@ -82,10 +73,6 @@ class TestClientTeamAccess(TestDatabaseFixture):
         self.client_team_access = models.ClientTeamAccess(org=self.org, client=self.client, access_level=models.CLIENT_TEAM_ACCESS.ALL)
         db.session.add(self.client_team_access)
         db.session.commit()
-
-    def test_find_all(self):
-        self.assertIs(self.client.org_team_access[0], self.client_team_access)
-
 
 class TestPermission(TestDatabaseFixture):
     def setUp(self):

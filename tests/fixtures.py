@@ -8,7 +8,7 @@ def make_fixtures():
     user1 = User(username=u"user1", fullname=u"User 1")
     user2 = User(username=u"user2", fullname=u"User 2")
     db.session.add_all([user1, user2])
-    
+
     email1 = UserEmail(email=u"user1@example.com", user=user1)
     phone1 = UserPhone(phone=u"1234567890", user=user1)
     email2 = UserEmail(email=u"user2@example.com", user=user2)
@@ -19,7 +19,7 @@ def make_fixtures():
     org.owners.users.append(user1)
     db.session.add(org)
 
-    client = Client(title=u"Test Application", org=org, user=user1, website=u"http://example.com")
+    client = Client(title=u"Test Application", org=org, confidential=True, website=u"http://example.com", namespace=u"123.example.com")
     db.session.add(client)
 
     resource = Resource(name=u"test_resource", title=u"Test Resource", client=client)
