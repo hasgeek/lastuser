@@ -10,8 +10,8 @@ casper.test.begin('Lastuser redirects to correct Lastuser login page', 1, functi
         casper.clear();
         phantom.clearCookies();
         casper.thenOpenAndEvaluate(host+"/login", function(test_username, test_password){
-            document.querySelector('#username').value = username;
-            document.querySelector('#password').value = password;
+            document.querySelector('#username').value = test_username;
+            document.querySelector('#password').value = test_password;
             document.querySelector('#passwordlogin').submit();
         }, test_username, test_password);
         casper.waitForUrl(host, function(){
