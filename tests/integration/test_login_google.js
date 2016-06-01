@@ -12,7 +12,7 @@ casper.test.begin('Lastuser redirects to correct Google login page', 3, function
         this.echo("Hit login endpoint");
         test.assertHttpStatus(200, "200 OK");
         this.echo("Check if redirected URL leads to Google");
-        test.assertUrlMatch(/accounts.google.com\/ServiceLogin\?passive=/, 'Redirected to Google login successfully');
+        test.assertUrlMatch(/accounts.google.com\/o\/oauth2\/v2\/auth/, 'Redirected to Google login successfully');
     });
 
     casper.run(function(){
