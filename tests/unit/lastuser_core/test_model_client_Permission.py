@@ -12,12 +12,12 @@ class TestPermission(TestDatabaseFixture):
         name = u"clown"
         title = u"Class Clown"
         description = u'Applies to a dachshund that is actually a labrador at heart'
-        result = Permission(name=name, title=title, description=description, user=oakley)
+        result = models.Permission(name=name, title=title, description=description, user=oakley)
         self.assertIsInstance(result, models.Permission)
         self.assertEqual(result.name, name)
         self.assertEqual(result.title, title)
         self.assertEqual(result.description, description)
-        self.assertEqual(result.user, crusoe)
+        self.assertEqual(result.user, oakley)
 
     def test_permission_get(self):
         """

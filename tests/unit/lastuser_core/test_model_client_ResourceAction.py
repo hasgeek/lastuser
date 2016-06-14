@@ -12,7 +12,7 @@ class TestResourceAction(TestDatabaseFixture):
         name=u'party'
         description=u'Weiner dog parties!'
         resource = self.fixtures.resource
-        result = ResourceAction(name=name, title=title, resource=resource description=description)
+        result = models.ResourceAction(name=name, title=title, resource=resource, description=description)
         self.assertEqual(result.name, name)
         self.assertEqual(result.resource, resource)
         self.assertEqual(result.title, title)
@@ -36,7 +36,7 @@ class TestResourceAction(TestDatabaseFixture):
         Test for retrieving a ResourceAction instance given a name and resource.
         """
         resource = self.fixtures.resource
-        name = u'letsdothis'
+        name = u'read'
         result = models.ResourceAction.get(name, resource)
         self.assertIsInstance(result, models.ResourceAction)
         self.assertEqual(result.name, name)

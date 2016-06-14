@@ -20,7 +20,7 @@ class TestAuthToken(TestDatabaseFixture):
         self.assertEqual(result.user, crusoe)
         self.assertEqual(result.client, client)
         self.assertEqual(result.validity, 0)
-        self.assertEqual(result.scope, u'id')
+        self.assertEqual(result.scope, "(u'id')")
         self.assertTrue(hasattr(result, token))
         self.assertTrue(hasattr(result, secret))
         self.assertTrue(hasattr(result, refresh_token))

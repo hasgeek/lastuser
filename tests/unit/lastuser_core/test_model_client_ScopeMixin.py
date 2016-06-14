@@ -18,7 +18,7 @@ class TestScopeMixin(TestDatabaseFixture):
         db.session.add_all([bellatrix, bellatrix_token])
         db.session.commit()
         self.assertEqual(bellatrix_token._scope, scope)
-        self.assertTrue(hasattr(bellatrix, __scope_null_allowed__))
+        self.assertTrue(hasattr(bellatrix_token, '__scope_null_allowed__'))
 
     def test_scopemixin_scope(self):
         """Test to retrieve scope on an ScopeMixin inherited class instance via scope method"""

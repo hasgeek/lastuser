@@ -12,23 +12,27 @@ class TestClient(TestDatabaseFixture):
         """Test for verifying creation of instance of Client """
         # user, org, title, description, confidential, website, namespace, redirect_uri, notification_uri, active, allow_any_login, team_access, key, trusted
         holly = models.User(username=u'holly', fullname=u'Holiday Golightly')
+        db.session.add(holly)
         sing_sing = models.Organization(name=u'sing_sing', title=u'Sing Sing')
+        sing_sing.owners.users.append(holly)
+        db.session.add(sing_sing)
+        db.session.commit()
         title = u"Tiffany's"
         description = u"Breakfast at Tiffany's"
         website = u'tiffany.com'
         namespace = u'diamonds.tiffany.com'
         redirect_uri = u'tiffany.com/login/redirect'
-        confidential=True
-        result = Client(title=title, org=sing_sing, confidential=confidential, namespace=namespace, website=website)
+        result = models.Client(title=title, org=sing_sing, confidential=True, namespace=namespace, website=website, description=description, redirect_uri=redirect_uri)
+        db.session.add(result)
+        db.session.commit()
         self.assertIsInstance(result, models.Client)
-        self.assertEqual(result.user, holly)
         self.assertEqual(result.org, sing_sing)
         self.assertEqual(result.title, title)
         self.assertEqual(result.description, description)
         self.assertEqual(result.website, website)
         self.assertEqual(result.namespace, namespace)
         self.assertEqual(result.redirect_uri, redirect_uri)
-        self.assertTrue(resutl.confidential)
+        self.assertTrue(result.confidential)
 
     def test_client_secret_is(self):
         """

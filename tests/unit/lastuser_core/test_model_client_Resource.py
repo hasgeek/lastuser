@@ -14,9 +14,8 @@ class TestResource(TestDatabaseFixture):
         client = self.fixtures.client
         title = u"Woodlands"
         description = u'The great woodlands of Ontario'
-        siteresource = True
         restricted = False
-        result = models.Resource(name=name, title=title, description=description, client=client)
+        result = models.Resource(name=name, title=title, description=description, client=client, siteresource=True)
         self.assertEqual(result.name, name)
         self.assertEqual(result.title, title)
         self.assertEqual(result.description, description)
@@ -61,7 +60,7 @@ class TestResource(TestDatabaseFixture):
         Test for retreiving a ResourceAction on this Resource given a action name
         """
         resource = self.fixtures.resource
-        name = u'letsdothis'
-        result = resource.get_action(name)
+        name = u'read'
+        result = resource.get_action(u'read')
         self.assertIsInstance(result, models.ResourceAction)
         self.assertEqual(result.name, name)

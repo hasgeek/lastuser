@@ -6,8 +6,7 @@ from lastuser_core.models import *
 class Fixtures(object):
     def make_fixtures(self):
         """
-        Create users, attach them to organizations. Create test client app, add test
-        resource, action and message.
+        Create users, attach them to organizations. Create test client app, add test resource, action and message.
         """
         crusoe = User(username=u"crusoe", fullname=u"Crusoe Celebrity Dachshund")
         oakley = User(username=u"oakley")
