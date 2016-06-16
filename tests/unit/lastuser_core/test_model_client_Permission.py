@@ -38,7 +38,6 @@ class TestPermission(TestDatabaseFixture):
         crusoe = self.fixtures.crusoe
         bdfl = self.fixtures.bdfl
         result1 = models.Permission.get(name=bdfl.name, user=crusoe)
-        print result1
 
         # scenario 1 + only org is given
         result2 = models.Permission.get(name=netizens.name, org=specialdachs)

@@ -49,12 +49,7 @@ Run the tests from the root directory of the project:
 
 		$ nosetests
 
-To see code coverage statistics:
-
-		$ cd tests
-		$ nosetests --with-coverage --cover-package=lastuser_core
-
-Optionally you can include the `--with-timer` flag with the `nosetests` command to see if there are tests that take longer than 1 second each.
+Optionally you can include the `--with-timer` flag with the `nosetests` command to check if there are tests that take longer than a second each.
 
 Support
 -------
