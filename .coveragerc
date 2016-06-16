@@ -1,5 +1,5 @@
 [run]
-source = lastuser_core,lastuser_oauth
+branch = True
 
 [report]
 # Regexes for lines to exclude from consideration
