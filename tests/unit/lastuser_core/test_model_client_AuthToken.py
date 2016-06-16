@@ -20,10 +20,10 @@ class TestAuthToken(TestDatabaseFixture):
         self.assertEqual(result.user, crusoe)
         self.assertEqual(result.client, client)
         self.assertEqual(result.validity, 0)
-        self.assertEqual(result.scope, "(u'id')")
-        self.assertTrue(hasattr(result, token))
-        self.assertTrue(hasattr(result, secret))
-        self.assertTrue(hasattr(result, refresh_token))
+        self.assertEqual(result.scope, tuple(u'id'.split(',')))
+        self.assertTrue(hasattr(result, 'token'))
+        self.assertTrue(hasattr(result, 'secret'))
+        self.assertTrue(hasattr(result, 'refresh_token'))
         # TODO: assert token_type, _algorithm
         # TODO: try to create a new token for this client and it should fail
 
