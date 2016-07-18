@@ -10,8 +10,9 @@ from flask import g, current_app, request, session, flash, redirect, url_for, Re
 from coaster.sqlalchemy import failsafe_add
 from coaster.views import get_current_url
 from baseframe import _
-from lastuser_core.models import db, User, ClientCredential, UserSession
+from lastuser_core.models import db, User, ClientCredential, UserSession, UserEmailClaim
 from lastuser_core.signals import user_login, user_registered
+from ..mailclient import send_email_verify_link
 from .. import lastuser_oauth
 from urlparse import urlparse
 
@@ -285,8 +286,8 @@ def logout_internal():
     session.permanent = False
 
 
-def register_internal(username, fullname, password):
-    user = User(username=username, fullname=fullname, password=password)
+def register_internal(username, fullname, password, email, emailclaim=False, client=None, template=None):
+    user = User(username=username, fullname=fullname, password=password, client=client)
     if not username:
         user.username = None
     if user.username:
@@ -295,6 +296,11 @@ def register_internal(username, fullname, password):
     else:
         db.session.add(user)
     user_registered.send(user)
+
+    if emailclaim:
+        useremail = UserEmailClaim(user=user, email=email)
+        db.session.add(useremail)
+        send_email_verify_link(useremail, template=template)
     return user
 
 
