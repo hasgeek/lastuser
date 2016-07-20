@@ -25,4 +25,4 @@ def upgrade():
 
 def downgrade():
     op.alter_column('client', 'scope', existing_type=sa.TEXT(), nullable=False, server_default='')
-    op.alter_column('client', 'scope', sever_default=None)
+    op.alter_column('client', 'scope', server_default=None)
