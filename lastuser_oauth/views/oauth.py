@@ -358,7 +358,6 @@ def oauth_token_success(token, **params):
     return response
 
 
-@csrf.exempt
 @lastuser_oauth.route('/token', methods=['POST'])
 @requires_client_login
 def oauth_token():
