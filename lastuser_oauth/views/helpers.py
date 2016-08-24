@@ -177,7 +177,7 @@ def _client_login_inner():
         return Response('Invalid client credentials', 401,
             {'WWW-Authenticate': 'Basic realm="Client credentials"'})
     if credential:
-        credential.accessed_at = datetime.utcnow()
+        credential.accessed_at = db.func.utcnow()
         db.session.commit()
     g.client = credential.client
 

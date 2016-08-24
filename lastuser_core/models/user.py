@@ -98,7 +98,7 @@ class User(BaseMixin, db.Model):
             self.pw_hash = None
         else:
             self.pw_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        self.pw_set_at = datetime.utcnow()
+        self.pw_set_at = db.func.utcnow()
         # Expire passwords after one year. TODO: make this configurable
         self.pw_expires_at = self.pw_set_at + timedelta(days=365)
 

@@ -37,7 +37,7 @@ class UserSession(BaseMixin, db.Model):
 
     accessed_at = db.Column(db.DateTime, nullable=False)
     revoked_at = db.Column(db.DateTime, nullable=True)
-    sudo_enabled_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow())
+    sudo_enabled_at = db.Column(db.DateTime, nullable=False, default=db.func.utcnow())
 
     def __init__(self, **kwargs):
         super(UserSession, self).__init__(**kwargs)
@@ -53,7 +53,7 @@ class UserSession(BaseMixin, db.Model):
         # `accessed_at` will be different from the automatic `updated_at` in one
         # crucial context: when the session was revoked remotely. `accessed_at` won't
         # be updated at that time.
-        self.accessed_at = datetime.utcnow()
+        self.accessed_at = db.func.utcnow()
         with db.session.no_autoflush:
             if client:
                 if client not in self.clients:  # self.clients is defined via Client.sessions
@@ -63,7 +63,7 @@ class UserSession(BaseMixin, db.Model):
                     db.session.execute(session_client.update().where(
                         session_client.c.user_session_id == self.id).where(
                         session_client.c.client_id == client.id).values(
-                        updated_at=datetime.utcnow()))
+                        updated_at=db.func.utcnow()))
             else:
                 self.ipaddr = request.remote_addr or u''
                 self.user_agent = unicode(request.user_agent.string[:250]) or u''
@@ -77,11 +77,11 @@ class UserSession(BaseMixin, db.Model):
         return self.sudo_enabled_at > datetime.utcnow() - timedelta(hours=1)
 
     def set_sudo(self):
-        self.sudo_enabled_at = datetime.utcnow()
+        self.sudo_enabled_at = db.func.utcnow()
 
     def revoke(self):
         if not self.revoked_at:
-            self.revoked_at = datetime.utcnow()
+            self.revoked_at = db.func.utcnow()
             session_revoked.send(self)
 
     @classmethod
@@ -94,7 +94,7 @@ class UserSession(BaseMixin, db.Model):
             # Session key must match.
             cls.buid == buid,
             # Sessions are valid for one year...
-            cls.accessed_at > datetime.utcnow() - timedelta(days=365),
+            cls.accessed_at > db.func.utcnow() - timedelta(days=365),
             # ...unless explicitly revoked (or user logged out)
             cls.revoked_at == None).one_or_none()  # NOQA
 
@@ -102,10 +102,10 @@ class UserSession(BaseMixin, db.Model):
 # Patch a retriever into the User class. This could be placed in the
 # UserSession.user relationship's backref with a custom primaryjoin
 # clause and explicit foreign_keys, but we're not sure if we can
-# put the datetime.utcnow() in there too.
+# put the db.func.utcnow() in there too.
 def active_sessions(self):
     return self.sessions.filter(
-        UserSession.accessed_at > datetime.utcnow() - timedelta(days=14),
+        UserSession.accessed_at > db.func.utcnow() - timedelta(days=14),
         UserSession.revoked_at == None).all()  # NOQA
 
 User.active_sessions = active_sessions
