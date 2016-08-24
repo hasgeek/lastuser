@@ -163,7 +163,7 @@ class User(BaseMixin, db.Model):
     @property
     def pickername(self):
         if self.username:
-            return u'{fullname} (~{username})'.format(fullname=self.fullname, username=self.username)
+            return u'{fullname} (@{username})'.format(fullname=self.fullname, username=self.username)
         else:
             return self.fullname
 
@@ -514,7 +514,7 @@ class Organization(BaseMixin, db.Model):
     @property
     def pickername(self):
         if self.name:
-            return u'{title} (~{name})'.format(title=self.title, name=self.name)
+            return u'{title} (@{name})'.format(title=self.title, name=self.name)
         else:
             return self.title
 
