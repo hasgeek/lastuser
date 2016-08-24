@@ -27,7 +27,10 @@ class ScopeMixin(object):
         return db.Column('scope', db.UnicodeText, nullable=cls.__scope_null_allowed__)
 
     def _scope_get(self):
-        return tuple(sorted([t.strip() for t in self._scope.replace('\r', ' ').replace('\n', ' ').split(u' ') if t]))
+        if not self._scope:
+            return ()
+        else:
+            return tuple(sorted([t.strip() for t in self._scope.replace('\r', ' ').replace('\n', ' ').split(u' ') if t]))
 
     def _scope_set(self, value):
         if isinstance(value, basestring):
