@@ -1,7 +1,9 @@
+progressbar2
 Flask
 markdown
 Flask-Assets
 Flask-Mail
+sqlalchemy_utils
 SQLAlchemy>=0.9
 Flask-SQLAlchemy
 jsmin

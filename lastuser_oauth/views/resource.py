@@ -20,11 +20,13 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
 
     if '*' in scope or 'id' in scope or 'id/*' in scope:
         userinfo = {'userid': user.userid,
+                    'uuid': user.uuid,
                     'username': user.username,
                     'fullname': user.fullname,
                     'timezone': user.timezone,
                     'avatar': user.avatar,
-                    'oldids': [o.userid for o in user.oldids]}
+                    'oldids': [o.userid for o in user.oldids],
+                    'olduuids': [o.uuid for o in user.oldids]}
     else:
         userinfo = {}
 
@@ -37,17 +39,19 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
         userinfo['phone'] = unicode(user.phone)
     if '*' in scope or 'organizations' in scope or 'organizations/*' in scope:
         userinfo['organizations'] = {
-            'owner': [{'userid': org.userid, 'name': org.name, 'title': org.title, 'domain': org.domain} for org in user.organizations_owned()],
-            'member': [{'userid': org.userid, 'name': org.name, 'title': org.title, 'domain': org.domain} for org in user.organizations_memberof()],
-            'all': [{'userid': org.userid, 'name': org.name, 'title': org.title, 'domain': org.domain} for org in user.organizations()],
+            'owner': [{'userid': org.userid, 'uuid': org.uuid, 'name': org.name, 'title': org.title, 'domain': org.domain} for org in user.organizations_owned()],
+            'member': [{'userid': org.userid, 'uuid': org.uuid, 'name': org.name, 'title': org.title, 'domain': org.domain} for org in user.organizations_memberof()],
+            'all': [{'userid': org.userid, 'uuid': org.uuid, 'name': org.name, 'title': org.title, 'domain': org.domain} for org in user.organizations()],
             }
 
     if '*' in scope or 'organizations' in scope or 'teams' in scope or 'organizations/*' in scope or 'teams/*' in scope:
         for team in user.teams:
             teams[team.userid] = {
                 'userid': team.userid,
+                'uuid': team.uuid,
                 'title': team.title,
                 'org': team.org.userid,
+                'org_uuid': team.org.uuid,
                 'domain': team.domain,
                 'owners': team == team.org.owners,
                 'members': team == team.org.members,
@@ -59,8 +63,10 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                 if team.userid not in teams:
                     teams[team.userid] = {
                         'userid': team.userid,
+                        'uuid': team.uuid,
                         'title': team.title,
                         'org': team.org.userid,
+                        'org_uuid': team.org.uuid,
                         'domain': team.domain,
                         'owners': team == team.org.owners,
                         'members': team == team.org.members,
@@ -164,6 +170,7 @@ def token_verify():
         'title': authtoken.client.title,
         'userid': authtoken.client.owner.userid,
         'buid': authtoken.client.owner.userid,
+        'uuid': authtoken.client.owner.uuid,
         'owner_title': authtoken.client.owner.pickername,
         'website': authtoken.client.website,
         'key': authtoken.client.key,
@@ -203,6 +210,7 @@ def token_get_scope():
         'title': authtoken.client.title,
         'userid': authtoken.client.owner.userid,
         'buid': authtoken.client.owner.userid,
+        'uuid': authtoken.client.owner.uuid,
         'owner_title': authtoken.client.owner.pickername,
         'website': authtoken.client.website,
         'key': authtoken.client.key,
@@ -306,11 +314,13 @@ def user_get_by_userid():
             type='user',
             userid=user.userid,
             buid=user.userid,
+            uuid=user.uuid,
             name=user.username,
             title=user.fullname,
             label=user.pickername,
             timezone=user.timezone,
-            oldids=[o.userid for o in user.oldids])
+            oldids=[o.userid for o in user.oldids],
+            olduuids=[o.uuid for o in user.oldids])
     else:
         org = Organization.get(userid=userid, defercols=True)
         if org:
@@ -319,6 +329,7 @@ def user_get_by_userid():
                 type='organization',
                 userid=org.userid,
                 buid=org.userid,
+                uuid=org.uuid,
                 name=org.name,
                 title=org.title,
                 label=org.pickername)
@@ -344,14 +355,17 @@ def user_get_by_userids(userid):
             {'type': 'user',
              'buid': u.userid,
              'userid': u.userid,
+             'uuid': u.uuid,
              'name': u.username,
              'title': u.fullname,
              'label': u.pickername,
              'timezone': u.timezone,
-             'oldids': [o.userid for o in u.oldids]} for u in users] + [
+             'oldids': [o.userid for o in u.oldids],
+             'olduuids': [o.uuid for o in u.oldids]} for u in users] + [
             {'type': 'organization',
              'buid': o.userid,
              'userid': o.userid,
+             'uuid': o.uuid,
              'name': o.name,
              'title': o.fullname,
              'label': o.pickername} for o in orgs]
@@ -373,11 +387,13 @@ def user_get(name):
             type='user',
             userid=user.userid,
             buid=user.userid,
+            uuid=user.uuid,
             name=user.username,
             title=user.fullname,
             label=user.pickername,
             timezone=user.timezone,
-            oldids=[o.userid for o in user.oldids])
+            oldids=[o.userid for o in user.oldids],
+            olduuids=[o.uuid for o in user.oldids])
     else:
         return api_result('error', error='not_found')
 
@@ -401,11 +417,13 @@ def user_getall(name):
                 'type': 'user',
                 'userid': user.userid,
                 'buid': user.userid,
+                'uuid': user.uuid,
                 'name': user.username,
                 'title': user.fullname,
                 'label': user.pickername,
                 'timezone': user.timezone,
                 'oldids': [o.userid for o in user.oldids],
+                'olduuids': [o.uuid for o in user.oldids],
                 })
             userids.add(user.userid)
     if not results:
@@ -427,6 +445,7 @@ def user_autocomplete():
     result = [{
         'userid': u.userid,
         'buid': u.userid,
+        'uuid': u.uuid,
         'name': u.username,
         'title': u.fullname,
         'label': u.pickername} for u in users]
@@ -458,7 +477,9 @@ def org_team_get():
         # XXX: Return user list here?
         if g.client in org.clients_with_team_access():
             orgteams[org.userid] = [{'userid': team.userid,
+                                     'uuid': team.uuid,
                                      'org': org.userid,
+                                     'org_uuid': org.uuid,
                                      'title': team.title,
                                      'owners': team == org.owners} for team in org.teams]
     return api_result('ok', org_teams=orgteams)
@@ -526,6 +547,7 @@ def session_verify(authtoken, args, files=None):
             'active': True,
             'sessionid': session.buid,
             'userid': session.user.userid,
+            'user_uuid': session.user.uuid,
             'sudo': session.has_sudo,
             }
     else:

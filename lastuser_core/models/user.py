@@ -8,7 +8,8 @@ from sqlalchemy import or_, event, DDL
 from sqlalchemy.orm import defer, deferred, foreign, remote
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
-from coaster.utils import buid, newsecret, newpin, valid_username
+from sqlalchemy_utils import UUIDType
+from coaster.utils import buid, newsecret, newpin, valid_username, uuid1mc
 from coaster.sqlalchemy import Query as CoasterQuery, make_timestamp_columns, failsafe_add
 from baseframe import _
 
@@ -29,6 +30,8 @@ class USER_STATUS:
 class User(BaseMixin, db.Model):
     __tablename__ = 'user'
     __bind_key__ = 'lastuser'
+    #: UUID that replaces userid going forward
+    uuid = db.Column(UUIDType(binary=False), default=uuid1mc, unique=True, nullable=False)
     #: The userid, a globally unique and permanent string to identify this user
     userid = db.Column(db.String(22), unique=True, nullable=False, default=buid)
     #: The user's fullname
@@ -397,6 +400,8 @@ class UserOldId(TimestampMixin, db.Model):
     # userid here is NOT a foreign key since it has to continue to exist
     # even if the User record is removed
     userid = db.Column(db.String(22), nullable=False, primary_key=True)
+    #: UUID that replaces userid going forward
+    uuid = db.Column(UUIDType(binary=False), unique=True, nullable=False)
     olduser = db.relationship(User, primaryjoin=foreign(userid) == remote(User.userid),
         backref=db.backref('oldid', uselist=False))
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
@@ -426,6 +431,8 @@ team_membership = db.Table(
 class Organization(BaseMixin, db.Model):
     __tablename__ = 'organization'
     __bind_key__ = 'lastuser'
+    #: UUID that replaces userid going forward
+    uuid = db.Column(UUIDType(binary=False), default=uuid1mc, unique=True, nullable=False)
     # owners_id cannot be null, but must be declared with nullable=True since there is
     # a circular dependency. The post_update flag on the relationship tackles the circular
     # dependency within SQLAlchemy.
@@ -591,6 +598,8 @@ class Organization(BaseMixin, db.Model):
 class Team(BaseMixin, db.Model):
     __tablename__ = 'team'
     __bind_key__ = 'lastuser'
+    #: UUID that replaces userid going forward
+    uuid = db.Column(UUIDType(binary=False), default=uuid1mc, unique=True, nullable=False)
     #: Unique and non-changing id
     userid = db.Column(db.String(22), unique=True, nullable=False, default=buid)
     #: Displayed name
