@@ -3,9 +3,9 @@ python:
   - "2.7"
   - "pypy"
 install:
-  - pip --default-timeout=180 install -r requirements.txt --use-mirrors
-  - pip --default-timeout=180 install -r test_requirements.txt --use-mirrors
-  - 'if [[ "$TRAVIS_PYTHON_VERSION" != "pypy" ]]; then pip install psycopg2 --use-mirrors; fi'
+  - pip --default-timeout=180 install -r requirements.txt
+  - pip --default-timeout=180 install -r test_requirements.txt
+  - 'if [[ "$TRAVIS_PYTHON_VERSION" != "pypy" ]]; then pip install psycopg2; fi'
 before_script:
   - psql -c 'create database lastuser_test_app;' -U postgres
 script:
