@@ -542,6 +542,7 @@ class Organization(BaseMixin, db.Model):
             perms.add('new-team')
         else:
             if 'view' in perms:
+                print "heere"
                 perms.remove('view')
             if 'edit' in perms:
                 perms.remove('edit')
