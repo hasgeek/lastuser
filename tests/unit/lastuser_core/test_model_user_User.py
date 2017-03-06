@@ -69,7 +69,7 @@ class TestUser(TestDatabaseFixture):
         # scenario 1: when username exists
         crusoe = self.fixtures.crusoe
         result = crusoe.pickername
-        expected_result = u'{fullname} (~{username})'.format(fullname=crusoe.fullname, username=crusoe.username)
+        expected_result = u'{fullname} (@{username})'.format(fullname=crusoe.fullname, username=crusoe.username)
         self.assertEqual(result, expected_result)
         # scenario 2: when username doesnt exist
         mr_fedrick = models.User(fullname=u'Mr. Fedrick')

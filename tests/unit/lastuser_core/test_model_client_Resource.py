@@ -49,7 +49,7 @@ class TestResource(TestDatabaseFixture):
         Test for retreiving a ResourceAction on this Resource given a action name
         """
         resource = self.fixtures.resource
-        name = u'letsdothis'
-        result = resource.get_action(name)
+        resource_action = self.fixtures.resource_action
+        result = resource.get_action(resource_action.name)
         self.assertIsInstance(result, models.ResourceAction)
-        self.assertEqual(result.name, name)
+        self.assertEqual(result, resource_action)

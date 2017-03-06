@@ -124,7 +124,7 @@ class TestOrganization(TestDatabaseFixture):
         db.session.add(olympic_coven)
         db.session.commit()
         self.assertIsInstance(olympic_coven.pickername, unicode)
-        assert u'{title} (~{name})'.format(title=title, name=name) in olympic_coven.pickername
+        assert u'{title} (@{name})'.format(title=title, name=name) in olympic_coven.pickername
 
     def test_organization_permissions(self):
         """

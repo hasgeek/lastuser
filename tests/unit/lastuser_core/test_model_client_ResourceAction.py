@@ -17,7 +17,6 @@ class TestResourceAction(TestDatabaseFixture):
         to the resource is it's owner
         """
         crusoe = self.fixtures.crusoe
-        resource = self.fixtures.resource
         resource_action = self.fixtures.resource_action
         expected_permissions = ['edit', 'delete']
         received_permissions = resource_action.permissions(crusoe)
@@ -29,7 +28,7 @@ class TestResourceAction(TestDatabaseFixture):
         Test for retrieving a ResourceAction instance given a name and resource.
         """
         resource = self.fixtures.resource
-        name = u'letsdothis'
-        result = models.ResourceAction.get(name, resource)
+        resource_action = self.fixtures.resource_action
+        result = models.ResourceAction.get(resource_action.name, resource)
         self.assertIsInstance(result, models.ResourceAction)
-        self.assertEqual(result.name, name)
+        self.assertEqual(result, resource_action)

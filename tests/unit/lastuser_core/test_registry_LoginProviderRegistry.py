@@ -30,16 +30,3 @@ class TestLoginProviderRegistry(unittest.TestCase):
         expected_login_providers.append('openid')
         self.assertIsInstance(login_registry, LoginProviderRegistry)
         self.assertItemsEqual(expected_login_providers, login_registry.keys())
-
-    def test_LoginProviderRegister_at_username_services(self):
-        """
-        Test for retrieving list of services that use @username addressing
-        """
-        init_for('testing')
-        expected_services = ['twitter', 'github']
-        recieved_services = []
-        for key,value in login_registry.items():
-            if hasattr(value, 'at_username'):
-                if value.at_username:
-                    recieved_services.append(key)
-        self.assertItemsEqual(expected_services, recieved_services)

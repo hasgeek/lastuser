@@ -26,8 +26,11 @@ class TestUser(TestDatabaseFixture):
 
     def test_usersession_has_sudo(self):
         """Test to set sudo and test if UserSession instance has_sudo """
-        another_user_session = models.UserSession()
+        crusoe = self.fixtures.crusoe
+        another_user_session = models.UserSession(user=crusoe, ipaddr='192.168.1.1', user_agent=u'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36', accessed_at=datetime.utcnow())
         another_user_session.set_sudo()
+        db.session.add(another_user_session)
+        db.session.commit()
         self.assertTrue(another_user_session.has_sudo)
 
     def test_usersession_revoke(self):
@@ -35,8 +38,8 @@ class TestUser(TestDatabaseFixture):
         crusoe = self.fixtures.crusoe
         yet_another_usersession = models.UserSession(user=crusoe, ipaddr='192.168.1.1', user_agent=u'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36', accessed_at=datetime.utcnow())
         yet_another_usersession.revoke()
-        result = models.UserSession.query.filter_by(user=crusoe).one_or_none()
-        assert(result.revoked_at) is not None
+        result = models.UserSession.query.filter_by(buid=yet_another_usersession.buid).one_or_none()
+        self.assertIsNotNone(result.revoked_at)
 
     def test_UserSession_get(self):
         """Test for verifying UserSession's get method"""
