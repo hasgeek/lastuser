@@ -4,6 +4,7 @@ import unittest
 from lastuserapp import app, db, init_for
 from .fixtures import Fixtures
 
+
 class TestDatabaseFixture(unittest.TestCase):
     def setUp(self):
         """
