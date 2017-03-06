@@ -160,7 +160,7 @@ def oauth_auth_success(client, redirect_uri, state, code, token=None):
     if use_fragment:
         return render_template('oauth_public_redirect.html', client=client, redirect_to=redirect_to)
     else:
-        response = redirect(redirect_to, code=302)
+        response = redirect(redirect_to, code=303)
         response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
         response.headers['Pragma'] = 'no-cache'
         return response
@@ -178,7 +178,7 @@ def oauth_auth_error(redirect_uri, state, error, error_description=None, error_u
     if error_uri is not None:
         params['error_uri'] = error_uri
     clear_flashed_messages()
-    response = redirect(make_redirect_url(redirect_uri, **params), code=302)
+    response = redirect(make_redirect_url(redirect_uri, **params), code=303)
     response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     return response
