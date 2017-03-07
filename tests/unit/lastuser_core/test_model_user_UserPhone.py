@@ -39,9 +39,3 @@ class TestUserPhone(TestDatabaseFixture):
         result = unicode(models.UserPhone(phone))
         self.assertIsInstance(result, unicode)
         self.assertEqual(result, phone)
-
-    # def test_userphone_phone(self):
-    #     """
-    #     Test for verifying UserPhone's phone property
-    #     """
-    #     pass
