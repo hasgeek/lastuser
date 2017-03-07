@@ -21,7 +21,7 @@ gustav = User(username=u"gustav", fullname=u"Gustav 'world' Dachshund", password
 # client for CRUD workflow of defining perms *in* client
 # spare user for CRUD workflow of assigning permissions
 oakley = User(username=u"oakley", fullname=u"Oakley 'huh' Dachshund")
-dachsunited = Organization(name=u'dachsunited', title=u'Dachs United')
+dachsunited = Organization(name=u"dachsunited", title=u"Dachs United")
 dachsunited.owners.users.append(gustav)
 dachsunited.members.users.append(oakley)
 dachshundworld = Client(title=u"Dachshund World", org=dachsunited, confidential=True, website=u"http://gustavsdachshundworld.com")
