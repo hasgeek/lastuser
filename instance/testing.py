@@ -21,11 +21,9 @@ USE_SSL = False
 #: Mail settings
 MAIL_SUPRESS_SEND = True
 MAIL_FAIL_SILENTLY = False
-DEFAULT_MAIL_SENDER = environ.get('DEFAULT_MAIL_SENDER')
-MAIL_DEFAULT_SENDER = DEFAULT_MAIL_SENDER  # For new versions of Flask-Mail
 SITE_SUPPORT_EMAIL = environ.get('SITE_SUPPORT_EMAIL')
 # Mail secrets
-MAIL_SERVER =  environ.get('MAIL_SERVER')
+MAIL_SERVER = environ.get('MAIL_SERVER')
 MAIL_PORT = environ.get('MAIL_PORT')
 MAIL_USE_SSL = environ.get('MAIL_USE_SSL')
 MAIL_USE_TLS = environ.get('MAIL_USE_TLS')
