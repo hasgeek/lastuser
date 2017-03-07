@@ -1,14 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from lastuserapp import db, init_for
+from lastuserapp import db
 import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
-from datetime import datetime as dt
 from coaster.utils import buid
-from datetime import datetime, timedelta
-from flask.testing import FlaskClient
-from flask import url_for
-from bs4 import BeautifulSoup
+from datetime import datetime
 
 
 class TestUser(TestDatabaseFixture):
@@ -20,7 +16,7 @@ class TestUser(TestDatabaseFixture):
 
     def test_usersession_ua(self):
         """Test to verify user_agent property of UserSession instance"""
-        ua=u'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36'
+        ua = u'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36'
         another_user_session = models.UserSession(user_agent=ua)
         self.assertIsInstance(another_user_session.ua, dict)
 
@@ -60,7 +56,7 @@ class TestUser(TestDatabaseFixture):
     def test_UserSession_authenticate(self):
         """Test to verify authenticate method on UserSession"""
         chandler = models.User(username=u'chandler', fullname=u'Chandler Bing')
-        chandler_buid=buid()
+        chandler_buid = buid()
         chandler_session = models.UserSession(user=chandler, ipaddr='192.168.1.4', buid=chandler_buid, user_agent=u'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36', accessed_at=datetime.utcnow())
         db.session.add(chandler)
         db.session.add(chandler_session)

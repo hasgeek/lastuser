@@ -2,4 +2,3 @@ nose
 coverage
 nose-timer
 nose-progressive
-bs4
