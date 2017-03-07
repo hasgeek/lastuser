@@ -27,12 +27,12 @@ class TestAuthCode(TestDatabaseFixture):
         db.session.commit()
 
         # Scenario 1: When code has not been used
-        unused_code_status = models.AuthCode.query.filter_by(user=oakley).one_or_none().is_valid()
+        unused_code_status = models.AuthCode.query.filter_by(user=oakley).one().is_valid()
         self.assertFalse(unused_code_status)
 
         # Scenario 2: When code has been used
         auth_code.created_at = datetime.utcnow()
         auth_code.used = False
         db.session.commit()
-        used_code_status = models.AuthCode.query.filter_by(user=oakley).one_or_none().is_valid()
+        used_code_status = models.AuthCode.query.filter_by(user=oakley).one().is_valid()
         self.assertTrue(used_code_status)
