@@ -45,8 +45,9 @@ class RegisterClientForm(forms.Form):
     website = forms.URLField(__("Application website"),
         validators=[forms.validators.DataRequired(), forms.validators.URL()],
         description=__("Website where users may access this application"))
-    namespace = forms.NullTextField(__("Client namespace"),
+    namespace = forms.StringField(__("Client namespace"),
         validators=[forms.validators.Optional()],
+        filters=[forms.filters.none_if_empty()],
         description=Markup(__(u"A dot-based namespace that uniquely identifies your client application. "
             u"For example, if your client website is <code>https://auth.hasgeek.com</code>, "
             u"use <code>com.hasgeek.auth</code>. Only required if your client app provides resources")),

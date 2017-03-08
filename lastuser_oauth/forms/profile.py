@@ -55,7 +55,8 @@ class ProfileForm(forms.Form):
     email = forms.EmailField(__("Email address"),
         validators=[forms.validators.DataRequired(), forms.ValidEmail()],
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
-    username = forms.AnnotatedNullTextField(__("Username"), validators=[forms.validators.DataRequired()],
+    username = forms.AnnotatedTextField(__("Username"), validators=[forms.validators.DataRequired()],
+        filters=[forms.filters.none_if_empty()],
         prefix=u"https://hasgeek.com/…",
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     timezone = forms.SelectField(__("Timezone"), validators=[forms.validators.DataRequired()], choices=timezones)
