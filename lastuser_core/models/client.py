@@ -50,7 +50,6 @@ class ScopeMixin(object):
 class Client(ScopeMixin, BaseMixin, db.Model):
     """OAuth client applications"""
     __tablename__ = 'client'
-    __bind_key__ = 'lastuser'
     __scope_null_allowed__ = True
     #: User who owns this client
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
@@ -179,7 +178,6 @@ class ClientCredential(BaseMixin, db.Model):
        prefixed with 'sha256$'.
     """
     __tablename__ = 'client_credential'
-    __bind_key__ = 'lastuser'
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('credentials', cascade='all, delete-orphan',
@@ -221,7 +219,6 @@ class UserFlashMessage(BaseMixin, db.Model):
     Saved messages for a user, to be relayed to trusted clients.
     """
     __tablename__ = 'userflashmessage'
-    __bind_key__ = 'lastuser'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('flashmessages', cascade='delete, delete-orphan'))
@@ -237,7 +234,6 @@ class Resource(BaseScopedNameMixin, db.Model):
     `name` as part of the requested `scope`.
     """
     __tablename__ = 'resource'
-    __bind_key__ = 'lastuser'
     # Resource names are unique within client apps
     name = db.Column(db.Unicode(20), nullable=False)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
@@ -287,7 +283,6 @@ class ResourceAction(BaseMixin, db.Model):
     Actions that can be performed on resources.
     """
     __tablename__ = 'resourceaction'
-    __bind_key__ = 'lastuser'
     name = db.Column(db.Unicode(20), nullable=False)
     resource_id = db.Column(db.Integer, db.ForeignKey('resource.id'), nullable=False)
     resource = db.relationship(Resource, primaryjoin=resource_id == Resource.id,
@@ -319,7 +314,6 @@ class ResourceAction(BaseMixin, db.Model):
 class AuthCode(ScopeMixin, BaseMixin, db.Model):
     """Short-lived authorization tokens"""
     __tablename__ = 'authcode'
-    __bind_key__ = 'lastuser'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
@@ -340,7 +334,6 @@ class AuthCode(ScopeMixin, BaseMixin, db.Model):
 class AuthToken(ScopeMixin, BaseMixin, db.Model):
     """Access tokens for access to data"""
     __tablename__ = 'authtoken'
-    __bind_key__ = 'lastuser'
     # Null for client-only tokens and public clients (user is identified via user_session.user there)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     _user = db.relationship(User, primaryjoin=user_id == User.id,
@@ -482,7 +475,6 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
 
 class Permission(BaseMixin, db.Model):
     __tablename__ = 'permission'
-    __bind_key__ = 'lastuser'
     #: User who created this permission
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(User, primaryjoin=user_id == User.id,
@@ -545,7 +537,6 @@ class Permission(BaseMixin, db.Model):
 # This model's name is in plural because it defines multiple permissions within each instance
 class UserClientPermissions(BaseMixin, db.Model):
     __tablename__ = 'userclientpermissions'
-    __bind_key__ = 'lastuser'
     #: User who has these permissions
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
@@ -591,7 +582,6 @@ class UserClientPermissions(BaseMixin, db.Model):
 # This model's name is in plural because it defines multiple permissions within each instance
 class TeamClientPermissions(BaseMixin, db.Model):
     __tablename__ = 'teamclientpermissions'
-    __bind_key__ = 'lastuser'
     #: Team which has these permissions
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     team = db.relationship(Team, primaryjoin=team_id == Team.id,
@@ -625,7 +615,6 @@ class CLIENT_TEAM_ACCESS:
 
 class ClientTeamAccess(BaseMixin, db.Model):
     __tablename__ = 'clientteamaccess'
-    __bind_key__ = 'lastuser'
     #: Organization whose teams are exposed to the client app
     org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
     org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
@@ -639,7 +628,6 @@ class ClientTeamAccess(BaseMixin, db.Model):
 
 class NoticeType(BaseMixin, db.Model):
     __tablename__ = 'noticetype'
-    __bind_key__ = 'lastuser'
     #: User who created this notice type
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,

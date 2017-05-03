@@ -29,7 +29,6 @@ class USER_STATUS:
 
 class User(BaseMixin, db.Model):
     __tablename__ = 'user'
-    __bind_key__ = 'lastuser'
     #: UUID that replaces userid going forward
     uuid = db.Column(UUIDType(binary=False), default=uuid1mc, unique=True, nullable=False)
     #: The userid, a globally unique and permanent string to identify this user
@@ -394,7 +393,6 @@ event.listen(User.__table__, 'after_create',
 
 class UserOldId(TimestampMixin, db.Model):
     __tablename__ = 'useroldid'
-    __bind_key__ = 'lastuser'
     query_class = CoasterQuery
 
     # userid here is NOT a foreign key since it has to continue to exist
@@ -423,14 +421,12 @@ team_membership = db.Table(
     'team_membership', db.Model.metadata,
     *(make_timestamp_columns() + (
         db.Column('user_id', None, db.ForeignKey('user.id'), nullable=False, primary_key=True),
-        db.Column('team_id', None, db.ForeignKey('team.id'), nullable=False, primary_key=True))),
-    info={'bind_key': 'lastuser'}
+        db.Column('team_id', None, db.ForeignKey('team.id'), nullable=False, primary_key=True)))
     )
 
 
 class Organization(BaseMixin, db.Model):
     __tablename__ = 'organization'
-    __bind_key__ = 'lastuser'
     #: UUID that replaces userid going forward
     uuid = db.Column(UUIDType(binary=False), default=uuid1mc, unique=True, nullable=False)
     # owners_id cannot be null, but must be declared with nullable=True since there is
@@ -597,7 +593,6 @@ class Organization(BaseMixin, db.Model):
 
 class Team(BaseMixin, db.Model):
     __tablename__ = 'team'
-    __bind_key__ = 'lastuser'
     #: UUID that replaces userid going forward
     uuid = db.Column(UUIDType(binary=False), default=uuid1mc, unique=True, nullable=False)
     #: Unique and non-changing id
@@ -685,7 +680,6 @@ class OwnerMixin(object):
 
 class UserEmail(OwnerMixin, BaseMixin, db.Model):
     __tablename__ = 'useremail'
-    __bind_key__ = 'lastuser'
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('emails', cascade='all, delete-orphan'))
@@ -762,7 +756,6 @@ event.listen(UserEmail.__table__, 'after_create',
 
 class UserEmailClaim(OwnerMixin, BaseMixin, db.Model):
     __tablename__ = 'useremailclaim'
-    __bind_key__ = 'lastuser'
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('emailclaims', cascade='all, delete-orphan'))
@@ -847,7 +840,6 @@ class UserEmailClaim(OwnerMixin, BaseMixin, db.Model):
 
 class UserPhone(OwnerMixin, BaseMixin, db.Model):
     __tablename__ = 'userphone'
-    __bind_key__ = 'lastuser'
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('phones', cascade='all, delete-orphan'))
@@ -905,7 +897,6 @@ class UserPhone(OwnerMixin, BaseMixin, db.Model):
 
 class UserPhoneClaim(OwnerMixin, BaseMixin, db.Model):
     __tablename__ = 'userphoneclaim'
-    __bind_key__ = 'lastuser'
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('phoneclaims', cascade='all, delete-orphan'))
@@ -986,7 +977,6 @@ class UserPhoneClaim(OwnerMixin, BaseMixin, db.Model):
 
 class PasswordResetRequest(BaseMixin, db.Model):
     __tablename__ = 'passwordresetrequest'
-    __bind_key__ = 'lastuser'
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id)
     reset_code = db.Column(db.String(44), nullable=False, default=newsecret)
@@ -998,7 +988,6 @@ class PasswordResetRequest(BaseMixin, db.Model):
 
 class UserExternalId(BaseMixin, db.Model):
     __tablename__ = 'userexternalid'
-    __bind_key__ = 'lastuser'
     __at_username_services__ = []
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,

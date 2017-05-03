@@ -106,7 +106,6 @@ channel_registry = OrderedDict([(c.name, c.title) for c in [
 
 class SMSMessage(BaseMixin, db.Model):
     __tablename__ = 'smsmessage'
-    __bind_key__ = 'lastuser'
     # Phone number that the message was sent to
     phone_number = db.Column(db.String(15), nullable=False)
     transaction_id = db.Column(db.Unicode(40), unique=True, nullable=True)
@@ -146,7 +145,6 @@ class SMSMessage(BaseMixin, db.Model):
 #     """
 
 #     __tablename__ = 'notification_class'
-#     __bind_key__ = 'lastuser'
 
 #     #: Client app that will send these notifications
 #     client_id = db.Column(None, db.ForeignKey('client.id'), nullable=False)
@@ -169,7 +167,6 @@ class SMSMessage(BaseMixin, db.Model):
 
 # class UserNotificationPreference(ChannelMixin, BaseMixin, db.Model):
 #     __tablename__ = 'user_notification_preference'
-#     __bind_key__ = 'lastuser'
 
 #     #: The notification class these preferences are for
 #     notification_class_id = db.Column(None, db.ForeignKey('notification_class.id'), nullable=False)

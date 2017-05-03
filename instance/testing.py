@@ -7,9 +7,7 @@ DEBUG_TB_ENABLED = False
 DEBUG_TB_INTERCEPT_REDIRECTS = False
 SERVER_NAME='test.lastuser.dev:7500'
 LOGFILE = 'error.log'
-SQLALCHEMY_BINDS = {
-    'lastuser': environ.get('SQLALCHEMY_DATABASE_URI', 'postgres://@localhost:5432/lastuser_test_app'),
-}
+SQLALCHEMY_DATABASE_URI = environ.get('SQLALCHEMY_DATABASE_URI', 'postgres://@localhost:5432/lastuser_test_app')
 SQLALCHEMY_ECHO = False
 SECRET_KEY = 'random_string_here'
 TIMEZONE = 'Asia/Calcutta'

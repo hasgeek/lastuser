@@ -17,14 +17,12 @@ session_client = db.Table(
     'session_client', db.Model.metadata,
     *(make_timestamp_columns() + (
         db.Column('user_session_id', None, db.ForeignKey('user_session.id'), nullable=False, primary_key=True),
-        db.Column('client_id', None, db.ForeignKey('client.id'), nullable=False, primary_key=True))),
-    info={'bind_key': 'lastuser'}
+        db.Column('client_id', None, db.ForeignKey('client.id'), nullable=False, primary_key=True)))
     )
 
 
 class UserSession(BaseMixin, db.Model):
     __tablename__ = 'user_session'
-    __bind_key__ = 'lastuser'
 
     buid = db.Column(db.Unicode(22), nullable=False, unique=True, default=make_buid)
     sessionid = db.synonym('buid')
