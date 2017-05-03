@@ -3,7 +3,7 @@
 from flask import g, render_template, redirect, request, jsonify, get_flashed_messages
 from coaster.utils import newsecret
 from coaster.sqlalchemy import failsafe_add
-from baseframe import _, csrf
+from baseframe import _
 
 from lastuser_core.utils import make_redirect_url
 from lastuser_core import resource_registry
