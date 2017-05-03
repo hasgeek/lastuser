@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask
-from flask.ext.rq import RQ
+from flask_rq import RQ
 import coaster.app
 from baseframe import baseframe, assets, Version
 

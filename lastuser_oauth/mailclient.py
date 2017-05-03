@@ -2,7 +2,7 @@
 
 from markdown import markdown
 from flask import render_template
-from flask.ext.mail import Mail, Message
+from flask_mail import Mail, Message
 from baseframe import _
 from html2text import html2text
 

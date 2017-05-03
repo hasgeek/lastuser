@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import requests
-from flask.ext.rq import job
+from flask_rq import job
 from lastuser_core.models import AuthToken
 from lastuser_core.signals import user_data_changed, org_data_changed, team_data_changed, session_revoked
 

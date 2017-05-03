@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import Markup, url_for, current_app, escape
-import flask.ext.wtf as wtf
+import flask_wtf as wtf
 from coaster.utils import valid_username
 from baseframe import _, __
 import baseframe.forms as forms

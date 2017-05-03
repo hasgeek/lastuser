@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import urlparse
 from openid import oidutil
 from flask import g, current_app, redirect, request, flash, render_template, url_for, Markup, escape, abort
-from flask.ext.openid import OpenID
+from flask_openid import OpenID
 from coaster.utils import getbool
 from coaster.views import get_next_url, load_model
 from baseframe import _, __

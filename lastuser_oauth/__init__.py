@@ -2,7 +2,7 @@
 
 from itsdangerous import JSONWebSignatureSerializer
 from flask import Blueprint
-from flask.ext.assets import Bundle
+from flask_assets import Bundle
 
 
 class LastuserOAuthBlueprint(Blueprint):

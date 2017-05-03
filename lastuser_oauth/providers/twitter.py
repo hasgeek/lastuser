@@ -5,7 +5,7 @@ from tweepy import TweepError, OAuthHandler as TwitterOAuthHandler, API as Twitt
 from httplib import BadStatusLine
 from ssl import SSLError
 from socket import error as socket_error, gaierror
-from flask.ext.oauth import OAuth, OAuthException  # OAuth 1.0a
+from flask_oauth import OAuth, OAuthException  # OAuth 1.0a
 from baseframe import _
 from lastuser_core.registry import LoginProvider, LoginInitError, LoginCallbackError
 
