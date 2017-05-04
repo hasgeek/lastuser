@@ -9,7 +9,7 @@ before_script:
   - psql -c 'create database lastuser_test_app;' -U postgres
 
 script:
-  - nosetests --with-timer
+  - ./runtests.sh
 
 notifications:
   email: false

@@ -4,7 +4,6 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-from lastuserapp import app, init_for
+from lastuserapp import app
 
-init_for('dev')
-app.run('0.0.0.0', 7000, debug=True)
+app.run('0.0.0.0', 7000)

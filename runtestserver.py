@@ -4,10 +4,9 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-from lastuserapp import app, init_for, db
+from lastuserapp import app, db
 from lastuser_core.models import *
 
-init_for('testing')
 #incase data exists from previously run tests
 db.drop_all()
 #create schema again

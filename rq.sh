@@ -1,3 +1,3 @@
 #!/bin/bash
 
-rqworker -c rqdev lastuser
+rqworker -c rqinit lastuser

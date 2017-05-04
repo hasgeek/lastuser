@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from flask import Markup
 
+#: Debug mode (put this value in development.py only, never in settings.py)
+DEBUG = True
+
 #: The title of this site
 SITE_TITLE = 'Lastuser'
 
