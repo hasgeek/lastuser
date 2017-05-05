@@ -2,6 +2,7 @@
 
 from flask import Flask
 from flask_rq import RQ
+from flask_migrate import Migrate
 import coaster.app
 from baseframe import baseframe, assets, Version
 
@@ -30,6 +31,7 @@ assets['lastuser-oauth.css'][version] = lastuser_oauth.lastuser_oauth_css
 coaster.app.init_app(app)
 db.init_app(app)
 db.app = app  # To make it work without an app context
+migrate = Migrate(app, db)
 RQ(app)  # Pick up RQ configuration from the app
 baseframe.init_app(app, requires=['lastuser-oauth'],
     ext_requires=['baseframe-bs3', 'fontawesome>=4.0.0', 'jquery.cookie', 'timezone'])
