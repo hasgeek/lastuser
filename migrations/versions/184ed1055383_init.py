@@ -39,7 +39,6 @@ def upgrade():
     sa.Column('name', sa.Unicode(length=80), nullable=True),
     sa.Column('title', sa.Unicode(length=80), nullable=False),
     sa.Column('description', sa.UnicodeText(), nullable=False),
-    sa.ForeignKeyConstraint(['owners_id'], ['team.id'], name='fk_organization_owners_id'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name'),
     sa.UniqueConstraint('userid')
@@ -169,7 +168,6 @@ def upgrade():
     sa.Column('userid', sa.String(length=22), nullable=False),
     sa.Column('title', sa.Unicode(length=250), nullable=False),
     sa.Column('org_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['org_id'], ['organization.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('userid')
     )
@@ -309,6 +307,14 @@ def upgrade():
     sa.ForeignKeyConstraint(['resource_id'], ['resource.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name','resource_id')
+    )
+    op.create_foreign_key(
+        "fk_organization_owners_id", "organization", "team",
+        ['owners_id'], ['id']
+    )
+    op.create_foreign_key(
+        "fk_team_org_id", "team", "organization",
+        ['org_id'], ['id']
     )
     ### end Alembic commands ###
 
