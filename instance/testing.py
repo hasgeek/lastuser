@@ -5,7 +5,7 @@ from flask import Markup
 SITE_TITLE = 'Lastuser'
 DEBUG_TB_ENABLED = False
 DEBUG_TB_INTERCEPT_REDIRECTS = False
-SERVER_NAME='test.lastuser.dev:7500'
+SERVER_NAME = 'test.lastuser.dev:7500'
 LOGFILE = 'error.log'
 SQLALCHEMY_DATABASE_URI = environ.get('SQLALCHEMY_DATABASE_URI', 'postgres://@localhost:5432/lastuser_test_app')
 SQLALCHEMY_ECHO = False
@@ -13,12 +13,15 @@ SECRET_KEY = 'random_string_here'
 TIMEZONE = 'Asia/Calcutta'
 CACHE_TYPE = 'redis'
 
+# WTF_CSRF_ENABLED = False
+WTF_CSRF_CHECK_DEFAULT = False
+
 #: Use SSL for some URLs
 USE_SSL = False
 
 #: Mail settings
 MAIL_SUPRESS_SEND = True
-MAIL_FAIL_SILENTLY = False
+MAIL_FAIL_SILENTLY = True
 SITE_SUPPORT_EMAIL = environ.get('SITE_SUPPORT_EMAIL')
 # Mail secrets
 MAIL_SERVER = environ.get('MAIL_SERVER')

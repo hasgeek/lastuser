@@ -7,11 +7,6 @@ from lastuser_core.models import *
 
 @given('we have a new user')
 def given_new_user(context):
-    context.app_context = app.test_request_context()
-    context.app_context.push()
-    context.test_client = app.test_client()
-    db.drop_all()
-    db.create_all()
     context.new_user = dict(
         fullname='Alyssa P Hacker',
         email='alyssa@hacker.com',
@@ -33,7 +28,3 @@ def then_user_registered(context):
     assert user is not None
     assert len(user.emailclaims) is 1
     # assert g.user is user
-
-
-# def after_all(context):
-#     db.drop_all()
