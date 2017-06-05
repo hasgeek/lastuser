@@ -2,3 +2,5 @@ nose
 coverage
 nose-timer
 nose-progressive
+behave
+mock
