@@ -13,8 +13,7 @@ SECRET_KEY = 'random_string_here'
 TIMEZONE = 'Asia/Calcutta'
 CACHE_TYPE = 'redis'
 
-# WTF_CSRF_ENABLED = False
-WTF_CSRF_CHECK_DEFAULT = False
+WTF_CSRF_ENABLED = False
 
 #: Use SSL for some URLs
 USE_SSL = False

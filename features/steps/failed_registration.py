@@ -1,7 +1,6 @@
 from flask import g
 from behave import *
 from mock import MagicMock
-from lastuserapp import app
 from lastuser_core.models import *
 
 
@@ -26,6 +25,5 @@ def when_form_submit(context):
 
 @then('the new user will not be registered')
 def then_user_registered(context):
-    user_query = User.query.filter_by(username=u'username')
-    print(user_query.count())
+    user_query = User.query.filter_by(username=context.new_user['username'])
     assert user_query.count() == 1

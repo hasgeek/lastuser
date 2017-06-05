@@ -1,7 +1,6 @@
 from flask import g
 from behave import *
 from mock import MagicMock
-from lastuserapp import app
 from lastuser_core.models import *
 
 
@@ -24,7 +23,7 @@ def when_form_submit(context):
 @then('the new user will be registered')
 def then_user_registered(context):
     # import IPython; IPython.embed()
-    user = User.get(username='alyssa')
+    user = User.get(username=context.new_user['username'])
     assert user is not None
     assert len(user.emailclaims) is 1
     # assert g.user is user
