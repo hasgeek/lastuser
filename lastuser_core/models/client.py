@@ -388,6 +388,10 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
         return u'<AuthToken {token} of {client} {user}>'.format(
             token=self.token, client=repr(self.client)[1:-1], user=repr(self.user)[1:-1])
 
+    @property
+    def effective_scope(self):
+        return sorted(set(self.scope) | set(self.client.scope))
+
     def refresh(self):
         """
         Create a new token while retaining the refresh token.
@@ -434,7 +438,7 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
             if token.client_id in newtokens:
                 for newtoken in newtokens[token.client_id]:
                     if newtoken.user == newuser:
-                        # There's another token for  newuser with the same client.
+                        # There's another token for newuser with the same client.
                         # Just extend the scope there
                         newtoken.scope = set(newtoken.scope) | set(token.scope)
                         db.session.delete(token)
@@ -450,25 +454,27 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
 
         :param str token: Token to lookup
         """
-        return cls.query.filter_by(token=token).one_or_none()
+        query = cls.query.filter_by(token=token).options(db.joinedload(cls.client).load_only('id', '_scope'))
+        return query.one_or_none()
 
     @classmethod
     def all(cls, users):
         """
         Return all AuthToken for the specified users.
         """
+        query = cls.query.options(db.joinedload(cls.client).load_only('id', '_scope'))
         if isinstance(users, QueryBaseClass):
             count = users.count()
             if count == 1:
-                return cls.query.filter_by(user=users.first()).all()
+                return query.filter_by(user=users.first()).all()
             elif count > 1:
-                return cls.query.filter(AuthToken.user_id.in_(users.options(load_only('id')))).all()
+                return query.filter(AuthToken.user_id.in_(users.options(load_only('id')))).all()
         else:
             count = len(users)
             if count == 1:
-                return cls.query.filter_by(user=users[0]).all()
+                return query.filter_by(user=users[0]).all()
             elif count > 1:
-                return cls.query.filter(AuthToken.user_id.in_([u.id for u in users])).all()
+                return query.filter(AuthToken.user_id.in_([u.id for u in users])).all()
 
         return []
 

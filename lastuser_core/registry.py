@@ -70,7 +70,7 @@ class ResourceRegistry(OrderedDict):
                 if not authtoken.is_valid():
                     return resource_auth_error(_(u"Access token has expired"))
 
-                tokenscope = set(authtoken.scope)  # Read once to avoid reparsing below
+                tokenscope = set(authtoken.effective_scope)  # Read once to avoid reparsing below
                 wildcardscope = usescope.split('/', 1)[0] + '/*'
                 if not (authtoken.client.trusted and '*' in tokenscope):
                     # If a trusted client has '*' in token scope, all good, else check further

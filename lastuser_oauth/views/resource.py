@@ -139,8 +139,8 @@ def token_verify():
     if not authtoken:
         # No such auth token
         return api_result('error', error='no_token')
-    if (g.client.namespace + ':' + client_resource not in authtoken.scope) and (
-            g.client.namespace + ':*' not in authtoken.scope):
+    if (g.client.namespace + ':' + client_resource not in authtoken.effective_scope) and (
+            g.client.namespace + ':*' not in authtoken.effective_scope):
         # Token does not grant access to this resource
         return api_result('error', error='access_denied')
     if '/' in client_resource:
@@ -165,7 +165,7 @@ def token_verify():
     # TODO: Don't return validity. Set the HTTP cache headers instead.
     params = {'validity': 120}  # Period (in seconds) for which this assertion may be cached.
     if authtoken.user:
-        params['userinfo'] = get_userinfo(authtoken.user, g.client, scope=authtoken.scope)
+        params['userinfo'] = get_userinfo(authtoken.user, g.client, scope=authtoken.effective_scope)
     params['clientinfo'] = {
         'title': authtoken.client.title,
         'userid': authtoken.client.owner.userid,
@@ -194,7 +194,7 @@ def token_get_scope():
 
     client_resources = []
     nsprefix = g.client.namespace + ':'
-    for item in authtoken.scope:
+    for item in authtoken.effective_scope:
         if item.startswith(nsprefix):
             client_resources.append(item[len(nsprefix):])
 
@@ -205,7 +205,7 @@ def token_get_scope():
     # TODO: Don't return validity. Set the HTTP cache headers instead.
     params = {'validity': 120}  # Period (in seconds) for which this assertion may be cached.
     if authtoken.user:
-        params['userinfo'] = get_userinfo(authtoken.user, g.client, scope=authtoken.scope)
+        params['userinfo'] = get_userinfo(authtoken.user, g.client, scope=authtoken.effective_scope)
     params['clientinfo'] = {
         'title': authtoken.client.title,
         'userid': authtoken.client.owner.userid,
@@ -530,7 +530,7 @@ def resource_id(authtoken, args, files=None):
     Return user's id
     """
     if 'all' in args and getbool(args['all']):
-        return get_userinfo(authtoken.user, authtoken.client, scope=authtoken.scope, get_permissions=True)
+        return get_userinfo(authtoken.user, authtoken.client, scope=authtoken.effective_scope, get_permissions=True)
     else:
         return get_userinfo(authtoken.user, authtoken.client, scope=['id'], get_permissions=False)
 

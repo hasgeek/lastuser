@@ -33,19 +33,20 @@ def notify_user_data_changed(user, changes):
         # We have changes that apps need to hear about
         for token in user.authtokens:
             if token.is_valid() and token.client.notification_uri:
+                tokenscope = token.effective_scope
                 notify_changes = []
                 for change in changes:
                     if change in ['merge', 'profile']:
                         notify_changes.append(change)
                     elif change in ['email', 'email-claim', 'email-delete']:
-                        if 'email' in token.scope or 'email/*' in token.scope:
+                        if 'email' in tokenscope or 'email/*' in tokenscope:
                             notify_changes.append(change)
                     elif change in ['phone', 'phone-claim', 'phone-delete']:
-                        if 'phone' in token.scope or 'phone/*' in token.scope:
+                        if 'phone' in tokenscope or 'phone/*' in tokenscope:
                             notify_changes.append(change)
                     elif change in ['team-membership']:
-                        if ('organizations' in token.scope or 'organizations/*' in token.scope or
-                                'teams' in token.scope or 'teams/*' in token.scope):
+                        if ('organizations' in tokenscope or 'organizations/*' in tokenscope or
+                                'teams' in tokenscope or 'teams/*' in tokenscope):
                             notify_changes.append(change)
                 if notify_changes:
                     send_notice.delay(token.client.notification_uri, data={
@@ -67,7 +68,7 @@ def notify_org_data_changed(org, user, changes, team=None):
     else:
         team_access = []
     for token in AuthToken.all(users=org.owners.users):
-        if ('organizations' in token.scope or 'organizations/*' in token.scope) and token.client.notification_uri and token.is_valid():
+        if ('organizations' in token.effective_scope or 'organizations/*' in token.effective_scope) and token.client.notification_uri and token.is_valid():
             if team is not None:
                 if token.client not in team_access:
                     continue

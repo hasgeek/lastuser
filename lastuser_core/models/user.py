@@ -292,7 +292,7 @@ class User(BaseMixin, db.Model):
         """
         Return a list of clients with access to the user's organizations' teams.
         """
-        return [token.client for token in self.authtokens if 'teams' in token.scope]
+        return [token.client for token in self.authtokens if 'teams' in token.effective_scope]
 
     @classmethod
     def get(cls, username=None, userid=None, defercols=False):
