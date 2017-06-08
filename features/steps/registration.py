@@ -2,6 +2,7 @@ from flask import g
 from behave import *
 from mock import MagicMock
 from lastuser_core.models import *
+from lastuserapp import app
 
 
 @given('we have a new user')
@@ -17,7 +18,8 @@ def given_new_user(context):
 
 @when('a new user submits the registration form with the proper details')
 def when_form_submit(context):
-    return context.test_client.post('/register', data=context.new_user, follow_redirects=True)
+    with app.test_client() as c:
+        c.post('/register', data=context.new_user, follow_redirects=True)
 
 
 @then('the new user will be registered')

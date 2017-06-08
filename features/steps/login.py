@@ -1,7 +1,6 @@
 from flask import g
 from behave import when, then, given
-from mock import MagicMock
-from lastuser_core.models import db, User
+from lastuserapp import app
 
 
 @given("we have an existing user")
@@ -13,18 +12,23 @@ def given_existing_user(context):
         password='alyssa',
         confirm_password='alyssa'
     )
-    context.test_client.post('/register', data=context.test_user, follow_redirects=True)
+    with app.test_client() as c:
+        c.post('/register', data=context.test_user, follow_redirects=True)
 
 
 @when("the user tries to log in")
 def when_login_form_submit(context):
-    login_data = dict(
+    assert g.user is None
+    context.login_data = dict(
         username=context.test_user['username'],
-        password=context.test_user['password']
+        password=context.test_user['password'],
     )
-    context.test_client.post('/login', data=login_data, follow_redirects=True)
+    context.login_data['form.id'] = "passwordlogin"
+    with app.test_client() as c:
+        c.post('/login', data=context.login_data)
+        context.user = g.user
 
 
 @then("we log the user in")
 def user_login(context):
-    assert g.user is not None
+    assert context.user is not None
