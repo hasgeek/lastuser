@@ -150,8 +150,8 @@ class User(BaseMixin, db.Model):
             return bcrypt.hashpw(password.encode('utf-8'), self.pw_hash.encode('utf-8')) == self.pw_hash.encode('utf-8')
 
     def __repr__(self):
-        return u'<User {username} "{fullname}">'.format(username=self.username or self.userid,
-            fullname=self.fullname)
+        return '<User {username} "{fullname}">'.format(username=self.username or self.userid,
+            fullname=self.fullname.encode('utf-8'))
 
     def profileid(self):
         if self.username:
@@ -407,7 +407,7 @@ class UserOldId(TimestampMixin, db.Model):
         backref=db.backref('oldids', cascade='all, delete-orphan'))
 
     def __repr__(self):
-        return u'<UserOldId {userid} of {user}>'.format(
+        return '<UserOldId {userid} of {user}>'.format(
             userid=self.userid, user=repr(self.user)[1:-1])
 
     @classmethod
@@ -511,8 +511,8 @@ class Organization(BaseMixin, db.Model):
         return True
 
     def __repr__(self):
-        return u'<Organization {name} "{title}">'.format(
-            name=self.name or self.userid, title=self.title)
+        return '<Organization {name} "{title}">'.format(
+            name=self.name or self.userid, title=self.title.encode('utf-8'))
 
     @property
     def pickername(self):
@@ -617,8 +617,8 @@ class Team(BaseMixin, db.Model):
     client = db.relationship('Client', foreign_keys=[client_id])  # No backref or cascade
 
     def __repr__(self):
-        return u'<Team {team} of {org}>'.format(
-            team=self.title, org=repr(self.org)[1:-1])
+        return '<Team {team} of {org}>'.format(
+            team=self.title.encode('utf-8'), org=repr(self.org)[1:-1])
 
     @property
     def pickername(self):
@@ -722,7 +722,7 @@ class UserEmail(OwnerMixin, BaseMixin, db.Model):
     email = db.synonym('_email', descriptor=email)
 
     def __repr__(self):
-        return u'<UserEmail {email} of {owner}>'.format(
+        return '<UserEmail {email} of {owner}>'.format(
             email=self.email, owner=repr(self.owner)[1:-1])
 
     def __unicode__(self):
@@ -803,7 +803,7 @@ class UserEmailClaim(OwnerMixin, BaseMixin, db.Model):
     email = db.synonym('_email', descriptor=email)
 
     def __repr__(self):
-        return u'<UserEmailClaim {email} of {owner}>'.format(
+        return '<UserEmailClaim {email} of {owner}>'.format(
             email=self.email, owner=repr(self.owner)[1:-1])
 
     def __unicode__(self):
@@ -876,7 +876,7 @@ class UserPhone(OwnerMixin, BaseMixin, db.Model):
     phone = db.synonym('_phone', descriptor=phone)
 
     def __repr__(self):
-        return u'<UserPhone {phone} of {user}>'.format(
+        return '<UserPhone {phone} of {user}>'.format(
             phone=self.phone, user=repr(self.user)[1:-1])
 
     def __unicode__(self):
@@ -940,7 +940,7 @@ class UserPhoneClaim(OwnerMixin, BaseMixin, db.Model):
     phone = db.synonym('_phone', descriptor=phone)
 
     def __repr__(self):
-        return u'<UserPhoneClaim {phone} of {user}>'.format(
+        return '<UserPhoneClaim {phone} of {user}>'.format(
             phone=self.phone, user=repr(self.user)[1:-1])
 
     def __unicode__(self):
@@ -1002,7 +1002,7 @@ class UserExternalId(BaseMixin, db.Model):
     __table_args__ = (db.UniqueConstraint('service', 'userid'), {})
 
     def __repr__(self):
-        return u'<UserExternalId {service}:{username} of {user}>'.format(
+        return '<UserExternalId {service}:{username} of {user}>'.format(
             service=self.service, username=self.username, user=repr(self.user)[1:-1])
 
     @classmethod
