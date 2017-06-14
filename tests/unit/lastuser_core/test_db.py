@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from lastuserapp import app, db, init_for
+from lastuserapp import app, db
 from .fixtures import Fixtures
 
 
@@ -11,7 +11,6 @@ class TestDatabaseFixture(unittest.TestCase):
         """
         Initialize a test DB and call to make fixtures.
         """
-        init_for('testing')
         self.app = app
         db.create_all()
         self.fixtures = Fixtures()

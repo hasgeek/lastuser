@@ -1,5 +1,5 @@
 
-from lastuserapp import db, app, init_for
+from lastuserapp import db, app
 from lastuser_core import login_registry
 from lastuser_core.registry import LoginProviderRegistry
 import unittest
@@ -18,7 +18,6 @@ class TestLoginProviderRegistry(unittest.TestCase):
         # we temporarily do not use the app instance available globally
         # and construct app instance separately
         expected_login_providers = []
-        init_for('testing')
         if app.config.get('OAUTH_TWITTER_KEY') and app.config.get('OAUTH_TWITTER_SECRET'):
             expected_login_providers.append('twitter')
         if app.config.get('OAUTH_GOOGLE_KEY') and app.config.get('OAUTH_GOOGLE_SECRET'):
