@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime, timedelta
+from uuid import uuid4
 from hashlib import md5
 from werkzeug import check_password_hash, cached_property
 import bcrypt
@@ -9,7 +10,7 @@ from sqlalchemy.orm import defer, deferred, foreign, remote
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy_utils import UUIDType
-from coaster.utils import buid, newsecret, newpin, valid_username, uuid1mc
+from coaster.utils import buid, newsecret, newpin, valid_username
 from coaster.sqlalchemy import Query as CoasterQuery, make_timestamp_columns, failsafe_add
 from baseframe import _
 
@@ -30,7 +31,7 @@ class USER_STATUS:
 class User(BaseMixin, db.Model):
     __tablename__ = 'user'
     #: UUID that replaces userid going forward
-    uuid = db.Column(UUIDType(binary=False), default=uuid1mc, unique=True, nullable=False)
+    uuid = db.Column(UUIDType(binary=False), default=uuid4, unique=True, nullable=False)
     #: The userid, a globally unique and permanent string to identify this user
     userid = db.Column(db.String(22), unique=True, nullable=False, default=buid)
     #: The user's fullname
@@ -428,7 +429,7 @@ team_membership = db.Table(
 class Organization(BaseMixin, db.Model):
     __tablename__ = 'organization'
     #: UUID that replaces userid going forward
-    uuid = db.Column(UUIDType(binary=False), default=uuid1mc, unique=True, nullable=False)
+    uuid = db.Column(UUIDType(binary=False), default=uuid4, unique=True, nullable=False)
     # owners_id cannot be null, but must be declared with nullable=True since there is
     # a circular dependency. The post_update flag on the relationship tackles the circular
     # dependency within SQLAlchemy.
@@ -594,7 +595,7 @@ class Organization(BaseMixin, db.Model):
 class Team(BaseMixin, db.Model):
     __tablename__ = 'team'
     #: UUID that replaces userid going forward
-    uuid = db.Column(UUIDType(binary=False), default=uuid1mc, unique=True, nullable=False)
+    uuid = db.Column(UUIDType(binary=False), default=uuid4, unique=True, nullable=False)
     #: Unique and non-changing id
     userid = db.Column(db.String(22), unique=True, nullable=False, default=buid)
     #: Displayed name
