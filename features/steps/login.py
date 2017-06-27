@@ -1,6 +1,7 @@
 from flask import g
 from behave import when, then, given
 from lastuserapp import app
+import selenium.webdriver.support.ui as ui
 
 
 @given("we have an existing user")
@@ -12,23 +13,36 @@ def given_existing_user(context):
         password='alyssa',
         confirm_password='alyssa'
     )
-    with app.test_client() as c:
-        c.post('/register', data=context.test_user, follow_redirects=True)
+
+    context.browser.visit('/register')
+    assert context.browser.find_element_by_name('csrf_token').is_enabled()
+    for k, v in context.test_user.iteritems():
+        context.browser.find_element_by_name(k).send_keys(v)
+
+    register_form = context.browser.find_element_by_id('register')
+    register_form.submit()
 
 
 @when("the user tries to log in")
 def when_login_form_submit(context):
-    assert g.user is None
-    context.login_data = dict(
-        username=context.test_user['username'],
-        password=context.test_user['password'],
-    )
-    context.login_data['form.id'] = "passwordlogin"
-    with app.test_client() as c:
-        c.post('/login', data=context.login_data)
-        context.user = g.user
+    context.login_data = {
+        'username': context.test_user['username'],
+        'password': context.test_user['password']
+    }
+    wait = ui.WebDriverWait(context.browser, 2)
+
+    context.browser.visit('/login')
+    assert context.browser.find_element_by_name('csrf_token').is_enabled()
+
+    context.browser.find_element_by_id('showmore').click()
+    for k, v in context.login_data.iteritems():
+        context.browser.find_element_by_name(k).send_keys(v)
+
+    context.browser.find_element_by_name('username').submit()
+
+    context.user_button = wait.until(lambda browser: browser.find_element_by_id('hg-user-btn'))
 
 
 @then("we log the user in")
 def user_login(context):
-    assert context.user is not None
+    assert context.user_button.is_enabled()
