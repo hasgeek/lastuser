@@ -4,3 +4,4 @@ nose-timer
 nose-progressive
 behave
 mock
+selenium
