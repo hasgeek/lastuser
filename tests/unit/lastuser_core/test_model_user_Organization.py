@@ -50,15 +50,15 @@ class TestOrganization(TestDatabaseFixture):
         spew = models.Organization(name=name, title=title)
         db.session.add(spew)
         db.session.commit()
-        # scenario 1: when neither name or userid are passed
+        # scenario 1: when neither name or buid are passed
         with self.assertRaises(TypeError):
             models.Organization.get()
-        # scenario 2: when userid is passed
-        userid = spew.userid
-        get_by_userid = models.Organization.get(userid=userid)
-        self.assertIsInstance(get_by_userid, models.Organization)
-        assert u'<Organization' in repr(get_by_userid)
-        assert u'"{title}">'.format(title=title) in repr(get_by_userid)
+        # scenario 2: when buid is passed
+        buid = spew.buid
+        get_by_buid = models.Organization.get(buid=buid)
+        self.assertIsInstance(get_by_buid, models.Organization)
+        assert u'<Organization' in repr(get_by_buid)
+        assert u'"{title}">'.format(title=title) in repr(get_by_buid)
         # scenario 3: when username is passed
         get_by_name = models.Organization.get(name=name)
         self.assertIsInstance(get_by_name, models.Organization)
@@ -70,21 +70,21 @@ class TestOrganization(TestDatabaseFixture):
 
     def test_Organization_all(self):
         """
-        Test for getting all organizations (takes userid or name optionally)
+        Test for getting all organizations (takes buid or name optionally)
         """
         gryffindor = models.Organization(name=u'gryffindor')
         ravenclaw = models.Organization(name=u'ravenclaw')
         db.session.add(gryffindor)
         db.session.add(ravenclaw)
         db.session.commit()
-        # scenario 1: when neither userids nor names are given
+        # scenario 1: when neither buids nor names are given
         self.assertEqual(models.Organization.all(), [])
-        # scenario 2: when userids are passed
+        # scenario 2: when buids are passed
         orglist = [gryffindor, ravenclaw]
-        orgids = [gryffindor.userid, ravenclaw.userid]
-        all_by_userids = models.Organization.all(userids=orgids)
-        self.assertIsInstance(all_by_userids, list)
-        self.assertItemsEqual(all_by_userids, orglist)
+        orgids = [gryffindor.buid, ravenclaw.buid]
+        all_by_buids = models.Organization.all(buids=orgids)
+        self.assertIsInstance(all_by_buids, list)
+        self.assertItemsEqual(all_by_buids, orglist)
         # scenario 3: when org names are passed
         names = [gryffindor.name, ravenclaw.name]
         all_by_names = models.Organization.all(names=names)
@@ -94,10 +94,10 @@ class TestOrganization(TestDatabaseFixture):
         all_by_names_with_defercols = models.Organization.all(names=names)
         self.assertIsInstance(all_by_names_with_defercols, list)
         self.assertItemsEqual(all_by_names_with_defercols, orglist)
-        # scenario 5: when defercols is set to True for userids
-        all_by_userids_with_defercols = models.Organization.all(userids=orgids)
-        self.assertIsInstance(all_by_userids_with_defercols, list)
-        self.assertItemsEqual(all_by_userids_with_defercols, orglist)
+        # scenario 5: when defercols is set to True for buids
+        all_by_buids_with_defercols = models.Organization.all(buids=orgids)
+        self.assertIsInstance(all_by_buids_with_defercols, list)
+        self.assertItemsEqual(all_by_buids_with_defercols, orglist)
 
     def test_organization_valid_name(self):
         """

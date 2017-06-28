@@ -8,14 +8,14 @@ class TestTeam(TestDatabaseFixture):
 
     def test_Team_get(self):
         """
-        Test for retrieving a Team with matching userid.
+        Test for retrieving a Team with matching buid.
         """
         dachshunds = self.fixtures.dachshunds
-        dachshunds_userid = dachshunds.userid
-        result_with_userid = models.Team.get(userid=dachshunds_userid)
-        assert u'<Team {team} of {org}>'.format(team=dachshunds.title, org=repr(dachshunds.org)[1:-1]) in repr(result_with_userid)
-        result_without_userid = models.Team.get()
-        self.assertIsNone(result_without_userid)
+        dachshunds_buid = dachshunds.buid
+        result_with_buid = models.Team.get(buid=dachshunds_buid)
+        assert u'<Team {team} of {org}>'.format(team=dachshunds.title, org=repr(dachshunds.org)[1:-1]) in repr(result_with_buid)
+        result_without_buid = models.Team.get()
+        self.assertIsNone(result_without_buid)
 
     def test_team_pickername(self):
         """

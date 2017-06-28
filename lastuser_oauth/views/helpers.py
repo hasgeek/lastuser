@@ -21,7 +21,7 @@ valid_timezones = set(common_timezones)
 @lastuser_oauth.before_app_request
 def lookup_current_user():
     """
-    If there's a userid in the session, retrieve the user object and add
+    If there's a buid in the session, retrieve the user object and add
     to the request namespace object g.
     """
     g.user = None
@@ -63,7 +63,7 @@ def lookup_current_user():
     else:
         lastuser_cookie.pop('sessionid', None)
     if g.user:
-        lastuser_cookie['userid'] = g.user.userid
+        lastuser_cookie['userid'] = g.user.buid
     else:
         lastuser_cookie.pop('userid', None)
 
@@ -255,7 +255,7 @@ def login_internal(user):
     usersession = UserSession(user=user)
     usersession.access()
     g.lastuser_cookie['sessionid'] = usersession.buid
-    g.lastuser_cookie['userid'] = user.userid
+    g.lastuser_cookie['userid'] = user.buid
     session.permanent = False
     autoset_timezone(user)
     user_login.send(user)
@@ -278,6 +278,7 @@ def logout_internal():
     session.pop('sessionid', None)
     session.pop('userid', None)
     session.pop('merge_userid', None)
+    session.pop('merge_buid', None)
     session.pop('userid_external', None)
     session.pop('avatar_url', None)
     g.lastuser_cookie.pop('sessionid', None)

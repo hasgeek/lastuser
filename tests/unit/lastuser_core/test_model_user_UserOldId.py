@@ -25,6 +25,6 @@ class TestUserOldId(TestDatabaseFixture):
             other = batdog
         else:
             other = crusoe
-        query_for_olduser = models.UserOldId.get(other.userid)
+        query_for_olduser = models.UserOldId.get(other.uuid)
         self.assertIsInstance(query_for_olduser, models.UserOldId)
         self.assertEqual(query_for_olduser.olduser, other)

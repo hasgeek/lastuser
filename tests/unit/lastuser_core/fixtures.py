@@ -42,7 +42,7 @@ class Fixtures(object):
         db.session.add(client)
         self.client = client
 
-        dachshunds = Team(userid=crusoe.userid, title=u"Dachshunds", org=batdog, domain=u'keepballin.ca')
+        dachshunds = Team(title=u"Dachshunds", org=batdog, domain=u'keepballin.ca')
         db.session.add(dachshunds)
         self.dachshunds = dachshunds
 

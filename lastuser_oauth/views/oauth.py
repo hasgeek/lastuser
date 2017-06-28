@@ -378,7 +378,7 @@ def oauth_token():
     username = request.form.get('username')
     password = request.form.get('password')
     # if grant_type == 'client_credentials'
-    userid = request.form.get('userid')
+    buid = request.form.get('buid') or request.form.get('userid')  # XXX: Deprecated userid parameter
 
     # Validations 1: Required parameters
     if not grant_type:
@@ -396,9 +396,9 @@ def oauth_token():
         except ScopeException as scopeex:
             return oauth_token_error('invalid_scope', unicode(scopeex))
 
-        if userid:
+        if buid:
             if client.trusted:
-                user = User.get(userid=userid)
+                user = User.get(buid=buid)
                 if user:
                     token = oauth_make_token(user=user, client=client, scope=[])
                     return oauth_token_success(

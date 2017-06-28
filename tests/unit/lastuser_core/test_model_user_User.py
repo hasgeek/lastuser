@@ -50,7 +50,7 @@ class TestUser(TestDatabaseFixture):
 
     def test_user_displayname(self):
         """
-        Test to verify any fullname or username or userid for displayname
+        Test to verify any fullname or username or buid for displayname
         """
         crusoe = self.fixtures.crusoe
         oakley = self.fixtures.oakley
@@ -59,7 +59,7 @@ class TestUser(TestDatabaseFixture):
         lena = models.User()
         db.session.add(lena)
         db.session.commit()
-        self.assertEqual(lena.displayname(), lena.userid)
+        self.assertEqual(lena.displayname(), lena.buid)
 
     def test_user_pickername(self):
         """
@@ -243,7 +243,7 @@ class TestUser(TestDatabaseFixture):
         kate_password = kate._set_password(u'12thprecinct')
         db.session.add(kate)
         db.session.commit()
-        result = models.User.get(userid=kate.userid)
+        result = models.User.get(buid=kate.buid)
         self.assertEqual(len(result.pw_hash), 60)
         self.assertGreater(result.pw_expires_at, result.pw_set_at)
 
@@ -276,7 +276,7 @@ class TestUser(TestDatabaseFixture):
         alexis.pw_expires_at=datetime.utcnow()+ timedelta(0,0,1)
         db.session.add(alexis)
         db.session.commit()
-        result = models.User.get(userid=alexis.userid)
+        result = models.User.get(buid=alexis.buid)
         self.assertTrue(alexis.password_has_expired())
 
     def test_user_password_is(self):
@@ -354,15 +354,15 @@ class TestUser(TestDatabaseFixture):
         """
         Test for User's get method
         """
-        # scenario 1: if both username and userid not passed
+        # scenario 1: if both username and buid not passed
         with self.assertRaises(TypeError):
             models.User.get()
         crusoe = self.fixtures.crusoe
         piglet = self.fixtures.piglet
-        # scenario 2: if userid is passed
-        lookup_by_userid = models.User.get(userid=crusoe.userid)
-        self.assertIsInstance(lookup_by_userid, models.client.User)
-        self.assertEqual(lookup_by_userid.userid, crusoe.userid)
+        # scenario 2: if buid is passed
+        lookup_by_buid = models.User.get(buid=crusoe.buid)
+        self.assertIsInstance(lookup_by_buid, models.client.User)
+        self.assertEqual(lookup_by_buid.buid, crusoe.buid)
         # scenario 3: if username is passed
         lookup_by_username = models.User.get(username=u"crusoe")
         self.assertIsInstance(lookup_by_username, models.User)
@@ -376,9 +376,9 @@ class TestUser(TestDatabaseFixture):
         lector.status = models.USER_STATUS.ACTIVE
         db.session.add(lector)
         db.session.commit()
-        lookup_by_userid_status = models.User.get(userid=lector.userid)
-        self.assertIsInstance(lookup_by_userid_status, models.User)
-        self.assertEqual(lookup_by_userid_status.status, lector.status)
+        lookup_by_buid_status = models.User.get(buid=lector.buid)
+        self.assertIsInstance(lookup_by_buid_status, models.User)
+        self.assertEqual(lookup_by_buid_status.status, lector.status)
         # scenario 6 : when user.status is USER_STATUS.MERGED
         piglet = self.fixtures.piglet
         piggy = models.User(username=u'piggy')
@@ -386,28 +386,28 @@ class TestUser(TestDatabaseFixture):
         db.session.commit()
         merged_user = models.merge_users(piglet, piggy)
         db.session.commit()
-        lookup_by_userid_merged = models.User.get(userid=piggy.userid)
-        self.assertIsInstance(lookup_by_userid_merged, models.User)
-        self.assertEqual(lookup_by_userid_merged.username, piglet.username)
+        lookup_by_buid_merged = models.User.get(buid=piggy.buid)
+        self.assertIsInstance(lookup_by_buid_merged, models.User)
+        self.assertEqual(lookup_by_buid_merged.username, piglet.username)
 
     def test_User_all(self):
         """
         Test for User's all method
         """
-        # scenario 1: when neither userids or usernames are passed
+        # scenario 1: when neither buids or usernames are passed
         with self.assertRaises(Exception):
             models.User.all()
         crusoe = self.fixtures.crusoe
         oakley = self.fixtures.oakley
         expected_result = [crusoe, oakley]
-        # scenario 2: when both userids and usernames are passed
-        lookup_by_both = models.User.all(userids=[crusoe.userid], usernames=[oakley.username])
+        # scenario 2: when both buids and usernames are passed
+        lookup_by_both = models.User.all(buids=[crusoe.buid], usernames=[oakley.username])
         self.assertIsInstance(lookup_by_both, list)
         self.assertItemsEqual(lookup_by_both, expected_result)
-        # scenario 3: when only userids are passed
-        lookup_by_userids = models.User.all(userids=[crusoe.userid, oakley.userid])
-        self.assertIsInstance(lookup_by_userids, list)
-        self.assertItemsEqual(lookup_by_userids, expected_result)
+        # scenario 3: when only buids are passed
+        lookup_by_buids = models.User.all(buids=[crusoe.buid, oakley.buid])
+        self.assertIsInstance(lookup_by_buids, list)
+        self.assertItemsEqual(lookup_by_buids, expected_result)
         # scenario 4: when only usernames are passed
         lookup_by_usernames = models.User.all(usernames=[crusoe.username, oakley.username])
         self.assertIsInstance(lookup_by_usernames, list)
@@ -421,9 +421,9 @@ class TestUser(TestDatabaseFixture):
         hannibal.status = models.USER_STATUS.ACTIVE
         db.session.add(hannibal)
         db.session.commit()
-        lookup_by_userid_status = models.User.all(usernames=[hannibal.username])
-        self.assertIsInstance(lookup_by_userid_status, list)
-        self.assertEqual(lookup_by_userid_status[0].status, hannibal.status)
+        lookup_by_buid_status = models.User.all(usernames=[hannibal.username])
+        self.assertIsInstance(lookup_by_buid_status, list)
+        self.assertEqual(lookup_by_buid_status[0].status, hannibal.status)
         # scenario 7 : when user.status is USER_STATUS.MERGED
         jykll = models.User()
         hyde = models.User()
@@ -431,9 +431,9 @@ class TestUser(TestDatabaseFixture):
         db.session.commit()
         merged_user = models.merge_users(jykll, hyde)
         db.session.commit()
-        lookup_by_userid_merged = models.User.all(userids=[hyde.userid])
-        self.assertIsInstance(lookup_by_userid_merged, list)
-        self.assertEqual(lookup_by_userid_merged[0].username, jykll.username)
+        lookup_by_buid_merged = models.User.all(buids=[hyde.buid])
+        self.assertIsInstance(lookup_by_buid_merged, list)
+        self.assertEqual(lookup_by_buid_merged[0].username, jykll.username)
 
     def test_user_add_email(self):
         """

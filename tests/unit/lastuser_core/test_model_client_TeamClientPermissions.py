@@ -17,8 +17,8 @@ class TestTeamClientPermissions(TestDatabaseFixture):
         team_client_permission = self.fixtures.team_client_permission
         self.assertEqual(team_client_permission.pickername, dachshunds.title)
 
-    def test_teamclientpermissions_userid(self):
-        """Test for retreving userid of a TeamClientPermissions instance """
+    def test_teamclientpermissions_budi(self):
+        """Test for retreving buid of a TeamClientPermissions instance """
         dachshunds = self.fixtures.dachshunds
         team_client_permission = self.fixtures.team_client_permission
-        self.assertEqual(team_client_permission.userid, dachshunds.userid)
+        self.assertEqual(team_client_permission.buid, dachshunds.buid)

@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime, timedelta
-from uuid import uuid4
 from hashlib import md5
 from werkzeug import check_password_hash, cached_property
 import bcrypt
 from sqlalchemy import or_, event, DDL
-from sqlalchemy.orm import defer, deferred, foreign, remote
+from sqlalchemy.orm import defer, deferred
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy_utils import UUIDType
-from coaster.utils import buid, newsecret, newpin, valid_username
-from coaster.sqlalchemy import Query as CoasterQuery, make_timestamp_columns, failsafe_add
+from coaster.utils import newsecret, newpin, valid_username
+from coaster.sqlalchemy import make_timestamp_columns, failsafe_add
 from baseframe import _
 
-from . import db, TimestampMixin, BaseMixin
+from . import db, BaseMixin, UuidMixin
 
 
 __all__ = ['User', 'UserEmail', 'UserEmailClaim', 'PasswordResetRequest', 'UserExternalId',
@@ -28,12 +26,8 @@ class USER_STATUS:
     INVITED = 3    # Invited to make an account, doesn't have one yet
 
 
-class User(BaseMixin, db.Model):
+class User(UuidMixin, BaseMixin, db.Model):
     __tablename__ = 'user'
-    #: UUID that replaces userid going forward
-    uuid = db.Column(UUIDType(binary=False), default=uuid4, unique=True, nullable=False)
-    #: The userid, a globally unique and permanent string to identify this user
-    userid = db.Column(db.String(22), unique=True, nullable=False, default=buid)
     #: The user's fullname
     fullname = db.Column(db.Unicode(80), default=u'', nullable=False)
     #: Alias for the user's fullname
@@ -82,7 +76,6 @@ class User(BaseMixin, db.Model):
         ]
 
     def __init__(self, password=None, **kwargs):
-        self.userid = buid()
         self.password = password
         super(User, self).__init__(**kwargs)
 
@@ -92,7 +85,7 @@ class User(BaseMixin, db.Model):
 
     def merged_user(self):
         if self.status == USER_STATUS.MERGED:
-            return UserOldId.get(self.userid).user
+            return UserOldId.get(self.uuid).user
         else:
             return self
 
@@ -130,7 +123,7 @@ class User(BaseMixin, db.Model):
             return False
         existing = User.query.filter(db.or_(
             User.username == value,
-            User.userid == value)).first()  # Avoid User.get to skip status check
+            User.buid == value)).first()  # Avoid User.get to skip status check
         if existing and existing.id != self.id:
             return False
         existing = Organization.get(name=value)
@@ -151,17 +144,17 @@ class User(BaseMixin, db.Model):
             return bcrypt.hashpw(password.encode('utf-8'), self.pw_hash.encode('utf-8')) == self.pw_hash.encode('utf-8')
 
     def __repr__(self):
-        return '<User {username} "{fullname}">'.format(username=self.username or self.userid,
+        return '<User {username} "{fullname}">'.format(username=self.username or self.buid,
             fullname=self.fullname.encode('utf-8'))
 
     def profileid(self):
         if self.username:
             return self.username
         else:
-            return self.userid
+            return self.buid
 
     def displayname(self):
-        return self.fullname or self.username or self.userid
+        return self.fullname or self.username or self.buid
 
     @property
     def pickername(self):
@@ -296,19 +289,19 @@ class User(BaseMixin, db.Model):
         return [token.client for token in self.authtokens if 'teams' in token.effective_scope]
 
     @classmethod
-    def get(cls, username=None, userid=None, defercols=False):
+    def get(cls, username=None, buid=None, defercols=False):
         """
-        Return a User with the given username or userid.
+        Return a User with the given username or buid.
 
         :param str username: Username to lookup
-        :param str userid: Userid to lookup
+        :param str buid: Buid to lookup
         :param bool defercols: Defer loading non-critical columns
         """
-        if not bool(username) ^ bool(userid):
-            raise TypeError("Either username or userid should be specified")
+        if not bool(username) ^ bool(buid):
+            raise TypeError("Either username or buid should be specified")
 
-        if userid:
-            query = cls.query.filter_by(userid=userid)
+        if buid:
+            query = cls.query.filter_by(buid=buid)
         else:
             query = cls.query.filter_by(username=username)
         if defercols:
@@ -320,19 +313,19 @@ class User(BaseMixin, db.Model):
             return user
 
     @classmethod
-    def all(cls, userids=None, usernames=None, defercols=False):
+    def all(cls, buids=None, usernames=None, defercols=False):
         """
         Return all matching users.
 
-        :param list userids: Userids to look up
+        :param list buids: Buids to look up
         :param list usernames: Usernames to look up
         :param bool defercols: Defer loading non-critical columns
         """
         users = set()
-        if userids and usernames:
-            query = cls.query.filter(or_(cls.userid.in_(userids), cls.username.in_(usernames)))
-        elif userids:
-            query = cls.query.filter(cls.userid.in_(userids))
+        if buids and usernames:
+            query = cls.query.filter(or_(cls.buid.in_(buids), cls.username.in_(usernames)))
+        elif buids:
+            query = cls.query.filter(cls.buid.in_(buids))
         elif usernames:
             query = cls.query.filter(cls.username.in_(usernames))
         else:
@@ -364,8 +357,8 @@ class User(BaseMixin, db.Model):
         if not query:
             return []
         users = cls.query.filter(cls.status == USER_STATUS.ACTIVE,
-            or_(  # Match against userid (exact value only), fullname or username, case insensitive
-                cls.userid == query[:-1],
+            or_(  # Match against buid (exact value only), fullname or username, case insensitive
+                cls.buid == query[:-1],
                 db.func.lower(cls.fullname).like(db.func.lower(query)),
                 db.func.lower(cls._username).like(db.func.lower(query))
                 )
@@ -392,28 +385,26 @@ event.listen(User.__table__, 'after_create',
     create_user_index.execute_if(dialect='postgresql'))
 
 
-class UserOldId(TimestampMixin, db.Model):
+class UserOldId(UuidMixin, BaseMixin, db.Model):
     __tablename__ = 'useroldid'
-    query_class = CoasterQuery
+    __uuid_primary_key__ = True
 
-    # userid here is NOT a foreign key since it has to continue to exist
-    # even if the User record is removed
-    userid = db.Column(db.String(22), nullable=False, primary_key=True)
-    #: UUID that replaces userid going forward
-    uuid = db.Column(UUIDType(binary=False), unique=True, nullable=False)
-    olduser = db.relationship(User, primaryjoin=foreign(userid) == remote(User.userid),
+    #: Old user account, if still present
+    olduser = db.relationship(User, primaryjoin='foreign(UserOldId.id) == remote(User.uuid)',
         backref=db.backref('oldid', uselist=False))
+    #: User id of new user
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
+    #: New user account
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('oldids', cascade='all, delete-orphan'))
 
     def __repr__(self):
-        return '<UserOldId {userid} of {user}>'.format(
-            userid=self.userid, user=repr(self.user)[1:-1])
+        return '<UserOldId {buid} of {user}>'.format(
+            buid=self.buid, user=repr(self.user)[1:-1])
 
     @classmethod
-    def get(cls, userid):
-        return cls.query.filter_by(userid=userid).one_or_none()
+    def get(cls, uuid):
+        return cls.query.filter_by(id=uuid).one_or_none()
 
 
 # --- Organizations and teams -------------------------------------------------
@@ -426,10 +417,8 @@ team_membership = db.Table(
     )
 
 
-class Organization(BaseMixin, db.Model):
+class Organization(UuidMixin, BaseMixin, db.Model):
     __tablename__ = 'organization'
-    #: UUID that replaces userid going forward
-    uuid = db.Column(UUIDType(binary=False), default=uuid4, unique=True, nullable=False)
     # owners_id cannot be null, but must be declared with nullable=True since there is
     # a circular dependency. The post_update flag on the relationship tackles the circular
     # dependency within SQLAlchemy.
@@ -441,7 +430,6 @@ class Organization(BaseMixin, db.Model):
         use_alter=True, name='organization_members_id_fkey'), nullable=True)
     members = db.relationship('Team', primaryjoin='Organization.members_id == Team.id',
         uselist=False, cascade='all', post_update=True)  # No delete-orphan cascade here
-    userid = db.Column(db.String(22), unique=True, nullable=False, default=buid)
     _name = db.Column('name', db.Unicode(80), unique=True, nullable=True)
     title = db.Column(db.Unicode(80), default=u'', nullable=False)
     #: Deprecated, but column preserved for existing data until migration
@@ -513,7 +501,7 @@ class Organization(BaseMixin, db.Model):
 
     def __repr__(self):
         return '<Organization {name} "{title}">'.format(
-            name=self.name or self.userid, title=self.title.encode('utf-8'))
+            name=self.name or self.buid, title=self.title.encode('utf-8'))
 
     @property
     def pickername(self):
@@ -557,19 +545,19 @@ class Organization(BaseMixin, db.Model):
             ).order_by(Permission.name).all()
 
     @classmethod
-    def get(cls, name=None, userid=None, defercols=False):
+    def get(cls, name=None, buid=None, defercols=False):
         """
-        Return an Organization with matching name or userid. Note that ``name`` is the username, not the title.
+        Return an Organization with matching name or buid. Note that ``name`` is the username, not the title.
 
         :param str name: Name of the organization
-        :param str userid: Userid of the organization
+        :param str buid: Buid of the organization
         :param bool defercols: Defer loading non-critical columns
         """
-        if not bool(name) ^ bool(userid):
-            raise TypeError("Either name or userid should be specified")
+        if not bool(name) ^ bool(buid):
+            raise TypeError("Either name or buid should be specified")
 
-        if userid:
-            query = cls.query.filter_by(userid=userid)
+        if buid:
+            query = cls.query.filter_by(buid=buid)
         else:
             query = cls.query.filter_by(name=name)
         if defercols:
@@ -577,10 +565,10 @@ class Organization(BaseMixin, db.Model):
         return query.one_or_none()
 
     @classmethod
-    def all(cls, userids=None, names=None, defercols=False):
+    def all(cls, buids=None, names=None, defercols=False):
         orgs = []
-        if userids:
-            query = cls.query.filter(cls.userid.in_(userids))
+        if buids:
+            query = cls.query.filter(cls.buid.in_(buids))
             if defercols:
                 query = query.options(*cls._defercols)
             orgs.extend(query.all())
@@ -592,12 +580,8 @@ class Organization(BaseMixin, db.Model):
         return orgs
 
 
-class Team(BaseMixin, db.Model):
+class Team(UuidMixin, BaseMixin, db.Model):
     __tablename__ = 'team'
-    #: UUID that replaces userid going forward
-    uuid = db.Column(UUIDType(binary=False), default=uuid4, unique=True, nullable=False)
-    #: Unique and non-changing id
-    userid = db.Column(db.String(22), unique=True, nullable=False, default=buid)
     #: Displayed name
     title = db.Column(db.Unicode(250), nullable=False)
     #: Organization
@@ -640,13 +624,13 @@ class Team(BaseMixin, db.Model):
         olduser.teams = []
 
     @classmethod
-    def get(cls, userid=None):
+    def get(cls, buid=None):
         """
-        Return a Team with matching userid.
+        Return a Team with matching buid.
 
-        :param str userid: Userid of the organization
+        :param str buid: Buid of the organization
         """
-        return cls.query.filter_by(userid=userid).one_or_none()
+        return cls.query.filter_by(buid=buid).one_or_none()
 
 
 # -- User/Org/Team email/phone and misc

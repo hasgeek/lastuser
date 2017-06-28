@@ -178,7 +178,7 @@ class SMSMessage(BaseMixin, db.Model):
 #     user = db.relationship(User, foreign_keys=[user_id],
 #         backref=db.backref('notification_preferences', cascade='all, delete-orphan'))
 
-#     #: Context for user's preferences (default user's userid, else org's userid)
+#     #: Context for user's preferences (default user's buid, else org's buid)
 #     #: If we migrate User/Organization/Team into a Principal model (ticket #91)
 #     #: this should become a foreign key to Principal.
 #     context = db.Column(db.Unicode(22))

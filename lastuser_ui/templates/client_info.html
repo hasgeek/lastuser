@@ -158,8 +158,8 @@
         <td>{{ pa.pickername }}</td>
         <td>{{ pa.access_permissions }}</td>
         <td>
-          <a class="btn btn-xs btn-info" href="{{ url_for('.permission_user_edit', key=client.key, userid=pa.userid) }}">Edit</a>
-          <a class="btn btn-xs btn-danger" href="{{ url_for('.permission_user_delete', key=client.key, userid=pa.userid) }}">Delete</a>
+          <a class="btn btn-xs btn-info" href="{{ url_for('.permission_user_edit', key=client.key, buid=pa.buid) }}">Edit</a>
+          <a class="btn btn-xs btn-danger" href="{{ url_for('.permission_user_delete', key=client.key, buid=pa.buid) }}">Delete</a>
         </td>
       {%- else %}
       <tr>

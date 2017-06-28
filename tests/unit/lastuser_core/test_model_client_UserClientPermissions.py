@@ -61,12 +61,12 @@ class TestUserClientPermissions(TestDatabaseFixture):
         result = models.UserClientPermissions(user=finnick, client=district4, access_permissions=access_permissions)
         self.assertEqual(result.pickername, finnick.pickername)
 
-    def test_userclientpermissions_userid(self):
+    def test_userclientpermissions_buid(self):
         """
-        Test for UserClientPermissions' userid
+        Test for UserClientPermissions' buid
         """
         beetee = models.User(username=u'beetee', fullname=u'Beetee')
         district3 = models.Client(title=u'District 3')
         access_permissions = u'siteadmin'
         result = models.UserClientPermissions(user=beetee, client=district3, access_permissions=access_permissions)
-        self.assertEqual(result.userid, beetee.userid)
+        self.assertEqual(result.buid, beetee.buid)

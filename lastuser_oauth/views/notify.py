@@ -15,7 +15,8 @@ def notify_session_revoked(session):
     for client in session.clients:
         if client.notification_uri:
             send_notice.delay(client.notification_uri, data={
-                'userid': session.user.userid,
+                'userid': session.user.buid,  # XXX: Deprecated parameter
+                'buid': session.user.buid,
                 'type': 'user',
                 'changes': ['logout'],
                 'sessionid': session.buid
@@ -50,7 +51,8 @@ def notify_user_data_changed(user, changes):
                             notify_changes.append(change)
                 if notify_changes:
                     send_notice.delay(token.client.notification_uri, data={
-                        'userid': user.userid,
+                        'userid': user.buid,  # XXX: Deprecated parameter
+                        'buid': user.buid,
                         'type': 'user',
                         'changes': notify_changes
                         })
@@ -80,10 +82,11 @@ def notify_org_data_changed(org, user, changes, team=None):
         else:
             notify_user = users[0]  # First user available
         send_notice.delay(client.notification_uri, data={
-            'userid': notify_user.userid,
+            'userid': notify_user.buid,  # XXX: Deprecated parameter
+            'buid': notify_user.buid,
             'type': 'org' if team is None else 'team',
-            'orgid': org.userid,
-            'teamid': team.userid if team is not None else None,
+            'orgid': org.buid,
+            'teamid': team.buid if team is not None else None,
             'changes': changes,
             })
 
