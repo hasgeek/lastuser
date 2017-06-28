@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from lastuserapp import app, db, init_for
+from lastuserapp import app, db
 from .fixtures import Fixtures
 
 
@@ -13,7 +13,6 @@ class TestDatabaseFixture(unittest.TestCase):
         """
         self.ctx = app.test_request_context()
         self.ctx.push()
-        init_for('testing')
         self.app = app
         db.create_all()
         self.client = app.test_client()

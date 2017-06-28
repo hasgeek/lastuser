@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
+
 from lastuserapp import db
 import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
 from datetime import datetime, timedelta
 from coaster.utils import buid
-from sqlalchemy.orm.query import Query as QueryBaseClass
 
 
 class TestAuthToken(TestDatabaseFixture):
@@ -37,7 +38,7 @@ class TestAuthToken(TestDatabaseFixture):
         client = self.fixtures.client
         # scenario 1: when validity is unlimited (0)
         tomriddle = models.User(username=u'voldemort', fullname=u'Tom Riddle')
-        scope=[u'id', u'email']
+        scope = [u'id', u'email']
         tomriddle_token = models.AuthToken(client=client, user=tomriddle, scope=scope, validity=0)
         self.assertTrue(tomriddle_token.is_valid())
 
@@ -143,14 +144,14 @@ class TestAuthToken(TestDatabaseFixture):
         crusoe = self.fixtures.crusoe
         client = self.fixtures.client
 
-        user_session= models.UserSession(buid=buid(), user=crusoe)
+        user_session = models.UserSession(buid=buid(), user=crusoe)
         auth_token_with_user_session = models.AuthToken(user=crusoe, user_session=user_session)
         self.assertIsInstance(auth_token_with_user_session.user_session.user, models.User)
         self.assertEqual(auth_token_with_user_session.user_session.user, crusoe)
 
         auth_token_without_user_session = models.AuthToken(client=client, user=crusoe)
         self.assertIsInstance(auth_token_without_user_session._user, models.User)
-        self.assertEqual(auth_token_without_user_session._user, crusoe )
+        self.assertEqual(auth_token_without_user_session._user, crusoe)
 
     # def test_AuthToken_migrate_user(self):
     #     """
@@ -194,10 +195,10 @@ class TestAuthToken(TestDatabaseFixture):
         snape = models.User(username=u'snape', fullname=u'Professor Severus Snape')
         valid_algorithm = 'hmac-sha-1'
         auth_token = models.AuthToken(user=snape)
-        auth_token.algorithm=None
+        auth_token.algorithm = None
         self.assertEqual(auth_token._algorithm, None)
-        auth_token.algorithm=valid_algorithm
+        auth_token.algorithm = valid_algorithm
         self.assertEqual(auth_token._algorithm, valid_algorithm)
         self.assertEqual(auth_token.algorithm, valid_algorithm)
         with self.assertRaises(ValueError):
-            auth_token.algorithm= "hmac-sha-2016"
+            auth_token.algorithm = "hmac-sha-2016"

@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
+
 from lastuserapp import db
 import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
-import fixtures
 
 
 class TestPermission(TestDatabaseFixture):
@@ -11,7 +12,6 @@ class TestPermission(TestDatabaseFixture):
         Test for retrieving a Permission instance given it's name and owner (user or org) or if it's available to all users.
         """
         # scenario 1: when allusers is False
-        oakley = self.fixtures.oakley
         specialdachs = self.fixtures.specialdachs
         netizens = models.Permission(name=u"netizens", title=u"Netizens", org=specialdachs, allusers=True)
         db.session.add(netizens)
@@ -24,8 +24,7 @@ class TestPermission(TestDatabaseFixture):
         # scenario 1 + only user is given
         crusoe = self.fixtures.crusoe
         bdfl = self.fixtures.bdfl
-        result1 = models.Permission.get(name=bdfl.name, user=crusoe)
-        print result1
+        self.assertIsNotNone(models.Permission.get(name=bdfl.name, user=crusoe))
 
         # scenario 1 + only org is given
         result2 = models.Permission.get(name=netizens.name, org=specialdachs)

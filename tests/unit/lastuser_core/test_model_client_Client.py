@@ -73,6 +73,7 @@ class TestClient(TestDatabaseFixture):
         result = client.authtoken_for(crusoe)
         client_token = models.AuthToken(client=client, user=crusoe, scope=u'id', validity=0)
         result = client.authtoken_for(user=crusoe)
+        self.assertEqual(client_token, result)
         self.assertIsInstance(result, models.AuthToken)
         assert "Crusoe Celebrity Dachshund" in repr(result)
 
@@ -81,7 +82,7 @@ class TestClient(TestDatabaseFixture):
         house_lannisters = models.Client(title=u'House of Lannisters', confidential=False, user=varys, website=u'houseoflannisters.westeros')
         varys_session = models.UserSession(user=varys, ipaddr='192.168.1.99', user_agent=u'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36', accessed_at=datetime.utcnow())
         lannisters_auth_token = models.AuthToken(client=house_lannisters, user=varys, scope=u'throne', validity=0, user_session=varys_session)
-        db.session.add_all([varys,house_lannisters,lannisters_auth_token, varys_session])
+        db.session.add_all([varys, house_lannisters, lannisters_auth_token, varys_session])
         db.session.commit()
         result = house_lannisters.authtoken_for(varys, user_session=varys_session)
         self.assertIsInstance(result, models.AuthToken)

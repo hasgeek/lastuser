@@ -11,7 +11,7 @@ class TestScopeMixin(TestDatabaseFixture):
         """
         Test to retrieve scope on an ScopeMixin inherited class instance via _scope method
         """
-        scope=u'id'
+        scope = u'id'
         bellatrix = models.User(username=u'bellatrix', fullname=u'Bellatrix Lestrange')
         client = self.fixtures.client
         bellatrix_token = models.AuthToken(client=client, user=bellatrix, scope=scope, validity=0)
@@ -21,8 +21,8 @@ class TestScopeMixin(TestDatabaseFixture):
 
     def test_ScopeMixin_scope(self):
         """Test to retrieve scope on an ScopeMixin inherited class instance via scope method"""
-        scope=(u'tricks')
-        ginny=models.User(username=u'ginny', fullname=u'Ginny Weasley')
+        scope = (u'tricks')
+        ginny = models.User(username=u'ginny', fullname=u'Ginny Weasley')
         client = self.fixtures.client
         ginny_token = models.AuthToken(client=client, user=ginny, scope=scope, validity=0)
         db.session.add_all([ginny, ginny_token])
@@ -31,7 +31,7 @@ class TestScopeMixin(TestDatabaseFixture):
 
     def test_scopemixin__scope_get(self):
         """Test to retrieve scope with __scope_get on an AuthToken instance """
-        scope=[u'teams', u'email', u'id']
+        scope = [u'teams', u'email', u'id']
         khal = models.User(username=u'khal', fullname=u'Khal Drogo')
         client = self.fixtures.client
         khal_token = models.AuthToken(client=client, user=khal, scope=scope, validity=0)
@@ -42,7 +42,7 @@ class TestScopeMixin(TestDatabaseFixture):
     def test_scopemixin__scope_set(self):
         """Test to set scope with __scope_set on an AuthToken instance"""
         """Test to retrieve scope with __scope_get on an AuthToken instance """
-        scope=[u'teams', u'wars', u'alliances']
+        scope = [u'teams', u'wars', u'alliances']
         sansa = models.User(username=u'sansa', fullname=u'Sansa Stark')
         client = self.fixtures.client
         sansa_token = models.AuthToken(client=client, user=sansa, validity=0)

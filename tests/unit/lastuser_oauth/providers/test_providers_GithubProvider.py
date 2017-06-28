@@ -1,6 +1,7 @@
-from lastuserapp import db, login_registry
-from lastuser_oauth.providers import *
+# -*- coding: utf-8 -*-
+
 from .test_db import TestDatabaseFixture
+
 
 class TestGithubProvider(TestDatabaseFixture):
     def setUp(self):

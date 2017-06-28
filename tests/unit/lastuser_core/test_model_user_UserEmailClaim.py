@@ -13,7 +13,6 @@ class TestUserEmailClaim(TestDatabaseFixture):
         domain = u'batdogs.ca'
         new_email = u'crusoe@' + domain
         md5sum = md5(new_email).hexdigest()
-        owner = crusoe
         result = models.UserEmailClaim(email=new_email, owner=crusoe)
         db.session.add(result)
         db.session.commit()

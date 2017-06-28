@@ -1,10 +1,12 @@
-from lastuserapp import db
+# -*- coding: utf-8 -*-
+
 from lastuser_core import registry
 from .test_db import TestDatabaseFixture
 try:
     from collections import OrderedDict
 except ImportError:
     from ordereddict import OrderedDict
+
 
 class TestResourceRegistry(TestDatabaseFixture):
 

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from lastuserapp import db
-from lastuser_core.models import *
+from lastuser_core.models import *  # NOQA
+
 
 class Fixtures(object):
     def make_fixtures(self):
@@ -56,7 +57,7 @@ class Fixtures(object):
         db.session.add(bdfl)
         self.bdfl = bdfl
 
-        user_client_permissions = UserClientPermissions(user=crusoe,client=client)
+        user_client_permissions = UserClientPermissions(user=crusoe, client=client)
         db.session.add(user_client_permissions)
         self.user_client_permissions = user_client_permissions
 

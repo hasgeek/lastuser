@@ -2,10 +2,9 @@
 
 from lastuserapp import db
 import lastuser_core.models as models
-from .test_db import TestDatabaseFixture
 from sqlalchemy.orm.collections import InstrumentedList
 from datetime import datetime, timedelta
-import time
+from .test_db import TestDatabaseFixture
 
 
 class TestUser(TestDatabaseFixture):

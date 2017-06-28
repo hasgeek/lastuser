@@ -111,16 +111,16 @@ class TestOrganization(TestDatabaseFixture):
         """
         Test for checking Organization's pickername
         """
-        #scenarion 1: when only title is given
+        # scenario 1: when only title is given
         abnegation = models.Organization(title=u"Abnegation")
         self.assertIsInstance(abnegation.pickername, unicode)
         self.assertEqual(abnegation.pickername, abnegation.title)
 
-        #scenario 2: when both name and title are given
+        # scenario 2: when both name and title are given
         name = u'cullens'
         title = u'The Cullens'
         olympic_coven = models.Organization(title=title)
-        olympic_coven.name=name
+        olympic_coven.name = name
         db.session.add(olympic_coven)
         db.session.commit()
         self.assertIsInstance(olympic_coven.pickername, unicode)
@@ -172,16 +172,16 @@ class TestOrganization(TestDatabaseFixture):
         Test for retrieving team members in a Organization based on domain
         """
 
-        #scenario 1: domain valid is None
+        # scenario 1: domain valid is None
         allegiant = models.Organization(name=u'allegiant', title=u'Allegiant')
         self.assertEqual(allegiant.domain, None)
 
-        #scenario 2: no teams in organzation
+        # scenario 2: no teams in organzation
         allegiant_domain = u'allegiants.com'
         allegiant.domain = allegiant_domain
         self.assertEqual(allegiant.domain, allegiant_domain)
 
-        #scenario 3: members dont have same domain as domain value
+        # scenario 3: members dont have same domain as domain value
         beatrice = models.User(username=u'beatrice', fullname=u'Beatrice Prior', email=u'b@allegiants.com')
         tobias = models.User(username=u'tobias', fullname=u'Tobias Eaton', email=u't@erudites.com')
         erudite = models.Organization(name=u'erudite', title=u'Erudite')
@@ -201,11 +201,11 @@ class TestOrganization(TestDatabaseFixture):
         name is a setter method
         """
         insurgent = models.Organization(title=u'Insurgent')
-        insurgent.name=u'35453496*%&^$%^'
+        insurgent.name = u'35453496*%&^$%^'
         self.assertIsNone(insurgent.name)
-        insurgent.name=u'Insurgent'
+        insurgent.name = u'Insurgent'
         self.assertIsNone(insurgent.name)
-        insurgent.name=u'insurgent'
+        insurgent.name = u'insurgent'
         self.assertEqual(insurgent.name, u'insurgent')
 
     def test_organization_clients_with_team_access(self):

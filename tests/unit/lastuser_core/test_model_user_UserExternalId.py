@@ -5,6 +5,7 @@ import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
 from os import environ
 
+
 class TestUserExternalId(TestDatabaseFixture):
 
     def test_UserExternalId(self):
@@ -17,9 +18,8 @@ class TestUserExternalId(TestDatabaseFixture):
         oauth_token_type = u'Bearer'
         result = models.UserExternalId(service=service, user=crusoe, userid=crusoe.email.email, username=crusoe.email.email, oauth_token=oauth_token, oauth_token_type=oauth_token_type)
         self.assertIsInstance(result, models.UserExternalId)
-        assert u'<UserExternalId {service}:{username} of {user}>'\
-                   .format(service=service, username=crusoe.email.email, user=repr(crusoe)[1:-1]) \
-               in repr(result)
+        assert u'<UserExternalId {service}:{username} of {user}>'.format(
+            service=service, username=crusoe.email.email, user=repr(crusoe)[1:-1]) in repr(result)
 
     def test_UserExternalId_get(self):
         """
@@ -40,12 +40,10 @@ class TestUserExternalId(TestDatabaseFixture):
         # scenario 2: when userid is passed
         get_by_userid = models.UserExternalId.get(service=service, userid=crusoe.email.email)
         self.assertIsInstance(get_by_userid, models.UserExternalId)
-        assert u'<UserExternalId {service}:{username} of {user}>'\
-                   .format(service=service, username=crusoe.email.email, user=repr(crusoe)[1:-1]) \
-               in repr(get_by_userid)
+        assert u'<UserExternalId {service}:{username} of {user}>'.format(
+            service=service, username=crusoe.email.email, user=repr(crusoe)[1:-1]) in repr(get_by_userid)
         # scenario 3: when username is passed
         get_by_username = models.UserExternalId.get(service=service, username=crusoe.email.email)
         self.assertIsInstance(get_by_username, models.UserExternalId)
-        assert u'<UserExternalId {service}:{username} of {user}>'\
-                   .format(service=service, username=crusoe.email.email, user=repr(crusoe)[1:-1]) \
-               in repr(get_by_username)
+        assert u'<UserExternalId {service}:{username} of {user}>'.format(
+            service=service, username=crusoe.email.email, user=repr(crusoe)[1:-1]) in repr(get_by_username)

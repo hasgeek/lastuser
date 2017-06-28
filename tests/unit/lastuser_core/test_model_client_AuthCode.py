@@ -1,7 +1,10 @@
+# -*- coding: utf-8 -*-
+
 from lastuserapp import db
 import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
-from datetime import datetime, timedelta
+from datetime import datetime
+
 
 class TestAuthCode(TestDatabaseFixture):
 

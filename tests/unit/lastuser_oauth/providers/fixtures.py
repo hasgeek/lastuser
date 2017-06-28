@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from lastuserapp import db
-from lastuser_core.models import *
-
-
 class Fixtures(object):
     def make_fixtures(self):
         """

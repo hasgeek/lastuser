@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from lastuserapp import db
 import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
+
 
 class TestResourceAction(TestDatabaseFixture):
     def setUp(self):

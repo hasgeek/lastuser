@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 from datetime import datetime, timedelta
 import urlparse
 from openid import oidutil
@@ -23,7 +24,7 @@ oid = OpenID()
 def openid_log(message, level=0):
     if current_app.debug:
         import sys
-        print >> sys.stderr, message
+        print(message, file=sys.stderr)
 
 oidutil.log = openid_log
 

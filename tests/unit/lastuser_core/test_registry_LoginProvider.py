@@ -1,5 +1,5 @@
-from lastuserapp import db
-import lastuser_core.models as models
+# -*- coding: utf-8 -*-
+
 from .test_db import TestDatabaseFixture
 
 

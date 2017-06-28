@@ -3,7 +3,7 @@
 from lastuserapp import db
 import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
-from sqlalchemy.ext.associationproxy import _AssociationList
+
 
 class TestUserOldId(TestDatabaseFixture):
     def setUp(self):
@@ -21,6 +21,10 @@ class TestUserOldId(TestDatabaseFixture):
         db.session.add(batdog)
         db.session.commit()
         merged = models.merge_users(crusoe, batdog)
-        query_for_olduser = models.UserOldId.get(batdog.userid)
+        if merged == crusoe:
+            other = batdog
+        else:
+            other = crusoe
+        query_for_olduser = models.UserOldId.get(other.userid)
         self.assertIsInstance(query_for_olduser, models.UserOldId)
-        self.assertEqual(query_for_olduser.olduser, batdog)
+        self.assertEqual(query_for_olduser.olduser, other)

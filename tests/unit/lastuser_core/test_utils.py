@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from lastuser_core.utils import *
+from lastuser_core.utils import *  # NOQA
 
 
 class FlaskrTestCase(unittest.TestCase):
@@ -11,8 +11,8 @@ class FlaskrTestCase(unittest.TestCase):
         Check if given has spaces or dashes and strip it
 
         """
-        self.assertEqual(strip_phone('+91-7676-33-2020'),'+917676332020')
-        self.assertEqual(strip_phone('+91 7676 33 2020'),'+917676332020')
+        self.assertEqual(strip_phone('+91-7676-33-2020'), '+917676332020')
+        self.assertEqual(strip_phone('+91 7676 33 2020'), '+917676332020')
 
     def test_valid_phone(self):
         """
@@ -29,7 +29,7 @@ class FlaskrTestCase(unittest.TestCase):
         Check if URL is gravatar URL and return extracted md5
         """
         self.assertIsNone(get_gravatar_md5sum('https://secure.gravatar.com/a744b4c602f8fd32206eb44894259642'))
-        self.assertIsNone (get_gravatar_md5sum('gravatar.com/avatar/a744b4c602f8fd32206eb44894259642'))
+        self.assertIsNone(get_gravatar_md5sum('gravatar.com/avatar/a744b4c602f8fd32206eb44894259642'))
         self.assertIsNone(get_gravatar_md5sum('https://hasgeek.com/avatar/a744b4c602f8fd32206eb44894259642'))
         self.assertEqual(get_gravatar_md5sum('https://secure.gravatar.com/avatar/a744b4c602f8fd32206eb44894259642'), 'a744b4c602f8fd32206eb44894259642')
         self.assertEqual(get_gravatar_md5sum('https://gravatar.com/avatar/a744b4c602f8fd32206eb44894259642'), 'a744b4c602f8fd32206eb44894259642')

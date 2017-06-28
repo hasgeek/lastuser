@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from lastuserapp import db
 import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
+
 
 class TestUserPhone(TestDatabaseFixture):
     def setUp(self):

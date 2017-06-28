@@ -1,7 +1,7 @@
-from lastuserapp import db
+# -*- coding: utf-8 -*-
+
 import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
-import fixtures
 
 
 class TestTeamClientPermissions(TestDatabaseFixture):

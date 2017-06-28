@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from lastuserapp import db
 import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
 from hashlib import md5
@@ -14,7 +13,7 @@ class TestUserEmail(TestDatabaseFixture):
         """
         oakley = self.fixtures.oakley
         email_domain = u'batdog.ca'
-        oakley_new_email = models.user.UserEmail(email=u'oakley@'+email_domain, user=oakley)
+        oakley_new_email = models.user.UserEmail(email=u'oakley@' + email_domain, user=oakley)
         self.assertIsInstance(oakley_new_email, models.user.UserEmail)
         self.assertTrue(hasattr(oakley_new_email, '_email'))
         self.assertTrue(hasattr(oakley_new_email, 'md5sum'))

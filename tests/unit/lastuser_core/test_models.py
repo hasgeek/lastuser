@@ -1,10 +1,8 @@
 from lastuserapp import db
 import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
-from hashlib import md5
 from os import environ
 
-#31, 48, 59
 
 class TestModels(TestDatabaseFixture):
 
@@ -84,8 +82,10 @@ class TestModels(TestDatabaseFixture):
         result5 = models.getuser(u'arya')
         self.assertEqual(result5, arya)
 
-        #scenario 6: with no starting with @ name and no UserEmailClaim or UserEmail
+        # scenario 6: with no starting with @ name and no UserEmailClaim or UserEmail
         cersei = models.User(username=u'cersei', fullname=u'Cersei Lannister')
+        db.session.add(cersei)
+        db.session.commit()
         result6 = models.getuser(u'cersei@thelannisters.co.uk')
         self.assertIsNone(result6)
 
@@ -95,7 +95,7 @@ class TestModels(TestDatabaseFixture):
         """
         crusoe = self.fixtures.crusoe
         email = crusoe.email.email
-        service_facebook= u'facebook'
+        service_facebook = u'facebook'
 
         externalid = models.UserExternalId(service=service_facebook, user=crusoe, userid=crusoe.email.email, username=crusoe.email.email, oauth_token=environ.get('FACEBOOK_OAUTH_TOKEN'), oauth_token_type=u'bearer')
 
@@ -103,6 +103,5 @@ class TestModels(TestDatabaseFixture):
         db.session.commit()
         result = models.getextid(service_facebook, userid=email)
         self.assertIsInstance(result, models.UserExternalId)
-        assert u'<UserExternalId {service}:{username} of {user}>'\
-                   .format(service=service_facebook, username=email, user=repr(crusoe)[1:-1]) \
-               in repr(result)
+        assert u'<UserExternalId {service}:{username} of {user}>'.format(
+            service=service_facebook, username=email, user=repr(crusoe)[1:-1]) in repr(result)
