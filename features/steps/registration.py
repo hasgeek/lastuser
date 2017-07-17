@@ -1,13 +1,12 @@
 from flask import g
-from behave import *
-from mock import MagicMock
-from lastuser_core.models import *
+from behave import given, when, then
+from lastuser_core.models import User
 from lastuserapp import app
 
 
 @given('we have a new user')
 def given_new_user(context):
-    context.new_user = dict(
+    context.test_user = dict(
         fullname='Alyssa P Hacker',
         email='alyssa@hacker.com',
         username='alyssa',
@@ -18,14 +17,18 @@ def given_new_user(context):
 
 @when('a new user submits the registration form with the proper details')
 def when_form_submit(context):
-    with app.test_client() as c:
-        c.post('/register', data=context.new_user, follow_redirects=True)
+    context.browser.visit('/register')
+
+    assert context.browser.find_element_by_name('csrf_token').is_enabled()
+    for k, v in context.test_user.iteritems():
+        context.browser.find_element_by_name(k).send_keys(v)
+
+    register_form = context.browser.find_element_by_id('register')
+    register_form.submit()
 
 
 @then('the new user will be registered')
 def then_user_registered(context):
-    # import IPython; IPython.embed()
-    user = User.get(username=context.new_user['username'])
+    user = User.get(username=context.test_user['username'])
     assert user is not None
     assert len(user.emailclaims) is 1
-    # assert g.user is user
