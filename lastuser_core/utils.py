@@ -7,7 +7,6 @@ from urllib import urlencode as make_query_string
 
 # --- Constants ---------------------------------------------------------------
 
-USERNAME_VALID_RE = re.compile('^[a-z0-9][a-z0-9-]*[a-z0-9]$')
 PHONE_STRIP_RE = re.compile(r'[\t .()\[\]-]+')
 PHONE_VALID_RE = re.compile(r'^\+[0-9]+$')
 
