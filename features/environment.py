@@ -1,7 +1,6 @@
 import threading
 from wsgiref.simple_server import make_server
 from selenium import webdriver
-from flask import g, session
 from lastuser_core.models import db
 from lastuserapp import app
 

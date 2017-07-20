@@ -1,6 +1,4 @@
-from flask import g
 from behave import when, then, given
-from lastuserapp import app
 import selenium.webdriver.support.ui as ui
 
 

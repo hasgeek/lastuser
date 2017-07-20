@@ -1,7 +1,5 @@
-from flask import g
 from behave import given, when, then
 from lastuser_core.models import User
-from lastuserapp import app
 
 
 @given('we have a new user')

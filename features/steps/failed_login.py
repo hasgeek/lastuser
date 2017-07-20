@@ -1,8 +1,5 @@
-from flask import g, session
+from flask import g
 from behave import when, then, given
-from mock import MagicMock
-from lastuser_core.models import db, User
-from lastuser_oauth.views.helpers import logout_internal
 from lastuserapp import app
 
 

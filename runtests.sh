@@ -2,5 +2,5 @@
 set -e
 export FLASK_ENV="TESTING"
 coverage run `which nosetests` "$@"
-coverage run `which behave`
+coverage run -a `which behave`
 coverage report -m
