@@ -28,6 +28,7 @@ class USER_STATUS:
 
 class User(UuidMixin, BaseMixin, db.Model):
     __tablename__ = 'user'
+    userid = db.synonym('buid')  # XXX: Deprecated, still here for Baseframe compatibility
     #: The user's fullname
     fullname = db.Column(db.Unicode(80), default=u'', nullable=False)
     #: Alias for the user's fullname
@@ -313,15 +314,18 @@ class User(UuidMixin, BaseMixin, db.Model):
             return user
 
     @classmethod
-    def all(cls, buids=None, usernames=None, defercols=False):
+    def all(cls, buids=None, userids=None, usernames=None, defercols=False):
         """
         Return all matching users.
 
         :param list buids: Buids to look up
+        :param list userids: Alias for ``buids`` (deprecated)
         :param list usernames: Usernames to look up
         :param bool defercols: Defer loading non-critical columns
         """
         users = set()
+        if userids and not buids:
+            buids = userids
         if buids and usernames:
             query = cls.query.filter(or_(cls.buid.in_(buids), cls.username.in_(usernames)))
         elif buids:
