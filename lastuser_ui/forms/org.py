@@ -15,9 +15,6 @@ class OrganizationForm(forms.Form):
     name = forms.AnnotatedTextField(__("Username"), validators=[forms.validators.DataRequired()],
         prefix=u"https://hasgeek.com/…",
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
-    domain = forms.RadioField(__("Domain"),
-        description=__(u"Users with an email address at this domain will automatically become members of this organization"),
-        validators=[forms.validators.Optional()])
 
     def validate_name(self, field):
         if not valid_username(field.data):

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from flask import g, current_app, render_template, url_for, abort, redirect, request, Markup
+from flask import g, current_app, render_template, url_for, abort, redirect, request
 from baseframe import _
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
-from baseframe.staticdata import webmail_domains
 from coaster.views import load_model, load_models
 
 from lastuser_core.models import db, Organization, Team
@@ -11,18 +10,6 @@ from lastuser_core.signals import org_data_changed, team_data_changed
 from lastuser_oauth.views.helpers import requires_login
 from .. import lastuser_ui
 from ..forms.org import OrganizationForm, TeamForm
-
-
-def user_org_domains(user, org=None):
-    domains = [email.domain for email in user.emails if email.domain not in webmail_domains]
-    choices = [(d, d) for d in domains]
-    if org and org.domain and org.domain not in domains:
-        choices.insert(0, (org.domain, Markup(_("{domain} <em>(Current setting)</em>")).format(domain=org.domain)))
-    if not domains:
-        choices.insert(0, (u'', Markup(_("<em>(You do not have a verified non-webmail email address yet)</em>"))))
-    else:
-        choices.insert(0, (u'', Markup(_("<em>(No domain associated with this organization)</em>"))))
-    return choices
 
 
 # --- Routes: Organizations ---------------------------------------------------
@@ -37,7 +24,6 @@ def org_list():
 @requires_login
 def org_new():
     form = OrganizationForm()
-    form.domain.choices = user_org_domains(g.user)
     form.name.description = current_app.config.get('ORG_NAME_REASON')
     form.title.description = current_app.config.get('ORG_TITLE_REASON')
     if form.validate_on_submit():
@@ -66,7 +52,6 @@ def org_info(org):
 @load_model(Organization, {'name': 'name'}, 'org', permission='edit')
 def org_edit(org):
     form = OrganizationForm(obj=org)
-    form.domain.choices = user_org_domains(g.user, org)
     form.name.description = current_app.config.get('ORG_NAME_REASON')
     form.title.description = current_app.config.get('ORG_TITLE_REASON')
     if form.validate_on_submit():

@@ -40,9 +40,9 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
         userinfo['phone'] = unicode(user.phone)
     if '*' in scope or 'organizations' in scope or 'organizations/*' in scope:
         userinfo['organizations'] = {
-            'owner': [{'userid': org.buid, 'buid': org.buid, 'uuid': org.uuid, 'name': org.name, 'title': org.title, 'domain': org.domain} for org in user.organizations_owned()],
-            'member': [{'userid': org.buid, 'buid': org.buid, 'uuid': org.uuid, 'name': org.name, 'title': org.title, 'domain': org.domain} for org in user.organizations_memberof()],
-            'all': [{'userid': org.buid, 'buid': org.buid, 'uuid': org.uuid, 'name': org.name, 'title': org.title, 'domain': org.domain} for org in user.organizations()],
+            'owner': [{'userid': org.buid, 'buid': org.buid, 'uuid': org.uuid, 'name': org.name, 'title': org.title} for org in user.organizations_owned()],
+            'member': [{'userid': org.buid, 'buid': org.buid, 'uuid': org.uuid, 'name': org.name, 'title': org.title} for org in user.organizations_memberof()],
+            'all': [{'userid': org.buid, 'buid': org.buid, 'uuid': org.uuid, 'name': org.name, 'title': org.title} for org in user.organizations()],
             }
 
     if '*' in scope or 'organizations' in scope or 'teams' in scope or 'organizations/*' in scope or 'teams/*' in scope:
@@ -54,7 +54,6 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                 'title': team.title,
                 'org': team.org.buid,
                 'org_uuid': team.org.uuid,
-                'domain': team.domain,
                 'owners': team == team.org.owners,
                 'members': team == team.org.members,
                 'member': True}
@@ -70,7 +69,6 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                         'title': team.title,
                         'org': team.org.buid,
                         'org_uuid': team.org.uuid,
-                        'domain': team.domain,
                         'owners': team == team.org.owners,
                         'members': team == team.org.members,
                         'member': False}

@@ -470,4 +470,3 @@ class TestUser(TestDatabaseFixture):
         db.session.add(gustav)
         db.session.commit()
         self.assertEqual(gustav_result.email, gustav_email)
-        self.assertEqual(gustav.teams[0], self.fixtures.dachshunds)

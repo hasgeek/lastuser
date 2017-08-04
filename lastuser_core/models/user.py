@@ -171,10 +171,6 @@ class User(UuidMixin, BaseMixin, db.Model):
                     emailob.primary = False
         useremail = UserEmail(user=self, email=email, primary=primary, type=type, private=private)
         useremail = failsafe_add(db.session, useremail, user=self, email=email)
-        with db.session.no_autoflush:
-            for team in Team.query.filter_by(domain=useremail.domain):
-                if self not in team.users:
-                    team.users.append(self)
         return useremail
 
     def del_email(self, email):
@@ -460,29 +456,6 @@ class Organization(UuidMixin, BaseMixin, db.Model):
         if self.members is None:
             self.members = Team(title=_(u"Members"), org=self)
 
-    @property
-    def domain(self):
-        if self.members:
-            return self.members.domain
-
-    @domain.setter
-    def domain(self, value):
-        from ..signals import user_data_changed, team_data_changed  # Import here as we can't import at top-level
-        if not value:
-            value = None
-        if not self.members:
-            self.make_teams()
-        if value and value != self.members.domain:
-            # Look for team members based on domain, but only if the domain value was
-            # changed
-            with db.session.no_autoflush:
-                for useremail in UserEmail.query.filter_by(domain=value).join(User):
-                    if useremail.user not in self.members.users:
-                        self.members.users.append(useremail.user)
-                        user_data_changed.send(useremail.user, changes=['team-membership'])
-            team_data_changed.send(self.members, user=None, changes=['membership'])  # The team /edit view sends 'edit'
-        self.members.domain = value
-
     @hybrid_property
     def name(self):
         return self._name
@@ -594,10 +567,6 @@ class Team(UuidMixin, BaseMixin, db.Model):
         backref=db.backref('teams', order_by=title, cascade='all, delete-orphan'))
     users = db.relationship(User, secondary='team_membership', lazy='dynamic',
         backref='teams')  # No cascades here! Cascades will delete users
-
-    #: Email domain for this team. Any users with a matching email address
-    #: will be auto-added to this team
-    domain = db.Column(db.Unicode(253), nullable=True, index=True)
 
     #: Client id that created this team
     client_id = db.Column(None, db.ForeignKey('client.id',

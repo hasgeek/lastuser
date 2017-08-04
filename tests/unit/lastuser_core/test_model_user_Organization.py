@@ -167,34 +167,6 @@ class TestOrganization(TestDatabaseFixture):
         self.assertIsInstance(org_with_permissions, list)
         self.assertItemsEqual(org_with_permissions, [netizens])
 
-    def test_organization_domain(self):
-        """
-        Test for retrieving team members in a Organization based on domain
-        """
-
-        # scenario 1: domain valid is None
-        allegiant = models.Organization(name=u'allegiant', title=u'Allegiant')
-        self.assertEqual(allegiant.domain, None)
-
-        # scenario 2: no teams in organzation
-        allegiant_domain = u'allegiants.com'
-        allegiant.domain = allegiant_domain
-        self.assertEqual(allegiant.domain, allegiant_domain)
-
-        # scenario 3: members dont have same domain as domain value
-        beatrice = models.User(username=u'beatrice', fullname=u'Beatrice Prior', email=u'b@allegiants.com')
-        tobias = models.User(username=u'tobias', fullname=u'Tobias Eaton', email=u't@erudites.com')
-        erudite = models.Organization(name=u'erudite', title=u'Erudite')
-        erudite.owners.users.append(beatrice)
-        erudite.members.users.append(tobias)
-        db.session.add(beatrice)
-        db.session.add(tobias)
-        db.session.add(erudite)
-        db.session.commit()
-        erudite.domain = u'erudites.com'
-        self.assertEqual(erudite.domain, u'erudites.com')
-        self.assertItemsEqual(erudite.teams, [erudite.owners, erudite.members])
-
     def test_organization_name(self):
         """
         Test for retrieving Organization's name
