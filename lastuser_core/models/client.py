@@ -564,8 +564,8 @@ class UserClientPermissions(BaseMixin, db.Model):
 
     # Used by lastuser_ui/client_info.html for url_for
     @property
-    def userid(self):
-        return self.user.userid
+    def buid(self):
+        return self.user.buid
 
     @classmethod
     def migrate_user(cls, olduser, newuser):
@@ -609,8 +609,8 @@ class TeamClientPermissions(BaseMixin, db.Model):
 
     # Used by lastuser_ui/client_info.html for url_for
     @property
-    def userid(self):
-        return self.team.userid
+    def buid(self):
+        return self.team.buid
 
 
 class CLIENT_TEAM_ACCESS:

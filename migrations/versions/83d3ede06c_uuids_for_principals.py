@@ -61,7 +61,7 @@ def upgrade():
     # Upgrade Organization
     op.add_column('organization', sa.Column('uuid', UUIDType(binary=False), nullable=True))
     count = conn.scalar(sa.select([sa.func.count('*')]).select_from(organization))
-    progress = get_progressbar('Organization', count)
+    progress = get_progressbar("Organization", count)
     progress.start()
     items = conn.execute(sa.select([organization.c.id, organization.c.created_at]))
     for counter, item in enumerate(items):
@@ -76,7 +76,7 @@ def upgrade():
     # Upgrade Team
     op.add_column('team', sa.Column('uuid', UUIDType(binary=False), nullable=True))
     count = conn.scalar(sa.select([sa.func.count('*')]).select_from(team))
-    progress = get_progressbar('Team', count)
+    progress = get_progressbar("Team", count)
     progress.start()
     items = conn.execute(sa.select([team.c.id, team.c.created_at]))
     for counter, item in enumerate(items):
@@ -91,7 +91,7 @@ def upgrade():
     # Upgrade User
     op.add_column('user', sa.Column('uuid', UUIDType(binary=False), nullable=True))
     count = conn.scalar(sa.select([sa.func.count('*')]).select_from(user))
-    progress = get_progressbar('User', count)
+    progress = get_progressbar("User", count)
     progress.start()
     items = conn.execute(sa.select([user.c.id, user.c.created_at]))
     for counter, item in enumerate(items):
@@ -106,7 +106,7 @@ def upgrade():
     # Upgrade UserOldId
     op.add_column('useroldid', sa.Column('uuid', UUIDType(binary=False), nullable=True))
     count = conn.scalar(sa.select([sa.func.count('*')]).select_from(useroldid))
-    progress = get_progressbar('Old ids', count)
+    progress = get_progressbar("Old ids", count)
     progress.start()
     items = conn.execute(sa.select([useroldid.c.user_id, useroldid.c.userid, user.c.uuid]).where(
         user.c.userid == useroldid.c.userid))

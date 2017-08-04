@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from coaster.sqlalchemy import TimestampMixin, BaseMixin, BaseScopedNameMixin  # Imported from here by other models  # NOQA
+from coaster.sqlalchemy import TimestampMixin, BaseMixin, BaseScopedNameMixin, UuidMixin  # Imported from here by other models  # NOQA
 from coaster.db import db
 
 
@@ -57,8 +57,8 @@ def merge_users(user1, user2):
             elif hasattr(model, 'user_id') and hasattr(model, 'query'):
                 for row in model.query.filter_by(user_id=merge_user.id).all():
                     row.user_id = keep_user.id
-    # 2. Add merge_user's userid to olduserids. Commit session.
-    db.session.add(UserOldId(user=keep_user, userid=merge_user.userid, uuid=merge_user.uuid))
+    # 2. Add merge_user's uuid to olduserids. Commit session.
+    db.session.add(UserOldId(id=merge_user.uuid, user=keep_user))
     # 3. Mark merge_user as merged. Commit session.
     merge_user.status = USER_STATUS.MERGED
     # 4. Release the username

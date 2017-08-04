@@ -2,4 +2,6 @@ nose
 coverage
 nose-timer
 nose-progressive
-psycopg2
+behave
+mock
+selenium

@@ -128,7 +128,7 @@ def login_service_postcallback(service, userdata):
         if g.user and g.user != user:
             # Woah! Account merger handler required
             # Always confirm with user before doing an account merger
-            session['merge_userid'] = user.userid
+            session['merge_buid'] = user.buid
 
     # Check for new email addresses
     if userdata.get('email') and not useremail:
@@ -142,8 +142,8 @@ def login_service_postcallback(service, userdata):
         for email in userdata['emails']:
             existing = UserEmail.get(email)
             if existing:
-                if existing.user != user and 'merge_userid' not in session:
-                    session['merge_userid'] = existing.user.userid
+                if existing.user != user and 'merge_buid' not in session:
+                    session['merge_buid'] = existing.user.buid
             else:
                 user.add_email(email)
 
@@ -169,7 +169,7 @@ def login_service_postcallback(service, userdata):
     else:
         login_next = next_url
 
-    if 'merge_userid' in session:
+    if 'merge_buid' in session:
         return set_loginmethod_cookie(redirect(url_for('.profile_merge', next=login_next), code=303), service)
     else:
         return set_loginmethod_cookie(redirect(login_next, code=303), service)
@@ -178,11 +178,11 @@ def login_service_postcallback(service, userdata):
 @lastuser_oauth.route('/profile/merge', methods=['GET', 'POST'])
 @requires_login
 def profile_merge():
-    if 'merge_userid' not in session:
+    if 'merge_buid' not in session:
         return redirect(get_next_url(), code=302)
-    other_user = User.get(userid=session['merge_userid'])
+    other_user = User.get(buid=session['merge_buid'])
     if other_user is None:
-        session.pop('merge_userid', None)
+        session.pop('merge_buid', None)
         return redirect(get_next_url(), code=302)
     form = ProfileMergeForm()
     if form.validate_on_submit():
@@ -191,11 +191,11 @@ def profile_merge():
             login_internal(new_user)
             user_data_changed.send(new_user, changes=['merge'])
             flash(_("Your accounts have been merged"), 'success')
-            session.pop('merge_userid', None)
+            session.pop('merge_buid', None)
             db.session.commit()
             return redirect(get_next_url(), code=303)
         else:
-            session.pop('merge_userid', None)
+            session.pop('merge_buid', None)
             return redirect(get_next_url(), code=303)
     return render_template('merge.html', form=form, user=g.user, other_user=other_user,
         login_registry=login_registry)

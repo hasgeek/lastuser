@@ -37,9 +37,9 @@ def available_client_owners():
     Return a list of possible client owners for the current user.
     """
     choices = []
-    choices.append((g.user.userid, g.user.pickername))
+    choices.append((g.user.buid, g.user.pickername))
     for org in g.user.organizations_owned():
-        choices.append((org.userid, org.pickername))
+        choices.append((org.buid, org.pickername))
     return choices
 
 
@@ -50,7 +50,7 @@ def client_new():
     form.edit_user = g.user
     form.client_owner.choices = available_client_owners()
     if request.method == 'GET':
-        form.client_owner.data = g.user.userid
+        form.client_owner.data = g.user.buid
 
     if form.validate_on_submit():
         client = Client()
@@ -88,9 +88,9 @@ def client_edit(client):
     form.client_owner.choices = available_client_owners()
     if request.method == 'GET':
         if client.user:
-            form.client_owner.data = client.user.userid
+            form.client_owner.data = client.user.buid
         else:
-            form.client_owner.data = client.org.userid
+            form.client_owner.data = client.org.buid
 
     if form.validate_on_submit():
         if client.user != form.user or client.org != form.org:
@@ -177,7 +177,7 @@ def permission_new():
     form.edit_user = g.user
     form.context.choices = available_client_owners()
     if request.method == 'GET':
-        form.context.data = g.user.userid
+        form.context.data = g.user.buid
     if form.validate_on_submit():
         perm = Permission()
         form.populate_obj(perm)
@@ -201,9 +201,9 @@ def permission_edit(perm):
     form.context.choices = available_client_owners()
     if request.method == 'GET':
         if perm.user:
-            form.context.data = perm.user.userid
+            form.context.data = perm.user.buid
         else:
-            form.context.data = perm.org.userid
+            form.context.data = perm.org.buid
     if form.validate_on_submit():
         form.populate_obj(perm)
         perm.user = form.user
@@ -242,7 +242,7 @@ def permission_user_new(client):
             Permission.org == client.org)).order_by('name').all()  # NOQA
         form = TeamPermissionAssignForm()
         form.org = client.org
-        form.team_id.choices = [(team.userid, team.title) for team in client.org.teams]
+        form.team_id.choices = [(team.buid, team.title) for team in client.org.teams]
     else:
         abort(403)  # This should never happen. Clients always have an owner.
     form.perms.choices = [(ap.name, _(u"{name} – {title}").format(name=ap.name, title=ap.title)) for ap in available_perms]
@@ -274,12 +274,12 @@ def permission_user_new(client):
         submit=_("Assign permissions"))
 
 
-@lastuser_ui.route('/apps/<key>/perms/<userid>/edit', methods=['GET', 'POST'])
+@lastuser_ui.route('/apps/<key>/perms/<buid>/edit', methods=['GET', 'POST'])
 @requires_login
 @load_model(Client, {'key': 'key'}, 'client', permission='assign-permissions', kwargs=True)
 def permission_user_edit(client, kwargs):
     if client.user:
-        user = User.get(userid=kwargs['userid'])
+        user = User.get(buid=kwargs['buid'])
         if not user:
             abort(404)
         available_perms = Permission.query.filter(db.or_(
@@ -287,7 +287,7 @@ def permission_user_edit(client, kwargs):
             Permission.user == g.user)).order_by('name').all()  # NOQA
         permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
     elif client.org:
-        team = Team.get(userid=kwargs['userid'])
+        team = Team.get(buid=kwargs['buid'])
         if not team:
             abort(404)
         available_perms = Permission.query.filter(db.or_(
@@ -321,12 +321,12 @@ def permission_user_edit(client, kwargs):
     return render_form(form=form, title=_("Edit permissions"), formid='perm_edit', submit=_("Save changes"), ajax=True)
 
 
-@lastuser_ui.route('/apps/<key>/perms/<userid>/delete', methods=['GET', 'POST'])
+@lastuser_ui.route('/apps/<key>/perms/<buid>/delete', methods=['GET', 'POST'])
 @requires_login
 @load_model(Client, {'key': 'key'}, 'client', permission='assign-permissions', kwargs=True)
 def permission_user_delete(client, kwargs):
     if client.user:
-        user = User.get(userid=kwargs['userid'])
+        user = User.get(buid=kwargs['buid'])
         if not user:
             abort(404)
         permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
@@ -336,7 +336,7 @@ def permission_user_delete(client, kwargs):
             success=_(u"You have revoked permisions for user {pname}").format(pname=user.pickername),
             next=url_for('.client_info', key=client.key))
     else:
-        team = Team.get(userid=kwargs['userid'])
+        team = Team.get(buid=kwargs['buid'])
         if not team:
             abort(404)
         permassign = TeamClientPermissions.query.filter_by(team=team, client=client).first_or_404()
@@ -466,14 +466,14 @@ def resource_action_delete(client, resource, action):
 def client_team_access(client):
     form = ClientTeamAccessForm()
     user_orgs = g.user.organizations_owned()
-    form.organizations.choices = [(org.userid, org.title) for org in user_orgs]
-    org_selected = [org.userid for org in user_orgs if client in org.clients_with_team_access()]
+    form.organizations.choices = [(org.buid, org.title) for org in user_orgs]
+    org_selected = [org.buid for org in user_orgs if client in org.clients_with_team_access()]
     if request.method == 'GET':
         form.organizations.data = org_selected
     if form.validate_on_submit():
-        org_del = Organization.query.filter(Organization.userid.in_(
+        org_del = Organization.query.filter(Organization.buid.in_(
             set(org_selected) - set(form.organizations.data))).all()
-        org_add = Organization.query.filter(Organization.userid.in_(
+        org_add = Organization.query.filter(Organization.buid.in_(
             set(form.organizations.data) - set(org_selected))).all()
         cta_del = ClientTeamAccess.query.filter_by(client=client).filter(
             ClientTeamAccess.org_id.in_([org.id for org in org_del])).all()

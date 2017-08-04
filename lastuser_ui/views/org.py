@@ -115,11 +115,11 @@ def team_new(org):
         formid='team_new', submit=_("Create"))
 
 
-@lastuser_ui.route('/organizations/<name>/teams/<userid>', methods=['GET', 'POST'])
+@lastuser_ui.route('/organizations/<name>/teams/<buid>', methods=['GET', 'POST'])
 @requires_login
 @load_models(
     (Organization, {'name': 'name'}, 'org'),
-    (Team, {'org': 'org', 'userid': 'userid'}, 'team'),
+    (Team, {'org': 'org', 'buid': 'buid'}, 'team'),
     permission='edit'
     )
 def team_edit(org, team):
@@ -134,11 +134,11 @@ def team_edit(org, team):
         formid='team_edit', submit=_("Save"), ajax=False)
 
 
-@lastuser_ui.route('/organizations/<name>/teams/<userid>/delete', methods=['GET', 'POST'])
+@lastuser_ui.route('/organizations/<name>/teams/<buid>/delete', methods=['GET', 'POST'])
 @requires_login
 @load_models(
     (Organization, {'name': 'name'}, 'org'),
-    (Team, {'org': 'org', 'userid': 'userid'}, 'team'),
+    (Team, {'org': 'org', 'buid': 'buid'}, 'team'),
     permission='delete'
     )
 def team_delete(org, team):

@@ -1,15 +1,15 @@
 language: python
 python:
   - "2.7"
+services:
+  - redis-server
 install:
-  - pip --default-timeout=180 install -r requirements.txt
-  - pip --default-timeout=180 install -r test_requirements.txt
+  - pip install -r requirements.txt
+  - pip install -r test_requirements.txt
 before_script:
   - psql -c 'create database lastuser_test_app;' -U postgres
-
 script:
   - ./runtests.sh
-
 notifications:
   email: false
   slack:

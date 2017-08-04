@@ -73,11 +73,11 @@ class RegisterClientForm(forms.Form):
         "Organization owners will then able to grant access to teams in their organizations"))
 
     def validate_client_owner(self, field):
-        if field.data == self.edit_user.userid:
+        if field.data == self.edit_user.buid:
             self.user = self.edit_user
             self.org = None
         else:
-            orgs = [org for org in self.edit_user.organizations_owned() if org.userid == field.data]
+            orgs = [org for org in self.edit_user.organizations_owned() if org.buid == field.data]
             if len(orgs) != 1:
                 raise forms.ValidationError(_("Invalid owner"))
             self.user = None
@@ -152,10 +152,10 @@ class PermissionForm(forms.Form):
             self.name.errors.append(_("A global permission with that name already exists"))
             return False
 
-        if self.context.data == self.edit_user.userid:
+        if self.context.data == self.edit_user.buid:
             existing = Permission.get(name=self.name.data, user=self.edit_user)
         else:
-            org = Organization.get(userid=self.context.data)
+            org = Organization.get(buid=self.context.data)
             if org:
                 existing = Permission.get(name=self.name.data, org=org)
             else:
@@ -167,11 +167,11 @@ class PermissionForm(forms.Form):
         return True
 
     def validate_context(self, field):
-        if field.data == self.edit_user.userid:
+        if field.data == self.edit_user.buid:
             self.user = self.edit_user
             self.org = None
         else:
-            orgs = [org for org in self.edit_user.organizations_owned() if org.userid == field.data]
+            orgs = [org for org in self.edit_user.organizations_owned() if org.buid == field.data]
             if len(orgs) != 1:
                 raise forms.ValidationError(_("Invalid context"))
             self.user = None
@@ -199,7 +199,7 @@ class TeamPermissionAssignForm(forms.Form):
     perms = forms.SelectMultipleField(__("Permissions"), validators=[forms.validators.DataRequired()])
 
     def validate_team_id(self, field):
-        teams = [team for team in self.org.teams if team.userid == field.data]
+        teams = [team for team in self.org.teams if team.buid == field.data]
         if len(teams) != 1:
             raise forms.ValidationError(_("Unknown team"))
         self.team = teams[0]

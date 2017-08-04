@@ -16,7 +16,7 @@ def requires_dashboard(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not g.user or g.user.userid not in current_app.config.get('DASHBOARD_USERS', []):
+        if not g.user or g.user.buid not in current_app.config.get('DASHBOARD_USERS', []):
             abort(403)
         return f(*args, **kwargs)
     return decorated_function

@@ -220,8 +220,8 @@ def reset():
     return render_form(form=form, title=_("Reset password"), message=message, submit=_("Send reset code"), ajax=False)
 
 
-@lastuser_oauth.route('/reset/<userid>/<secret>', methods=['GET', 'POST'])
-@load_model(User, {'userid': 'userid'}, 'user', kwargs=True)
+@lastuser_oauth.route('/reset/<buid>/<secret>', methods=['GET', 'POST'])
+@load_model(User, {'buid': 'buid'}, 'user', kwargs=True)
 def reset_email(user, kwargs):
     resetreq = PasswordResetRequest.query.filter_by(user=user, reset_code=kwargs['secret']).first()
     if not resetreq:

@@ -2,15 +2,17 @@
 from os import environ
 from flask import Markup
 
+TESTING = True
+
 SITE_TITLE = 'Lastuser'
 DEBUG_TB_ENABLED = False
 DEBUG_TB_INTERCEPT_REDIRECTS = False
-SERVER_NAME='test.lastuser.dev:7500'
+SERVER_NAME = 'localhost:7001'
 LOGFILE = 'error.log'
 SQLALCHEMY_DATABASE_URI = environ.get('SQLALCHEMY_DATABASE_URI', 'postgres://@localhost:5432/lastuser_test_app')
 SQLALCHEMY_ECHO = False
 SECRET_KEY = 'random_string_here'
-TIMEZONE = 'Asia/Calcutta'
+TIMEZONE = 'Asia/Kolkata'
 CACHE_TYPE = 'redis'
 
 #: Use SSL for some URLs
@@ -18,14 +20,14 @@ USE_SSL = False
 
 #: Mail settings
 MAIL_SUPRESS_SEND = True
-MAIL_FAIL_SILENTLY = False
+MAIL_FAIL_SILENTLY = True
 SITE_SUPPORT_EMAIL = environ.get('SITE_SUPPORT_EMAIL')
 # Mail secrets
 MAIL_SERVER = environ.get('MAIL_SERVER')
 MAIL_PORT = environ.get('MAIL_PORT')
 MAIL_USE_SSL = environ.get('MAIL_USE_SSL')
 MAIL_USE_TLS = environ.get('MAIL_USE_TLS')
-MAIL_DEFAULT_SENDER = environ.get('MAIL_DEFAULT_SENDER')
+MAIL_DEFAULT_SENDER = environ.get('MAIL_DEFAULT_SENDER', 'test@example.com')
 MAIL_USERNAME = environ.get('MAIL_USERNAME')
 MAIL_PASSWORD = environ.get('MAIL_PASSWORD')
 
