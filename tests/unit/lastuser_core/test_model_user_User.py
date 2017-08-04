@@ -231,20 +231,22 @@ class TestUser(TestDatabaseFixture):
         piglet = self.fixtures.piglet
         assert piglet.phone is u''
 
-    def test_user__set_password(self):
+    def test_user_password(self):
         """
         Test to set user password
         """
         # Scenario 1: Set None as password
         castle = models.User(username=u'castle', fullname=u'Rick Castle')
-        self.assertEqual(castle._set_password(None), None)
+        castle.password = None
+        self.assertEqual(castle.pw_hash, None)
         # Scenario 2: Set valid password
         kate = models.User(username=u'kate', fullname=u'Detective Kate Beckette')
-        kate_password = kate._set_password(u'12thprecinct')
+        kate.password = u'12thprecinct'
         db.session.add(kate)
         db.session.commit()
         result = models.User.get(buid=kate.buid)
         self.assertEqual(len(result.pw_hash), 60)
+        self.assertTrue(result.password_is(u'12thprecinct'))
         self.assertGreater(result.pw_expires_at, result.pw_set_at)
 
     def test_user_clients_with_team_access(self):
@@ -262,7 +264,9 @@ class TestUser(TestDatabaseFixture):
         volterra = models.Client(title=u'Volterra, Tuscany', org=volturi, confidential=True, website=u'volterra.co.it')
         enforcers = models.Client(title=u'Volturi\'s thugs', org=volturi, confidential=True, website=u'volturi.co.it')
         volterra_auth_token = models.AuthToken(client=volterra, user=aro, scope=u'teams', validity=0)
+        volterra_auth_token  # NOQA
         enforcers_auth_token = models.AuthToken(client=enforcers, user=marcus, scope=u'teams', validity=0)
+        enforcers_auth_token  # NOQA
         self.assertItemsEqual(aro.clients_with_team_access(), [volterra])
         self.assertItemsEqual(marcus.clients_with_team_access(), [enforcers])
         self.assertEqual(jane.clients_with_team_access(), [])
@@ -272,11 +276,12 @@ class TestUser(TestDatabaseFixture):
         Test to check if password for a user has expired
         """
         alexis = models.User(username=u'alexis', fullname=u'Alexis Castle')
-        alexis._set_password(u'unfortunateincidents')
-        alexis.pw_expires_at=datetime.utcnow()+ timedelta(0,0,1)
+        alexis.password = u'unfortunateincidents'
+        alexis.pw_expires_at = datetime.utcnow() + timedelta(0, 0, 1)
         db.session.add(alexis)
         db.session.commit()
         result = models.User.get(buid=alexis.buid)
+        self.assertIsNotNone(result)
         self.assertTrue(alexis.password_has_expired())
 
     def test_user_password_is(self):
@@ -288,8 +293,8 @@ class TestUser(TestDatabaseFixture):
         self.assertFalse(oldmajor.password_is(u'oinkoink'))
         # scenario 3: if password has been set
         dumbeldore = models.User(u'dumbeldore', fullname=u'Albus Dumberldore')
-        dumbeldore_password=u'dissendium'
-        dumbeldore._set_password(password=dumbeldore_password)
+        dumbeldore_password = u'dissendium'
+        dumbeldore.password = dumbeldore_password
         self.assertTrue(dumbeldore.password_is(dumbeldore_password))
 
     def test_user_is_active(self):
@@ -315,7 +320,7 @@ class TestUser(TestDatabaseFixture):
         # result1 = models.User.autocomplete(u'*')
         # self.assertEqual(result1 or lena)
         # scenario 2: when query passed
-        queries=[u"[oa]", u"Pig", "crusoe@keepballin.ca"]
+        queries = [u"[oa]", u"Pig", "crusoe@keepballin.ca"]
         result2 = []
         for each in queries:
             result2.append(models.User.autocomplete(each))
@@ -334,14 +339,14 @@ class TestUser(TestDatabaseFixture):
         """
         Test for checking if user had a old id
         """
-        ### Merge a user onto an older user ###
+        # ## Merge a user onto an older user ###
         crusoe = self.fixtures.crusoe
         crusoe2 = models.User(username=u"batdog", fullname=u"Batdog")
         db.session.add(crusoe2)
         db.session.commit()
         merged_user = models.merge_users(crusoe, crusoe2)
         db.session.commit()
-        ### DONE ###
+        # ## DONE ###
         self.assertIsInstance(merged_user, models.User)
         # because the logic is to merge into older account so merge status set on newer account
         self.assertEqual(crusoe.status, 0)
@@ -385,6 +390,7 @@ class TestUser(TestDatabaseFixture):
         db.session.add(piggy)
         db.session.commit()
         merged_user = models.merge_users(piglet, piggy)
+        merged_user  # NOQA
         db.session.commit()
         lookup_by_buid_merged = models.User.get(buid=piggy.buid)
         self.assertIsInstance(lookup_by_buid_merged, models.User)
@@ -414,6 +420,7 @@ class TestUser(TestDatabaseFixture):
         self.assertItemsEqual(lookup_by_usernames, expected_result)
         # scenario 5: when defercols is set to True
         lookup_by_usernames_defercols = models.User.all(usernames=[crusoe.username, oakley.username], defercols=True)
+        lookup_by_usernames_defercols  # NOQA
         self.assertIsInstance(lookup_by_usernames, list)
         self.assertItemsEqual(lookup_by_usernames, expected_result)
         # scenario 6: when user.status is active
@@ -430,6 +437,7 @@ class TestUser(TestDatabaseFixture):
         db.session.add_all([jykll, hyde])
         db.session.commit()
         merged_user = models.merge_users(jykll, hyde)
+        merged_user  # NOQA
         db.session.commit()
         lookup_by_buid_merged = models.User.all(buids=[hyde.buid])
         self.assertIsInstance(lookup_by_buid_merged, list)
@@ -441,7 +449,7 @@ class TestUser(TestDatabaseFixture):
         """
         # scenario 1: if primary flag is True and user has no existing email
         mr_whymper = models.User(username=u'whymper')
-        whymper_email = email=u'whmmm@animalfarm.co.uk'
+        whymper_email = u'whmmm@animalfarm.co.uk'
         whymper_result = mr_whymper.add_email(whymper_email, primary=True)
         self.assertEqual(whymper_result.email, whymper_email)
         # # scenario 2: when primary flag is True but user has existing primary email
