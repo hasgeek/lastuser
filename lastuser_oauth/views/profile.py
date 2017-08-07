@@ -83,7 +83,7 @@ def confirm_email(md5sum, secret):
                             u"Your email address <code>{email}</code> has already been verified").format(
                                 fullname=escape(claimed_user.fullname), email=escape(claimed_email))))
 
-            useremail = emailclaim.user.add_email(emailclaim.email.lower(),
+            useremail = emailclaim.user.add_email(emailclaim.email,
                 primary=emailclaim.user.email is None,
                 type=emailclaim.type,
                 private=emailclaim.private)

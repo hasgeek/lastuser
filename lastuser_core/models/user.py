@@ -666,7 +666,7 @@ class UserEmail(OwnerMixin, BaseMixin, db.Model):
 
     def __init__(self, email, **kwargs):
         super(UserEmail, self).__init__(**kwargs)
-        self._email = email
+        self._email = email.lower()
         self.md5sum = md5(self._email).hexdigest()
         self.domain = email.split('@')[-1]
 
@@ -749,7 +749,7 @@ class UserEmailClaim(OwnerMixin, BaseMixin, db.Model):
     def __init__(self, email, **kwargs):
         super(UserEmailClaim, self).__init__(**kwargs)
         self.verification_code = newsecret()
-        self._email = email
+        self._email = email.lower()
         self.md5sum = md5(self._email).hexdigest()
         self.domain = email.split('@')[-1]
 

@@ -62,13 +62,16 @@ def get_user_extid(service, userdata):
     provider = login_registry[service]
     extid = getextid(service=service, userid=userdata['userid'])
 
+    user = None
     useremail = None
+
     if userdata.get('email'):
         useremail = UserEmail.get(email=userdata['email'])
 
-    user = None
     if extid is not None:
         user = extid.user
+    # It is possible at this time that extid.user and useremail.user are different.
+    # We do not handle it here, but in the parent function login_service_postcallback.
     elif useremail is not None and useremail.user is not None:
         user = useremail.user
     else:
@@ -129,6 +132,8 @@ def login_service_postcallback(service, userdata):
             # Woah! Account merger handler required
             # Always confirm with user before doing an account merger
             session['merge_buid'] = user.buid
+        elif useremail and useremail.user != user:
+            session['merge_buid'] = useremail.user.buid
 
     # Check for new email addresses
     if userdata.get('email') and not useremail:
@@ -164,7 +169,7 @@ def login_service_postcallback(service, userdata):
     db.session.commit()
 
     # Finally: set a login method cookie and send user on their way
-    if not user.is_profile_complete():
+    if not g.user.is_profile_complete():
         login_next = url_for('.profile_new', next=next_url)
     else:
         login_next = next_url
@@ -189,10 +194,10 @@ def profile_merge():
         if 'merge' in request.form:
             new_user = merge_users(g.user, other_user)
             login_internal(new_user)
-            user_data_changed.send(new_user, changes=['merge'])
             flash(_("Your accounts have been merged"), 'success')
             session.pop('merge_buid', None)
             db.session.commit()
+            user_data_changed.send(new_user, changes=['merge'])
             return redirect(get_next_url(), code=303)
         else:
             session.pop('merge_buid', None)
