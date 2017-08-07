@@ -11,7 +11,7 @@ port = int(port) if port else 7000
 
 
 def before_all(context):
-    context.server = make_server('', port, app)
+    context.server = make_server(host, port, app)
     context.thread = threading.Thread(target=context.server.serve_forever)
     context.thread.start()
     context.browser = webdriver.PhantomJS()
