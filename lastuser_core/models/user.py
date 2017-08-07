@@ -707,7 +707,7 @@ class UserEmail(OwnerMixin, BaseMixin, db.Model):
 
 
 create_useremail_index = DDL(
-    'CREATE INDEX ix_useremail_email_lower ON useremail (lower(email) varchar_pattern_ops);')
+    'CREATE UNIQUE INDEX ix_useremail_email_lower ON useremail (lower(email) varchar_pattern_ops);')
 event.listen(UserEmail.__table__, 'after_create',
     create_useremail_index.execute_if(dialect='postgresql'))
 
