@@ -4,10 +4,10 @@ from selenium import webdriver
 from lastuser_core.models import db
 from lastuserapp import app
 
-server_name = app.config.get('SERVER_NAME')
+server_name = app.config.get('SERVER_NAME') or 'localhost:7001'
 base_url = 'http://%s' % server_name
 host, port = server_name.split(':')
-port = int(port) if port else 7000
+port = int(port) if port else 7001
 
 
 def before_all(context):
