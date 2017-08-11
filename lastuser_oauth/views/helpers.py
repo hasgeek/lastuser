@@ -52,7 +52,7 @@ def lookup_current_user():
 
     # Transition users with 'userid' to 'sessionid'
     if not g.usersession and 'userid' in lastuser_cookie:
-        g.user = User.get(userid=lastuser_cookie['userid'])
+        g.user = User.get(buid=lastuser_cookie['userid'])
         if g.user:
             g.usersession = UserSession(user=g.user)
             g.usersession.access()
