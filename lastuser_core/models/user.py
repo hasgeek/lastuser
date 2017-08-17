@@ -384,6 +384,9 @@ create_user_index = DDL(
 event.listen(User.__table__, 'after_create',
     create_user_index.execute_if(dialect='postgresql'))
 
+event.listen(User.__table__, 'before_drop',
+    DDL('DROP INDEX ix_user_username_lower; DROP INDEX ix_user_fullname_lower;').execute_if(dialect='postgresql'))
+
 
 class UserOldId(UuidMixin, BaseMixin, db.Model):
     __tablename__ = 'useroldid'
@@ -711,6 +714,9 @@ create_useremail_index = DDL(
 event.listen(UserEmail.__table__, 'after_create',
     create_useremail_index.execute_if(dialect='postgresql'))
 
+event.listen(UserEmail.__table__, 'before_drop',
+    DDL('DROP INDEX ix_useremail_email_lower').execute_if(dialect='postgresql'))
+
 
 class UserEmailClaim(OwnerMixin, BaseMixin, db.Model):
     __tablename__ = 'useremailclaim'
@@ -989,3 +995,6 @@ create_userexternalid_index = DDL(
     'CREATE INDEX ix_userexternalid_username_lower ON userexternalid (lower(username) varchar_pattern_ops);')
 event.listen(UserExternalId.__table__, 'after_create',
     create_userexternalid_index.execute_if(dialect='postgresql'))
+
+event.listen(UserExternalId.__table__, 'before_drop',
+    DDL('DROP INDEX ix_userexternalid_username_lower;').execute_if(dialect='postgresql'))
