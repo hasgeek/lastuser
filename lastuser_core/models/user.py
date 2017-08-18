@@ -684,6 +684,18 @@ class UserEmail(OwnerMixin, BaseMixin, db.Model):
     def __str__(self):
         return str(self.__unicode__())
 
+    @property
+    def primary(self):
+        return self.user.primary_email == self
+
+    @primary.setter
+    def primary(self, value):
+        if value:
+            self.user.primary_email = self
+        else:
+            if self.user.primary_email == self:
+                self.user.primary_email = None
+
     @classmethod
     def get(cls, email=None, md5sum=None):
         """
@@ -839,6 +851,18 @@ class UserPhone(OwnerMixin, BaseMixin, db.Model):
 
     def __str__(self):
         return str(self.__unicode__())
+
+    @property
+    def primary(self):
+        return self.user.primary_phone == self
+
+    @primary.setter
+    def primary(self, value):
+        if value:
+            self.user.primary_phone = self
+        else:
+            if self.user.primary_phone == self:
+                self.user.primary_phone = None
 
     @classmethod
     def get(cls, phone):
