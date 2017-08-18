@@ -19,7 +19,7 @@
 <h2>My email addresses</h2>
 <ul>
   {% for useremail in g.user.emails %}
-    <li>{{ useremail }} {% if useremail.primary %} <em>(primary)</em> {% endif -%}
+    <li>{{ useremail }} {% if useremail == g.user.primary_email %} <em>(primary)</em> {% endif -%}
       <a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}">(remove)</a></li>
   {% else %}
     <li><em>(no verified addresses)</em></li>
@@ -34,7 +34,7 @@
 <h2>My mobile numbers</h2>
 <ul>
   {% for userphone in g.user.phones %}
-    <li>{{ userphone }} {% if userphone.primary %} <em>(primary)</em> {% endif -%}
+    <li>{{ userphone }} {% if userphone == g.user.primary_phone %} <em>(primary)</em> {% endif -%}
       <a href="{{ url_for('.remove_phone', number=userphone.phone) }}">(remove)</a></li>
   {% else %}
     <li><em>(no verified numbers)</em></li>

@@ -9,7 +9,7 @@ from sqlalchemy.orm import defer, deferred
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
 from coaster.utils import newsecret, newpin, valid_username
-from coaster.sqlalchemy import make_timestamp_columns, failsafe_add
+from coaster.sqlalchemy import make_timestamp_columns, failsafe_add, add_primary_relationship
 from baseframe import _
 
 from . import db, BaseMixin, UuidMixin
@@ -165,26 +165,19 @@ class User(UuidMixin, BaseMixin, db.Model):
             return self.fullname
 
     def add_email(self, email, primary=False, type=None, private=False):
-        if primary:
-            for emailob in self.emails:
-                if emailob.primary:
-                    emailob.primary = False
         useremail = UserEmail(user=self, email=email, primary=primary, type=type, private=private)
         useremail = failsafe_add(db.session, useremail, user=self, email=email)
+        if primary:
+            self.primary_email = useremail
         return useremail
 
     def del_email(self, email):
-        setprimary = False
         useremail = UserEmail.query.filter_by(user=self, email=email).first()
         if useremail:
-            if useremail.primary:
-                setprimary = True
             db.session.delete(useremail)
-        if setprimary:
-            for emailob in UserEmail.query.filter_by(user=self).all():
-                if emailob is not useremail:
-                    emailob.primary = True
-                    break
+        if self.primary_email in (useremail, None):
+            db.session.flush()
+            self.primary_email = UserEmail.query.filter_by(user=self).first()
 
     @cached_property
     def email(self):
@@ -192,7 +185,7 @@ class User(UuidMixin, BaseMixin, db.Model):
         Returns primary email address for user.
         """
         # Look for a primary address
-        useremail = UserEmail.query.filter_by(user=self, primary=True).first()
+        useremail = self.primary_email
         if useremail:
             return useremail
         # No primary? Maybe there's one that's not set as primary?
@@ -200,7 +193,7 @@ class User(UuidMixin, BaseMixin, db.Model):
         if useremail:
             # XXX: Mark at primary. This may or may not be saved depending on
             # whether the request ended in a database commit.
-            useremail.primary = True
+            self.primary_email = useremail
             return useremail
         # This user has no email address. Return a blank string instead of None
         # to support the common use case, where the caller will use unicode(user.email)
@@ -213,7 +206,7 @@ class User(UuidMixin, BaseMixin, db.Model):
         Returns primary phone number for user.
         """
         # Look for a primary address
-        userphone = UserPhone.query.filter_by(user=self, primary=True).first()
+        userphone = self.primary_phone
         if userphone:
             return userphone
         # No primary? Maybe there's one that's not set as primary?
@@ -221,7 +214,7 @@ class User(UuidMixin, BaseMixin, db.Model):
         if userphone:
             # XXX: Mark at primary. This may or may not be saved depending on
             # whether the request ended in a database commit.
-            userphone.primary = True
+            self.primary_phone = userphone
             return userphone
         # This user has no phone number. Return a blank string instead of None
         # to support the common use case, where the caller will use unicode(user.phone)
@@ -655,7 +648,6 @@ class UserEmail(OwnerMixin, BaseMixin, db.Model):
 
     _email = db.Column('email', db.Unicode(254), unique=True, nullable=False)
     md5sum = db.Column(db.String(32), unique=True, nullable=False)
-    primary = db.Column(db.Boolean, nullable=False, default=False)
     domain = db.Column(db.Unicode(253), nullable=False, index=True)
 
     private = db.Column(db.Boolean, nullable=False, default=False)
@@ -816,7 +808,6 @@ class UserPhone(OwnerMixin, BaseMixin, db.Model):
     team = db.relationship(Team, primaryjoin=team_id == Team.id,
         backref=db.backref('phones', cascade='all, delete-orphan'))
 
-    primary = db.Column(db.Boolean, nullable=False, default=False)
     _phone = db.Column('phone', db.Unicode(16), unique=True, nullable=False)
     gets_text = db.Column(db.Boolean, nullable=False, default=True)
 
@@ -990,6 +981,10 @@ class UserExternalId(BaseMixin, db.Model):
             return cls.query.filter_by(service=service, userid=userid).one_or_none()
         else:
             return cls.query.filter_by(service=service, username=username).one_or_none()
+
+
+add_primary_relationship(User, 'primary_email', UserEmail, 'user', 'user_id')
+add_primary_relationship(User, 'primary_phone', UserPhone, 'user', 'user_id')
 
 create_userexternalid_index = DDL(
     'CREATE INDEX ix_userexternalid_username_lower ON userexternalid (lower(username) varchar_pattern_ops);')
