@@ -127,7 +127,8 @@ def verify_phone(phoneclaim):
                 primary = True
             else:
                 primary = False
-            userphone = UserPhone(user=g.user, phone=phoneclaim.phone, gets_text=True, primary=primary)
+            userphone = UserPhone(user=g.user, phone=phoneclaim.phone, gets_text=True)
+            userphone.primary = primary
             db.session.add(userphone)
             db.session.delete(phoneclaim)
             db.session.commit()
