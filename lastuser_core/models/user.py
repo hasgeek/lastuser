@@ -165,7 +165,7 @@ class User(UuidMixin, BaseMixin, db.Model):
             return self.fullname
 
     def add_email(self, email, primary=False, type=None, private=False):
-        useremail = UserEmail(user=self, email=email, primary=primary, type=type, private=private)
+        useremail = UserEmail(user=self, email=email, type=type, private=private)
         useremail = failsafe_add(db.session, useremail, user=self, email=email)
         if primary:
             self.primary_email = useremail
