@@ -13,7 +13,6 @@ def register_user(context, user_dict, clear_cookies=True):
     register_form.submit()
 
     context.wait.until(lambda browser: browser.find_element_by_id('hg-user-btn'))
-    context.browser.save_screenshot('screenie.png')
 
     if clear_cookies:
         context.browser.delete_all_cookies()

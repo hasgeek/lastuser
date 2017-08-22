@@ -1,7 +1,7 @@
 from flask import g
 from behave import when, then, given
 from lastuserapp import app
-from utils import login_test_user
+from utils import login_test_user, login_user
 
 
 # @given("we have an existing user")
@@ -30,7 +30,9 @@ def visit_profile_page(context):
 @then("the user can edit their profile")
 def edit_profile(context):
     context.browser.visit('/profile/edit')
+    context.browser.find_element_by_name("fullname").clear()
     context.browser.find_element_by_name("fullname").send_keys(context.test_user["fullname"] + "test")
+    context.browser.find_element_by_name("username").clear()
     context.browser.find_element_by_name("username").send_keys(context.test_user["username"] + "test")
     context.browser.find_element_by_name("fullname").submit()
 
@@ -50,6 +52,10 @@ def change_password(context):
     context.browser.find_element_by_name("password").submit()
 
     alert = context.browser.find_elements_by_xpath("//div[@class='alert alert-success fade in']")
-    # context.browser.save_screenshot('post-password.jpg')
     assert len(alert) == 1
     assert 'Your new password has been saved' in context.browser.page_source
+
+    # now let's logout and login again
+    context.browser.delete_all_cookies()
+    login_user(context, dict(username=context.test_user["username"] + "test", password=context.test_user["test_new_password"]))
+    assert context.browser.find_element_by_id('hg-user-btn').is_enabled()
