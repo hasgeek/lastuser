@@ -2,25 +2,12 @@ from flask import g
 from behave import given, when, then
 from lastuser_core.models import User
 from lastuserapp import app
+from utils import register_test_user
 
 
 @given('a new user trying to register with a used username')
 def given_new_user(context):
-    context.test_user = dict(
-        fullname='Alyssa P Hacker',
-        email='alyssa@hacker.com',
-        username='alyssa',
-        password='alyssa',
-        confirm_password='alyssa'
-    )
-    # registering the test user
-    context.browser.visit('/register')
-    assert context.browser.find_element_by_name('csrf_token').is_enabled()
-    for k, v in context.test_user.iteritems():
-        context.browser.find_element_by_name(k).send_keys(v)
-
-    register_form = context.browser.find_element_by_id('register')
-    register_form.submit()
+    register_test_user(context)
 
 
 @when('this new user submits the registration form with a username that has already been used')
@@ -30,7 +17,8 @@ def when_form_submit(context):
     context.browser.visit('/register')
     assert context.browser.find_element_by_name('csrf_token').is_enabled()
     for k, v in context.test_user.iteritems():
-        context.browser.find_element_by_name(k).send_keys(v)
+        if not k.startswith('test_'):
+            context.browser.find_element_by_name(k).send_keys(v)
 
     register_form = context.browser.find_element_by_id('register')
     register_form.submit()
