@@ -11,6 +11,8 @@ from utils import login_test_user, login_user
 @given("the user is logged in")
 def user_logs_in(context):
     login_test_user(context)
+    context.wait.until(lambda browser: browser.find_element_by_id('hg-user-btn'))
+    assert context.browser.find_element_by_id('hg-user-btn').is_enabled()
 
 
 @when("the user visits their profile page")
@@ -20,7 +22,6 @@ def when_login_form_submit(context):
 
 @then("the user can see their details")
 def visit_profile_page(context):
-    assert context.browser.find_element_by_id('hg-user-btn').is_enabled()
     infoboxes = context.browser.find_elements_by_class_name('infobox')
     assert len(infoboxes) > 0
     infobox = infoboxes[0]
@@ -59,3 +60,9 @@ def change_password(context):
     context.browser.delete_all_cookies()
     login_user(context, dict(username=context.test_user["username"] + "test", password=context.test_user["test_new_password"]))
     assert context.browser.find_element_by_id('hg-user-btn').is_enabled()
+
+    # now let's logout and try logging in again with previous password
+    context.browser.delete_all_cookies()
+    login_user(context, dict(username=context.test_user["username"] + "test", password=context.test_user["password"]))
+    wrong_password_error = context.browser.find_elements_by_xpath('//p[@class="help-error" and contains(text(), "Incorrect password")]')
+    assert len(wrong_password_error) == 1

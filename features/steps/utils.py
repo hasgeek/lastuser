@@ -36,4 +36,3 @@ def login_user(context, user_dict):
         context.browser.find_element_by_name(k).send_keys(v)
 
     context.browser.find_element_by_name('username').submit()
-    context.wait.until(lambda browser: browser.find_element_by_id('hg-user-btn'))
