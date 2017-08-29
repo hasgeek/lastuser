@@ -8,7 +8,7 @@ from sqlalchemy import or_, event, DDL
 from sqlalchemy.orm import defer, deferred
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
-from coaster.utils import newsecret, newpin, valid_username
+from coaster.utils import newsecret, newpin, valid_username, require_one_of
 from coaster.sqlalchemy import make_timestamp_columns, failsafe_add, add_primary_relationship
 from baseframe import _
 
@@ -287,13 +287,8 @@ class User(UuidMixin, BaseMixin, db.Model):
         :param str buid: Buid to lookup
         :param bool defercols: Defer loading non-critical columns
         """
-        if not bool(username) ^ bool(buid):
-            raise TypeError("Either username or buid should be specified")
-
-        if buid:
-            query = cls.query.filter_by(buid=buid)
-        else:
-            query = cls.query.filter_by(username=username)
+        param, value = require_one_of(True, username=username, buid=buid)
+        query = cls.query.filter_by(**{param: value})
         if defercols:
             query = query.options(*cls._defercols)
         user = query.one_or_none()
@@ -526,13 +521,8 @@ class Organization(UuidMixin, BaseMixin, db.Model):
         :param str buid: Buid of the organization
         :param bool defercols: Defer loading non-critical columns
         """
-        if not bool(name) ^ bool(buid):
-            raise TypeError("Either name or buid should be specified")
-
-        if buid:
-            query = cls.query.filter_by(buid=buid)
-        else:
-            query = cls.query.filter_by(name=name)
+        param, value = require_one_of(True, name=name, buid=buid)
+        query = cls.query.filter_by(**{param: value})
         if defercols:
             query = query.options(*cls._defercols)
         return query.one_or_none()
@@ -704,8 +694,7 @@ class UserEmail(OwnerMixin, BaseMixin, db.Model):
         :param str email: Email address to lookup
         :param str md5sum: md5sum of email address to lookup
         """
-        if not bool(email) ^ bool(md5sum):
-            raise TypeError("Either email or md5sum should be specified")
+        require_one_of(email=email, md5sum=md5sum)
 
         if email:
             return cls.query.filter(cls.email.in_([email, email.lower()])).one_or_none()
@@ -998,13 +987,8 @@ class UserExternalId(BaseMixin, db.Model):
         site URL changes. The username is the email address, which will be the same despite
         different userids.
         """
-        if not bool(userid) ^ bool(username):
-            raise TypeError("Either userid or username should be specified")
-
-        if userid:
-            return cls.query.filter_by(service=service, userid=userid).one_or_none()
-        else:
-            return cls.query.filter_by(service=service, username=username).one_or_none()
+        param, value = require_one_of(True, userid=userid, username=username)
+        return cls.query.filter_by(**{param: value, 'service': service}).one_or_none()
 
 
 add_primary_relationship(User, 'primary_email', UserEmail, 'user', 'user_id')

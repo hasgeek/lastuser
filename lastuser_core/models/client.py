@@ -7,7 +7,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import load_only
 from sqlalchemy.orm.query import Query as QueryBaseClass
 from sqlalchemy.orm.collections import attribute_mapped_collection
-from coaster.utils import buid, newsecret
+from coaster.utils import buid, newsecret, require_one_of
 from baseframe import _
 
 from . import db, BaseMixin, BaseScopedNameMixin
@@ -151,12 +151,8 @@ class Client(ScopeMixin, BaseMixin, db.Model):
         :param str key: Client key to lookup
         :param str namespace: Client namespace to lookup
         """
-        if not bool(key) ^ bool(namespace):
-            raise TypeError("Either key or namespace should be specified")
-        if key:
-            return cls.query.filter_by(key=key, active=True).one_or_none()
-        else:
-            return cls.query.filter_by(namespace=namespace, active=True).one_or_none()
+        param, value = require_one_of(True, key=key, namespace=namespace)
+        return cls.query.filter_by(**{param: value, 'active': True}).one_or_none()
 
 
 class ClientCredential(BaseMixin, db.Model):
@@ -261,8 +257,7 @@ class Resource(BaseScopedNameMixin, db.Model):
 
         :param str name: Name of the resource.
         """
-        if not bool(client) ^ bool(namespace):
-            raise TypeError("Either client or namespace should be specified")
+        require_one_of(client=client, namespace=namespace)
 
         if client:
             return cls.query.filter_by(name=name, client=client).one_or_none()
@@ -532,12 +527,8 @@ class Permission(BaseMixin, db.Model):
         if allusers:
             return cls.query.filter_by(name=name, allusers=True).one_or_none()
         else:
-            if not bool(user) ^ bool(org):
-                raise TypeError("Either user or org should be specified")
-            if user is not None:
-                return cls.query.filter_by(name=name, user=user).one_or_none()
-            else:
-                return cls.query.filter_by(name=name, org=org).one_or_none()
+            param, value = require_one_of(True, user=user, org=org)
+            return cls.query.filter_by(**{param: value, 'name': name}).one_or_none()
 
 
 # This model's name is in plural because it defines multiple permissions within each instance
