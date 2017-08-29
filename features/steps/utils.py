@@ -36,3 +36,12 @@ def login_user(context, user_dict):
         context.browser.find_element_by_name(k).send_keys(v)
 
     context.browser.find_element_by_name('username').submit()
+
+
+def get_namespace_from_website(website):
+    from urlparse import urlparse
+
+    parsed_url = urlparse(website)
+    netloc_reversed = parsed_url.netloc.split('.')
+    netloc_reversed.reverse()
+    return '.'.join(netloc_reversed)
