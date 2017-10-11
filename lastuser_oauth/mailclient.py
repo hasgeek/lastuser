@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from markdown import markdown
 from flask import render_template
 from flask_mail import Mail, Message
 from baseframe import _
