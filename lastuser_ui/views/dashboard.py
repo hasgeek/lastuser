@@ -30,7 +30,7 @@ def dashboard():
         '''SELECT COUNT(DISTINCT(user_session.user_id)) AS mau FROM user_session, "user" WHERE user_session.user_id = "user".id AND "user".status = :status AND user_session.accessed_at >= (NOW() AT TIME ZONE 'UTC') - INTERVAL '30 days' '''
         )).params(status=USER_STATUS.ACTIVE).first()[0]
 
-    return render_template('dashboard.html',
+    return render_template('dashboard.html.jinja2',
         user_count=user_count,
         mau=mau
         )

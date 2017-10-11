@@ -17,7 +17,7 @@ from ..forms.org import OrganizationForm, TeamForm
 @lastuser_ui.route('/organizations')
 @requires_login
 def org_list():
-    return render_template('org_list.html', organizations=g.user.organizations_owned())
+    return render_template('org_list.html.jinja2', organizations=g.user.organizations_owned())
 
 
 @lastuser_ui.route('/organizations/new', methods=['GET', 'POST'])
@@ -44,7 +44,7 @@ def org_new():
 @requires_login
 @load_model(Organization, {'name': 'name'}, 'org', permission='view')
 def org_info(org):
-    return render_template('org_info.html', org=org)
+    return render_template('org_info.html.jinja2', org=org)
 
 
 @lastuser_ui.route('/organizations/<name>/edit', methods=['GET', 'POST'])

@@ -1,4 +1,4 @@
-{% from "baseframe/forms.html" import renderfield, rendersubmit %}
+{% from "baseframe/forms.html.jinja2" import renderfield, rendersubmit %}
 {% macro passwordlogin(loginform, markup) %}
   <form id="passwordlogin" method="POST" class="form-horizontal">
     <input type="hidden" name="_charset_"/>

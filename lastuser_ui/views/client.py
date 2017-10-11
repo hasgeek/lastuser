@@ -20,16 +20,16 @@ from ..forms import (RegisterClientForm, PermissionForm, UserPermissionAssignFor
 @requires_login
 def client_list():
     if g.user:
-        return render_template('client_list.html', clients=Client.query.filter(db.or_(Client.user == g.user,
+        return render_template('client_list.html.jinja2', clients=Client.query.filter(db.or_(Client.user == g.user,
             Client.org_id.in_(g.user.organizations_owned_ids()))).order_by('title').all())
     else:
         # TODO: Show better UI for non-logged in users
-        return render_template('client_list.html', clients=[])
+        return render_template('client_list.html.jinja2', clients=[])
 
 
 @lastuser_ui.route('/apps/all')
 def client_list_all():
-    return render_template('client_list.html', clients=Client.query.order_by('title').all())
+    return render_template('client_list.html.jinja2', clients=Client.query.order_by('title').all())
 
 
 def available_client_owners():
@@ -74,7 +74,7 @@ def client_info(client):
     else:
         permassignments = TeamClientPermissions.query.filter_by(client=client).all()
     resources = Resource.query.filter_by(client=client).order_by('name').all()
-    return render_template('client_info.html', client=client,
+    return render_template('client_info.html.jinja2', client=client,
         permassignments=permassignments,
         resources=resources)
 
@@ -139,7 +139,7 @@ def client_cred_new(client):
         cred, secret = ClientCredential.new(client)
         cred.title = form.title.data
         db.session.commit()
-        return render_template('client_cred.html', name=cred.name, secret=secret, cred=cred)
+        return render_template('client_cred.html.jinja2', name=cred.name, secret=secret, cred=cred)
     return render_form(form=form, title=_("New access key"), formid='client_cred',
         submit=_("Create"), ajax=False)
 
@@ -167,7 +167,7 @@ def permission_list():
         db.or_(Permission.user_id == g.user.id,
                Permission.org_id.in_(g.user.organizations_owned_ids()))
         ).order_by('name').all()
-    return render_template('permission_list.html', allperms=allperms, userperms=userperms)
+    return render_template('permission_list.html.jinja2', allperms=allperms, userperms=userperms)
 
 
 @lastuser_ui.route('/perms/new', methods=['GET', 'POST'])

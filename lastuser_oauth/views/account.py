@@ -202,5 +202,5 @@ def profile_merge():
         else:
             session.pop('merge_buid', None)
             return redirect(get_next_url(), code=303)
-    return render_template('merge.html', form=form, user=g.user, other_user=other_user,
+    return render_template('merge.html.jinja2', form=form, user=g.user, other_user=other_user,
         login_registry=login_registry)

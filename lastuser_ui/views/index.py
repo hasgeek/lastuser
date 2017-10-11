@@ -7,4 +7,4 @@ from .. import lastuser_ui
 
 @lastuser_ui.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html.jinja2')

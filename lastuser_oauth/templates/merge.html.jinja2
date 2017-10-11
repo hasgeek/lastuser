@@ -1,5 +1,5 @@
-{% extends "layout.html" %}
-{% from "baseframe/forms.html" import renderfield, renderform_inner, rendersubmit, ajaxform %}
+{% extends "layout.html.jinja2" %}
+{% from "baseframe/forms.html.jinja2" import renderfield, renderform_inner, rendersubmit, ajaxform %}
 {% block title %}Merge accounts{% endblock %}
 
 {% macro accountinfo(user) %}

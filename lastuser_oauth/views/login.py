@@ -66,9 +66,9 @@ def login():
         abort(500)
     iframe_block = {'X-Frame-Options': 'SAMEORIGIN'}
     if request.is_xhr and formid == 'passwordlogin':
-        return render_template('loginform.html', loginform=loginform, Markup=Markup), 200, iframe_block
+        return render_template('loginform.html.jinja2', loginform=loginform, Markup=Markup), 200, iframe_block
     else:
-        return render_template('login.html', loginform=loginform, lastused=loginmethod,
+        return render_template('login.html.jinja2', loginform=loginform, lastused=loginmethod,
             service_forms=service_forms, Markup=Markup, login_registry=login_registry), 200, iframe_block
 
 

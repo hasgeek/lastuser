@@ -18,7 +18,7 @@ from .sms import send_phone_verify_code
 @lastuser_ui.route('/profile')
 @requires_login
 def profile():
-    return render_template('profile.html')
+    return render_template('profile.html.jinja2')
 
 
 @lastuser_ui.route('/profile/password', methods=['GET', 'POST'])

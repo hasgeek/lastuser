@@ -108,7 +108,7 @@ def oauth_auth_403(reason):
     """
     Returns 403 errors for /auth
     """
-    return render_template('oauth403.html', reason=reason), 403
+    return render_template('oauth403.html.jinja2', reason=reason), 403
 
 
 def oauth_make_auth_code(client, scope, redirect_uri):
@@ -158,7 +158,7 @@ def oauth_auth_success(client, redirect_uri, state, code, token=None):
     else:
         redirect_to = make_redirect_url(redirect_uri, use_fragment=use_fragment, code=code, state=state)
     if use_fragment:
-        return render_template('oauth_public_redirect.html', client=client, redirect_to=redirect_to)
+        return render_template('oauth_public_redirect.html.jinja2', client=client, redirect_to=redirect_to)
     else:
         response = redirect(redirect_to, code=303)
         response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
@@ -287,7 +287,7 @@ def oauth_authorize():
         # else: shouldn't happen, so just show the form again
 
     # GET request or POST with invalid CSRF
-    return render_template('authorize.html',
+    return render_template('authorize.html.jinja2',
         form=form,
         client=client,
         redirect_uri=redirect_uri,

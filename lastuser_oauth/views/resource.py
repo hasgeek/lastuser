@@ -499,7 +499,7 @@ def login_beacon_iframe(client_id, login_url):
         abort(404)
     if not client.host_matches(login_url):
         abort(400)
-    return render_template('login_beacon.html', client=client, login_url=login_url), 200, {
+    return render_template('login_beacon.html.jinja2', client=client, login_url=login_url), 200, {
         'Expires': 'Fri, 01 Jan 1990 00:00:00 GMT',
         'Cache-Control': 'private, max-age=86400'
         }
