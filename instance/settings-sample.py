@@ -17,7 +17,7 @@ TYPEKIT_CODE = ''
 GA_CODE = ''
 
 #: Database backend
-SQLALCHEMY_DATABASE_URI = 'sqlite:///test.db'
+SQLALCHEMY_DATABASE_URI = 'postgresql:///localhost/lastuser'
 
 #: Cache type
 CACHE_TYPE = 'redis'

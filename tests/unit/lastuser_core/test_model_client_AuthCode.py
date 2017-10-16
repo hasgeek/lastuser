@@ -3,7 +3,6 @@
 from lastuserapp import db
 import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
-from datetime import datetime
 
 
 class TestAuthCode(TestDatabaseFixture):
@@ -34,7 +33,6 @@ class TestAuthCode(TestDatabaseFixture):
         self.assertFalse(unused_code_status)
 
         # Scenario 2: When code has been used
-        auth_code.created_at = datetime.utcnow()
         auth_code.used = False
         db.session.commit()
         used_code_status = models.AuthCode.query.filter_by(user=oakley).one().is_valid()
