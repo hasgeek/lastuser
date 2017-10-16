@@ -11,18 +11,18 @@ Usage
 
 To install and run LastUser on your computer:
 
-	$ git clone https://github.com/hasgeek/lastuser
-	$ cd lastuser
-  $ cp instance/settings-sample.py instance/development.py
+    $ git clone https://github.com/hasgeek/lastuser
+    $ cd lastuser
+    $ cp instance/settings-sample.py instance/development.py
 
-	Edit to customize `instance/development.py` as needed.
+Edit to customize `instance/development.py` as needed.
 
-	$ python manage.py db create
+    $ python manage.py db create
 
-	Setup [Virtualenv](https://virtualenv.readthedocs.org/) for this directory.
+Setup [virtualenv](https://virtualenv.readthedocs.org/) for this directory.
 
-	$ pip install -r requirements.txt
-	$ python runserver.py
+    $ pip install -r requirements.txt
+    $ python runserver.py
 
 Your LastUser server will now be accessible at `http://localhost:7000`.
 
@@ -35,26 +35,26 @@ Unit tests are in place to test a single unit of the code, usually a method/func
 
 Before you run the tests:
 
-		$ cp secrets.test.sample secrets.test
+    $ cp secrets.test.sample secrets.test
 
 Populate this file with values pertaining to components you would want enabled.
 Note that API keys for Twitter, Github and Google are necessary as some Tests
 depend on those components being enabled. To set secrets in your environment:
 
-		$ source secrets.test
+    $ source secrets.test
 
 Now, create the test database with:
 
-		$ createdb lastuser_test_app
+    $ createdb lastuser_test_app
 
 Run the tests from the root directory of the project:
 
-		$ nosetests
+    $ nosetests
 
 To see code coverage statistics:
 
-		$ cd tests
-		$ nosetests --with-coverage --cover-package=lastuser_core,lastuser_oauth
+    $ cd tests
+    $ nosetests --with-coverage --cover-package=lastuser_core,lastuser_oauth
 
 Optionally you can include the `--with-timer` flag with the `nosetests` command to see if there are tests that take longer than 1 second each.
 
