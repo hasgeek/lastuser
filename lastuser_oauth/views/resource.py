@@ -136,6 +136,10 @@ def token_verify():
         # No token specified by caller
         return resource_error('no_token')
 
+    if not g.client.namespace:
+        # This client has not defined any resources
+        return api_result('error', error='client_no_resources')
+
     authtoken = AuthToken.get(token=token)
     if not authtoken:
         # No such auth token
