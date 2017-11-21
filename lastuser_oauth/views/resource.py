@@ -192,19 +192,20 @@ def token_get_scope():
         # No token specified by caller
         return resource_error('no_token')
 
+    if not g.client.namespace:
+        # This client has not defined any resources
+        return api_result('error', error='client_no_resources')
+
     authtoken = AuthToken.get(token=token)
     if not authtoken:
         # No such auth token
         return api_result('error', error='no_token')
 
     client_resources = []
-    if g.client.namespace:
-        nsprefix = g.client.namespace + ':'
-        for item in authtoken.effective_scope:
-            if item.startswith(nsprefix):
-                client_resources.append(item[len(nsprefix):])
-    else:
-        client_resources = authtoken.effective_scope
+    nsprefix = g.client.namespace + ':'
+    for item in authtoken.effective_scope:
+        if item.startswith(nsprefix):
+            client_resources.append(item[len(nsprefix):])
 
     if not client_resources:
         return api_result('error', error='no_access')
