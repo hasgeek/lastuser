@@ -24,3 +24,4 @@ baseframe-packed.js
 *.sql.bz2
 secrets.dev
 secrets.test
+*/.well-known/acme-challenge
