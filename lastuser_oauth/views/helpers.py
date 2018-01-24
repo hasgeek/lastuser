@@ -6,7 +6,7 @@ from functools import wraps
 from urllib import unquote
 from pytz import common_timezones
 import itsdangerous
-from flask import g, current_app, request, session, flash, redirect, url_for, Response
+from flask import g, current_app, request, session, flash, redirect, url_for, Response, _request_ctx_stack
 from coaster.sqlalchemy import failsafe_add
 from coaster.views import get_current_url
 from baseframe import _
@@ -18,14 +18,26 @@ from urlparse import urlparse
 valid_timezones = set(common_timezones)
 
 
+def _set_user(user):
+    g.user = user
+    _request_ctx_stack.top.user = user
+
+
+def _set_usersession(session):
+    g.usersession = session
+    if not hasattr(_request_ctx_stack.top, 'auth'):
+        _request_ctx_stack.top.auth = {}
+    _request_ctx_stack.top.auth['session'] = session
+
+
 @lastuser_oauth.before_app_request
 def lookup_current_user():
     """
     If there's a buid in the session, retrieve the user object and add
     to the request namespace object g.
     """
-    g.user = None
-    g.usersession = None
+    _set_user(None)
+    _set_usersession(None)
 
     lastuser_cookie = {}
     lastuser_cookie_headers = {}  # Ignored for now, intended for future changes
@@ -44,17 +56,17 @@ def lookup_current_user():
             lastuser_cookie = {}
 
     if 'sessionid' in lastuser_cookie:
-        g.usersession = UserSession.authenticate(buid=lastuser_cookie['sessionid'])
+        _set_usersession(UserSession.authenticate(buid=lastuser_cookie['sessionid']))
         if g.usersession:
             g.usersession.access()
             db.session.commit()  # Save access
-            g.user = g.usersession.user
+            _set_user(g.usersession.user)
 
     # Transition users with 'userid' to 'sessionid'
     if not g.usersession and 'userid' in lastuser_cookie:
-        g.user = User.get(buid=lastuser_cookie['userid'])
+        _set_user(User.get(buid=lastuser_cookie['userid']))
         if g.user:
-            g.usersession = UserSession(user=g.user)
+            _set_usersession(UserSession(user=g.user))
             g.usersession.access()
             db.session.commit()  # Save access
 
@@ -251,12 +263,13 @@ def requires_client_id_or_user_or_client_login(f):
 
 
 def login_internal(user):
-    g.user = user
+    _set_user(user)
     usersession = UserSession(user=user)
     usersession.access()
+    _set_usersession(usersession)
     g.lastuser_cookie['sessionid'] = usersession.buid
     g.lastuser_cookie['userid'] = user.buid
-    session.permanent = False
+    session.permanent = True
     autoset_timezone(user)
     user_login.send(user)
 
@@ -271,10 +284,10 @@ def autoset_timezone(user):
 
 
 def logout_internal():
-    g.user = None
+    _set_user(None)
     if g.usersession:
         g.usersession.revoke()
-        g.usersession = None
+        _set_usersession(None)
     session.pop('sessionid', None)
     session.pop('userid', None)
     session.pop('merge_userid', None)
