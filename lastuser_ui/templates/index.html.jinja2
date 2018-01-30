@@ -29,7 +29,7 @@
   library implements the client side for the <a href="http://flask.pocoo.org/">Flask</a>
   microframework. Lastuser is itself implemented in Flask.
 </p>
-{% if g.user %}
+{% if current_auth.is_authenticated %}
   <p>
     Since you are logged in, you can explore the innards:
   </p>

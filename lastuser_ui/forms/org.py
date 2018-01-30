@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from flask import g, current_app, Markup, url_for
+from flask import current_app, Markup, url_for
 from coaster.utils import valid_username
+from coaster.auth import current_auth
 from baseframe import _, __
 import baseframe.forms as forms
 
@@ -23,7 +24,7 @@ class OrganizationForm(forms.Form):
             raise forms.ValidationError(_("This name is reserved"))
         existing = User.get(username=field.data)
         if existing is not None:
-            if existing == g.user:
+            if existing == current_auth.user:
                 raise forms.ValidationError(Markup(_(u"This is <em>your</em> current username. "
                     u'You must change it first from <a href="{profile}">your profile</a> '
                     u"before you can assign it to an organization").format(

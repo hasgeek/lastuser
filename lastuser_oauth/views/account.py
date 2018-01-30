@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-from flask import abort, url_for, flash, redirect, g, session, render_template, request
+from flask import abort, url_for, flash, redirect, session, render_template, request
 
 from coaster.utils import valid_username
+from coaster.auth import current_auth
 from coaster.views import get_next_url
 from baseframe import _
 from baseframe.signals import exception_catchall
@@ -48,7 +49,7 @@ def login_service_callback(service):
         msg = _(u"{service} login failed: {error}").format(service=provider.title, error=unicode(e))
         exception_catchall.send(e, message=msg)
         flash(msg, category='danger')
-        if g.user:
+        if current_auth.is_authenticated:
             return redirect(get_next_url(referrer=False))
         else:
             return redirect(url_for('.login'))
@@ -115,9 +116,9 @@ def login_service_postcallback(service, userdata):
         db.session.add(extid)
 
     if user is None:
-        if g.user:
+        if current_auth.is_authenticated:
             # Attach this id to currently logged-in user
-            user = g.user
+            user = current_auth.user
             extid.user = user
         else:
             # Register a new user
@@ -128,7 +129,7 @@ def login_service_postcallback(service, userdata):
                     # Set a username for this user if it's available
                     user.username = userdata['username']
     else:  # This id is attached to a user
-        if g.user and g.user != user:
+        if current_auth.is_authenticated and current_auth.user != user:
             # Woah! Account merger handler required
             # Always confirm with user before doing an account merger
             session['merge_buid'] = user.buid
@@ -161,7 +162,7 @@ def login_service_postcallback(service, userdata):
     if not user.fullname and userdata.get('fullname'):
         user.fullname = userdata['fullname']
 
-    if not g.user:  # If a user isn't already logged in, login now.
+    if not current_auth.is_authenticated:  # If a user isn't already logged in, login now.
         login_internal(user)
         flash(_(u"You have logged in via {service}").format(service=login_registry[service].title), 'success')
     next_url = get_next_url(session=True)
@@ -169,7 +170,7 @@ def login_service_postcallback(service, userdata):
     db.session.commit()
 
     # Finally: set a login method cookie and send user on their way
-    if not g.user.is_profile_complete():
+    if not current_auth.user.is_profile_complete():
         login_next = url_for('.profile_new', next=next_url)
     else:
         login_next = next_url
@@ -192,7 +193,7 @@ def profile_merge():
     form = ProfileMergeForm()
     if form.validate_on_submit():
         if 'merge' in request.form:
-            new_user = merge_users(g.user, other_user)
+            new_user = merge_users(current_auth.user, other_user)
             login_internal(new_user)
             flash(_("Your accounts have been merged"), 'success')
             session.pop('merge_buid', None)
@@ -202,5 +203,5 @@ def profile_merge():
         else:
             session.pop('merge_buid', None)
             return redirect(get_next_url(), code=303)
-    return render_template('merge.html.jinja2', form=form, user=g.user, other_user=other_user,
+    return render_template('merge.html.jinja2', form=form, user=current_auth.user, other_user=other_user,
         login_registry=login_registry)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from flask import g
 from coaster.utils import nullunicode
+from coaster.auth import current_auth
 from baseframe import _, __
 import baseframe.forms as forms
 
@@ -24,11 +24,11 @@ class NewEmailAddressForm(forms.Form):
         field.data = field.data.lower()  # Convert to lowercase
         existing = UserEmail.get(email=field.data)
         if existing is not None:
-            if existing.user == g.user:
+            if existing.user == current_auth.user:
                 raise forms.ValidationError(_("You have already registered this email address"))
             else:
                 raise forms.ValidationError(_("This email address has already been claimed"))
-        existing = UserEmailClaim.get(email=field.data, user=g.user)
+        existing = UserEmailClaim.get(email=field.data, user=current_auth.user)
         if existing is not None:
             raise forms.ValidationError(_("This email address is pending verification"))
 
@@ -58,11 +58,11 @@ class NewPhoneForm(forms.Form):
         # Step 5: Check if number has already been claimed
         existing = UserPhone.get(phone=number)
         if existing is not None:
-            if existing.user == g.user:
+            if existing.user == current_auth.user:
                 raise forms.ValidationError(_("You have already registered this phone number"))
             else:
                 raise forms.ValidationError(_("This phone number has already been claimed"))
-        existing = UserPhoneClaim.get(phone=number, user=g.user)
+        existing = UserPhoneClaim.get(phone=number, user=current_auth.user)
         if existing is not None:
             raise forms.ValidationError(_("This phone number is pending verification"))
         field.data = number  # Save stripped number

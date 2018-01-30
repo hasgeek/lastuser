@@ -4,9 +4,10 @@ from __future__ import print_function
 from datetime import datetime, timedelta
 import urlparse
 from openid import oidutil
-from flask import g, current_app, redirect, request, flash, render_template, url_for, Markup, escape, abort
+from flask import current_app, redirect, request, flash, render_template, url_for, Markup, escape, abort
 from flask_openid import OpenID
 from coaster.utils import getbool
+from coaster.auth import current_auth
 from coaster.views import get_next_url, load_model
 from baseframe import _, __
 from baseframe.forms import render_form, render_message, render_redirect
@@ -33,7 +34,7 @@ oidutil.log = openid_log
 @oid.loginhandler
 def login():
     # If user is already logged in, send them back
-    if g.user:
+    if current_auth.is_authenticated:
         return redirect(get_next_url(referrer=True), code=303)
 
     loginform = LoginForm()
@@ -130,7 +131,7 @@ def logout():
 @lastuser_oauth.route('/logout/<session>')
 @load_model(UserSession, {'buid': 'session'}, 'session')
 def logout_session(session):
-    if not request.referrer or (urlparse.urlsplit(request.referrer).netloc != urlparse.urlsplit(request.url).netloc) or (session.user != g.user):
+    if not request.referrer or (urlparse.urlsplit(request.referrer).netloc != urlparse.urlsplit(request.url).netloc) or (session.user != current_auth.user):
         flash(current_app.config.get('LOGOUT_UNAUTHORIZED_MESSAGE') or logout_errormsg, 'danger')
         return redirect(url_for('index'))
 
@@ -141,7 +142,7 @@ def logout_session(session):
 
 @lastuser_oauth.route('/register', methods=['GET', 'POST'])
 def register():
-    if g.user:
+    if current_auth.is_authenticated:
         return redirect(url_for('index'))
     form = RegisterForm()
     # Make Recaptcha optional
