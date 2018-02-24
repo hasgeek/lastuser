@@ -17,7 +17,7 @@ def given_existing_user(context):
     for k, v in context.test_user.iteritems():
         context.browser.find_element_by_name(k).send_keys(v)
 
-    register_form = context.browser.find_element_by_id('register')
+    register_form = context.browser.find_element_by_id('form-register')
     register_form.submit()
 
 
@@ -27,7 +27,7 @@ def when_login_form_submit(context):
         'username': context.test_user['username'],
         'password': context.test_user['password']
     }
-    wait = ui.WebDriverWait(context.browser, 2)
+    wait = ui.WebDriverWait(context.browser, 30)
 
     context.browser.visit('/login')
     assert context.browser.find_element_by_name('csrf_token').is_enabled()
