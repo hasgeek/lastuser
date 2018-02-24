@@ -1,7 +1,6 @@
-nose
+pytest
 coverage
-nose-timer
-nose-progressive
 behave
 mock
 selenium
+coveralls
