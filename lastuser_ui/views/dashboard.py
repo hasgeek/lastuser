@@ -4,7 +4,8 @@ from functools import wraps
 from collections import defaultdict
 from cStringIO import StringIO
 import unicodecsv
-from flask import g, current_app, abort, render_template
+from flask import current_app, abort, render_template
+from coaster.auth import current_auth
 
 from lastuser_core.models import db, User, USER_STATUS
 from .. import lastuser_ui
@@ -16,7 +17,7 @@ def requires_dashboard(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not g.user or g.user.buid not in current_app.config.get('DASHBOARD_USERS', []):
+        if not current_auth.is_authenticated or current_auth.user.buid not in current_app.config.get('DASHBOARD_USERS', []):
             abort(403)
         return f(*args, **kwargs)
     return decorated_function

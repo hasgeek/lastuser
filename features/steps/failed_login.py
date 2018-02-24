@@ -1,5 +1,5 @@
-from flask import g
 from behave import when, then, given
+from coaster.auth import current_auth
 from lastuserapp import app
 
 
@@ -16,7 +16,7 @@ def when_login_form_submit(context):
     context.test_user['form.id'] = "passwordlogin"
     with app.test_client() as c:
         c.post('/login', data=context.test_user, follow_redirects=True)
-        context.user = g.user
+        context.user = current_auth.user
 
 
 @then("we do not log the user in")

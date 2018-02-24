@@ -7,8 +7,10 @@ from flask_assets import Bundle
 
 class LastuserOAuthBlueprint(Blueprint):
     def init_app(self, app):
+        from .views.helpers import LoginManager
         self.serializer = JSONWebSignatureSerializer(
             app.config.get('LASTUSER_SECRET_KEY') or app.config['SECRET_KEY'])
+        app.login_manager = LoginManager()
 
 
 lastuser_oauth = LastuserOAuthBlueprint('lastuser_oauth', __name__,

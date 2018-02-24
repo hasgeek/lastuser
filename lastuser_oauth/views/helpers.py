@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import os
 from datetime import datetime, timedelta
 from functools import wraps
 from urllib import unquote
 from pytz import common_timezones
 import itsdangerous
-from flask import g, current_app, request, session, flash, redirect, url_for, Response, _request_ctx_stack
+from flask import current_app, request, session, flash, redirect, url_for, Response
+from coaster.auth import current_auth, add_auth_attribute, request_has_auth
 from coaster.sqlalchemy import failsafe_add
 from coaster.views import get_current_url
 from baseframe import _
@@ -18,70 +18,58 @@ from urlparse import urlparse
 valid_timezones = set(common_timezones)
 
 
-def _set_user(user):
-    g.user = user
-    _request_ctx_stack.top.user = user
+class LoginManager(object):
+    def _load_user(self):
+        """
+        If there's a buid in the session, retrieve the user object and add
+        to the request namespace object g.
+        """
+        add_auth_attribute('user', None)
+        add_auth_attribute('session', None)
 
+        lastuser_cookie = {}
+        lastuser_cookie_headers = {}  # Ignored for now, intended for future changes
 
-def _set_usersession(session):
-    g.usersession = session
-    if not hasattr(_request_ctx_stack.top, 'auth'):
-        _request_ctx_stack.top.auth = {}
-    _request_ctx_stack.top.auth['session'] = session
+        # Migrate data from Flask cookie session
+        if 'sessionid' in session:
+            lastuser_cookie['sessionid'] = session.pop('sessionid')
+        if 'userid' in session:
+            lastuser_cookie['userid'] = session.pop('userid')
 
+        if 'lastuser' in request.cookies:
+            try:
+                lastuser_cookie, lastuser_cookie_headers = lastuser_oauth.serializer.loads(
+                    request.cookies['lastuser'], return_header=True)
+            except itsdangerous.BadSignature:
+                lastuser_cookie = {}
 
-@lastuser_oauth.before_app_request
-def lookup_current_user():
-    """
-    If there's a buid in the session, retrieve the user object and add
-    to the request namespace object g.
-    """
-    _set_user(None)
-    _set_usersession(None)
+        if 'sessionid' in lastuser_cookie:
+            add_auth_attribute('session', UserSession.authenticate(buid=lastuser_cookie['sessionid']))
+            if current_auth.session:
+                current_auth.session.access()
+                db.session.commit()  # Save access
+                add_auth_attribute('user', current_auth.session.user)
 
-    lastuser_cookie = {}
-    lastuser_cookie_headers = {}  # Ignored for now, intended for future changes
+        # Transition users with 'userid' to 'sessionid'
+        if not current_auth.session and 'userid' in lastuser_cookie:
+            add_auth_attribute('user', User.get(buid=lastuser_cookie['userid']))
+            if current_auth.is_authenticated:
+                add_auth_attribute('session', UserSession(user=current_auth.user))
+                current_auth.session.access()
+                db.session.commit()  # Save access
 
-    # Migrate data from Flask cookie session
-    if 'sessionid' in session:
-        lastuser_cookie['sessionid'] = session.pop('sessionid')
-    if 'userid' in session:
-        lastuser_cookie['userid'] = session.pop('userid')
+        if current_auth.session:
+            lastuser_cookie['sessionid'] = current_auth.session.buid
+        else:
+            lastuser_cookie.pop('sessionid', None)
+        if current_auth.is_authenticated:
+            lastuser_cookie['userid'] = current_auth.user.buid
+        else:
+            lastuser_cookie.pop('userid', None)
 
-    if 'lastuser' in request.cookies:
-        try:
-            lastuser_cookie, lastuser_cookie_headers = lastuser_oauth.serializer.loads(
-                request.cookies['lastuser'], return_header=True)
-        except itsdangerous.BadSignature:
-            lastuser_cookie = {}
-
-    if 'sessionid' in lastuser_cookie:
-        _set_usersession(UserSession.authenticate(buid=lastuser_cookie['sessionid']))
-        if g.usersession:
-            g.usersession.access()
-            db.session.commit()  # Save access
-            _set_user(g.usersession.user)
-
-    # Transition users with 'userid' to 'sessionid'
-    if not g.usersession and 'userid' in lastuser_cookie:
-        _set_user(User.get(buid=lastuser_cookie['userid']))
-        if g.user:
-            _set_usersession(UserSession(user=g.user))
-            g.usersession.access()
-            db.session.commit()  # Save access
-
-    if g.usersession:
-        lastuser_cookie['sessionid'] = g.usersession.buid
-    else:
-        lastuser_cookie.pop('sessionid', None)
-    if g.user:
-        lastuser_cookie['userid'] = g.user.buid
-    else:
-        lastuser_cookie.pop('userid', None)
-
-    g.lastuser_cookie = lastuser_cookie
-    # This will be set to True downstream by the requires_login decorator
-    g.login_required = False
+        add_auth_attribute('cookie', lastuser_cookie)
+        # This will be set to True downstream by the requires_login decorator
+        add_auth_attribute('login_required', False)
 
 
 @lastuser_oauth.after_app_request
@@ -89,19 +77,20 @@ def lastuser_cookie(response):
     """
     Save lastuser login cookie and hasuser JS-readable flag cookie.
     """
-    expires = datetime.utcnow() + timedelta(days=365)
-    response.set_cookie('lastuser',
-        value=lastuser_oauth.serializer.dumps(g.lastuser_cookie, header_fields={'v': 1}),
-        max_age=31557600,                                         # Keep this cookie for a year.
-        expires=expires,                                          # Expire one year from now.
-        domain=current_app.config.get('LASTUSER_COOKIE_DOMAIN'),  # Place cookie in master domain.
-        httponly=True)                                            # Don't allow reading this from JS.
+    if request_has_auth():
+        expires = datetime.utcnow() + timedelta(days=365)
+        response.set_cookie('lastuser',
+            value=lastuser_oauth.serializer.dumps(current_auth.cookie, header_fields={'v': 1}),
+            max_age=31557600,                                         # Keep this cookie for a year.
+            expires=expires,                                          # Expire one year from now.
+            domain=current_app.config.get('LASTUSER_COOKIE_DOMAIN'),  # Place cookie in master domain.
+            httponly=True)                                            # Don't allow reading this from JS.
 
-    response.set_cookie('hasuser',
-        value='1' if g.user else '0',
-        max_age=31557600,              # Keep this cookie for a year.
-        expires=expires,               # Expire one year from now.
-        httponly=False)                # Allow reading this from JS.
+        response.set_cookie('hasuser',
+            value='1' if current_auth.is_authenticated else '0',
+            max_age=31557600,              # Keep this cookie for a year.
+            expires=expires,               # Expire one year from now.
+            httponly=False)                # Allow reading this from JS.
 
     return response
 
@@ -118,44 +107,14 @@ def cache_expiry_headers(response):
     return response
 
 
-@lastuser_oauth.app_template_filter('usessl')
-def usessl(url):
-    """
-    Convert a URL to https:// if SSL is enabled in site config
-    """
-    if not current_app.config.get('USE_SSL'):
-        return url
-    if url.startswith('//'):  # //www.example.com/path
-        return 'https:' + url
-    if url.startswith('/'):  # /path
-        url = os.path.join(request.url_root, url[1:])
-    if url.startswith('http:'):  # http://www.example.com
-        url = 'https:' + url[5:]
-    return url
-
-
-@lastuser_oauth.app_template_filter('nossl')
-def nossl(url):
-    """
-    Convert a URL to http:// if using SSL
-    """
-    if url.startswith('//'):
-        return 'http:' + url
-    if url.startswith('/') and request.url.startswith('https:'):  # /path and SSL is on
-        url = os.path.join(request.url_root, url[1:])
-    if url.startswith('https://'):
-        return 'http:' + url[6:]
-    return url
-
-
 def requires_login(f):
     """
     Decorator to require a login for the given view.
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        g.login_required = True
-        if g.user is None:
+        add_auth_attribute('login_required', True)
+        if not current_auth.is_authenticated:
             flash(_(u"You need to be logged in for that page"), 'info')
             session['next'] = get_current_url()
             return redirect(url_for('login'))
@@ -167,11 +126,14 @@ def requires_login_no_message(f):
     """
     Decorator to require a login for the given view.
     Does not display a message asking the user to login.
+    However, if a message received in ``request.args['message']``,
+    it is displayed. This is an insecure channel for client apps
+    to display a helper message.
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        g.login_required = True
-        if g.user is None:
+        add_auth_attribute('login_required', True)
+        if not current_auth.is_authenticated:
             session['next'] = get_current_url()
             if 'message' in request.args and request.args['message']:
                 flash(request.args['message'], 'info')
@@ -191,7 +153,7 @@ def _client_login_inner():
     if credential:
         credential.accessed_at = db.func.utcnow()
         db.session.commit()
-    g.client = credential.client
+    add_auth_attribute('client', credential.client, actor=True)
 
 
 def requires_client_login(f):
@@ -214,9 +176,9 @@ def requires_user_or_client_login(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        g.login_required = True
+        add_auth_attribute('login_required', True)
         # Check for user first:
-        if g.user is not None:
+        if current_auth.is_authenticated:
             return f(*args, **kwargs)
         # If user is not logged in, check for client
         result = _client_login_inner()
@@ -239,7 +201,7 @@ def requires_client_id_or_user_or_client_login(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        g.login_required = True
+        add_auth_attribute('login_required', True)
 
         # Check if http referrer and given client id match a registered client
         if 'client_id' in request.values and 'session' in request.values and request.referrer:
@@ -249,7 +211,7 @@ def requires_client_id_or_user_or_client_login(f):
                     return f(*args, **kwargs)
 
         # If we didn't get a valid client_id and session, maybe there's a user?
-        if g.user is not None:
+        if current_auth.is_authenticated:
             return f(*args, **kwargs)
 
         # If user is not logged in, check for client credentials in the request authorization header.
@@ -263,12 +225,12 @@ def requires_client_id_or_user_or_client_login(f):
 
 
 def login_internal(user):
-    _set_user(user)
+    add_auth_attribute('user', user)
     usersession = UserSession(user=user)
     usersession.access()
-    _set_usersession(usersession)
-    g.lastuser_cookie['sessionid'] = usersession.buid
-    g.lastuser_cookie['userid'] = user.buid
+    add_auth_attribute('session', usersession)
+    current_auth.cookie['sessionid'] = usersession.buid
+    current_auth.cookie['userid'] = user.buid
     session.permanent = True
     autoset_timezone(user)
     user_login.send(user)
@@ -284,18 +246,18 @@ def autoset_timezone(user):
 
 
 def logout_internal():
-    _set_user(None)
-    if g.usersession:
-        g.usersession.revoke()
-        _set_usersession(None)
+    add_auth_attribute('user', None)
+    if current_auth.session:
+        current_auth.session.revoke()
+        add_auth_attribute('session', None)
     session.pop('sessionid', None)
     session.pop('userid', None)
     session.pop('merge_userid', None)
     session.pop('merge_buid', None)
     session.pop('userid_external', None)
     session.pop('avatar_url', None)
-    g.lastuser_cookie.pop('sessionid', None)
-    g.lastuser_cookie.pop('userid', None)
+    current_auth.cookie.pop('sessionid', None)
+    current_auth.cookie.pop('userid', None)
     session.permanent = False
 
 

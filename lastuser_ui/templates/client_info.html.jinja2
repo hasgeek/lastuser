@@ -30,12 +30,12 @@
   <dd>{{ client.allow_any_login }}</dd>
   <dt>Registered date</dt>
   <dd>{{ client.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</dd>
-  {%- if client.owner_is(g.user) %}
+  {%- if client.owner_is(current_auth.user) %}
     <dt>Users</dt>
     <dd>{{ client.authtokens.count() }}</dd>
   {%- endif %}
 </dl>
-{%- if client.owner_is(g.user) %}
+{%- if client.owner_is(current_auth.user) %}
   <p>
     <a class="btn btn-info" href="{{ url_for('.client_edit', key=client.key) }}">Edit this application</a>
     <a class="btn btn-danger" href="{{ url_for('.client_delete', key=client.key) }}">Delete</a>
@@ -81,7 +81,7 @@
       <th>Name</th>
       <th>Title</th>
       <th>Description</th>
-      {% if client.owner_is(g.user) %}
+      {% if client.owner_is(current_auth.user) %}
         <th colspan="2">Action</th>
       {% endif %}
     </tr>
@@ -93,7 +93,7 @@
         <td><strong>{{ resource.name }}</strong>{% if resource.siteresource %} <em>(site)</em>{% endif %}</td>
         <td><strong>{{ resource.title }}</strong></td>
         <td><strong>{{ resource.description }}</strong></td>
-        {% if client.owner_is(g.user) %}
+        {% if client.owner_is(current_auth.user) %}
           <td>
             <a class="btn btn-xs btn-info" href="{{ url_for('.resource_edit', key=client.key, idr=resource.id) }}">Edit</a>
             <a class="btn btn-xs btn-danger" href="{{ url_for('.resource_delete', key=client.key, idr=resource.id) }}">Delete</a>
@@ -107,7 +107,7 @@
           <td>{{ action.name }}</td>
           <td>{{ action.title }}</td>
           <td>{{ action.description }}</td>
-          {% if client.owner_is(g.user) %}
+          {% if client.owner_is(current_auth.user) %}
             <td>
               <a class="btn btn-xs btn-info" href="{{ url_for('.resource_action_edit', key=client.key, idr=resource.id, ida=action.id) }}">Edit</a>
               <a class="btn btn-xs btn-danger" href="{{ url_for('.resource_action_delete', key=client.key, idr=resource.id, ida=action.id) }}">Delete</a>
@@ -115,7 +115,7 @@
           {% endif %}
         </tr>
       {% endfor %}
-      {% if client.owner_is(g.user) %}
+      {% if client.owner_is(current_auth.user) %}
         <tr>
           <td class="separator"></td>
           <td colspan="5" class="separator">
@@ -132,12 +132,12 @@
     {% endfor %}
   </tbody>
 </table>
-{%- if client.owner_is(g.user) %}
+{%- if client.owner_is(current_auth.user) %}
 <p>
   <a class="btn btn-info" href="{{ url_for('.resource_new', key=client.key) }}">New resource</a>
 </p>
 {%- endif %}
-{% if client.owner_is(g.user) %}
+{% if client.owner_is(current_auth.user) %}
   <h2>Permissions</h2>
   <p>
     The following {% if client.user %}users{% else %}teams{% endif %} have permissions to this app.
@@ -175,7 +175,7 @@
     <a class="btn btn-info" href="{{ url_for('.permission_user_new', key=client.key) }}">Assign permissions to another {% if client.user %}user{% else %}team{% endif %}</a>
   </p>
 {% endif %}
-{% if g.user and client.team_access and g.user.organizations_owned() %}
+{% if current_auth.is_authenticated and client.team_access and current_auth.user.organizations_owned() %}
   <h2>Team Access</h2>
   <p>
     This application can manage access permissions per team. Select the organizations whose teams it has access to.
@@ -189,7 +189,7 @@
       </tr>
     </thead>
     <tbody>
-      {% for org in g.user.organizations_owned() %}
+      {% for org in current_auth.user.organizations_owned() %}
       <tr>
         <td>{{ loop.index }}</td>
         <td>{{ org.title }}</td>

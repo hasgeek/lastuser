@@ -2,8 +2,9 @@
 
 from urlparse import urlparse
 from werkzeug.exceptions import BadRequest
-from flask import request, g, abort, render_template, jsonify
+from flask import request, abort, render_template, jsonify
 from coaster.utils import getbool
+from coaster.auth import current_auth
 from coaster.views import requestargs, jsonp
 from baseframe import _, __
 
@@ -136,7 +137,7 @@ def token_verify():
         # No token specified by caller
         return resource_error('no_token')
 
-    if not g.client.namespace:
+    if not current_auth.client.namespace:
         # This client has not defined any resources
         return api_result('error', error='client_no_resources')
 
@@ -144,8 +145,8 @@ def token_verify():
     if not authtoken:
         # No such auth token
         return api_result('error', error='no_token')
-    if (g.client.namespace + ':' + client_resource not in authtoken.effective_scope) and (
-            g.client.namespace + ':*' not in authtoken.effective_scope):
+    if (current_auth.client.namespace + ':' + client_resource not in authtoken.effective_scope) and (
+            current_auth.client.namespace + ':*' not in authtoken.effective_scope):
         # Token does not grant access to this resource
         return api_result('error', error='access_denied')
     if '/' in client_resource:
@@ -157,7 +158,7 @@ def token_verify():
         resource_name = client_resource
         action_name = None
     if resource_name != '*':
-        resource = Resource.get(resource_name, client=g.client)
+        resource = Resource.get(resource_name, client=current_auth.client)
         if not resource:
             # Resource does not exist or does not belong to this client
             return api_result('error', error='access_denied')
@@ -170,7 +171,7 @@ def token_verify():
     # TODO: Don't return validity. Set the HTTP cache headers instead.
     params = {'validity': 120}  # Period (in seconds) for which this assertion may be cached.
     if authtoken.user:
-        params['userinfo'] = get_userinfo(authtoken.user, g.client, scope=authtoken.effective_scope)
+        params['userinfo'] = get_userinfo(authtoken.user, current_auth.client, scope=authtoken.effective_scope)
     params['clientinfo'] = {
         'title': authtoken.client.title,
         'userid': authtoken.client.owner.buid,
@@ -192,7 +193,7 @@ def token_get_scope():
         # No token specified by caller
         return resource_error('no_token')
 
-    if not g.client.namespace:
+    if not current_auth.client.namespace:
         # This client has not defined any resources
         return api_result('error', error='client_no_resources')
 
@@ -202,7 +203,7 @@ def token_get_scope():
         return api_result('error', error='no_token')
 
     client_resources = []
-    nsprefix = g.client.namespace + ':'
+    nsprefix = current_auth.client.namespace + ':'
     for item in authtoken.effective_scope:
         if item.startswith(nsprefix):
             client_resources.append(item[len(nsprefix):])
@@ -214,7 +215,7 @@ def token_get_scope():
     # TODO: Don't return validity. Set the HTTP cache headers instead.
     params = {'validity': 120}  # Period (in seconds) for which this assertion may be cached.
     if authtoken.user:
-        params['userinfo'] = get_userinfo(authtoken.user, g.client, scope=authtoken.effective_scope)
+        params['userinfo'] = get_userinfo(authtoken.user, current_auth.client, scope=authtoken.effective_scope)
     params['clientinfo'] = {
         'title': authtoken.client.title,
         'userid': authtoken.client.owner.buid,
@@ -250,7 +251,7 @@ def sync_resources():
         siteresource = getbool(resources[name].get('siteresource'))
         restricted = getbool(resources[name].get('restricted'))
         actions_list.setdefault(resource_name, [])
-        resource = Resource.get(name=resource_name, client=g.client)
+        resource = Resource.get(name=resource_name, client=current_auth.client)
         if resource:
             results[resource.name] = {'status': 'exists', 'actions': {}}
             if not action_name and resource.description != description:
@@ -263,7 +264,7 @@ def sync_resources():
                 resource.restricted = restricted
                 results[resource.name]['status'] = 'updated'
         else:
-            resource = Resource(client=g.client, name=resource_name,
+            resource = Resource(client=current_auth.client, name=resource_name,
                 title=resources.get(resource_name, {}).get('title') or resource_name.title(),
                 description=resources.get(resource_name, {}).get('description') or u'')
             db.session.add(resource)
@@ -289,14 +290,14 @@ def sync_resources():
 
     # Deleting resources & actions not defined in client application.
     for resource_name in actions_list:
-        resource = Resource.get(name=resource_name, client=g.client)
+        resource = Resource.get(name=resource_name, client=current_auth.client)
         actions = ResourceAction.query.filter(
             ~ResourceAction.name.in_(actions_list[resource_name]), ResourceAction.resource == resource)
         for action in actions.all():
             results[resource_name]['actions'][action.name] = {'status': 'deleted'}
         actions.delete(synchronize_session='fetch')
     del_resources = Resource.query.filter(
-        ~Resource.name.in_(actions_list.keys()), Resource.client == g.client)
+        ~Resource.name.in_(actions_list.keys()), Resource.client == current_auth.client)
     for resource in del_resources.all():
         ResourceAction.query.filter_by(resource=resource).delete(synchronize_session='fetch')
         results[resource.name] = {'status': 'deleted'}
@@ -469,7 +470,7 @@ def org_team_get():
     """
     Returns a list of teams in the given organization.
     """
-    if not g.client.team_access:
+    if not current_auth.client.team_access:
         return api_result('error', error='no_team_access')
     org_buids = request.values.getlist('org')
     if not org_buids:
@@ -484,7 +485,7 @@ def org_team_get():
         # of the trusted flag? It was originally meant to only bypass user authorization
         # on login to HasGeek websites as that would have been very confusing to users.
         # XXX: Return user list here?
-        if g.client in org.clients_with_team_access():
+        if current_auth.client in org.clients_with_team_access():
             orgteams[org.buid] = [{
                 'userid': team.buid,
                 'buid': team.buid,
@@ -520,8 +521,8 @@ def login_beacon_json(client_id):
     client = cred.client if cred else None
     if client is None:
         abort(404)
-    if g.user:
-        token = client.authtoken_for(g.user)
+    if current_auth.is_authenticated:
+        token = client.authtoken_for(current_auth.user)
     else:
         token = None
     response = jsonify({

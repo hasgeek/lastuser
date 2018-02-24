@@ -1,7 +1,5 @@
-from flask import g
 from behave import given, when, then
 from lastuser_core.models import User
-from lastuserapp import app
 
 
 @given('a new user trying to register with a used username')
@@ -19,7 +17,7 @@ def given_new_user(context):
     for k, v in context.test_user.iteritems():
         context.browser.find_element_by_name(k).send_keys(v)
 
-    register_form = context.browser.find_element_by_id('register')
+    register_form = context.browser.find_element_by_id('form-register')
     register_form.submit()
 
 
@@ -32,7 +30,7 @@ def when_form_submit(context):
     for k, v in context.test_user.iteritems():
         context.browser.find_element_by_name(k).send_keys(v)
 
-    register_form = context.browser.find_element_by_id('register')
+    register_form = context.browser.find_element_by_id('form-register')
     register_form.submit()
     # page will have error message
     alert = context.browser.find_elements_by_xpath("//*[contains(text(), 'This username is taken')]")

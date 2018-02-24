@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from flask import g, render_template, redirect, request, jsonify, get_flashed_messages
+from flask import render_template, redirect, request, jsonify, get_flashed_messages
 from coaster.utils import newsecret
+from coaster.auth import current_auth
 from coaster.sqlalchemy import failsafe_add
 from baseframe import _
 
@@ -116,7 +117,7 @@ def oauth_make_auth_code(client, scope, redirect_uri):
     Make an auth code for a given client. Caller must commit
     the database session for this to work.
     """
-    authcode = AuthCode(user=g.user, session=g.usersession, client=client, scope=scope, redirect_uri=redirect_uri[:1024])
+    authcode = AuthCode(user=current_auth.user, session=current_auth.session, client=client, scope=scope, redirect_uri=redirect_uri[:1024])
     authcode.code = newsecret()
     db.session.add(authcode)
     return authcode.code
@@ -136,7 +137,7 @@ def save_flashed_messages():
     Save flashed messages so they can be relayed back to trusted clients.
     """
     for index, (category, message) in enumerate(get_flashed_messages(with_categories=True)):
-        db.session.add(UserFlashMessage(user=g.user, seq=index, category=category, message=message))
+        db.session.add(UserFlashMessage(user=current_auth.user, seq=index, category=category, message=message))
 
 
 def oauth_auth_success(client, redirect_uri, state, code, token=None):
@@ -225,10 +226,10 @@ def oauth_authorize():
     # Validation 1.4: Client allows login for this user
     if not client.allow_any_login:
         if client.user:
-            perms = UserClientPermissions.query.filter_by(user=g.user, client=client).first()
+            perms = UserClientPermissions.query.filter_by(user=current_auth.user, client=client).first()
         else:
             perms = TeamClientPermissions.query.filter_by(client=client).filter(
-                TeamClientPermissions.team_id.in_([team.id for team in g.user.teams])).first()
+                TeamClientPermissions.team_id.in_([team.id for team in current_auth.user.teams])).first()
         if not perms:
             return oauth_auth_error(client.redirect_uri, state, 'invalid_scope', _(u"You do not have access to this application"))
 
@@ -258,19 +259,19 @@ def oauth_authorize():
             return oauth_auth_success(client, redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
         else:
             return oauth_auth_success(client, redirect_uri, state, code=None,
-                token=oauth_make_token(g.user, client, scope, g.usersession))
+                token=oauth_make_token(current_auth.user, client, scope, current_auth.session))
 
     # If there is an existing auth token with the same or greater scope, don't ask user again; authorise silently
     if client.confidential:
-        existing_token = AuthToken.query.filter_by(user=g.user, client=client).first()
+        existing_token = AuthToken.query.filter_by(user=current_auth.user, client=client).first()
     else:
-        existing_token = AuthToken.query.filter_by(user_session=g.usersession, client=client).first()
+        existing_token = AuthToken.query.filter_by(user_session=current_auth.session, client=client).first()
     if existing_token and set(scope).issubset(set(existing_token.effective_scope)):
         if response_type == 'code':
             return oauth_auth_success(client, redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
         else:
             return oauth_auth_success(client, redirect_uri, state, code=None,
-                token=oauth_make_token(g.user, client, scope, g.usersession))
+                token=oauth_make_token(current_auth.user, client, scope, current_auth.session))
 
     # First request. Ask user.
     if form.validate_on_submit():
@@ -280,7 +281,7 @@ def oauth_authorize():
                 return oauth_auth_success(client, redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
             else:
                 return oauth_auth_success(client, redirect_uri, state, code=None,
-                    token=oauth_make_token(g.user, client, scope, g.usersession))
+                    token=oauth_make_token(current_auth.user, client, scope, current_auth.session))
         elif 'deny' in request.form:
             # User said no. Return "access_denied" error (OAuth2 spec)
             return oauth_auth_error(redirect_uri, state, 'access_denied')
@@ -369,7 +370,7 @@ def oauth_token():
     """
     # Always required parameters
     grant_type = request.form.get('grant_type')
-    client = g.client  # Provided by @requires_client_login
+    client = current_auth.client  # Provided by @requires_client_login
     scope = request.form.get('scope', u'').split(u' ')
     # if grant_type == 'authorization_code' (POST)
     code = request.form.get('code')

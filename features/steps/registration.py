@@ -21,7 +21,7 @@ def when_form_submit(context):
     for k, v in context.test_user.iteritems():
         context.browser.find_element_by_name(k).send_keys(v)
 
-    register_form = context.browser.find_element_by_id('register')
+    register_form = context.browser.find_element_by_id('form-register')
     register_form.submit()
 
 

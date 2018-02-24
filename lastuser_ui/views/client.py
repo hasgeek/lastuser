@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from flask import g, request, render_template, url_for, flash, abort
+from flask import request, render_template, url_for, flash, abort
+from coaster.auth import current_auth
 from coaster.views import load_model, load_models
 from baseframe import _
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
@@ -19,9 +20,9 @@ from ..forms import (RegisterClientForm, PermissionForm, UserPermissionAssignFor
 @lastuser_ui.route('/apps')
 @requires_login
 def client_list():
-    if g.user:
-        return render_template('client_list.html.jinja2', clients=Client.query.filter(db.or_(Client.user == g.user,
-            Client.org_id.in_(g.user.organizations_owned_ids()))).order_by('title').all())
+    if current_auth.is_authenticated:
+        return render_template('client_list.html.jinja2', clients=Client.query.filter(db.or_(Client.user == current_auth.user,
+            Client.org_id.in_(current_auth.user.organizations_owned_ids()))).order_by('title').all())
     else:
         # TODO: Show better UI for non-logged in users
         return render_template('client_list.html.jinja2', clients=[])
@@ -37,8 +38,8 @@ def available_client_owners():
     Return a list of possible client owners for the current user.
     """
     choices = []
-    choices.append((g.user.buid, g.user.pickername))
-    for org in g.user.organizations_owned():
+    choices.append((current_auth.user.buid, current_auth.user.pickername))
+    for org in current_auth.user.organizations_owned():
         choices.append((org.buid, org.pickername))
     return choices
 
@@ -47,10 +48,10 @@ def available_client_owners():
 @requires_login
 def client_new():
     form = RegisterClientForm(model=Client)
-    form.edit_user = g.user
+    form.edit_user = current_auth.user
     form.client_owner.choices = available_client_owners()
     if request.method == 'GET':
-        form.client_owner.data = g.user.buid
+        form.client_owner.data = current_auth.user.buid
 
     if form.validate_on_submit():
         client = Client()
@@ -84,7 +85,7 @@ def client_info(client):
 @load_model(Client, {'key': 'key'}, 'client', permission='edit')
 def client_edit(client):
     form = RegisterClientForm(obj=client, model=Client)
-    form.edit_user = g.user
+    form.edit_user = current_auth.user
     form.client_owner.choices = available_client_owners()
     if request.method == 'GET':
         if client.user:
@@ -164,8 +165,8 @@ def client_cred_delete(client, cred):
 def permission_list():
     allperms = Permission.query.filter_by(allusers=True).order_by('name').all()
     userperms = Permission.query.filter(
-        db.or_(Permission.user_id == g.user.id,
-               Permission.org_id.in_(g.user.organizations_owned_ids()))
+        db.or_(Permission.user_id == current_auth.user.id,
+               Permission.org_id.in_(current_auth.user.organizations_owned_ids()))
         ).order_by('name').all()
     return render_template('permission_list.html.jinja2', allperms=allperms, userperms=userperms)
 
@@ -174,10 +175,10 @@ def permission_list():
 @requires_login
 def permission_new():
     form = PermissionForm()
-    form.edit_user = g.user
+    form.edit_user = current_auth.user
     form.context.choices = available_client_owners()
     if request.method == 'GET':
-        form.context.data = g.user.buid
+        form.context.data = current_auth.user.buid
     if form.validate_on_submit():
         perm = Permission()
         form.populate_obj(perm)
@@ -197,7 +198,7 @@ def permission_new():
 @load_model(Permission, {'id': 'id'}, 'perm', permission='edit')
 def permission_edit(perm):
     form = PermissionForm(obj=perm)
-    form.edit_user = g.user
+    form.edit_user = current_auth.user
     form.context.choices = available_client_owners()
     if request.method == 'GET':
         if perm.user:
@@ -234,7 +235,7 @@ def permission_user_new(client):
     if client.user:
         available_perms = Permission.query.filter(db.or_(
             Permission.allusers == True,
-            Permission.user == g.user)).order_by('name').all()  # NOQA
+            Permission.user == current_auth.user)).order_by('name').all()  # NOQA
         form = UserPermissionAssignForm()
     elif client.org:
         available_perms = Permission.query.filter(db.or_(
@@ -284,7 +285,7 @@ def permission_user_edit(client, kwargs):
             abort(404)
         available_perms = Permission.query.filter(db.or_(
             Permission.allusers == True,
-            Permission.user == g.user)).order_by('name').all()  # NOQA
+            Permission.user == current_auth.user)).order_by('name').all()  # NOQA
         permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
     elif client.org:
         team = Team.get(buid=kwargs['buid'])
@@ -465,7 +466,7 @@ def resource_action_delete(client, resource, action):
 @load_model(Client, {'key': 'key'}, 'client')
 def client_team_access(client):
     form = ClientTeamAccessForm()
-    user_orgs = g.user.organizations_owned()
+    user_orgs = current_auth.user.organizations_owned()
     form.organizations.choices = [(org.buid, org.title) for org in user_orgs]
     org_selected = [org.buid for org in user_orgs if client in org.clients_with_team_access()]
     if request.method == 'GET':

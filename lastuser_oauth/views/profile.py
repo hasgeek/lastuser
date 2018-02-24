@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from flask import g, current_app, flash, url_for, Markup, escape
+from flask import current_app, flash, url_for, Markup, escape
+from coaster.auth import current_auth
 from coaster.views import get_next_url
 from baseframe import _
 from baseframe.forms import render_form, render_redirect, render_message
@@ -17,33 +18,33 @@ from .helpers import requires_login
 @lastuser_oauth.route('/profile/new', methods=['GET', 'POST'], defaults={'newprofile': True}, endpoint='profile_new')
 @requires_login
 def profile_edit(newprofile=False):
-    form = ProfileForm(obj=g.user)
-    form.edit_user = g.user
+    form = ProfileForm(obj=current_auth.user)
+    form.edit_user = current_auth.user
     form.fullname.description = current_app.config.get('FULLNAME_REASON')
     form.email.description = current_app.config.get('EMAIL_REASON')
     form.username.description = current_app.config.get('USERNAME_REASON')
     form.timezone.description = current_app.config.get('TIMEZONE_REASON')
-    if g.user.email or newprofile is False:
+    if current_auth.user.email or newprofile is False:
         del form.email
 
     if form.validate_on_submit():
         # Can't auto-populate here because user.email is read-only
-        g.user.fullname = form.fullname.data
-        g.user.username = form.username.data
-        g.user.timezone = form.timezone.data
+        current_auth.user.fullname = form.fullname.data
+        current_auth.user.username = form.username.data
+        current_auth.user.timezone = form.timezone.data
 
-        if newprofile and not g.user.email:
-            useremail = UserEmailClaim.get(user=g.user, email=form.email.data)
+        if newprofile and not current_auth.user.email:
+            useremail = UserEmailClaim.get(user=current_auth.user, email=form.email.data)
             if useremail is None:
-                useremail = UserEmailClaim(user=g.user, email=form.email.data)
+                useremail = UserEmailClaim(user=current_auth.user, email=form.email.data)
                 db.session.add(useremail)
             send_email_verify_link(useremail)
             db.session.commit()
-            user_data_changed.send(g.user, changes=['profile', 'email-claim'])
+            user_data_changed.send(current_auth.user, changes=['profile', 'email-claim'])
             flash(_("Your profile has been updated. We sent you an email to confirm your address"), category='success')
         else:
             db.session.commit()
-            user_data_changed.send(g.user, changes=['profile'])
+            user_data_changed.send(current_auth.user, changes=['profile'])
             flash(_("Your profile has been updated"), category='success')
 
         if newprofile:
@@ -53,7 +54,7 @@ def profile_edit(newprofile=False):
     if newprofile:
         return render_form(form, title=_("Update profile"), formid='profile_new', submit=_("Continue"),
             message=Markup(_(u"Hello, <strong>{fullname}</strong>. Please spare a minute to fill out your profile").format(
-                fullname=escape(g.user.fullname))),
+                fullname=escape(current_auth.user.fullname))),
             ajax=True)
     else:
         return render_form(form, title=_("Edit profile"), formid='profile_edit', submit=_("Save changes"), ajax=True)
@@ -65,14 +66,14 @@ def profile_edit(newprofile=False):
 def confirm_email(md5sum, secret):
     emailclaim = UserEmailClaim.query.filter_by(md5sum=md5sum, verification_code=secret).first()
     if emailclaim is not None:
-        if 'verify' in emailclaim.permissions(g.user):
+        if 'verify' in emailclaim.permissions(current_auth.user):
             existing = UserEmail.query.filter(UserEmail.email.in_([emailclaim.email, emailclaim.email.lower()])).first()
             if existing is not None:
                 claimed_email = emailclaim.email
                 claimed_user = emailclaim.user
                 db.session.delete(emailclaim)
                 db.session.commit()
-                if claimed_user != g.user:
+                if claimed_user != current_auth.user:
                     return render_message(title=_("Email address already claimed"),
                         message=Markup(
                             _(u"The email address <code>{email}</code> has already been verified by another user").format(
@@ -92,7 +93,7 @@ def confirm_email(md5sum, secret):
                     UserEmailClaim.email.in_([useremail.email, useremail.email.lower()])).all():
                 db.session.delete(claim)
             db.session.commit()
-            user_data_changed.send(g.user, changes=['email'])
+            user_data_changed.send(current_auth.user, changes=['email'])
             return render_message(title=_("Email address verified"),
                 message=Markup(_(u"Hello <strong>{fullname}</strong>! "
                     u"Your email address <code>{email}</code> has now been verified").format(
