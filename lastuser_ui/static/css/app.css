@@ -1,0 +1,74 @@
+.detail-box {
+  margin: 10px;
+  border-bottom: 1px solid #ddd;
+  margin: 0 -15px;
+  padding: 15px;
+}
+.detail-box .heading, .detail-box .heading-special {
+  margin: 0;
+}
+.detail-box .heading-special {
+  cursor: pointer;
+}
+.detail-box .para {
+  margin: 0;
+}
+.detail-box .button-box {
+  margin: 12px auto 0;
+}
+.detail-box .button-box-button {
+  margin-bottom: 12px;
+}
+.detail-box .detail-box-form {
+  padding: 12px 0 0;
+}
+.detail-box .detail-box-form .well {
+  margin-bottom: 0;
+}
+.detail-box .detail-box-panel {
+  margin-bottom: 0;
+  margin-top: 5px;
+}
+.detail-box .detail-box-table {
+  margin-bottom: 0;
+}
+.detail-box .detail-box-table tr:first-child > td {
+  border-top: 0;
+}
+.detail-box .detail-box-table td:first-child {
+  padding-left: 0;
+}
+
+@media screen and (min-width: 768px) {
+  .detail > div {
+    display: inline-block;
+    float: none;
+    vertical-align: top;
+    margin: 0 -1px 30px;
+  }
+
+  .detail-box {
+    -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 0 10px rgba(0, 0, 0, 0.1) inset;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 0 10px rgba(0, 0, 0, 0.1) inset;
+    padding: 15px;
+    margin: 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  .detail-box .button-box {
+    float: right;
+  }
+  .detail-box .button-box-button {
+    margin-bottom: 0;
+  }
+  .detail-box .detail-box-form {
+    clear: both;
+  }
+}
+@media (min-width: 992px) and (max-width: 1199px) {
+  .detail-box .form-horizontal .help-required {
+    position: absolute;
+    right: -10px;
+    bottom: 0;
+  }
+}
