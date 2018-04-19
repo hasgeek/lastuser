@@ -6,7 +6,7 @@ from coaster.views import load_model
 from baseframe import _
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
 
-from lastuser_core.models import db, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
+from lastuser_core.models import db, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim, UserExternalId
 from lastuser_core.signals import user_data_changed
 from lastuser_oauth.mailclient import send_email_verify_link
 from lastuser_oauth.views.helpers import requires_login
@@ -59,6 +59,21 @@ def add_email():
         submit=_("Add email"), ajax=True)
 
 
+@lastuser_ui.route('/profile/email/<md5sum>/makeprimary', methods=['POST'])
+@requires_login
+def make_email_primary(md5sum):
+    useremail = UserEmail.query.filter_by(md5sum=md5sum, user=current_auth.user).first()
+    if useremail is not None and isinstance(useremail, UserEmail):
+        if useremail.primary:
+            flash(_("This is already your primary email address"), 'error')
+        else:
+            current_auth.user.make_email_primary(useremail.email)
+            db.session.commit()
+            user_data_changed.send(current_auth.user, changes=['email-update-primary'])
+            flash(_(u"Your primary email address has been updated").format(email=useremail.email))
+    return render_redirect(url_for('.profile'), code=303)
+
+
 @lastuser_ui.route('/profile/email/<md5sum>/remove', methods=['GET', 'POST'])
 @requires_login
 def remove_email(md5sum):
@@ -72,8 +87,7 @@ def remove_email(md5sum):
         # FIXME: Confirm validation success
         user_data_changed.send(current_auth.user, changes=['email-delete'])
     return render_delete_sqla(useremail, db, title=_(u"Confirm removal"),
-        message=_(u"Remove email address {email}?").format(
-            email=useremail.email),
+        message=_(u"Remove email address {email}?").format(email=useremail.email),
         success=_(u"You have removed your email address {email}").format(email=useremail.email),
         next=url_for('.profile'))
 
@@ -142,3 +156,18 @@ def verify_phone(phoneclaim):
             flash(_("This phone number has already been claimed by another user"), 'danger')
     return render_form(form=form, title=_("Verify phone number"), formid='phone_verify',
         submit=_("Verify"), ajax=True)
+
+
+@lastuser_ui.route('/profile/extid/<id>/remove', methods=['GET', 'POST'])
+@requires_login
+@load_model(UserExternalId, {'id': 'id'}, 'extid', permission='delete_extid')
+def remove_extid(extid):
+    num_extids = len(current_auth.user.externalids)
+    has_pw_hash = bool(current_auth.user.pw_hash)
+    if not has_pw_hash and num_extids == 1:
+        flash(_("You do not have a password set. So you must have at least one external ID enabled."), 'danger')
+        return render_redirect(url_for('.profile'), code=303)
+    return render_delete_sqla(extid, db, title=_(u"Confirm delete"),
+        message=_(u"Delete ‘{service}’ account with username ‘{username}’?").format(service=extid.service, username=extid.username),
+        success=_(u"You have deleted ‘{service}’ account with username ‘{username}’ and all its associated resources and permission assignments").format(service=extid.service, username=extid.username),
+        next=url_for('.profile'))

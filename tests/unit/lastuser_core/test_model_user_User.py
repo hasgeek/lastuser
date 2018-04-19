@@ -453,16 +453,14 @@ class TestUser(TestDatabaseFixture):
         whymper_result = mr_whymper.add_email(whymper_email, primary=True)
         self.assertEqual(whymper_result.email, whymper_email)
         # # scenario 2: when primary flag is True but user has existing primary email
-        # crusoe = self.fixtures.crusoe
-        # crusoe_new_email = u'crusoe@batdog.ca'
-        # # FIXME this line trips line 176 in the method
-        # crusoe_result = crusoe.add_email(email=crusoe_new_email, primary=True)
-        # self.assertEqual(crusoe_result.email, crusoe_new_email)
+        crusoe = self.fixtures.crusoe
+        crusoe_new_email = u'crusoe@batdog.ca'
+        crusoe_result = crusoe.add_email(email=crusoe_new_email, primary=True)
+        self.assertEqual(crusoe_result.email, crusoe_new_email)
         # # scenario 3: when primary flag is True but user has existing email same as one passed
-        # crusoe_existing_email = u'crusoe@keepballin.ca'
-        # # FIXME this line trips line 176 in the method
-        # crusoe_result = crusoe.add_email(crusoe_existing_email, primary=True)
-        # self.assertEqual(crusoe_result.email, crusoe_existing_email)
+        crusoe_existing_email = u'crusoe@keepballin.ca'
+        crusoe_result = crusoe.add_email(crusoe_existing_email, primary=True)
+        self.assertEqual(crusoe_result.email, crusoe_existing_email)
         # scenario 4: when requested to adds an email with domain belonging to a team, add user to team
         gustav = models.User(username=u'gustav')
         gustav_email = u'g@keepballin.ca'
@@ -470,3 +468,14 @@ class TestUser(TestDatabaseFixture):
         db.session.add(gustav)
         db.session.commit()
         self.assertEqual(gustav_result.email, gustav_email)
+
+    def test_make_email_primary(self):
+        """
+        Test to make an email primary for a user
+        """
+        mr_whymper = models.User(username=u'whymmper')
+        whymper_email = u'whmmmm@animalfarm.co.uk'
+        whymper_result = mr_whymper.add_email(whymper_email)
+        mr_whymper.make_email_primary(whymper_result)
+        self.assertEqual(whymper_result.email, whymper_email)
+        self.assertEqual(whymper_result.primary, True)

@@ -25,3 +25,5 @@ baseframe-packed.js
 secrets.dev
 secrets.test
 */.well-known/acme-challenge
+ghostdriver.log
+.pytest_cache

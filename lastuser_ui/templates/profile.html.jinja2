@@ -37,7 +37,18 @@
       <table class="table detail-box-table">
         {% for useremail in current_auth.user.emails %}
           <tr>
-            <td>{{ useremail }} {% if useremail.primary %} <em>(primary)</em> {% endif -%} <a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a></td>
+            <td>{{ useremail }}
+              {% if useremail.primary %}
+                <em>(primary)</em>
+              {% else %}
+                <form action="{{ url_for('.make_email_primary', md5sum=useremail.md5sum) }}" method="POST">
+                  <button class="btn btn-xs btn-primary" type="submit">Make primary</button>
+                </form>
+                <form action="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}" method="POST">
+                  <button class="btn btn-xs btn-danger" type="submit"><i class="fa fa-trash-o"></i></button>
+                </form>
+              {% endif -%}
+            </td>
           </tr>
         {% endfor %}
         {% for useremail in current_auth.user.emailclaims %}
@@ -87,13 +98,13 @@
         <table class="table detail-box-table">
           {% for extid in current_auth.user.externalids %}
             <tr>
-              <td><i class="fa fa-{{ extid.service }}"></i> {{ extid.username }}</td>
+              <td><i class="fa fa-{{ extid.service }}"></i> {{ extid.username }} <a href="{{ url_for('.remove_extid', id=extid.id) }}"><i class="fa fa-trash-o"></i></a></td>
             </tr>
           {% endfor %}
         </table>
       {% else %}
         <p class="para"><em>(none)</em></p>
-      {% endif %} 
+      {% endif %}
     </div><!--eof detail-box-->
   </div><!--eof connected ids-->
 
@@ -143,11 +154,11 @@
       <div class="panel panel-default detail-box-panel">
         <ul class="list-group">
           {%- for session in current_auth.user.active_sessions() %}
-            <li class="list-group-item">From {{ session.ipaddr }} since {{ session.created_at|age }} with {{ session.ua.browser}}/{{ session.ua.platform }}/{{ session.ua.version }}, last active {{ session.accessed_at|age }} 
-            {% if session == current_auth.usersession -%} 
-              (current) 
-            {%- else -%} 
-              (<a href="{{ url_for('lastuser_oauth.logout_session', session=session.buid) }}">logout</a>) 
+            <li class="list-group-item">From {{ session.ipaddr }} since {{ session.created_at|age }} with {{ session.ua.browser}}/{{ session.ua.platform }}/{{ session.ua.version }}, last active {{ session.accessed_at|age }}
+            {% if session == current_auth.usersession -%}
+              (current)
+            {%- else -%}
+              (<a href="{{ url_for('lastuser_oauth.logout_session', session=session.buid) }}">logout</a>)
             {%- endif %}
             </li>
           {%- endfor %}
