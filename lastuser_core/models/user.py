@@ -171,6 +171,14 @@ class User(UuidMixin, BaseMixin, db.Model):
             self.primary_email = useremail
         return useremail
 
+    def make_email_primary(self, email):
+        if isinstance(email, UserEmail):
+            useremail = email
+        else:
+            useremail = UserEmail.query.filter_by(user=self, email=email).first()
+        if useremail and not useremail.primary:
+            self.primary_email = useremail
+
     def del_email(self, email):
         useremail = UserEmail.query.filter_by(user=self, email=email).first()
         if useremail:
@@ -989,6 +997,12 @@ class UserExternalId(BaseMixin, db.Model):
         """
         param, value = require_one_of(True, userid=userid, username=username)
         return cls.query.filter_by(**{param: value, 'service': service}).one_or_none()
+
+    def permissions(self, user, inherited=None):
+        perms = super(UserExternalId, self).permissions(user, inherited)
+        if user and user == self.user:
+            perms.add('delete_extid')
+        return perms
 
 
 add_primary_relationship(User, 'primary_email', UserEmail, 'user', 'user_id')
