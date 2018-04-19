@@ -279,3 +279,12 @@ def set_loginmethod_cookie(response, value):
         expires=datetime.utcnow() + timedelta(days=365),   # Expire one year from now
         httponly=True)
     return response
+
+
+def mask_email(email):
+    if '@' not in email:
+        return
+    username, domain = email.split('@')
+    masked_username = username.replace(username[1:], '*' * len(username[1:]))
+    masked_domain = domain.replace(domain[1:], '*' * len(domain[1:]))
+    return '@'.join([masked_username, masked_domain])
