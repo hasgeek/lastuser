@@ -16,8 +16,9 @@ from lastuser_core import login_registry
 from .. import lastuser_oauth
 from ..mailclient import send_email_verify_link, send_password_reset_link
 from lastuser_core.models import db, User, UserEmailClaim, PasswordResetRequest, ClientCredential, UserSession
+from lastuser_core.utils import mask_email
 from ..forms import LoginForm, RegisterForm, PasswordResetForm, PasswordResetRequestForm, LoginPasswordResetException
-from .helpers import login_internal, logout_internal, register_internal, set_loginmethod_cookie, mask_email
+from .helpers import login_internal, logout_internal, register_internal, set_loginmethod_cookie
 
 oid = OpenID()
 

@@ -58,3 +58,19 @@ def get_gravatar_md5sum(url):
     if len(md5sum) != 32:
         return None
     return md5sum
+
+
+def mask_email(email):
+    """
+    Masks an email address
+
+    >>> mask_email(u'foobar@example.com')
+    u'f*****@e**********'
+
+    """
+    if '@' not in email:
+        return email
+    username, domain = email.split('@')
+    masked_username = username.replace(username[1:], '*' * len(username[1:]))
+    masked_domain = domain.replace(domain[1:], '*' * len(domain[1:]))
+    return u'@'.join([masked_username, masked_domain])

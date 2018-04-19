@@ -46,3 +46,6 @@ class FlaskrTestCase(unittest.TestCase):
         result = make_redirect_url('http://example.com/?foo=bar', use_fragment=True, foo='baz')
         expected_result = 'http://example.com/?foo=bar#foo=baz'
         self.assertEqual(result, expected_result)
+
+    def test_mask_email(self):
+        self.assertEqual(mask_email('foobar@example.com'), 'f*****@e**********')
