@@ -70,7 +70,9 @@ def make_email_primary(md5sum):
             current_auth.user.make_email_primary(useremail.email)
             db.session.commit()
             user_data_changed.send(current_auth.user, changes=['email-update-primary'])
-            flash(_(u"Your primary email address has been updated").format(email=useremail.email))
+            flash(_(u"Your primary email address has been updated").format(email=useremail.email), 'success')
+    else:
+        flash(_("No such email address is linked to this user account"), 'error')
     return render_redirect(url_for('.profile'), code=303)
 
 
