@@ -41,11 +41,9 @@
               {% if useremail.primary %}
                 <em>(primary)</em>
               {% else %}
-                <form action="{{ url_for('.make_email_primary', md5sum=useremail.md5sum) }}" method="POST">
+                &nbsp;<a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a>
+                <form action="{{ url_for('.make_email_primary', md5sum=useremail.md5sum) }}" method="POST" class="inline-form">
                   <button class="btn btn-xs btn-primary" type="submit">Make primary</button>
-                </form>
-                <form action="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}" method="POST">
-                  <button class="btn btn-xs btn-danger" type="submit"><i class="fa fa-trash-o"></i></button>
                 </form>
               {% endif -%}
             </td>
@@ -53,7 +51,7 @@
         {% endfor %}
         {% for useremail in current_auth.user.emailclaims %}
           <tr>
-            <td>{{ useremail }} <em>(pending verification)</em> <a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a></td>
+            <td>{{ useremail }} <em>(pending verification)</em>&nbsp;<a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a></td>
           </tr>
         {% endfor %}
       </table>
@@ -98,7 +96,7 @@
         <table class="table detail-box-table">
           {% for extid in current_auth.user.externalids %}
             <tr>
-              <td><i class="fa fa-{{ extid.service }}"></i> {{ extid.username }} <a href="{{ url_for('.remove_extid', id=extid.id) }}"><i class="fa fa-trash-o"></i></a></td>
+              <td><i class="fa fa-{{ extid.service }}"></i> {{ extid.username }}&nbsp;<a href="{{ url_for('.remove_extid', id=extid.id) }}"><i class="fa fa-trash-o"></i></a></td>
             </tr>
           {% endfor %}
         </table>
