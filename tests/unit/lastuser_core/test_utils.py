@@ -48,4 +48,4 @@ class FlaskrTestCase(unittest.TestCase):
         self.assertEqual(result, expected_result)
 
     def test_mask_email(self):
-        self.assertEqual(mask_email('foobar@example.com'), 'f*****@e**********')
+        self.assertEqual(mask_email('foobar@example.com'), 'f****@e****')
