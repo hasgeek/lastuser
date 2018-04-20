@@ -43,7 +43,7 @@
               {% else %}
                 &nbsp;<a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a>
                 <form action="{{ url_for('.make_email_primary', md5sum=useremail.md5sum) }}" method="POST" class="inline-form">
-                  <button class="btn btn-xs btn-primary" type="submit">Make primary</button>
+                  <button class="btn btn-xs btn-primary" type="submit">Set as primary</button>
                 </form>
               {% endif -%}
             </td>
