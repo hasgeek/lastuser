@@ -8,7 +8,7 @@ import baseframe.forms as forms
 from lastuser_core.utils import strip_phone, valid_phone
 from lastuser_core.models import UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
 
-__all__ = ['NewEmailAddressForm', 'NewPhoneForm', 'VerifyPhoneForm']
+__all__ = ['NewEmailAddressForm', 'EmailPrimaryForm', 'NewPhoneForm', 'VerifyPhoneForm']
 
 
 class NewEmailAddressForm(forms.Form):
@@ -31,6 +31,11 @@ class NewEmailAddressForm(forms.Form):
         existing = UserEmailClaim.get(email=field.data, user=current_auth.user)
         if existing is not None:
             raise forms.ValidationError(_("This email address is pending verification"))
+
+
+class EmailPrimaryForm(forms.Form):
+    email = forms.EmailField(__("Email address"), validators=[forms.validators.DataRequired(), forms.ValidEmail()],
+        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
 
 
 class NewPhoneForm(forms.Form):

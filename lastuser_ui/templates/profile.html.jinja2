@@ -1,5 +1,5 @@
 {% extends "layout.html.jinja2" %}
-{% from "baseframe/forms.html.jinja2" import renderfield, rendersubmit %}
+{% from "baseframe/forms.html.jinja2" import rendersubmit %}
 {% block title %}My profile{% endblock %}
 
 {% block content %}
@@ -34,33 +34,45 @@
     <div class="detail-box clearfix">
       <h2 class="heading">Email addresses</h2>
       {% if current_auth.user.emails %}
-      <table class="table detail-box-table">
-        {% for useremail in current_auth.user.emails %}
-          <tr>
-            <td>{{ useremail }}
-              {% if useremail.primary %}
-                <em>(primary)</em>
-              {% else %}
-                &nbsp;<a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a>
-                <form action="{{ url_for('.make_email_primary', md5sum=useremail.md5sum) }}" method="POST" class="inline-form">
-                  <button class="btn btn-xs btn-primary" type="submit">Set as primary</button>
-                </form>
-              {% endif -%}
-            </td>
-          </tr>
-        {% endfor %}
-        {% for useremail in current_auth.user.emailclaims %}
-          <tr>
-            <td>{{ useremail }} <em>(pending verification)</em>&nbsp;<a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a></td>
-          </tr>
-        {% endfor %}
-      </table>
+      <form action="{{ url_for('.make_email_primary') }}" method="POST">
+        {{ primary_email_form.hidden_tag() }}
+        <div class="table detail-box-table">
+          <div class="listwidget">
+            <ul>
+              {% for useremail in current_auth.user.emails %}
+                {% if useremail.primary %}
+                  <li>
+                    {{ useremail }}
+                  </li>
+                {% else %}
+                  <li>
+                    <input id="useremail-{{loop.index}}" name="email" value="{{useremail}}" type="radio">
+                    <label for="useremail-{{loop.index}}">{{ useremail }}</label>&nbsp;<a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a>
+                  </li>
+                {% endif -%}
+              {% endfor %}
+              {% for useremail in current_auth.user.emailclaims %}
+                <li>
+                  {{ useremail }} <em>(pending verification)</em>&nbsp;<a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        <div class="button-box">
+          <!-- <button class="btn btn-sm btn-info" type="submit">Delete</button> -->
+          <button class="btn btn-sm btn-primary" type="submit">Set as primary</button>
+          <a class="btn btn-sm btn-success" href="{{ url_for('.add_email') }}">Add an email address</a>
+        </div>
+      </form>
       {% else %}
         <p class="para">No verified addresses</p>
+        <div class="button-box">
+          <a class="btn btn-sm btn-success" href="{{ url_for('.add_email') }}">Add an email address</a>
+        </div>
       {% endif %}
-      <div class="button-box">
-        <a class="btn btn-sm btn-success" href="{{ url_for('.add_email') }}">Add an email address</a>
-      </div>
+
+      </form>
     </div><!--eof detail-box-->
   </div><!--eof email-->
 

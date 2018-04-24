@@ -12,14 +12,15 @@ from lastuser_oauth.mailclient import send_email_verify_link
 from lastuser_oauth.views.helpers import requires_login
 from lastuser_oauth.forms import PasswordResetForm, PasswordChangeForm
 from .. import lastuser_ui
-from ..forms import NewEmailAddressForm, NewPhoneForm, VerifyPhoneForm
+from ..forms import NewEmailAddressForm, EmailPrimaryForm, NewPhoneForm, VerifyPhoneForm
 from .sms import send_phone_verify_code
 
 
 @lastuser_ui.route('/profile')
 @requires_login
 def profile():
-    return render_template('profile.html.jinja2')
+    primary_email_form = EmailPrimaryForm()
+    return render_template('profile.html.jinja2', primary_email_form=primary_email_form)
 
 
 @lastuser_ui.route('/profile/password', methods=['GET', 'POST'])
@@ -59,20 +60,24 @@ def add_email():
         submit=_("Add email"), ajax=True)
 
 
-@lastuser_ui.route('/profile/email/<md5sum>/makeprimary', methods=['POST'])
+@lastuser_ui.route('/profile/email/makeprimary', methods=['POST'])
 @requires_login
-def make_email_primary(md5sum):
-    useremail = UserEmail.query.filter_by(md5sum=md5sum, user=current_auth.user).first()
-    if useremail is not None and isinstance(useremail, UserEmail):
-        if useremail.primary:
-            flash(_("This is already your primary email address"), 'error')
+def make_email_primary():
+    form = EmailPrimaryForm()
+    if form.validate_on_submit():
+        useremail = UserEmail.query.filter_by(email=form.email.data, user=current_auth.user).first()
+        if useremail is not None and isinstance(useremail, UserEmail):
+            if useremail.primary:
+                flash(_("This is already your primary email address"), 'danger')
+            else:
+                current_auth.user.make_email_primary(useremail.email)
+                db.session.commit()
+                user_data_changed.send(current_auth.user, changes=['email-update-primary'])
+                flash(_(u"Your primary email address has been updated").format(email=useremail.email), 'success')
         else:
-            current_auth.user.make_email_primary(useremail.email)
-            db.session.commit()
-            user_data_changed.send(current_auth.user, changes=['email-update-primary'])
-            flash(_(u"Your primary email address has been updated").format(email=useremail.email), 'success')
+            flash(_("No such email address is linked to this user account"), 'danger')
     else:
-        flash(_("No such email address is linked to this user account"), 'error')
+            flash(_("Please select an email address"), 'danger')
     return render_redirect(url_for('.profile'), code=303)
 
 
@@ -83,7 +88,7 @@ def remove_email(md5sum):
     if not useremail:
         useremail = UserEmailClaim.query.filter_by(md5sum=md5sum, user=current_auth.user).first_or_404()
     if isinstance(useremail, UserEmail) and useremail.primary:
-        flash(_("You cannot remove your primary email address"), 'error')
+        flash(_("You cannot remove your primary email address"), 'danger')
         return render_redirect(url_for('.profile'), code=303)
     if request.method == 'POST':
         # FIXME: Confirm validation success
