@@ -40,16 +40,15 @@
           <div class="listwidget">
             <ul>
               {% for useremail in current_auth.user.emails %}
-                {% if useremail.primary %}
-                  <li>
-                    {{ useremail }}
-                  </li>
-                {% else %}
-                  <li>
-                    <input id="useremail-{{loop.index}}" name="email" value="{{useremail}}" type="radio">
-                    <label for="useremail-{{loop.index}}">{{ useremail }}</label>&nbsp;<a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a>
-                  </li>
-                {% endif -%}
+                <li>
+                  <input id="useremail-{{loop.index}}" name="email" value="{{useremail}}" type="radio">
+                  <label for="useremail-{{loop.index}}">{{ useremail }}</label>
+                  {% if useremail.primary %}
+                    &nbsp;<em>(primary)</em>
+                  {% else %}
+                    &nbsp;<a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a>
+                  {% endif %}
+                </li>
               {% endfor %}
               {% for useremail in current_auth.user.emailclaims %}
                 <li>
@@ -60,8 +59,7 @@
           </div>
         </div>
         <div class="button-box">
-          <!-- <button class="btn btn-sm btn-info" type="submit">Delete</button> -->
-          <button class="btn btn-sm btn-primary" type="submit">Set as primary</button>
+          <button class="btn btn-sm btn-info" type="submit">Set as primary</button>
           <a class="btn btn-sm btn-success" href="{{ url_for('.add_email') }}">Add an email address</a>
         </div>
       </form>
@@ -108,7 +106,7 @@
         <table class="table detail-box-table">
           {% for extid in current_auth.user.externalids %}
             <tr>
-              <td><i class="fa fa-{{ extid.service }}"></i> {{ extid.username }}&nbsp;<a href="{{ url_for('.remove_extid', id=extid.id) }}"><i class="fa fa-trash-o"></i></a></td>
+              <td><i class="fa fa-{{ extid.service }}"></i>&nbsp;{{ extid.username }}&nbsp;<a href="{{ url_for('.remove_extid', id=extid.id) }}"><i class="fa fa-trash-o"></i></a></td>
             </tr>
           {% endfor %}
         </table>
