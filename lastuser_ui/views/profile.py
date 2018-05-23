@@ -5,7 +5,7 @@ from coaster.auth import current_auth
 from coaster.views import load_model
 from baseframe import _
 from baseframe.forms import render_form, render_redirect, render_delete_sqla
-
+from lastuser_core import login_registry
 from lastuser_core.models import db, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim, UserExternalId
 from lastuser_core.signals import user_data_changed
 from lastuser_oauth.mailclient import send_email_verify_link
@@ -20,7 +20,12 @@ from .sms import send_phone_verify_code
 @requires_login
 def profile():
     primary_email_form = EmailPrimaryForm()
-    return render_template('profile.html.jinja2', primary_email_form=primary_email_form)
+    service_forms = {}
+    for service, provider in login_registry.items():
+        if provider.at_login and provider.form is not None:
+            service_forms[service] = provider.get_form()
+    return render_template('profile.html.jinja2', primary_email_form=primary_email_form,
+        service_forms=service_forms, login_registry=login_registry)
 
 
 @lastuser_ui.route('/profile/password', methods=['GET', 'POST'])

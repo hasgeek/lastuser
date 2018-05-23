@@ -113,7 +113,11 @@
       {% else %}
         <p class="para"><em>(none)</em></p>
       {% endif %}
-    </div><!--eof detail-box-->
+      <h2 class="heading">Add External ID</h2>
+      {% for provider in login_registry %}
+        <a class="btn btn-default login-{{ provider }}" href="{{ url_for('lastuser_oauth.login_service', service=provider, next=url_for('.profile')) }}"><i class="fa fa-{{ login_registry[provider].icon }}"></i>&nbsp;&nbsp;{{ login_registry[provider]['title'] }}</a>
+      {% endfor %}
+    </div>
   </div><!--eof connected ids-->
 
   <div class="col-xs-12 col-sm-12 col-md-6">

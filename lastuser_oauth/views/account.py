@@ -74,7 +74,16 @@ def get_user_extid(service, userdata):
     # It is possible at this time that extid.user and useremail.user are different.
     # We do not handle it here, but in the parent function login_service_postcallback.
     elif useremail is not None and useremail.user is not None:
+        # XXX: What if, the user is logged in and the "first" email address
+        # returned by the external ID belongs to another user account in our DB?
+        # In that case, current_auth.user != useremail.user
+        # https://github.com/hasgeek/lastuser/blob/profile_page/lastuser_oauth/providers/github.py#L70
         user = useremail.user
+    elif current_auth.is_authenticated:
+        # This is possible when user is adding an external ID from the profile page.
+        # useremail can be None if the "first" email of the external ID doesn't match
+        # any useremail record.
+        user = current_auth.user
     else:
         # Cross-check with all other instances of the same LoginProvider (if we don't have a user)
         # This is (for eg) for when we have two Twitter services with different access levels.
