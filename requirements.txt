@@ -12,7 +12,7 @@ Flask-OAuth==0.12
 pytz==2018.4
 bcrypt>=2.0.0
 ordereddict==1.1
-Flask-WTF
+Flask-WTF==0.14.2
 requests
 blinker
 Flask-RQ
