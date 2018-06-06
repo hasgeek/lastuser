@@ -16,7 +16,7 @@ Flask-WTF==0.14.2
 requests==2.18.4
 blinker==1.4
 Flask-RQ==0.2
-tweepy
+tweepy==3.6.0
 unicodecsv
 oauth2client
 ua-parser
