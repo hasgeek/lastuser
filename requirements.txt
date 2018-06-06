@@ -1,4 +1,4 @@
-progressbar2
+progressbar2==3.38.0
 Flask
 markdown
 Flask-Assets
