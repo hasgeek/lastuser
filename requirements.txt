@@ -5,7 +5,7 @@ Flask-Assets==0.12
 Flask-Mail==0.9.1
 sqlalchemy_utils==0.33.3
 SQLAlchemy>=0.9
-Flask-SQLAlchemy
+Flask-SQLAlchemy==2.3.2
 jsmin
 Flask-OpenID
 Flask-OAuth
