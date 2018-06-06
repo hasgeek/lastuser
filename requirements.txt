@@ -18,7 +18,7 @@ blinker==1.4
 Flask-RQ==0.2
 tweepy==3.6.0
 unicodecsv==0.14.1
-oauth2client
+oauth2client==4.1.2
 ua-parser
 itsdangerous
 psycopg2
