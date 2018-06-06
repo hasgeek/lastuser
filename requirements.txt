@@ -15,7 +15,7 @@ ordereddict==1.1
 Flask-WTF==0.14.2
 requests==2.18.4
 blinker==1.4
-Flask-RQ
+Flask-RQ==0.2
 tweepy
 unicodecsv
 oauth2client
