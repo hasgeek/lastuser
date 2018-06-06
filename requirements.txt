@@ -1,5 +1,5 @@
 progressbar2==3.38.0
-Flask
+Flask==1.0.2
 markdown
 Flask-Assets
 Flask-Mail
