@@ -2,5 +2,5 @@ pytest==3.6.1
 coverage==4.5.1
 behave==1.2.6
 mock==2.0.0
-selenium
+selenium==3.12.0
 coveralls
