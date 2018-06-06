@@ -1,6 +1,6 @@
 progressbar2==3.38.0
 Flask==1.0.2
-markdown
+markdown==2.6.11
 Flask-Assets
 Flask-Mail
 sqlalchemy_utils
