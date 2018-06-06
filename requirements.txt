@@ -11,7 +11,7 @@ Flask-OpenID==1.2.5
 Flask-OAuth==0.12
 pytz==2018.4
 bcrypt>=2.0.0
-ordereddict
+ordereddict==1.1
 Flask-WTF
 requests
 blinker
