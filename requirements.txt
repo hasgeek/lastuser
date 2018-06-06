@@ -17,7 +17,7 @@ requests==2.18.4
 blinker==1.4
 Flask-RQ==0.2
 tweepy==3.6.0
-unicodecsv
+unicodecsv==0.14.1
 oauth2client
 ua-parser
 itsdangerous
