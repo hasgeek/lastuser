@@ -21,6 +21,6 @@ unicodecsv==0.14.1
 oauth2client==4.1.2
 ua-parser==0.8.0
 itsdangerous==0.24
-psycopg2==2.7.4
+psycopg2==2.7.5
 git+https://github.com/hasgeek/coaster
 git+https://github.com/hasgeek/baseframe
