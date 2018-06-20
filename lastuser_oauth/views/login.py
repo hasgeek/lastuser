@@ -59,7 +59,9 @@ def login():
                 return set_loginmethod_cookie(render_redirect(get_next_url(session=True), code=303),
                     'password')
         except LoginPasswordResetException:
-            return render_redirect(url_for('.reset', nopasswd=1, username=loginform.username.data))
+            flash(_(u"Your account does not have a password set. Please enter your username "
+                "or email address to request a reset code and set a new password"), category='danger')
+            return render_redirect(url_for('.reset', username=loginform.username.data))
     elif request.method == 'POST' and formid in service_forms:
         form = service_forms[formid]['form']
         if form.validate():
@@ -172,9 +174,6 @@ def reset():
     form = PasswordResetRequestForm()
     if getbool(request.args.get('expired')):
         message = _(u"Your password has expired. Please enter your username "
-            "or email address to request a reset code and set a new password")
-    elif getbool(request.args.get('nopasswd')):
-        message = _(u"Your account does not have a password set. Please enter your username "
             "or email address to request a reset code and set a new password")
     else:
         message = None
