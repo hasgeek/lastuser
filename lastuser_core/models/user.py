@@ -171,14 +171,6 @@ class User(UuidMixin, BaseMixin, db.Model):
             self.primary_email = useremail
         return useremail
 
-    def make_email_primary(self, email):
-        if isinstance(email, UserEmail):
-            useremail = email
-        else:
-            useremail = UserEmail.query.filter_by(user=self, email=email).first()
-        if useremail and not useremail.primary:
-            self.primary_email = useremail
-
     def del_email(self, email):
         useremail = UserEmail.query.filter_by(user=self, email=email).first()
         if useremail:

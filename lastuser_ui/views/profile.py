@@ -75,7 +75,7 @@ def make_email_primary():
             if useremail.primary:
                 flash(_("This is already your primary email address"), 'danger')
             else:
-                current_auth.user.make_email_primary(useremail.email)
+                current_auth.user.primary_email = useremail
                 db.session.commit()
                 user_data_changed.send(current_auth.user, changes=['email-update-primary'])
                 flash(_(u"Your primary email address has been updated").format(email=useremail.email), 'success')
