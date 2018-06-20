@@ -71,6 +71,4 @@ def mask_email(email):
     if '@' not in email:
         return email
     username, domain = email.split('@')
-    masked_username = username.replace(username[1:], '*' * 4)
-    masked_domain = domain.replace(domain[1:], '*' * 4)
-    return u'@'.join([masked_username, masked_domain])
+    return u'{u}****@{d}****'.format(u=username[0], d=domain[0])
