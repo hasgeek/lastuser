@@ -476,6 +476,6 @@ class TestUser(TestDatabaseFixture):
         mr_whymper = models.User(username=u'whymmper')
         whymper_email = u'whmmmm@animalfarm.co.uk'
         whymper_result = mr_whymper.add_email(whymper_email)
-        mr_whymper.make_email_primary(whymper_result)
+        mr_whymper.primary_email = whymper_result
         self.assertEqual(whymper_result.email, whymper_email)
         self.assertEqual(whymper_result.primary, True)
