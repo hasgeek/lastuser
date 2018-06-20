@@ -74,16 +74,7 @@ def get_user_extid(service, userdata):
     # It is possible at this time that extid.user and useremail.user are different.
     # We do not handle it here, but in the parent function login_service_postcallback.
     elif useremail is not None and useremail.user is not None:
-        # XXX: What if, the user is logged in and the "first" email address
-        # returned by the external ID belongs to another user account in our DB?
-        # In that case, current_auth.user != useremail.user
-        # https://github.com/hasgeek/lastuser/blob/profile_page/lastuser_oauth/providers/github.py#L70
         user = useremail.user
-    elif current_auth.is_authenticated:
-        # This is possible when user is adding an external ID from the profile page.
-        # useremail can be None if the "first" email of the external ID doesn't match
-        # any useremail record.
-        user = current_auth.user
     else:
         # Cross-check with all other instances of the same LoginProvider (if we don't have a user)
         # This is (for eg) for when we have two Twitter services with different access levels.
@@ -101,7 +92,27 @@ def get_user_extid(service, userdata):
 def login_service_postcallback(service, userdata):
     user, extid, useremail = get_user_extid(service, userdata)
 
+    if user is None:
+        if current_auth:
+            # Attach this id to currently logged-in user
+            user = current_auth.user
+        else:
+            # Register a new user
+            user = register_internal(None, userdata.get('fullname'), None)
+            if userdata.get('username'):
+                if valid_username(userdata['username']) and user.is_valid_username(userdata['username']):
+                    # Set a username for this user if it's available
+                    user.username = userdata['username']
+    else:  # This id is attached to a user
+        if current_auth and current_auth.user != user:
+            # Woah! Account merger handler required
+            # Always confirm with user before doing an account merger
+            session['merge_buid'] = user.buid
+        elif useremail and useremail.user != user:
+            session['merge_buid'] = useremail.user.buid
+
     if extid is not None:
+        extid.user = user
         extid.oauth_token = userdata.get('oauth_token')
         extid.oauth_token_secret = userdata.get('oauth_token_secret')
         extid.oauth_token_type = userdata.get('oauth_token_type')
@@ -113,7 +124,7 @@ def login_service_postcallback(service, userdata):
     else:
         # New external id. Register it.
         extid = UserExternalId(
-            user=user,  # This may be None right now. Will be handled below
+            user=user,
             service=service,
             userid=userdata['userid'],
             username=userdata.get('username'),
@@ -123,27 +134,6 @@ def login_service_postcallback(service, userdata):
             # TODO: Save refresh token
             )
         db.session.add(extid)
-
-    if user is None:
-        if current_auth.is_authenticated:
-            # Attach this id to currently logged-in user
-            user = current_auth.user
-            extid.user = user
-        else:
-            # Register a new user
-            user = register_internal(None, userdata.get('fullname'), None)
-            extid.user = user
-            if userdata.get('username'):
-                if valid_username(userdata['username']) and user.is_valid_username(userdata['username']):
-                    # Set a username for this user if it's available
-                    user.username = userdata['username']
-    else:  # This id is attached to a user
-        if current_auth.is_authenticated and current_auth.user != user:
-            # Woah! Account merger handler required
-            # Always confirm with user before doing an account merger
-            session['merge_buid'] = user.buid
-        elif useremail and useremail.user != user:
-            session['merge_buid'] = useremail.user.buid
 
     # Check for new email addresses
     if userdata.get('email') and not useremail:
