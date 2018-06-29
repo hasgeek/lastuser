@@ -9,7 +9,7 @@ Flask-SQLAlchemy==2.3.2
 jsmin==2.2.2
 Flask-OpenID==1.2.5
 Flask-OAuth==0.12
-pytz==2018.4
+pytz==2018.5
 bcrypt>=2.0.0
 ordereddict==1.1
 Flask-WTF==0.14.2
