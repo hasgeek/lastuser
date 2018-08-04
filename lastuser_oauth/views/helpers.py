@@ -77,7 +77,7 @@ def lastuser_cookie(response):
     """
     Save lastuser login cookie and hasuser JS-readable flag cookie.
     """
-    if request_has_auth():
+    if request_has_auth() and hasattr(current_auth, 'cookie'):
         expires = datetime.utcnow() + timedelta(days=365)
         response.set_cookie('lastuser',
             value=lastuser_oauth.serializer.dumps(current_auth.cookie, header_fields={'v': 1}),
