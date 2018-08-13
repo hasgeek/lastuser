@@ -52,7 +52,8 @@
               {% endfor %}
               {% for useremail in current_auth.user.emailclaims %}
                 <li>
-                  {{ useremail }} <em>(pending verification)</em>&nbsp;<a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a>
+                <input type="radio" disabled="disabled">
+                  {{ useremail }} <em>(<a href="{{ url_for('.verify_email', md5sum=useremail.md5sum) }}">pending verification</a>)</em>&nbsp;<a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a>
                 </li>
               {% endfor %}
             </ul>

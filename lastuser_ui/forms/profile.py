@@ -8,7 +8,7 @@ import baseframe.forms as forms
 from lastuser_core.utils import strip_phone, valid_phone
 from lastuser_core.models import UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
 
-__all__ = ['NewEmailAddressForm', 'EmailPrimaryForm', 'NewPhoneForm', 'VerifyPhoneForm']
+__all__ = ['NewEmailAddressForm', 'EmailPrimaryForm', 'VerifyEmailForm', 'NewPhoneForm', 'VerifyPhoneForm']
 
 
 class NewEmailAddressForm(forms.Form):
@@ -36,6 +36,10 @@ class NewEmailAddressForm(forms.Form):
 class EmailPrimaryForm(forms.Form):
     email = forms.EmailField(__("Email address"), validators=[forms.validators.DataRequired(), forms.ValidEmail()],
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
+
+
+class VerifyEmailForm(forms.Form):
+    pass
 
 
 class NewPhoneForm(forms.Form):

@@ -12,7 +12,7 @@ from lastuser_oauth.mailclient import send_email_verify_link
 from lastuser_oauth.views.helpers import requires_login
 from lastuser_oauth.forms import PasswordResetForm, PasswordChangeForm
 from .. import lastuser_ui
-from ..forms import NewEmailAddressForm, EmailPrimaryForm, NewPhoneForm, VerifyPhoneForm
+from ..forms import NewEmailAddressForm, EmailPrimaryForm, VerifyEmailForm, NewPhoneForm, VerifyPhoneForm
 from .sms import send_phone_verify_code
 
 
@@ -102,6 +102,25 @@ def remove_email(md5sum):
         message=_(u"Remove email address {email}?").format(email=useremail.email),
         success=_(u"You have removed your email address {email}").format(email=useremail.email),
         next=url_for('.profile'))
+
+
+@lastuser_ui.route('/profile/email/<md5sum>/verify', methods=['GET', 'POST'])
+@requires_login
+def verify_email(md5sum):
+    useremail = UserEmail.query.filter_by(md5sum=md5sum, user=current_auth.user).first()
+    if useremail:
+        flash(_("This email address is already verified"), 'danger')
+        return render_redirect(url_for('.profile'), code=303)
+
+    emailclaim = UserEmailClaim.query.filter_by(md5sum=md5sum, user=current_auth.user).first_or_404()
+    verify_form = VerifyEmailForm()
+    if verify_form.validate_on_submit():
+        send_email_verify_link(emailclaim)
+        flash(_(u"The verification email has been sent to this address"), 'success')
+        return render_redirect(url_for('.profile'), code=303)
+    return render_form(form=verify_form, title=_("Resend the verification email?"),
+        message=_("We will resend the verification email to '{email}'".format(email=emailclaim.email)),
+        formid="email_verify", submit=_("Send"), cancel_url=url_for('.profile'))
 
 
 @lastuser_ui.route('/profile/phone/new', methods=['GET', 'POST'])
