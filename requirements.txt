@@ -3,7 +3,7 @@ Flask==1.0.2
 markdown==2.6.11
 Flask-Assets==0.12
 Flask-Mail==0.9.1
-sqlalchemy_utils==0.33.3
+sqlalchemy_utils==0.33.4
 SQLAlchemy>=0.9
 Flask-SQLAlchemy==2.3.2
 jsmin==2.2.2
