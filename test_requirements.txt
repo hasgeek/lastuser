@@ -1,6 +1,6 @@
-pytest
-coverage
-behave
-mock
-selenium
-coveralls
+pytest==3.8.0
+coverage==4.5.1
+behave==1.2.6
+mock==2.0.0
+selenium==3.14.0
+coveralls==1.5.0

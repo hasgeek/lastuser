@@ -70,20 +70,20 @@ class TwitterProvider(LoginProvider):
 
         # Try to read more from the user's Twitter profile
         auth = TwitterOAuthHandler(self.consumer_key, self.consumer_secret)
-        if self.access_key is not None and self.access_secret is not None:
-            auth.set_access_token(self.access_key, self.access_secret)
-        else:
-            auth.set_access_token(resp['oauth_token'], resp['oauth_token_secret'])
+        auth.set_access_token(resp['oauth_token'], resp['oauth_token_secret'])
         api = TwitterAPI(auth)
         try:
-            twinfo = api.lookup_users(user_ids=[resp['user_id']])[0]
+            twinfo = api.verify_credentials(include_entities='false', skip_status='true', include_email='true')
             fullname = twinfo.name
             avatar_url = twinfo.profile_image_url_https.replace('_normal.', '_bigger.')
+            email = getattr(twinfo, 'email', None)
         except TweepError:
             fullname = None
             avatar_url = None
+            email = None
 
-        return {'userid': resp['user_id'],
+        return {'email': email,
+                'userid': resp['user_id'],
                 'username': resp['screen_name'],
                 'fullname': fullname,
                 'avatar_url': avatar_url,

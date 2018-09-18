@@ -133,7 +133,6 @@ def login_service_postcallback(service, userdata):
             oauth_token_type=userdata.get('oauth_token_type')
             # TODO: Save refresh token
             )
-        db.session.add(extid)
 
     # Check for new email addresses
     if userdata.get('email') and not useremail:
@@ -166,6 +165,7 @@ def login_service_postcallback(service, userdata):
         flash(_(u"You have logged in via {service}").format(service=login_registry[service].title), 'success')
     next_url = get_next_url(session=True)
 
+    db.session.add(extid)  # If we made a new extid, add it to the session now
     db.session.commit()
 
     # Finally: set a login method cookie and send user on their way
