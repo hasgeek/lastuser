@@ -50,8 +50,8 @@ class TestUser(TestDatabaseFixture):
         "Test for verifying UserSession's active_sessions"
         piglet = self.fixtures.piglet
         piglet_session = models.UserSession(user=piglet, ipaddr='192.168.1.3', buid=buid(), user_agent=u'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36', accessed_at=datetime.utcnow())
-        self.assertIsInstance(piglet.active_sessions(), list)
-        self.assertItemsEqual(piglet.active_sessions(), [piglet_session])
+        self.assertIsInstance(piglet.active_sessions.all(), list)
+        self.assertItemsEqual(piglet.active_sessions.all(), [piglet_session])
 
     def test_UserSession_authenticate(self):
         """Test to verify authenticate method on UserSession"""

@@ -107,7 +107,7 @@
         <table class="table detail-box-table">
           {% for extid in current_auth.user.externalids %}
             <tr>
-              <td><i class="fa fa-{{ extid.service }}"></i>&nbsp;{{ extid.username }}&nbsp;<a href="{{ url_for('.remove_extid', id=extid.id) }}"><i class="fa fa-trash-o"></i></a></td>
+              <td><i class="fa fa-{{ extid.service }}"></i>&nbsp;{{ extid.username }}&nbsp;<a href="{{ url_for('.remove_extid', service=extid.service, userid=extid.userid) }}"><i class="fa fa-trash-o"></i></a></td>
             </tr>
           {% endfor %}
         </table>
@@ -143,7 +143,7 @@
 
   <div class="col-xs-12 col-sm-12 col-md-6">
     <div class="detail-box clearfix">
-      <h2 class="heading">Applications</h2>
+      <h2 class="heading">Developer Apps</h2>
       {% if current_auth.user.clients %}
         <table class="table detail-box-table">
           {% for client in current_auth.user.clients %}
@@ -156,7 +156,7 @@
         <p class="para"><em>(No client applications)</em></p>
       {% endif %}
       <div class="button-box">
-        <a class="btn btn-sm btn-success" href="{{ url_for('.client_new') }}">Register an application</a>
+        <a class="btn btn-sm btn-success" href="{{ url_for('.client_new') }}">Register an app</a>
       </div>
     </div><!--eof detail-box-->
   </div><!--eof developer options-->
@@ -166,8 +166,8 @@
       <h2 class="heading">My sessions</h2>
       <div class="panel panel-default detail-box-panel">
         <ul class="list-group">
-          {%- for session in current_auth.user.active_sessions() %}
-            <li class="list-group-item">From {{ session.ipaddr }} since {{ session.created_at|age }} with {{ session.ua.browser}}/{{ session.ua.platform }}/{{ session.ua.version }}, last active {{ session.accessed_at|age }}
+          {%- for session in current_auth.user.active_sessions %}
+            <li class="list-group-item">From {{ session.ipaddr }} since {{ session.created_at|age }} with {{ session.ua['user_agent']['family']}} {{ session.ua['user_agent']['major'] }} on {{ session.ua['os']['family'] }} {{ session.ua['os']['major'] }}.{{ session.ua['os']['minor'] }}, last active {{ session.accessed_at|age }}
             {% if session == current_auth.usersession -%}
               (current)
             {%- else -%}

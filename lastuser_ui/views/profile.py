@@ -189,9 +189,9 @@ def verify_phone(phoneclaim):
         submit=_("Verify"), ajax=True)
 
 
-@lastuser_ui.route('/profile/extid/<id>/remove', methods=['GET', 'POST'])
+@lastuser_ui.route('/profile/extid/<service>/<path:userid>/remove', methods=['GET', 'POST'])
 @requires_login
-@load_model(UserExternalId, {'id': 'id'}, 'extid', permission='delete_extid')
+@load_model(UserExternalId, {'service': 'service', 'userid': 'userid'}, 'extid', permission='delete_extid')
 def remove_extid(extid):
     num_extids = len(current_auth.user.externalids)
     has_pw_hash = bool(current_auth.user.pw_hash)
@@ -199,6 +199,6 @@ def remove_extid(extid):
         flash(_("You do not have a password set. So you must have at least one external ID enabled."), 'danger')
         return render_redirect(url_for('.profile'), code=303)
     return render_delete_sqla(extid, db, title=_(u"Confirm delete"),
-        message=_(u"Delete ‘{service}’ account with username ‘{username}’?").format(service=extid.service, username=extid.username),
-        success=_(u"You have deleted ‘{service}’ account with username ‘{username}’ and all its associated resources and permission assignments").format(service=extid.service, username=extid.username),
+        message=_(u"Delete {service} account with username ‘{username}’?").format(service=login_registry[extid.service].title, username=extid.username),
+        success=_(u"You have deleted {service} account with username ‘{username}’").format(service=login_registry[extid.service].title, username=extid.username),
         next=url_for('.profile'))

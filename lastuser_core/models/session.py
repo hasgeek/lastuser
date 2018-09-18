@@ -97,13 +97,11 @@ class UserSession(BaseMixin, db.Model):
             cls.revoked_at == None).one_or_none()  # NOQA
 
 
-# Patch a retriever into the User class. This could be placed in the
-# UserSession.user relationship's backref with a custom primaryjoin
-# clause and explicit foreign_keys, but we're not sure if we can
-# put the db.func.utcnow() in there too.
-def active_sessions(self):
-    return self.sessions.filter(
+User.active_sessions = db.relationship(UserSession,
+    lazy='dynamic',
+    primaryjoin=db.and_(
+        UserSession.user_id == User.id,
         UserSession.accessed_at > db.func.utcnow() - timedelta(days=14),
-        UserSession.revoked_at == None).all()  # NOQA
-
-User.active_sessions = active_sessions
+        UserSession.revoked_at == None  # NOQA
+        )
+    )
