@@ -121,46 +121,6 @@
     </div>
   </div><!--eof connected ids-->
 
-  <div class="col-xs-12 col-sm-12 col-md-6">
-    <div class="detail-box clearfix">
-      <h2 class="heading">Organizations</h2>
-      {% if current_auth.user.organizations_owned() %}
-        <table class="table detail-box-table">
-          {% for org in current_auth.user.organizations_owned() %}
-            <tr>
-              <td><a href="{{ url_for('.org_info', name=org.name) }}">{{ org.title }}</a></td>
-            </tr>
-          {% endfor %}
-        </table>
-      {% else %}
-        <p class="para"><em>(No organizations)</em></p>
-      {% endif %}
-      <div class="button-box">
-        <a class="btn btn-sm btn-success" href="{{ url_for('.org_new') }}">Create an organization</a>
-      </div>
-    </div><!--eof detail-box-->
-  </div><!--eof organnizations-->
-
-  <div class="col-xs-12 col-sm-12 col-md-6">
-    <div class="detail-box clearfix">
-      <h2 class="heading">Developer Apps</h2>
-      {% if current_auth.user.clients %}
-        <table class="table detail-box-table">
-          {% for client in current_auth.user.clients %}
-            <tr>
-              <td><a href="{{ url_for('.client_info', key=client.key) }}">{{ client.title }}</a></td>
-            </tr>
-          {% endfor %}
-        </table>
-      {% else %}
-        <p class="para"><em>(No client applications)</em></p>
-      {% endif %}
-      <div class="button-box">
-        <a class="btn btn-sm btn-success" href="{{ url_for('.client_new') }}">Register an app</a>
-      </div>
-    </div><!--eof detail-box-->
-  </div><!--eof developer options-->
-
   <div class="col-xs-12">
     <div class="detail-box clearfix">
       <h2 class="heading">My sessions</h2>

@@ -189,6 +189,7 @@ def verify_phone(phoneclaim):
         submit=_("Verify"), ajax=True)
 
 
+# Userid is a path here because obsolete OpenID ids are URLs (both direct and via Google)
 @lastuser_ui.route('/profile/extid/<service>/<path:userid>/remove', methods=['GET', 'POST'])
 @requires_login
 @load_model(UserExternalId, {'service': 'service', 'userid': 'userid'}, 'extid', permission='delete_extid')
