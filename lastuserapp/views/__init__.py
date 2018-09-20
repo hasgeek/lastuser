@@ -16,7 +16,7 @@ def profile_url(self):
     """
     Link to the user's profile.
     """
-    return url_for('lastuser_ui.profile')
+    return url_for('lastuser_ui.account')
 
 
 def organization_links(self):

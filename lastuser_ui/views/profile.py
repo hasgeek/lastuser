@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import flash, render_template, url_for, request
+from flask import flash, render_template, url_for, request, redirect
 from coaster.auth import current_auth
 from coaster.views import load_model
 from baseframe import _
@@ -16,19 +16,29 @@ from ..forms import NewEmailAddressForm, EmailPrimaryForm, VerifyEmailForm, NewP
 from .sms import send_phone_verify_code
 
 
-@lastuser_ui.route('/profile')
+@lastuser_ui.route('/profile', defaults={'path': None})
+@lastuser_ui.route('/profile/<path:path>')
 @requires_login
-def profile():
+def profile(path=None):
+    if path is not None:
+        return redirect('/account/%s' % path)
+    else:
+        return redirect('/account')
+
+
+@lastuser_ui.route('/account')
+@requires_login
+def account():
     primary_email_form = EmailPrimaryForm()
     service_forms = {}
     for service, provider in login_registry.items():
         if provider.at_login and provider.form is not None:
             service_forms[service] = provider.get_form()
-    return render_template('profile.html.jinja2', primary_email_form=primary_email_form,
+    return render_template('account.html.jinja2', primary_email_form=primary_email_form,
         service_forms=service_forms, login_registry=login_registry)
 
 
-@lastuser_ui.route('/profile/password', methods=['GET', 'POST'])
+@lastuser_ui.route('/account/password', methods=['GET', 'POST'])
 @requires_login
 def change_password():
     if not current_auth.user.pw_hash:
@@ -47,7 +57,7 @@ def change_password():
         submit=_("Change password"), ajax=True)
 
 
-@lastuser_ui.route('/profile/email/new', methods=['GET', 'POST'])
+@lastuser_ui.route('/account/email/new', methods=['GET', 'POST'])
 @requires_login
 def add_email():
     form = NewEmailAddressForm()
@@ -65,7 +75,7 @@ def add_email():
         submit=_("Add email"), ajax=True)
 
 
-@lastuser_ui.route('/profile/email/makeprimary', methods=['POST'])
+@lastuser_ui.route('/account/email/makeprimary', methods=['POST'])
 @requires_login
 def make_email_primary():
     form = EmailPrimaryForm()
@@ -86,7 +96,7 @@ def make_email_primary():
     return render_redirect(url_for('.profile'), code=303)
 
 
-@lastuser_ui.route('/profile/email/<md5sum>/remove', methods=['GET', 'POST'])
+@lastuser_ui.route('/account/email/<md5sum>/remove', methods=['GET', 'POST'])
 @requires_login
 def remove_email(md5sum):
     useremail = UserEmail.query.filter_by(md5sum=md5sum, user=current_auth.user).first()
@@ -99,12 +109,13 @@ def remove_email(md5sum):
         # FIXME: Confirm validation success
         user_data_changed.send(current_auth.user, changes=['email-delete'])
     return render_delete_sqla(useremail, db, title=_(u"Confirm removal"),
-        message=_(u"Remove email address {email}?").format(email=useremail.email),
+        message=_(u"Remove email address {email} from your account?").format(email=useremail.email),
         success=_(u"You have removed your email address {email}").format(email=useremail.email),
-        next=url_for('.profile'))
+        next=url_for('.profile'),
+        delete_text=_(u"Remove"))
 
 
-@lastuser_ui.route('/profile/email/<md5sum>/verify', methods=['GET', 'POST'])
+@lastuser_ui.route('/account/email/<md5sum>/verify', methods=['GET', 'POST'])
 @requires_login
 def verify_email(md5sum):
     useremail = UserEmail.query.filter_by(md5sum=md5sum, user=current_auth.user).first()
@@ -123,7 +134,7 @@ def verify_email(md5sum):
         formid="email_verify", submit=_("Send"), cancel_url=url_for('.profile'))
 
 
-@lastuser_ui.route('/profile/phone/new', methods=['GET', 'POST'])
+@lastuser_ui.route('/account/phone/new', methods=['GET', 'POST'])
 @requires_login
 def add_phone():
     form = NewPhoneForm()
@@ -145,7 +156,7 @@ def add_phone():
         submit=_("Add phone"), ajax=True)
 
 
-@lastuser_ui.route('/profile/phone/<number>/remove', methods=['GET', 'POST'])
+@lastuser_ui.route('/account/phone/<number>/remove', methods=['GET', 'POST'])
 @requires_login
 def remove_phone(number):
     userphone = UserPhone.query.filter_by(phone=number, user=current_auth.user).first()
@@ -155,13 +166,14 @@ def remove_phone(number):
         # FIXME: Confirm validation success
         user_data_changed.send(current_auth.user, changes=['phone-delete'])
     return render_delete_sqla(userphone, db, title=_(u"Confirm removal"),
-        message=_(u"Remove phone number {phone}?").format(
+        message=_(u"Remove phone number {phone} from your account?").format(
             phone=userphone.phone),
         success=_(u"You have removed your number {phone}").format(phone=userphone.phone),
-        next=url_for('.profile'))
+        next=url_for('.profile'),
+        delete_text=_(u"Remove"))
 
 
-@lastuser_ui.route('/profile/phone/<number>/verify', methods=['GET', 'POST'])
+@lastuser_ui.route('/account/phone/<number>/verify', methods=['GET', 'POST'])
 @requires_login
 @load_model(UserPhoneClaim, {'phone': 'number'}, 'phoneclaim', permission='verify')
 def verify_phone(phoneclaim):
@@ -190,7 +202,7 @@ def verify_phone(phoneclaim):
 
 
 # Userid is a path here because obsolete OpenID ids are URLs (both direct and via Google)
-@lastuser_ui.route('/profile/extid/<service>/<path:userid>/remove', methods=['GET', 'POST'])
+@lastuser_ui.route('/account/extid/<service>/<path:userid>/remove', methods=['GET', 'POST'])
 @requires_login
 @load_model(UserExternalId, {'service': 'service', 'userid': 'userid'}, 'extid', permission='delete_extid')
 def remove_extid(extid):
@@ -200,6 +212,7 @@ def remove_extid(extid):
         flash(_("You do not have a password set. So you must have at least one external ID enabled."), 'danger')
         return render_redirect(url_for('.profile'), code=303)
     return render_delete_sqla(extid, db, title=_(u"Confirm delete"),
-        message=_(u"Delete {service} account with username ‘{username}’?").format(service=login_registry[extid.service].title, username=extid.username),
-        success=_(u"You have deleted {service} account with username ‘{username}’").format(service=login_registry[extid.service].title, username=extid.username),
-        next=url_for('.profile'))
+        message=_(u"Remove {service} account ‘{username}’ from your account?").format(service=login_registry[extid.service].title, username=extid.username),
+        success=_(u"You have removed the {service} account ‘{username}’").format(service=login_registry[extid.service].title, username=extid.username),
+        next=url_for('.profile'),
+        delete_text=_(u"Remove"))

@@ -82,7 +82,7 @@ class TestUser(TestDatabaseFixture):
         and email are present
         """
         crusoe = self.fixtures.crusoe
-        self.assertTrue(crusoe.is_profile_complete)
+        self.assertTrue(crusoe.is_profile_complete())
         lena = models.User()
         db.session.add(lena)
         db.session.commit()

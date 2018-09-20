@@ -14,10 +14,10 @@ from ..forms import ProfileForm
 from .helpers import requires_login
 
 
-@lastuser_oauth.route('/profile/edit', methods=['GET', 'POST'], defaults={'newprofile': False}, endpoint='profile_edit')
-@lastuser_oauth.route('/profile/new', methods=['GET', 'POST'], defaults={'newprofile': True}, endpoint='profile_new')
+@lastuser_oauth.route('/account/edit', methods=['GET', 'POST'], defaults={'newprofile': False}, endpoint='account_edit')
+@lastuser_oauth.route('/account/new', methods=['GET', 'POST'], defaults={'newprofile': True}, endpoint='account_new')
 @requires_login
-def profile_edit(newprofile=False):
+def account_edit(newprofile=False):
     form = ProfileForm(obj=current_auth.user)
     form.edit_user = current_auth.user
     form.fullname.description = current_app.config.get('FULLNAME_REASON')
@@ -50,14 +50,14 @@ def profile_edit(newprofile=False):
         if newprofile:
             return render_redirect(get_next_url(), code=303)
         else:
-            return render_redirect(url_for('profile'), code=303)
+            return render_redirect(url_for('account'), code=303)
     if newprofile:
-        return render_form(form, title=_("Update profile"), formid='profile_new', submit=_("Continue"),
+        return render_form(form, title=_("Update profile"), formid='account_new', submit=_("Continue"),
             message=Markup(_(u"Hello, <strong>{fullname}</strong>. Please spare a minute to fill out your profile").format(
                 fullname=escape(current_auth.user.fullname))),
             ajax=True)
     else:
-        return render_form(form, title=_("Edit profile"), formid='profile_edit', submit=_("Save changes"), ajax=True)
+        return render_form(form, title=_("Edit profile"), formid='account_edit', submit=_("Save changes"), ajax=True)
 
 
 # FIXME: Don't modify db on GET. Autosubmit via JS and process on POST

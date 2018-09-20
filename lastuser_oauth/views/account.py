@@ -170,19 +170,19 @@ def login_service_postcallback(service, userdata):
 
     # Finally: set a login method cookie and send user on their way
     if not current_auth.user.is_profile_complete():
-        login_next = url_for('.profile_new', next=next_url)
+        login_next = url_for('.account_new', next=next_url)
     else:
         login_next = next_url
 
     if 'merge_buid' in session:
-        return set_loginmethod_cookie(redirect(url_for('.profile_merge', next=login_next), code=303), service)
+        return set_loginmethod_cookie(redirect(url_for('.account_merge', next=login_next), code=303), service)
     else:
         return set_loginmethod_cookie(redirect(login_next, code=303), service)
 
 
-@lastuser_oauth.route('/profile/merge', methods=['GET', 'POST'])
+@lastuser_oauth.route('/account/merge', methods=['GET', 'POST'])
 @requires_login
-def profile_merge():
+def account_merge():
     if 'merge_buid' not in session:
         return redirect(get_next_url(), code=302)
     other_user = User.get(buid=session['merge_buid'])

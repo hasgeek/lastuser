@@ -1,6 +1,6 @@
 {% extends "layout.html.jinja2" %}
 {% from "baseframe/forms.html.jinja2" import rendersubmit %}
-{% block title %}My profile{% endblock %}
+{% block title %}My account{% endblock %}
 
 {% block content %}
 <div class="row detail">
@@ -24,7 +24,7 @@
       </tr>
       </table>
       <div class="button-box">
-        <a class="btn btn-sm btn-info" href="{{ url_for('lastuser_oauth.profile_edit') }}">Edit this</a>
+        <a class="btn btn-sm btn-info" href="{{ url_for('lastuser_oauth.account_edit') }}">Edit this</a>
         <a class="btn btn-sm btn-success" href="{{ url_for('.change_password') }}">Change password</a>
       </div>
     </div><!--eof detail-box-->
@@ -107,7 +107,7 @@
         <table class="table detail-box-table">
           {% for extid in current_auth.user.externalids %}
             <tr>
-              <td><i class="fa fa-{{ extid.service }}"></i>&nbsp;{{ extid.username }}&nbsp;<a href="{{ url_for('.remove_extid', service=extid.service, userid=extid.userid) }}"><i class="fa fa-trash-o"></i></a></td>
+              <td><i class="fa fa-fw fa-{{ extid.service }}"></i>&nbsp;{{ extid.username }}&nbsp;<a href="{{ url_for('.remove_extid', service=extid.service, userid=extid.userid) }}"><i class="fa fa-trash-o"></i></a></td>
             </tr>
           {% endfor %}
         </table>
