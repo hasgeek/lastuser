@@ -12,7 +12,8 @@ from lastuser_oauth.mailclient import send_email_verify_link
 from lastuser_oauth.views.helpers import requires_login
 from lastuser_oauth.forms import PasswordResetForm, PasswordChangeForm
 from .. import lastuser_ui
-from ..forms import NewEmailAddressForm, EmailPrimaryForm, VerifyEmailForm, NewPhoneForm, VerifyPhoneForm
+from ..forms import (NewEmailAddressForm, EmailPrimaryForm, VerifyEmailForm,
+    NewPhoneForm, PhonePrimaryForm, VerifyPhoneForm)
 from .sms import send_phone_verify_code
 
 
@@ -30,12 +31,16 @@ def profile(path=None):
 @requires_login
 def account():
     primary_email_form = EmailPrimaryForm()
+    primary_phone_form = PhonePrimaryForm()
     service_forms = {}
     for service, provider in login_registry.items():
         if provider.at_login and provider.form is not None:
             service_forms[service] = provider.get_form()
-    return render_template('account.html.jinja2', primary_email_form=primary_email_form,
-        service_forms=service_forms, login_registry=login_registry)
+    return render_template('account.html.jinja2',
+        primary_email_form=primary_email_form,
+        primary_phone_form=primary_phone_form,
+        service_forms=service_forms,
+        login_registry=login_registry)
 
 
 @lastuser_ui.route('/account/password', methods=['GET', 'POST'])
@@ -52,7 +57,7 @@ def change_password():
         current_auth.user.password = form.password.data
         db.session.commit()
         flash(_("Your new password has been saved"), category='success')
-        return render_redirect(url_for('.profile'), code=303)
+        return render_redirect(url_for('.account'), code=303)
     return render_form(form=form, title=_("Change password"), formid='changepassword',
         submit=_("Change password"), ajax=True)
 
@@ -70,7 +75,7 @@ def add_email():
         send_email_verify_link(useremail)
         flash(_("We sent you an email to confirm your address"), 'success')
         user_data_changed.send(current_auth.user, changes=['email-claim'])
-        return render_redirect(url_for('.profile'), code=303)
+        return render_redirect(url_for('.account'), code=303)
     return render_form(form=form, title=_("Add an email address"), formid='email_add',
         submit=_("Add email"), ajax=True)
 
@@ -83,17 +88,38 @@ def make_email_primary():
         useremail = UserEmail.query.filter_by(email=form.email.data, user=current_auth.user).first()
         if useremail is not None and isinstance(useremail, UserEmail):
             if useremail.primary:
-                flash(_("This is already your primary email address"), 'danger')
+                flash(_("This is already your primary email address"), 'info')
             else:
                 current_auth.user.primary_email = useremail
                 db.session.commit()
                 user_data_changed.send(current_auth.user, changes=['email-update-primary'])
-                flash(_(u"Your primary email address has been updated").format(email=useremail.email), 'success')
+                flash(_(u"Your primary email address has been updated"), 'success')
         else:
             flash(_("No such email address is linked to this user account"), 'danger')
     else:
             flash(_("Please select an email address"), 'danger')
-    return render_redirect(url_for('.profile'), code=303)
+    return render_redirect(url_for('.account'), code=303)
+
+
+@lastuser_ui.route('/account/phone/makeprimary', methods=['POST'])
+@requires_login
+def make_phone_primary():
+    form = PhonePrimaryForm()
+    if form.validate_on_submit():
+        userphone = UserPhone.query.filter_by(phone=form.phone.data, user=current_auth.user).first()
+        if userphone is not None and isinstance(userphone, UserPhone):
+            if userphone.primary:
+                flash(_("This is already your primary phone number"), 'info')
+            else:
+                current_auth.user.primary_phone = userphone
+                db.session.commit()
+                user_data_changed.send(current_auth.user, changes=['phone-update-primary'])
+                flash(_(u"Your primary phone number has been updated"), 'success')
+        else:
+            flash(_("No such phone number is linked to this user account"), 'danger')
+    else:
+            flash(_("Please select a phone number"), 'danger')
+    return render_redirect(url_for('.account'), code=303)
 
 
 @lastuser_ui.route('/account/email/<md5sum>/remove', methods=['GET', 'POST'])
@@ -104,14 +130,14 @@ def remove_email(md5sum):
         useremail = UserEmailClaim.query.filter_by(md5sum=md5sum, user=current_auth.user).first_or_404()
     if isinstance(useremail, UserEmail) and useremail.primary:
         flash(_("You cannot remove your primary email address"), 'danger')
-        return render_redirect(url_for('.profile'), code=303)
+        return render_redirect(url_for('.account'), code=303)
     if request.method == 'POST':
         # FIXME: Confirm validation success
         user_data_changed.send(current_auth.user, changes=['email-delete'])
     return render_delete_sqla(useremail, db, title=_(u"Confirm removal"),
         message=_(u"Remove email address {email} from your account?").format(email=useremail.email),
         success=_(u"You have removed your email address {email}").format(email=useremail.email),
-        next=url_for('.profile'),
+        next=url_for('.account'),
         delete_text=_(u"Remove"))
 
 
@@ -121,17 +147,17 @@ def verify_email(md5sum):
     useremail = UserEmail.query.filter_by(md5sum=md5sum, user=current_auth.user).first()
     if useremail:
         flash(_("This email address is already verified"), 'danger')
-        return render_redirect(url_for('.profile'), code=303)
+        return render_redirect(url_for('.account'), code=303)
 
     emailclaim = UserEmailClaim.query.filter_by(md5sum=md5sum, user=current_auth.user).first_or_404()
     verify_form = VerifyEmailForm()
     if verify_form.validate_on_submit():
         send_email_verify_link(emailclaim)
         flash(_(u"The verification email has been sent to this address"), 'success')
-        return render_redirect(url_for('.profile'), code=303)
+        return render_redirect(url_for('.account'), code=303)
     return render_form(form=verify_form, title=_("Resend the verification email?"),
         message=_("We will resend the verification email to '{email}'".format(email=emailclaim.email)),
-        formid="email_verify", submit=_("Send"), cancel_url=url_for('.profile'))
+        formid="email_verify", submit=_("Send"), cancel_url=url_for('.account'))
 
 
 @lastuser_ui.route('/account/phone/new', methods=['GET', 'POST'])
@@ -162,6 +188,12 @@ def remove_phone(number):
     userphone = UserPhone.query.filter_by(phone=number, user=current_auth.user).first()
     if userphone is None:
         userphone = UserPhoneClaim.query.filter_by(phone=number, user=current_auth.user).first_or_404()
+        if userphone.verification_expired:
+            flash(_("This number has been blocked due to too many failed verification attempts"), 'danger')
+            # Block attempts to delete this number if verification failed.
+            # It needs to be deleted in a background sweep.
+            return render_redirect(url_for('.account'), code=303)
+
     if request.method == 'POST':
         # FIXME: Confirm validation success
         user_data_changed.send(current_auth.user, changes=['phone-delete'])
@@ -169,7 +201,7 @@ def remove_phone(number):
         message=_(u"Remove phone number {phone} from your account?").format(
             phone=userphone.phone),
         success=_(u"You have removed your number {phone}").format(phone=userphone.phone),
-        next=url_for('.profile'),
+        next=url_for('.account'),
         delete_text=_(u"Remove"))
 
 
@@ -177,6 +209,12 @@ def remove_phone(number):
 @requires_login
 @load_model(UserPhoneClaim, {'phone': 'number'}, 'phoneclaim', permission='verify')
 def verify_phone(phoneclaim):
+    if phoneclaim.verification_expired:
+        flash(_("You provided an incorrect verification code too many times"), 'danger')
+        # Block attempts to verify this number, but also keep the claim so that a new
+        # claim cannot be made. A periodic sweep to delete old claims is needed.
+        return render_redirect(url_for('.account'), code=303)
+
     form = VerifyPhoneForm()
     form.phoneclaim = phoneclaim
     if form.validate_on_submit():
@@ -192,11 +230,14 @@ def verify_phone(phoneclaim):
             db.session.commit()
             flash(_("Your phone number has been verified"), 'success')
             user_data_changed.send(current_auth.user, changes=['phone'])
-            return render_redirect(url_for('.profile'), code=303)
+            return render_redirect(url_for('.account'), code=303)
         else:
             db.session.delete(phoneclaim)
             db.session.commit()
             flash(_("This phone number has already been claimed by another user"), 'danger')
+    elif request.method == 'POST':
+        phoneclaim.verification_attempts += 1
+        db.session.commit()
     return render_form(form=form, title=_("Verify phone number"), formid='phone_verify',
         submit=_("Verify"), ajax=True)
 
@@ -210,9 +251,9 @@ def remove_extid(extid):
     has_pw_hash = bool(current_auth.user.pw_hash)
     if not has_pw_hash and num_extids == 1:
         flash(_("You do not have a password set. So you must have at least one external ID enabled."), 'danger')
-        return render_redirect(url_for('.profile'), code=303)
-    return render_delete_sqla(extid, db, title=_(u"Confirm delete"),
+        return render_redirect(url_for('.account'), code=303)
+    return render_delete_sqla(extid, db, title=_(u"Confirm removal"),
         message=_(u"Remove {service} account ‘{username}’ from your account?").format(service=login_registry[extid.service].title, username=extid.username),
         success=_(u"You have removed the {service} account ‘{username}’").format(service=login_registry[extid.service].title, username=extid.username),
-        next=url_for('.profile'),
+        next=url_for('.account'),
         delete_text=_(u"Remove"))

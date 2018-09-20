@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from hashlib import md5
 from werkzeug import check_password_hash, cached_property
 import bcrypt
+import phonenumbers
 from sqlalchemy import or_, event, DDL
 from sqlalchemy.orm import defer, deferred
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -841,6 +842,12 @@ class UserPhone(OwnerMixin, BaseMixin, db.Model):
     def __str__(self):
         return str(self.__unicode__())
 
+    def parsed(self):
+        return phonenumbers.parse(self._phone)
+
+    def formatted(self):
+        return phonenumbers.format_number(self.parsed(), phonenumbers.PhoneNumberFormat.INTERNATIONAL)
+
     @property
     def primary(self):
         return self.user.primary_phone == self
@@ -880,6 +887,7 @@ class UserPhoneClaim(OwnerMixin, BaseMixin, db.Model):
     _phone = db.Column('phone', db.Unicode(16), nullable=False, index=True)
     gets_text = db.Column(db.Boolean, nullable=False, default=True)
     verification_code = db.Column(db.Unicode(4), nullable=False, default=newpin)
+    verification_attempts = db.Column(db.Integer, nullable=False, default=0)
 
     private = db.Column(db.Boolean, nullable=False, default=False)
     type = db.Column(db.Unicode(30), nullable=True)
@@ -916,6 +924,16 @@ class UserPhoneClaim(OwnerMixin, BaseMixin, db.Model):
 
     def __str__(self):
         return str(self.__unicode__())
+
+    def parsed(self):
+        return phonenumbers.parse(self._phone)
+
+    def formatted(self):
+        return phonenumbers.format_number(self.parsed(), phonenumbers.PhoneNumberFormat.INTERNATIONAL)
+
+    @hybrid_property
+    def verification_expired(self):
+        return self.verification_attempts >= 3
 
     def permissions(self, user, inherited=None):
         perms = super(UserPhoneClaim, self).permissions(user, inherited)

@@ -1,76 +1,97 @@
 {% extends "layout.html.jinja2" %}
 {% from "baseframe/forms.html.jinja2" import rendersubmit %}
-{% block title %}My account{% endblock %}
+{% block title %}{% trans %}My account{% endtrans %}{% endblock %}
 
 {% block content %}
 <div class="row detail">
   <div class="col-xs-12 col-sm-12 col-md-6">
     <div class="detail-box clearfix">
-      <h2 class="heading">Info</h2>
+      <h2 class="heading">{% trans %}Info{% endtrans %}</h2>
       <table class="table detail-box-table">
       <tr>
-        <td><strong>Name</strong></td>
+        <td><strong>{% trans %}Name{% endtrans %}</strong></td>
         <td>{{ current_auth.user.fullname }}</td>
       </tr>
       <tr>
-        <td><strong>Username</strong></td>
+        <td><strong>{% trans %}Username{% endtrans %}</strong></td>
         <td>
           {% if current_auth.user.username %}
             {{ current_auth.user.username }}
           {% else %}
-            <em>(none)</em>
+            <em>{% trans %}(none){% endtrans %}</em>
           {% endif %}
         </td>
       </tr>
       </table>
       <div class="button-box">
-        <a class="btn btn-sm btn-info" href="{{ url_for('lastuser_oauth.account_edit') }}">Edit this</a>
-        <a class="btn btn-sm btn-success" href="{{ url_for('.change_password') }}">Change password</a>
+        <a class="btn btn-sm btn-info" href="{{ url_for('lastuser_oauth.account_edit') }}">{% trans %}Edit this{% endtrans %}</a>
+        <a class="btn btn-sm btn-success" href="{{ url_for('.change_password') }}">{% trans %}Change password{% endtrans %}</a>
       </div>
     </div><!--eof detail-box-->
   </div><!--eof info-->
 
   <div class="col-xs-12 col-sm-12 col-md-6">
     <div class="detail-box clearfix">
-      <h2 class="heading">Email addresses</h2>
-      {% if current_auth.user.emails %}
+      <h2 class="heading">{% trans %}External IDs{% endtrans %} <small>{% trans %}Use any of these to login to your account{% endtrans %}</small></h2>
+      {% if current_auth.user.externalids %}
+        <table class="table detail-box-table">
+          {% for extid in current_auth.user.externalids %}
+            <tr>
+              <td><i class="fa fa-fw fa-{{ extid.service }}"></i> {{ extid.username }}</td>
+              <td><a title="{% trans %}Remove{% endtrans %}" href="{{ url_for('.remove_extid', service=extid.service, userid=extid.userid) }}"><i class="fa fa-trash-o"></i></a></td>
+            </tr>
+          {% endfor %}
+        </table>
+      {% else %}
+        <p class="para"><em>(none)</em></p>
+      {% endif %}
+      <h2 class="heading">{% trans %}Add External ID{% endtrans %}</h2>
+      <p class="button-bar">
+        {% for provider in login_registry %}
+          <a class="btn btn-default login-{{ provider }}" href="{{ url_for('lastuser_oauth.login_service', service=provider, next=url_for('.profile')) }}"><i class="fa fa-{{ login_registry[provider].icon }}"></i>&nbsp;&nbsp;{{ login_registry[provider]['title'] }}</a>
+        {% endfor %}
+      </p>
+    </div>
+  </div><!--eof connected ids-->
+
+  <div class="col-xs-12 col-sm-12 col-md-6">
+    <div class="detail-box clearfix">
+      <h2 class="heading">{% trans %}Email addresses{% endtrans %}</h2>
       <form action="{{ url_for('.make_email_primary') }}" method="POST">
         {{ primary_email_form.hidden_tag() }}
-        <div class="table detail-box-table">
-          <div class="listwidget">
-            <ul>
-              {% for useremail in current_auth.user.emails %}
-                <li>
-                  <input id="useremail-{{loop.index}}" name="email" value="{{useremail}}" type="radio">
-                  <label for="useremail-{{loop.index}}">{{ useremail }}</label>
-                  {% if useremail.primary %}
-                    &nbsp;<em>(primary)</em>
-                  {% else %}
-                    &nbsp;<a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a>
-                  {% endif %}
-                </li>
-              {% endfor %}
-              {% for useremail in current_auth.user.emailclaims %}
-                <li>
-                <input type="radio" disabled="disabled">
-                  {{ useremail }} <em>(<a href="{{ url_for('.verify_email', md5sum=useremail.md5sum) }}">pending verification</a>)</em>&nbsp;<a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a>
-                </li>
-              {% endfor %}
-            </ul>
-          </div>
-        </div>
+        <table class="table detail-box-table">
+          {% for useremail in current_auth.user.emails %}
+            <tr>
+              <td>
+                <input id="useremail-{{loop.index}}" name="email" value="{{useremail}}" type="radio">&nbsp;
+                <label for="useremail-{{loop.index}}">{{ useremail }}</label>
+                {% if useremail.primary %}
+                  <em>{% trans %}(primary){% endtrans %}</em>
+                {% endif %}
+              </td>
+              <td>
+                {%- if not useremail.primary %}
+                  <a  title="{% trans %}Remove{% endtrans %}" href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a>
+                {%- endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          {% for useremail in current_auth.user.emailclaims %}
+            <tr>
+              <td>
+                <input type="radio" disabled="disabled">&nbsp;
+                {{ useremail }} <em><a href="{{ url_for('.verify_email', md5sum=useremail.md5sum) }}">{% trans %}(pending verification){% endtrans %}</a></em>
+              </td>
+              <td>
+                <a  title="{% trans %}Remove{% endtrans %}" href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a>
+              </td>
+            </tr>
+          {% endfor %}
+        </table>
         <div class="button-box">
-          <button class="btn btn-sm btn-info" type="submit">Set as primary</button>
-          <a class="btn btn-sm btn-success" href="{{ url_for('.add_email') }}">Add an email address</a>
+          {% if current_auth.user.emails %}<button class="btn btn-sm btn-info" type="submit">{% trans %}Set as primary{% endtrans %}</button>{% endif %}
+          <a class="btn btn-sm btn-success" href="{{ url_for('.add_email') }}">{% trans %}Add an email address{% endtrans %}</a>
         </div>
-      </form>
-      {% else %}
-        <p class="para">No verified addresses</p>
-        <div class="button-box">
-          <a class="btn btn-sm btn-success" href="{{ url_for('.add_email') }}">Add an email address</a>
-        </div>
-      {% endif %}
-
       </form>
     </div><!--eof detail-box-->
   </div><!--eof email-->
@@ -78,48 +99,42 @@
   <div class="col-xs-12 col-sm-12 col-md-6">
     <div class="detail-box clearfix">
       <h2 class="heading">Mobile numbers</h2>
-      {% if current_auth.user.phones %}
-      <table class="table detail-box-table">
-        {% for userphone in current_auth.user.phones %}
-          <tr>
-            <td>{{ userphone }} {% if userphone.primary %} <em>(primary)</em> {% endif -%}<a href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a></td>
-          </tr>
-        {% endfor %}
-        {% for userphone in current_auth.user.phoneclaims %}
-          <tr>
-            <td>{{ userphone }} <em>(<a href="{{ url_for('.verify_phone', number=userphone) }}">pending verification</a>)</em> <a href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a></td>
-          </tr>
-        {% endfor %}
-      </table>
-      {% else %}
-      <p class="para"><em>(No verified numbers)</em></p>
-      {% endif %}
-      <div class="button-box">
-        <a class="btn btn-sm btn-success" href="{{ url_for('.add_phone') }}">Add a mobile number</a>
-      </div>
-    </div><!--eof detail-box-->
-  </div><!--eof phone-->
-
-  <div class="col-xs-12 col-sm-12 col-md-6">
-    <div class="detail-box clearfix">
-      <h2 class="heading">External IDs</h2>
-      {% if current_auth.user.externalids %}
+      <form action="{{ url_for('.make_phone_primary') }}" method="POST">
+        {{ primary_phone_form.hidden_tag() }}
         <table class="table detail-box-table">
-          {% for extid in current_auth.user.externalids %}
+          {% for userphone in current_auth.user.phones %}
             <tr>
-              <td><i class="fa fa-fw fa-{{ extid.service }}"></i>&nbsp;{{ extid.username }}&nbsp;<a href="{{ url_for('.remove_extid', service=extid.service, userid=extid.userid) }}"><i class="fa fa-trash-o"></i></a></td>
+              <td>
+                <input id="userphone-{{loop.index}}" name="phone" value="{{userphone}}" type="radio">&nbsp;
+                <label for="userphone-{{loop.index}}">{{ userphone.formatted() }}</label>
+                 {% if userphone.primary %} <em>{% trans %}(primary){% endtrans %}</em> {% endif -%}
+              </td>
+              <td>
+                {%- if not userphone.primary %}
+                  <a  title="{% trans %}Remove{% endtrans %}" href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a>
+                {%- endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          {% for userphone in current_auth.user.phoneclaims %}
+            <tr>
+              <td>
+                <input type="radio" disabled="disabled">&nbsp;
+                <label>{{ userphone.formatted() }}</label> <em>{% if userphone.verification_expired %}{% trans %}(blocked){% endtrans %}{% else %}<a href="{{ url_for('.verify_phone', number=userphone) }}">{% trans %}(pending verification){% endtrans %}</a>{% endif %}</em>
+              </td>
+              <td>
+                {% if not userphone.verification_expired %}<a title="{% trans %}Remove{% endtrans %}" href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a>{% endif %}
+              </td>
             </tr>
           {% endfor %}
         </table>
-      {% else %}
-        <p class="para"><em>(none)</em></p>
-      {% endif %}
-      <h2 class="heading">Add External ID</h2>
-      {% for provider in login_registry %}
-        <a class="btn btn-default login-{{ provider }}" href="{{ url_for('lastuser_oauth.login_service', service=provider, next=url_for('.profile')) }}"><i class="fa fa-{{ login_registry[provider].icon }}"></i>&nbsp;&nbsp;{{ login_registry[provider]['title'] }}</a>
-      {% endfor %}
-    </div>
-  </div><!--eof connected ids-->
+        <div class="button-box">
+          {% if current_auth.user.phones %}<button class="btn btn-sm btn-info" type="submit">{% trans %}Set as primary{% endtrans %}</button>{% endif %}
+          <a class="btn btn-sm btn-success" href="{{ url_for('.add_phone') }}">{% trans %}Add a mobile number{% endtrans %}</a>
+        </div>
+      </form>
+    </div><!--eof detail-box-->
+  </div><!--eof phone-->
 
   <div class="col-xs-12">
     <div class="detail-box clearfix">
@@ -129,9 +144,9 @@
           {%- for session in current_auth.user.active_sessions %}
             <li class="list-group-item">From {{ session.ipaddr }} since {{ session.created_at|age }} with {{ session.ua['user_agent']['family']}} {{ session.ua['user_agent']['major'] }} on {{ session.ua['os']['family'] }} {{ session.ua['os']['major'] }}.{{ session.ua['os']['minor'] }}, last active {{ session.accessed_at|age }}
             {% if session == current_auth.usersession -%}
-              (current)
+              {% trans %}(current){% endtrans %}
             {%- else -%}
-              (<a href="{{ url_for('lastuser_oauth.logout_session', session=session.buid) }}">logout</a>)
+              <a href="{{ url_for('lastuser_oauth.logout_session', session=session.buid) }}">{% trans %}(logout){% endtrans %}</a>
             {%- endif %}
             </li>
           {%- endfor %}

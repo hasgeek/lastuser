@@ -8,7 +8,8 @@ import baseframe.forms as forms
 from lastuser_core.utils import strip_phone, valid_phone
 from lastuser_core.models import UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
 
-__all__ = ['NewEmailAddressForm', 'EmailPrimaryForm', 'VerifyEmailForm', 'NewPhoneForm', 'VerifyPhoneForm']
+__all__ = ['NewEmailAddressForm', 'EmailPrimaryForm', 'VerifyEmailForm',
+    'NewPhoneForm', 'PhonePrimaryForm', 'VerifyPhoneForm']
 
 
 class NewEmailAddressForm(forms.Form):
@@ -77,9 +78,14 @@ class NewPhoneForm(forms.Form):
         field.data = number  # Save stripped number
 
 
+class PhonePrimaryForm(forms.Form):
+    phone = forms.StringField(__("Phone number"), validators=[forms.validators.DataRequired()],
+        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
+
+
 class VerifyPhoneForm(forms.Form):
     verification_code = forms.StringField(__("Verification code"), validators=[forms.validators.DataRequired()],
-        widget_attrs={'pattern': '[0-9]*'})
+        widget_attrs={'pattern': '[0-9]*', 'autocomplete': 'off'})
 
     def validate_verification_code(self, field):
         # self.phoneclaim is set by the view before calling form.validate()
