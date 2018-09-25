@@ -52,8 +52,8 @@ class GoogleProvider(LoginProvider):
         return {'email': credentials.id_token['email'],
                 'userid': credentials.id_token['email'],
                 'username': credentials.id_token['email'],
-                'fullname': response['name'],
-                'avatar_url': response['picture'],
+                'fullname': response.get('name', ''),
+                'avatar_url': response.get('picture'),
                 'oauth_token': credentials.access_token,
                 'oauth_token_secret': None,  # OAuth 2 doesn't need token secrets
                 'oauth_token_type': credentials.token_response['token_type']
