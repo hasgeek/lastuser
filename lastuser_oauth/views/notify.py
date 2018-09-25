@@ -7,7 +7,7 @@ from lastuser_core.signals import user_data_changed, org_data_changed, team_data
 
 
 user_changes_to_notify = set(['merge', 'profile', 'email', 'email-claim', 'email-delete',
-    'phone', 'phone-claim', 'phone-delete', 'team-membership'])
+    'email-update-primary', 'phone', 'phone-claim', 'phone-delete', 'team-membership'])
 
 
 @session_revoked.connect
@@ -39,10 +39,10 @@ def notify_user_data_changed(user, changes):
                 for change in changes:
                     if change in ['merge', 'profile']:
                         notify_changes.append(change)
-                    elif change in ['email', 'email-claim', 'email-delete']:
+                    elif change in ['email', 'email-claim', 'email-delete', 'email-update-primary']:
                         if 'email' in tokenscope or 'email/*' in tokenscope:
                             notify_changes.append(change)
-                    elif change in ['phone', 'phone-claim', 'phone-delete']:
+                    elif change in ['phone', 'phone-claim', 'phone-delete', 'phone-update-primary']:
                         if 'phone' in tokenscope or 'phone/*' in tokenscope:
                             notify_changes.append(change)
                     elif change in ['team-membership']:

@@ -8,7 +8,8 @@ import baseframe.forms as forms
 from lastuser_core.utils import strip_phone, valid_phone
 from lastuser_core.models import UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
 
-__all__ = ['NewEmailAddressForm', 'NewPhoneForm', 'VerifyPhoneForm']
+__all__ = ['NewEmailAddressForm', 'EmailPrimaryForm', 'VerifyEmailForm',
+    'NewPhoneForm', 'PhonePrimaryForm', 'VerifyPhoneForm']
 
 
 class NewEmailAddressForm(forms.Form):
@@ -33,17 +34,32 @@ class NewEmailAddressForm(forms.Form):
             raise forms.ValidationError(_("This email address is pending verification"))
 
 
+class EmailPrimaryForm(forms.Form):
+    email = forms.EmailField(__("Email address"), validators=[forms.validators.DataRequired(), forms.ValidEmail()],
+        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
+
+
+class VerifyEmailForm(forms.Form):
+    pass
+
+
 class NewPhoneForm(forms.Form):
     phone = forms.TelField(__("Phone number"), default='+91',
         validators=[forms.validators.DataRequired()],
-        description=__("In international calling format starting with '+' and country code. Mobile numbers only at this time"))
-    type = forms.RadioField(__("Type"), coerce=nullunicode, validators=[forms.validators.Optional()], choices=[
-        (__(u"Mobile"), __(u"Mobile")),
-        # (__(u"Home"), __(u"Home")),
-        # (__(u"Work"), __(u"Work")),
-        (__(u"Other"), __(u"Other"))])
+        description=__("Mobile numbers only at this time. Please prefix with '+' and country code."))
+
+    # Temporarily removed since we only support mobile numbers at this time. When phone call validation is added,
+    # we can ask for other types of numbers:
+
+    # type = forms.RadioField(__("Type"), coerce=nullunicode, validators=[forms.validators.Optional()], choices=[
+    #     (__(u"Mobile"), __(u"Mobile")),
+    #     (__(u"Home"), __(u"Home")),
+    #     (__(u"Work"), __(u"Work")),
+    #     (__(u"Other"), __(u"Other"))])
 
     def validate_phone(self, field):
+        # TODO: Use the phonenumbers library to validate this
+
         # Step 1: Remove punctuation in number
         number = strip_phone(field.data)
         # Step 2: Check length
@@ -68,9 +84,14 @@ class NewPhoneForm(forms.Form):
         field.data = number  # Save stripped number
 
 
+class PhonePrimaryForm(forms.Form):
+    phone = forms.StringField(__("Phone number"), validators=[forms.validators.DataRequired()],
+        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
+
+
 class VerifyPhoneForm(forms.Form):
     verification_code = forms.StringField(__("Verification code"), validators=[forms.validators.DataRequired()],
-        widget_attrs={'pattern': '[0-9]*'})
+        widget_attrs={'pattern': '[0-9]*', 'autocomplete': 'off'})
 
     def validate_verification_code(self, field):
         # self.phoneclaim is set by the view before calling form.validate()

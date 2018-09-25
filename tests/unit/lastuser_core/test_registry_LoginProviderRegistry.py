@@ -27,6 +27,5 @@ class TestLoginProviderRegistry(unittest.TestCase):
             expected_login_providers.append('linkedin')
         if app.config.get('OAUTH_GITHUB_KEY') and app.config.get('OAUTH_GITHUB_SECRET'):
             expected_login_providers.append('github')
-        expected_login_providers.append('openid')
         self.assertIsInstance(login_registry, LoginProviderRegistry)
         self.assertItemsEqual(expected_login_providers, login_registry.keys())

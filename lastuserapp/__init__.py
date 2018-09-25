@@ -64,5 +64,3 @@ if app.config.get('OAUTH_GITHUB_KEY') and app.config.get('OAUTH_GITHUB_SECRET'):
         at_login=True, priority=False, icon='github',
         key=app.config['OAUTH_GITHUB_KEY'],
         secret=app.config['OAUTH_GITHUB_SECRET'])
-login_registry['openid'] = providers.OpenIdProvider('openid', 'OpenID',
-    at_login=True, priority=False, icon='openid')

@@ -16,7 +16,7 @@ def profile_url(self):
     """
     Link to the user's profile.
     """
-    return url_for('lastuser_ui.profile')
+    return url_for('lastuser_ui.account')
 
 
 def organization_links(self):
@@ -28,6 +28,7 @@ def organization_links(self):
         'link': url_for('lastuser_ui.org_info', name=org.name),
         'title': org.title} for org in self.organizations_owned()]
 
+
 User.profile_url = property(profile_url)
 User.organization_links = organization_links
 
@@ -35,6 +36,11 @@ User.organization_links = organization_links
 @app.route('/profile')
 def profile():
     return lastuser_ui.views.profile.profile()
+
+
+@app.route('/account')
+def account():
+    return lastuser_ui.views.profile.account()
 
 
 @app.route('/login')

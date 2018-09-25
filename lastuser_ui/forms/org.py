@@ -26,9 +26,9 @@ class OrganizationForm(forms.Form):
         if existing is not None:
             if existing == current_auth.user:
                 raise forms.ValidationError(Markup(_(u"This is <em>your</em> current username. "
-                    u'You must change it first from <a href="{profile}">your profile</a> '
+                    u'You must change it first from <a href="{account}">your account</a> '
                     u"before you can assign it to an organization").format(
-                        profile=url_for('profile'))))
+                        account=url_for('account'))))
             else:
                 raise forms.ValidationError(_("This name is taken"))
         existing = Organization.get(name=field.data)

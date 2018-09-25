@@ -16,6 +16,7 @@ from lastuser_core import login_registry
 from .. import lastuser_oauth
 from ..mailclient import send_email_verify_link, send_password_reset_link
 from lastuser_core.models import db, User, UserEmailClaim, PasswordResetRequest, ClientCredential, UserSession
+from lastuser_core.utils import mask_email
 from ..forms import LoginForm, RegisterForm, PasswordResetForm, PasswordResetRequestForm, LoginPasswordResetException
 from .helpers import login_internal, logout_internal, register_internal, set_loginmethod_cookie
 
@@ -58,7 +59,9 @@ def login():
                 return set_loginmethod_cookie(render_redirect(get_next_url(session=True), code=303),
                     'password')
         except LoginPasswordResetException:
-            return render_redirect(url_for('.reset', expired=1, username=loginform.username.data))
+            flash(_(u"Your account does not have a password set. Please enter your username "
+                "or email address to request a reset code and set a new password"), category='danger')
+            return render_redirect(url_for('.reset', username=loginform.username.data))
     elif request.method == 'POST' and formid in service_forms:
         form = service_forms[formid]['form']
         if form.validate():
@@ -212,11 +215,11 @@ def reset():
         send_password_reset_link(email=email, user=user, secret=resetreq.reset_code)
         db.session.commit()
         return render_message(title=_("Reset password"), message=_(u"""
-            We sent you an email with a link to reset your password.
+            We sent a link to reset your password to your email address: {masked_email}.
             Please check your email. If it doesn’t arrive in a few minutes,
             it may have landed in your spam or junk folder.
             The reset link is valid for 24 hours.
-            """))
+            """.format(masked_email=mask_email(email))))
 
     return render_form(form=form, title=_("Reset password"), message=message, submit=_("Send reset code"), ajax=False)
 

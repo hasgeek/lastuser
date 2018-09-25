@@ -34,7 +34,7 @@
     <div class="span3 col-xs-12 col-sm-4 col-md-3 col-lg-3">
       <ul class="well nav nav-list">
         <li class="nav-header">Account</li>
-        <li{% if request.endpoint=='lastuser_ui.profile' %} class="active"{% endif %}><a href="{{ url_for('lastuser_ui.profile') }}"><span class="icon-user">Profile</span></a></li>
+        <li{% if request.endpoint=='lastuser_ui.account' %} class="active"{% endif %}><a href="{{ url_for('lastuser_ui.account') }}"><span class="icon-user">Profile</span></a></li>
         <li class="nav-header">Applications</li>
         <li{% if request.endpoint=='lastuser_ui.client_list' %} class="active"{% endif %}><a href="{{ url_for('lastuser_ui.client_list') }}"><span class="icon-cog">My applications</span></a></li>
         <li{% if request.endpoint=='lastuser_ui.permission_list' %} class="active"{% endif %}><a href="{{ url_for('lastuser_ui.permission_list') }}"><span class="icon-lock">Permissions</span></a></li>

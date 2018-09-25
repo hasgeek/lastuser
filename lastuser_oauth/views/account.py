@@ -90,7 +90,14 @@ def get_user_extid(service, userdata):
 
 
 def login_service_postcallback(service, userdata):
+    """
+    Called from :func:login_service_callback after receiving data from the upstream login service
+    """
+    # 1. Check whether we have an existing UserExternalId
     user, extid, useremail = get_user_extid(service, userdata)
+    # If extid is not None, user.extid == user, guaranteed.
+    # If extid is None but useremail is not None, user == useremail.user
+    # However, if both extid and useremail are present, they may be different users
 
     if extid is not None:
         extid.oauth_token = userdata.get('oauth_token')
@@ -115,7 +122,7 @@ def login_service_postcallback(service, userdata):
             )
 
     if user is None:
-        if current_auth.is_authenticated:
+        if current_auth:
             # Attach this id to currently logged-in user
             user = current_auth.user
             extid.user = user
@@ -127,12 +134,13 @@ def login_service_postcallback(service, userdata):
                 if valid_username(userdata['username']) and user.is_valid_username(userdata['username']):
                     # Set a username for this user if it's available
                     user.username = userdata['username']
-    else:  # This id is attached to a user
-        if current_auth.is_authenticated and current_auth.user != user:
+    else:  # We have an existing user account from extid or useremail
+        if current_auth and current_auth.user != user:
             # Woah! Account merger handler required
             # Always confirm with user before doing an account merger
             session['merge_buid'] = user.buid
         elif useremail and useremail.user != user:
+            # Once again, account merger required since the extid and useremail are linked to different users
             session['merge_buid'] = useremail.user.buid
 
     # Check for new email addresses
@@ -161,7 +169,7 @@ def login_service_postcallback(service, userdata):
     if not user.fullname and userdata.get('fullname'):
         user.fullname = userdata['fullname']
 
-    if not current_auth.is_authenticated:  # If a user isn't already logged in, login now.
+    if not current_auth:  # If a user isn't already logged in, login now.
         login_internal(user)
         flash(_(u"You have logged in via {service}").format(service=login_registry[service].title), 'success')
     next_url = get_next_url(session=True)
@@ -171,19 +179,19 @@ def login_service_postcallback(service, userdata):
 
     # Finally: set a login method cookie and send user on their way
     if not current_auth.user.is_profile_complete():
-        login_next = url_for('.profile_new', next=next_url)
+        login_next = url_for('.account_new', next=next_url)
     else:
         login_next = next_url
 
     if 'merge_buid' in session:
-        return set_loginmethod_cookie(redirect(url_for('.profile_merge', next=login_next), code=303), service)
+        return set_loginmethod_cookie(redirect(url_for('.account_merge', next=login_next), code=303), service)
     else:
         return set_loginmethod_cookie(redirect(login_next, code=303), service)
 
 
-@lastuser_oauth.route('/profile/merge', methods=['GET', 'POST'])
+@lastuser_oauth.route('/account/merge', methods=['GET', 'POST'])
 @requires_login
-def profile_merge():
+def account_merge():
     if 'merge_buid' not in session:
         return redirect(get_next_url(), code=302)
     other_user = User.get(buid=session['merge_buid'])
