@@ -90,29 +90,16 @@ def get_user_extid(service, userdata):
 
 
 def login_service_postcallback(service, userdata):
+    """
+    Called from :func:login_service_callback after receiving data from the upstream login service
+    """
+    # 1. Check whether we have an existing UserExternalId
     user, extid, useremail = get_user_extid(service, userdata)
-
-    if user is None:
-        if current_auth:
-            # Attach this id to currently logged-in user
-            user = current_auth.user
-        else:
-            # Register a new user
-            user = register_internal(None, userdata.get('fullname'), None)
-            if userdata.get('username'):
-                if valid_username(userdata['username']) and user.is_valid_username(userdata['username']):
-                    # Set a username for this user if it's available
-                    user.username = userdata['username']
-    else:  # This id is attached to a user
-        if current_auth and current_auth.user != user:
-            # Woah! Account merger handler required
-            # Always confirm with user before doing an account merger
-            session['merge_buid'] = user.buid
-        elif useremail and useremail.user != user:
-            session['merge_buid'] = useremail.user.buid
+    # If extid is not None, user.extid == user, guaranteed.
+    # If extid is None but useremail is not None, user == useremail.user
+    # However, if both extid and useremail are present, they may be different users
 
     if extid is not None:
-        extid.user = user
         extid.oauth_token = userdata.get('oauth_token')
         extid.oauth_token_secret = userdata.get('oauth_token_secret')
         extid.oauth_token_type = userdata.get('oauth_token_type')
@@ -124,7 +111,7 @@ def login_service_postcallback(service, userdata):
     else:
         # New external id. Register it.
         extid = UserExternalId(
-            user=user,
+            user=user,  # This may be None right now. Will be handled below
             service=service,
             userid=userdata['userid'],
             username=userdata.get('username'),
@@ -133,6 +120,28 @@ def login_service_postcallback(service, userdata):
             oauth_token_type=userdata.get('oauth_token_type')
             # TODO: Save refresh token
             )
+
+    if user is None:
+        if current_auth:
+            # Attach this id to currently logged-in user
+            user = current_auth.user
+            extid.user = user
+        else:
+            # Register a new user
+            user = register_internal(None, userdata.get('fullname'), None)
+            extid.user = user
+            if userdata.get('username'):
+                if valid_username(userdata['username']) and user.is_valid_username(userdata['username']):
+                    # Set a username for this user if it's available
+                    user.username = userdata['username']
+    else:  # We have an existing user account from extid or useremail
+        if current_auth and current_auth.user != user:
+            # Woah! Account merger handler required
+            # Always confirm with user before doing an account merger
+            session['merge_buid'] = user.buid
+        elif useremail and useremail.user != user:
+            # Once again, account merger required since the extid and useremail are linked to different users
+            session['merge_buid'] = useremail.user.buid
 
     # Check for new email addresses
     if userdata.get('email') and not useremail:
@@ -160,7 +169,7 @@ def login_service_postcallback(service, userdata):
     if not user.fullname and userdata.get('fullname'):
         user.fullname = userdata['fullname']
 
-    if not current_auth.is_authenticated:  # If a user isn't already logged in, login now.
+    if not current_auth:  # If a user isn't already logged in, login now.
         login_internal(user)
         flash(_(u"You have logged in via {service}").format(service=login_registry[service].title), 'success')
     next_url = get_next_url(session=True)
