@@ -48,7 +48,7 @@
       <h2 class="heading">{% trans %}Add External ID{% endtrans %}</h2>
       <p class="button-bar">
         {% for provider in login_registry %}
-          <a class="btn btn-default login-{{ provider }}" href="{{ url_for('lastuser_oauth.login_service', service=provider, next=url_for('.profile')) }}"><i class="fa fa-{{ login_registry[provider].icon }}"></i>&nbsp;&nbsp;{{ login_registry[provider]['title'] }}</a>
+          <a class="btn btn-default login-{{ provider }}" href="{{ url_for('lastuser_oauth.login_service', service=provider, next=url_for('.account')) }}"><i class="fa fa-{{ login_registry[provider].icon }}"></i>&nbsp;&nbsp;{{ login_registry[provider]['title'] }}</a>
         {% endfor %}
       </p>
     </div>
