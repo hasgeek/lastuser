@@ -173,7 +173,7 @@ def add_phone():
     if form.validate_on_submit():
         userphone = UserPhoneClaim.get(user=current_auth.user, phone=form.phone.data)
         if userphone is None:
-            userphone = UserPhoneClaim(user=current_auth.user, phone=form.phone.data, type=form.type.data)
+            userphone = UserPhoneClaim(user=current_auth.user, phone=form.phone.data)
             db.session.add(userphone)
         try:
             send_phone_verify_code(userphone)
@@ -185,7 +185,7 @@ def add_phone():
             db.session.rollback()
             form.phone.errors.append(unicode(e))
     return render_form(form=form, title=_("Add a phone number"), formid='phone_add',
-        submit=_("Add phone"), ajax=True)
+        submit=_("Verify phone"), ajax=True)
 
 
 @lastuser_ui.route('/account/phone/<number>/remove', methods=['GET', 'POST'])

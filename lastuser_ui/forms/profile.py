@@ -46,14 +46,20 @@ class VerifyEmailForm(forms.Form):
 class NewPhoneForm(forms.Form):
     phone = forms.TelField(__("Phone number"), default='+91',
         validators=[forms.validators.DataRequired()],
-        description=__("In international calling format starting with '+' and country code. Mobile numbers only at this time"))
-    type = forms.RadioField(__("Type"), coerce=nullunicode, validators=[forms.validators.Optional()], choices=[
-        (__(u"Mobile"), __(u"Mobile")),
-        # (__(u"Home"), __(u"Home")),
-        # (__(u"Work"), __(u"Work")),
-        (__(u"Other"), __(u"Other"))])
+        description=__("Mobile numbers only at this time. Please prefix with '+' and country code."))
+
+    # Temporarily removed since we only support mobile numbers at this time. When phone call validation is added,
+    # we can ask for other types of numbers:
+
+    # type = forms.RadioField(__("Type"), coerce=nullunicode, validators=[forms.validators.Optional()], choices=[
+    #     (__(u"Mobile"), __(u"Mobile")),
+    #     (__(u"Home"), __(u"Home")),
+    #     (__(u"Work"), __(u"Work")),
+    #     (__(u"Other"), __(u"Other"))])
 
     def validate_phone(self, field):
+        # TODO: Use the phonenumbers library to validate this
+
         # Step 1: Remove punctuation in number
         number = strip_phone(field.data)
         # Step 2: Check length
