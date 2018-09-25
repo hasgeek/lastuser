@@ -42,7 +42,7 @@ def notify_user_data_changed(user, changes):
                     elif change in ['email', 'email-claim', 'email-delete', 'email-update-primary']:
                         if 'email' in tokenscope or 'email/*' in tokenscope:
                             notify_changes.append(change)
-                    elif change in ['phone', 'phone-claim', 'phone-delete']:
+                    elif change in ['phone', 'phone-claim', 'phone-delete', 'phone-update-primary']:
                         if 'phone' in tokenscope or 'phone/*' in tokenscope:
                             notify_changes.append(change)
                     elif change in ['team-membership']:

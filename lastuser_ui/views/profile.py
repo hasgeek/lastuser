@@ -141,6 +141,12 @@ def remove_email(md5sum):
         delete_text=_(u"Remove"))
 
 
+# Redirect from old URL in previously sent out verification emails
+@lastuser_ui.route('/profile/email/<md5sum>/verify')
+def verify_email_old(md5sum):
+    return redirect(url_for('verify_email', md5sum=md5sum), code=301)
+
+
 @lastuser_ui.route('/account/email/<md5sum>/verify', methods=['GET', 'POST'])
 @requires_login
 def verify_email(md5sum):
