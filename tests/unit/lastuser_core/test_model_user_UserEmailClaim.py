@@ -13,7 +13,7 @@ class TestUserEmailClaim(TestDatabaseFixture):
         domain = u'batdogs.ca'
         new_email = u'crusoe@' + domain
         md5sum = md5(new_email).hexdigest()
-        result = models.UserEmailClaim(email=new_email, owner=crusoe)
+        result = models.UserEmailClaim(email=new_email, user=crusoe)
         db.session.add(result)
         db.session.commit()
         self.assertIsInstance(result, models.UserEmailClaim)
@@ -28,7 +28,7 @@ class TestUserEmailClaim(TestDatabaseFixture):
         """
         crusoe = self.fixtures.crusoe
         email = u'crusoe@batdogs.ca'
-        email_claim = models.UserEmailClaim(email=email, owner=crusoe)
+        email_claim = models.UserEmailClaim(email=email, user=crusoe)
         permissions_expected = ['verify']
         result = email_claim.permissions(crusoe)
         self.assertIsInstance(result, set)
@@ -44,13 +44,13 @@ class TestUserEmailClaim(TestDatabaseFixture):
 
         katnis = models.User(username=u'katnis', fullname=u'Katnis Everdeen')
         email = u'katnis@hungergames.org'
-        email_claim = models.UserEmailClaim(email=email, owner=katnis)
+        email_claim = models.UserEmailClaim(email=email, user=katnis)
         db.session.add(email_claim)
         db.session.commit()
         result = models.UserEmailClaim.get(email, katnis)
         self.assertIsInstance(result, models.UserEmailClaim)
         self.assertEqual(result.email, email)
-        self.assertEqual(result.owner, katnis)
+        self.assertEqual(result.user, katnis)
 
     def test_UserEmailClaim_all(self):
         """
@@ -59,8 +59,8 @@ class TestUserEmailClaim(TestDatabaseFixture):
         gail = models.User(username=u'gail', fullname=u'Gail Hawthorne')
         peeta = models.User(username=u'peeta', fullname=u'Peeta Mallark')
         email = u'gail@district7.gov'
-        claim_by_gail = models.UserEmailClaim(email=email, owner=gail)
-        claim_by_peeta = models.UserEmailClaim(email=email, owner=peeta)
+        claim_by_gail = models.UserEmailClaim(email=email, user=gail)
+        claim_by_peeta = models.UserEmailClaim(email=email, user=peeta)
         db.session.add(claim_by_gail)
         db.session.add(claim_by_peeta)
         db.session.commit()
@@ -74,6 +74,6 @@ class TestUserEmailClaim(TestDatabaseFixture):
         """
         effie = models.User(username=u'effie', fullname=u'Miss. Effie Trinket')
         email = u'effie@hungergames.org'
-        claim_by_effie = models.UserEmailClaim(email=email, owner=effie)
+        claim_by_effie = models.UserEmailClaim(email=email, user=effie)
         self.assertIsInstance(claim_by_effie.email, unicode)
         self.assertEqual(claim_by_effie.email, email)

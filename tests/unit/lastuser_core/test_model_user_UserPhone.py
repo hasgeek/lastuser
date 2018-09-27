@@ -27,7 +27,7 @@ class TestUserPhone(TestDatabaseFixture):
         phone = u'+8080808080'
         result = models.UserPhone.get(phone)
         self.assertIsInstance(result, models.UserPhone)
-        self.assertEqual(result.owner, crusoe)
+        self.assertEqual(result.user, crusoe)
         self.assertEqual(result.phone, phone)
 
     def test_UserPhone_unicode(self):

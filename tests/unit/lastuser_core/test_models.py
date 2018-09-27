@@ -68,7 +68,7 @@ class TestModels(TestDatabaseFixture):
         # scenario 3: with no @ starting in name, check by UserEmailClaim
         j_email = u'jonsnow@nightswatch.co.uk'
         jonsnow = models.User(username=u'jonsnow', fullname=u'Jon Snow')
-        jonsnow_email_claimed = models.UserEmailClaim(email=j_email, owner=jonsnow)
+        jonsnow_email_claimed = models.UserEmailClaim(email=j_email, user=jonsnow)
         db.session.add_all([jonsnow, jonsnow_email_claimed])
         db.session.commit()
         result4 = models.getuser(j_email)

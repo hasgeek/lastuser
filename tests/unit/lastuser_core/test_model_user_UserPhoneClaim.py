@@ -24,8 +24,8 @@ class TestUserPhoneClaim(TestDatabaseFixture):
         crusoe = self.fixtures.crusoe
         oakley = self.fixtures.oakley
         phone = u'9191919191'
-        claim_by_crusoe = models.UserPhoneClaim(phone=phone, owner=crusoe)
-        claim_by_oakley = models.UserPhoneClaim(phone=phone, owner=oakley)
+        claim_by_crusoe = models.UserPhoneClaim(phone=phone, user=crusoe)
+        claim_by_oakley = models.UserPhoneClaim(phone=phone, user=oakley)
         db.session.add(claim_by_crusoe, claim_by_oakley)
         db.session.commit()
         result = models.UserPhoneClaim.all(phone)
@@ -39,13 +39,13 @@ class TestUserPhoneClaim(TestDatabaseFixture):
         """
         snow = models.User(username=u'', fullname=u'President Coriolanus Snow')
         phone = u'9191919191'
-        phone_claim = models.UserPhoneClaim(phone=phone, owner=snow)
+        phone_claim = models.UserPhoneClaim(phone=phone, user=snow)
         db.session.add(phone_claim)
         db.session.commit()
         result = models.UserPhoneClaim.get(phone, snow)
         self.assertIsInstance(result, models.UserPhoneClaim)
         self.assertEqual(result.phone, phone)
-        self.assertEqual(result.owner, snow)
+        self.assertEqual(result.user, snow)
 
     def test_UserPhoneClaim_unicode(self):
         """
@@ -54,7 +54,7 @@ class TestUserPhoneClaim(TestDatabaseFixture):
         """
         haymitch = models.User(username=u'haymitch', fullname=u'Haymitch Abernathy')
         phone = u'9191919191'
-        phone_claim = models.UserPhoneClaim(phone=phone, owner=haymitch)
+        phone_claim = models.UserPhoneClaim(phone=phone, user=haymitch)
         db.session.add(phone_claim)
         db.session.commit()
         result = unicode(models.UserPhoneClaim(phone=phone))
@@ -68,7 +68,7 @@ class TestUserPhoneClaim(TestDatabaseFixture):
         """
         coin = models.User(username=u'coin', fullname=u'President Alma Coin')
         phone = u'9191919191'
-        phone_claim = models.UserPhoneClaim(phone=phone, owner=coin)
+        phone_claim = models.UserPhoneClaim(phone=phone, user=coin)
         permissions_expected = ['verify']
         result = phone_claim.permissions(coin)
         self.assertIsInstance(result, set)

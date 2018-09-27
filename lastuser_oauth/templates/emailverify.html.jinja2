@@ -11,6 +11,6 @@
 		<link itemprop="url" href="{{ request.url_root }}"/>
 	</div>
 </div>
-<p>Hello {{ useremail.owner.title }},</p>
+<p>Hello {{ useremail.user.fullname }},</p>
 <p><a href="{{ url_for('lastuser_oauth.confirm_email', _external=True, md5sum=useremail.md5sum, secret=useremail.verification_code) }}">Click here to confirm your email address</a></p>
 <p>If you did not sign up, you may safely ignore this email.</p>

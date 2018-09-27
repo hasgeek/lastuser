@@ -595,60 +595,17 @@ class Team(UuidMixin, BaseMixin, db.Model):
 
 # -- User/Org/Team email/phone and misc
 
-class OwnerMixin(object):
-    """
-    Provides the :attr:`owner` property for UserEmail, UserEmailClaim,
-    UserPhone and UserPhoneClaim.
-    """
-    @property
-    def owner(self):
-        """The owner of this object"""
-        return self.user or self.org or self.team
-
-    @owner.setter
-    def owner(self, value):
-        if isinstance(value, User):
-            self.user = value
-            self.org = None
-            self.team = None
-        elif isinstance(value, Organization):
-            self.user = None
-            self.org = value
-            self.team = None
-        elif isinstance(value, Team):
-            self.user = None
-            self.org = None
-            self.team = value
-        else:
-            raise ValueError(value)
-
-
-class UserEmail(OwnerMixin, BaseMixin, db.Model):
+class UserEmail(BaseMixin, db.Model):
     __tablename__ = 'useremail'
-    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=True)
+    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('emails', cascade='all, delete-orphan'))
-
-    org_id = db.Column(None, db.ForeignKey('organization.id'), nullable=True)
-    org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
-        backref=db.backref('emails', cascade='all, delete-orphan'))
-
-    team_id = db.Column(None, db.ForeignKey('team.id'), nullable=True)
-    team = db.relationship(Team, primaryjoin=team_id == Team.id,
-        backref=db.backref('emails', cascade='all, delete-orphan'))
-
     _email = db.Column('email', db.Unicode(254), unique=True, nullable=False)
     md5sum = db.Column(db.String(32), unique=True, nullable=False)
     domain = db.Column(db.Unicode(253), nullable=False, index=True)
 
     private = db.Column(db.Boolean, nullable=False, default=False)
     type = db.Column(db.Unicode(30), nullable=True)
-
-    __table_args__ = (db.CheckConstraint(
-        db.case([(user_id != None, 1)], else_=0) +
-        db.case([(org_id != None, 1)], else_=0) +
-        db.case([(team_id != None, 1)], else_=0) == 1,  # NOQA
-        name='useremail_user_id_or_org_id_or_team_id'),)
 
     def __init__(self, email, **kwargs):
         super(UserEmail, self).__init__(**kwargs)
@@ -666,8 +623,8 @@ class UserEmail(OwnerMixin, BaseMixin, db.Model):
     email = db.synonym('_email', descriptor=email)
 
     def __repr__(self):
-        return '<UserEmail {email} of {owner}>'.format(
-            email=self.email, owner=repr(self.owner)[1:-1])
+        return '<UserEmail {email} of {user}>'.format(
+            email=self.email, user=repr(self.user)[1:-1])
 
     def __unicode__(self):
         return unicode(self.email)
@@ -712,20 +669,11 @@ event.listen(UserEmail.__table__, 'before_drop',
     DDL('DROP INDEX ix_useremail_email_lower').execute_if(dialect='postgresql'))
 
 
-class UserEmailClaim(OwnerMixin, BaseMixin, db.Model):
+class UserEmailClaim(BaseMixin, db.Model):
     __tablename__ = 'useremailclaim'
-    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=True)
+    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('emailclaims', cascade='all, delete-orphan'))
-
-    org_id = db.Column(None, db.ForeignKey('organization.id'), nullable=True)
-    org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
-        backref=db.backref('emailclaims', cascade='all, delete-orphan'))
-
-    team_id = db.Column(None, db.ForeignKey('team.id'), nullable=True)
-    team = db.relationship(Team, primaryjoin=team_id == Team.id,
-        backref=db.backref('emailclaims', cascade='all, delete-orphan'))
-
     _email = db.Column('email', db.Unicode(254), nullable=True, index=True)
     verification_code = db.Column(db.String(44), nullable=False, default=newsecret)
     md5sum = db.Column(db.String(32), nullable=False, index=True)
@@ -734,17 +682,7 @@ class UserEmailClaim(OwnerMixin, BaseMixin, db.Model):
     private = db.Column(db.Boolean, nullable=False, default=False)
     type = db.Column(db.Unicode(30), nullable=True)
 
-    __table_args__ = (
-        # Only one of these three unique constraints will apply as null values
-        # in the *_id columns are ignored for unique constraints
-        db.UniqueConstraint('user_id', 'email'),
-        db.UniqueConstraint('org_id', 'email'),
-        db.UniqueConstraint('team_id', 'email'),
-        db.CheckConstraint(
-            db.case([(user_id != None, 1)], else_=0) +
-            db.case([(org_id != None, 1)], else_=0) +
-            db.case([(team_id != None, 1)], else_=0) == 1,  # NOQA
-            name='useremailclaim_user_id_or_org_id_or_team_id'))
+    __table_args__ = (db.UniqueConstraint('user_id', 'email'),)
 
     def __init__(self, email, **kwargs):
         super(UserEmailClaim, self).__init__(**kwargs)
@@ -761,8 +699,8 @@ class UserEmailClaim(OwnerMixin, BaseMixin, db.Model):
     email = db.synonym('_email', descriptor=email)
 
     def __repr__(self):
-        return '<UserEmailClaim {email} of {owner}>'.format(
-            email=self.email, owner=repr(self.owner)[1:-1])
+        return '<UserEmailClaim {email} of {user}>'.format(
+            email=self.email, user=repr(self.user)[1:-1])
 
     def __unicode__(self):
         return unicode(self.email)
@@ -796,31 +734,16 @@ class UserEmailClaim(OwnerMixin, BaseMixin, db.Model):
         return cls.query.filter(UserEmailClaim.email.in_([email, email.lower()])).order_by(cls.user_id).all()
 
 
-class UserPhone(OwnerMixin, BaseMixin, db.Model):
+class UserPhone(BaseMixin, db.Model):
     __tablename__ = 'userphone'
-    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=True)
+    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('phones', cascade='all, delete-orphan'))
-
-    org_id = db.Column(None, db.ForeignKey('organization.id'), nullable=True)
-    org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
-        backref=db.backref('phones', cascade='all, delete-orphan'))
-
-    team_id = db.Column(None, db.ForeignKey('team.id'), nullable=True)
-    team = db.relationship(Team, primaryjoin=team_id == Team.id,
-        backref=db.backref('phones', cascade='all, delete-orphan'))
-
     _phone = db.Column('phone', db.Unicode(16), unique=True, nullable=False)
     gets_text = db.Column(db.Boolean, nullable=False, default=True)
 
     private = db.Column(db.Boolean, nullable=False, default=False)
     type = db.Column(db.Unicode(30), nullable=True)
-
-    __table_args__ = (db.CheckConstraint(
-        db.case([(user_id != None, 1)], else_=0) +
-        db.case([(org_id != None, 1)], else_=0) +
-        db.case([(team_id != None, 1)], else_=0) == 1,  # NOQA
-        name='userphone_user_id_or_org_id_or_team_id'),)
 
     def __init__(self, phone, **kwargs):
         super(UserPhone, self).__init__(**kwargs)
@@ -870,20 +793,11 @@ class UserPhone(OwnerMixin, BaseMixin, db.Model):
         return cls.query.filter_by(phone=phone).one_or_none()
 
 
-class UserPhoneClaim(OwnerMixin, BaseMixin, db.Model):
+class UserPhoneClaim(BaseMixin, db.Model):
     __tablename__ = 'userphoneclaim'
-    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=True)
+    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('phoneclaims', cascade='all, delete-orphan'))
-
-    org_id = db.Column(None, db.ForeignKey('organization.id'), nullable=True)
-    org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
-        backref=db.backref('phoneclaims', cascade='all, delete-orphan'))
-
-    team_id = db.Column(None, db.ForeignKey('team.id'), nullable=True)
-    team = db.relationship(Team, primaryjoin=team_id == Team.id,
-        backref=db.backref('phoneclaims', cascade='all, delete-orphan'))
-
     _phone = db.Column('phone', db.Unicode(16), nullable=False, index=True)
     gets_text = db.Column(db.Boolean, nullable=False, default=True)
     verification_code = db.Column(db.Unicode(4), nullable=False, default=newpin)
@@ -892,17 +806,7 @@ class UserPhoneClaim(OwnerMixin, BaseMixin, db.Model):
     private = db.Column(db.Boolean, nullable=False, default=False)
     type = db.Column(db.Unicode(30), nullable=True)
 
-    __table_args__ = (
-        # Only one of these three unique constraints will apply as null values
-        # in the *_id columns are ignored for unique constraints
-        db.UniqueConstraint('user_id', 'phone'),
-        db.UniqueConstraint('org_id', 'phone'),
-        db.UniqueConstraint('team_id', 'phone'),
-        db.CheckConstraint(
-            db.case([(user_id != None, 1)], else_=0) +
-            db.case([(org_id != None, 1)], else_=0) +
-            db.case([(team_id != None, 1)], else_=0) == 1,  # NOQA
-            name='userphoneclaim_user_id_or_org_id_or_team_id'))
+    __table_args__ = (db.UniqueConstraint('user_id', 'phone'),)
 
     def __init__(self, phone, **kwargs):
         super(UserPhoneClaim, self).__init__(**kwargs)
