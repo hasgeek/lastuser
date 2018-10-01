@@ -163,8 +163,6 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
     pw_expires_at = db.Column(db.DateTime, nullable=True)
     #: User's timezone
     timezone = db.Column(db.Unicode(40), nullable=True)
-    #: Deprecated, but column preserved for existing data until migration
-    description = deferred(db.Column(db.UnicodeText, default=u'', nullable=False))
     #: User's status (active, suspended, merged, etc)
     status = db.Column(db.SmallInteger, nullable=False, default=USER_STATUS.ACTIVE)
     #: User avatar (URL to browser-ready image)
