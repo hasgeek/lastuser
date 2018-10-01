@@ -7,21 +7,23 @@ from .fixtures import Fixtures
 
 class TestDatabaseFixture(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """
         Initialize a test DB and call to make fixtures.
         """
-        self.app = app
+        cls.app = app
         db.create_all()
-        self.fixtures = Fixtures()
-        self.fixtures.make_fixtures()
-        self.fixtures.test_client = app.test_client()
+        cls.fixtures = Fixtures()
+        cls.fixtures.make_fixtures()
+        cls.fixtures.test_client = app.test_client()
 
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
         """
         Remove test session and tables.
         """
-        db.session.rollback()
         db.drop_all()
         db.session.remove()
+
+    def tearDown(self):
+        db.session.rollback()

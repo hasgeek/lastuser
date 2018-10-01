@@ -17,12 +17,12 @@ class TestUserOldId(TestDatabaseFixture):
         Test for verifying creation and retrieval of UserOldId instance
         """
         crusoe = self.fixtures.crusoe
-        batdog = models.User(username=u"batdog", fullname=u"Batdog")
-        db.session.add(batdog)
+        bathound = models.User(username=u"bathound", fullname=u"Bathound")
+        db.session.add(bathound)
         db.session.commit()
-        merged = models.merge_users(crusoe, batdog)
+        merged = models.merge_users(crusoe, bathound)
         if merged == crusoe:
-            other = batdog
+            other = bathound
         else:
             other = crusoe
         query_for_olduser = models.UserOldId.get(other.uuid)

@@ -88,7 +88,7 @@ class TestAuthToken(TestDatabaseFixture):
         alastor_token = models.AuthToken(client=client, user=alastor, scope=[u'id'])
         greyback = models.User(username=u'greyback', fullname=u'Fenrir Greyback')
         greyback_token = models.AuthToken(client=client, user=greyback, scope=[u'id'])
-        pottermania = models.Organization(name=u'Batdog', title=u'Batdog')
+        pottermania = models.Organization(name=u'pottermania', title=u'Pottermania')
         pottermania.owners.users.append(hermione)
         pottermania_members = [hermione, alastor, greyback, myrtle]
         for member in pottermania_members:

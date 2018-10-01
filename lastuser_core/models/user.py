@@ -5,37 +5,156 @@ from hashlib import md5
 from werkzeug import check_password_hash, cached_property
 import bcrypt
 import phonenumbers
-from sqlalchemy import or_, event, DDL
+from sqlalchemy import or_
 from sqlalchemy.orm import defer, deferred
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
-from coaster.utils import newsecret, newpin, valid_username, require_one_of
+from coaster.utils import newsecret, newpin, valid_username, require_one_of, LabeledEnum
 from coaster.sqlalchemy import make_timestamp_columns, failsafe_add, add_primary_relationship
-from baseframe import _
+from baseframe import _, __
 
 from . import db, BaseMixin, UuidMixin
 
 
-__all__ = ['User', 'UserEmail', 'UserEmailClaim', 'PasswordResetRequest', 'UserExternalId',
+__all__ = ['Name', 'User', 'UserEmail', 'UserEmailClaim', 'PasswordResetRequest', 'UserExternalId',
            'UserPhone', 'UserPhoneClaim', 'Team', 'Organization', 'UserOldId', 'USER_STATUS']
 
 
-class USER_STATUS:
-    ACTIVE = 0     # Regular, active user
-    SUSPENDED = 1  # Suspended account
-    MERGED = 2     # Merged into another user
-    INVITED = 3    # Invited to make an account, doesn't have one yet
+class Name(UuidMixin, BaseMixin, db.Model):
+    """
+    Manage common namespace between the User and Organization models.
+    """
+    __tablename__ = 'name'
+    __uuid_primary_key__ = True
+    __name_length__ = 63
+
+    #: The "username" assigned to a user or organization (length limit 63 to fit DNS label limit)
+    name = db.Column(db.Unicode(__name_length__), nullable=False, unique=True)
+    # Only one of the following three may be set:
+    #: User that owns this name (limit one per user)
+    user_id = db.Column(None, db.ForeignKey('user.id', ondelete='CASCADE'), unique=True, nullable=True)
+    user = db.relationship('User', backref=db.backref('_name', uselist=False, cascade='all, delete-orphan'))
+    #: Organization that owns this name (limit one per organization)
+    org_id = db.Column(None, db.ForeignKey('organization.id', ondelete='CASCADE'), unique=True, nullable=True)
+    org = db.relationship('Organization', backref=db.backref('_name', uselist=False, cascade='all, delete-orphan'))
+    #: Reserved name (not assigned to any party)
+    reserved = db.Column(db.Boolean, nullable=False, default=False, index=True)
+
+    __table_args__ = (
+        db.CheckConstraint(
+            db.case([(user_id != None, 1)], else_=0) +
+            db.case([(org_id != None, 1)], else_=0) +
+            db.case([(reserved == True, 1)], else_=0) == 1,
+            name='username_owner_check'),  # NOQA
+        db.Index('ix_name_name_lower', db.func.lower(name).label('name_lower'),
+            unique=True, postgresql_ops={'name_lower': 'varchar_pattern_ops'})
+        )
+
+    @property
+    def owner(self):
+        return self.user or self.org
+
+    @owner.setter
+    def owner(self, value):
+        if isinstance(value, User):
+            self.user = value
+            self.org = None
+        elif isinstance(value, Organization):
+            self.user = None
+            self.org = value
+        else:
+            raise ValueError(value)
+        self.reserved = False
+
+    @classmethod
+    def get(cls, name):
+        return cls.query.filter(db.func.lower(Name.name) == db.func.lower(name)).one_or_none()
+
+    @classmethod
+    def validate_name_candidate(cls, name):
+        """
+        Check if a name is available, returning one of several error codes, or None if all is okay:
+
+        * ``blank``: No name supplied
+        * ``invalid``: Invalid characters in name
+        * ``long``: Name is longer than allowed size
+        * ``reserved``: Name is reserved
+        * ``user``: Name is assigned to a user
+        * ``org``: Name is assigned to an organization
+        """
+        if not name:
+            return 'blank'
+        elif not valid_username(name):
+            return 'invalid'
+        elif len(name) > cls.__name_length__:
+            return 'long'
+        existing = cls.get(name)
+        if existing:
+            if existing.reserved:
+                return 'reserved'
+            elif existing.user_id:
+                return 'user'
+            elif existing.org_id:
+                return 'org'
+
+    @classmethod
+    def is_available_name(cls, name):
+        if valid_username(name) and len(name) <= cls.__name_length__:
+            if cls.query.filter(db.func.lower(cls.name) == db.func.lower(name)).isempty():
+                return True
+        return False
+
+    @db.validates('name')
+    def validate_name(self, key, value):
+        if not valid_username(value):
+            raise ValueError("Invalid username: " + value)
+        # We don't check for existence in the db since this validator only
+        # checks for valid syntax. To confirm the name is actually available,
+        # the caller must call :meth:`is_available_name` or attempt to commit
+        # to the db and catch IntegrityError.
+        return value
 
 
-class User(UuidMixin, BaseMixin, db.Model):
+class SharedNameMixin(object):
+    """
+    Common methods between User and Organization to link to Name
+    """
+    # The `name` property in User and Organization is not over here because
+    # of what seems to be a SQLAlchemy bug: we can't override the expression
+    # (both models need separate expressions) without triggering an inspection
+    # of the `_name` relationship, which does not exist yet as the backrefs
+    # are only fully setup when module loading is finished.
+    # Doc: https://docs.sqlalchemy.org/en/latest/orm/extensions/hybrid.html#reusing-hybrid-properties-across-subclasses
+
+    def is_valid_name(self, value):
+        if not valid_username(value):
+            return False
+        existing = Name.get(value)
+        if existing and existing.owner != self:
+            return False
+        return True
+
+    def validate_name_candidate(self, name):
+        if name and name == self.name:
+            return
+        return Name.validate_name_candidate(name)
+
+
+class USER_STATUS(LabeledEnum):
+    ACTIVE = (0, 'active', __("Active"))           # Regular, active user
+    SUSPENDED = (1, 'suspended', __("Suspended"))  # Suspended account
+    MERGED = (2, 'merged', __("Merged"))           # Merged into another user
+    INVITED = (3, 'invited', __("Invited"))        # Invited to make an account, doesn't have one yet
+
+
+class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
     __tablename__ = 'user'
+    __title_length__ = 80
     userid = db.synonym('buid')  # XXX: Deprecated, still here for Baseframe compatibility
     #: The user's fullname
-    fullname = db.Column(db.Unicode(80), default=u'', nullable=False)
+    fullname = db.Column(db.Unicode(__title_length__), default=u'', nullable=False)
     #: Alias for the user's fullname
     title = db.synonym('fullname')
-    #: The user's username, backend store
-    _username = db.Column('username', db.Unicode(80), unique=True, nullable=True)
     #: Bcrypt hash of the user's password
     pw_hash = db.Column(db.String(80), nullable=True)
     #: Timestamp for when the user's password last changed
@@ -51,7 +170,7 @@ class User(UuidMixin, BaseMixin, db.Model):
     #: User avatar (URL to browser-ready image)
     avatar = db.Column(db.Unicode(250), nullable=True)
 
-    #: Client id that created this account
+    #: Client id that created this user account
     client_id = db.Column(None, db.ForeignKey('client.id',
         use_alter=True, name='user_client_id_fkey'), nullable=True)
     #: If this user was created by a client app via the API, record it here
@@ -65,6 +184,11 @@ class User(UuidMixin, BaseMixin, db.Model):
 
     #: Other user accounts that were merged into this user account
     oldusers = association_proxy('oldids', 'olduser')
+
+    __table_args__ = (
+        db.Index('ix_user_fullname_lower', db.func.lower(fullname).label('fullname_lower'),
+            postgresql_ops={'fullname_lower': 'varchar_pattern_ops'}),
+        )
 
     _defercols = [
         defer('created_at'),
@@ -80,6 +204,27 @@ class User(UuidMixin, BaseMixin, db.Model):
     def __init__(self, password=None, **kwargs):
         self.password = password
         super(User, self).__init__(**kwargs)
+
+    @hybrid_property
+    def name(self):
+        if self._name:
+            return self._name.name
+
+    @name.setter
+    def name(self, value):
+        if not value:
+            self._name = None
+        else:
+            if self._name is not None:
+                self._name.name = value
+            else:
+                self._name = Name(name=value, owner=self, id=self.uuid)
+
+    @name.expression
+    def name(cls):
+        return db.select([Name.name]).where(Name.user_id == cls.id).label('name')
+
+    username = db.synonym('name')
 
     @property
     def is_active(self):
@@ -102,36 +247,6 @@ class User(UuidMixin, BaseMixin, db.Model):
 
     #: Write-only property (passwords cannot be read back in plain text)
     password = property(fset=_set_password)
-
-    # FIXME: move this to an SQLAlchemy validator
-
-    #: Username (may be null)
-    @hybrid_property
-    def username(self):
-        return self._username
-
-    @username.setter
-    def username(self, value):
-        if not value:
-            self._username = None
-        elif self.is_valid_username(value):
-            self._username = value
-
-    # Alias name to username
-    name = username
-
-    def is_valid_username(self, value):
-        if not valid_username(value):
-            return False
-        existing = User.query.filter(db.or_(
-            User.username == value,
-            User.buid == value)).first()  # Avoid User.get to skip status check
-        if existing and existing.id != self.id:
-            return False
-        existing = Organization.get(name=value)
-        if existing:
-            return False
-        return True
 
     def password_has_expired(self):
         return self.pw_hash is not None and self.pw_expires_at is not None and self.pw_expires_at <= datetime.utcnow()
@@ -288,8 +403,12 @@ class User(UuidMixin, BaseMixin, db.Model):
         :param str buid: Buid to lookup
         :param bool defercols: Defer loading non-critical columns
         """
-        param, value = require_one_of(True, username=username, buid=buid)
-        query = cls.query.filter_by(**{param: value})
+        require_one_of(username=username, buid=buid)
+
+        if username is not None:
+            query = cls.query.join(Name).filter(Name.name == username)
+        else:
+            query = cls.query.filter_by(buid=buid)
         if defercols:
             query = query.options(*cls._defercols)
         user = query.one_or_none()
@@ -312,11 +431,11 @@ class User(UuidMixin, BaseMixin, db.Model):
         if userids and not buids:
             buids = userids
         if buids and usernames:
-            query = cls.query.filter(or_(cls.buid.in_(buids), cls.username.in_(usernames)))
+            query = cls.query.join(Name).filter(or_(cls.buid.in_(buids), Name.name.in_(usernames)))
         elif buids:
             query = cls.query.filter(cls.buid.in_(buids))
         elif usernames:
-            query = cls.query.filter(cls.username.in_(usernames))
+            query = cls.query.join(Name).filter(Name.name.in_(usernames))
         else:
             raise Exception
 
@@ -345,11 +464,11 @@ class User(UuidMixin, BaseMixin, db.Model):
         # and doesn't use an index on PostgreSQL (there's a functional index defined below).
         if not query:
             return []
-        users = cls.query.filter(cls.status == USER_STATUS.ACTIVE,
+        users = cls.query.join(Name).filter(cls.status == USER_STATUS.ACTIVE,
             or_(  # Match against buid (exact value only), fullname or username, case insensitive
                 cls.buid == query[:-1],
                 db.func.lower(cls.fullname).like(db.func.lower(query)),
-                db.func.lower(cls._username).like(db.func.lower(query))
+                db.func.lower(Name.name).like(db.func.lower(query))
                 )
             ).options(*cls._defercols).limit(100).all()  # Limit to 100 results
         if query.startswith('@') and UserExternalId.__at_username_services__:
@@ -365,16 +484,6 @@ class User(UuidMixin, BaseMixin, db.Model):
                     db.func.lower(UserEmail.email).like(db.func.lower(query))
                 ).subquery())).options(*cls._defercols).limit(100).all() + users
         return users
-
-
-create_user_index = DDL(
-    'CREATE INDEX ix_user_username_lower ON "user" (lower(username) varchar_pattern_ops); '
-    'CREATE INDEX ix_user_fullname_lower ON "user" (lower(fullname) varchar_pattern_ops);')
-event.listen(User.__table__, 'after_create',
-    create_user_index.execute_if(dialect='postgresql'))
-
-event.listen(User.__table__, 'before_drop',
-    DDL('DROP INDEX ix_user_username_lower; DROP INDEX ix_user_fullname_lower;').execute_if(dialect='postgresql'))
 
 
 class UserOldId(UuidMixin, BaseMixin, db.Model):
@@ -409,8 +518,9 @@ team_membership = db.Table(
     )
 
 
-class Organization(UuidMixin, BaseMixin, db.Model):
+class Organization(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
     __tablename__ = 'organization'
+    __title_length__ = 80
     # owners_id cannot be null, but must be declared with nullable=True since there is
     # a circular dependency. The post_update flag on the relationship tackles the circular
     # dependency within SQLAlchemy.
@@ -422,8 +532,7 @@ class Organization(UuidMixin, BaseMixin, db.Model):
         use_alter=True, name='organization_members_id_fkey'), nullable=True)
     members = db.relationship('Team', primaryjoin='Organization.members_id == Team.id',
         uselist=False, cascade='all', post_update=True)  # No delete-orphan cascade here
-    _name = db.Column('name', db.Unicode(80), unique=True, nullable=True)
-    title = db.Column(db.Unicode(80), default=u'', nullable=False)
+    title = db.Column(db.Unicode(__title_length__), default=u'', nullable=False)
     #: Deprecated, but column preserved for existing data until migration
     description = deferred(db.Column(db.UnicodeText, default=u'', nullable=False))
 
@@ -442,31 +551,30 @@ class Organization(UuidMixin, BaseMixin, db.Model):
         super(Organization, self).__init__(*args, **kwargs)
         self.make_teams()
 
+    @hybrid_property
+    def name(self):
+        if self._name:
+            return self._name.name
+
+    @name.setter
+    def name(self, value):
+        if not value:
+            self._name = None
+        else:
+            if self._name is not None:
+                self._name.name = value
+            else:
+                self._name = Name(name=value, owner=self, id=self.uuid)
+
+    @name.expression
+    def name(cls):
+        return db.select([Name.name]).where(Name.org_id == cls.id).label('name')
+
     def make_teams(self):
         if self.owners is None:
             self.owners = Team(title=_(u"Owners"), org=self)
         if self.members is None:
             self.members = Team(title=_(u"Members"), org=self)
-
-    @hybrid_property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        if self.valid_name(value):
-            self._name = value
-
-    def valid_name(self, value):
-        if not valid_username(value):
-            return False
-        existing = Organization.get(name=value)
-        if existing and existing.id != self.id:
-            return False
-        existing = User.query.filter_by(username=value).first()  # Avoid User.get to skip status check
-        if existing:
-            return False
-        return True
 
     def __repr__(self):
         return '<Organization {name} "{title}">'.format(
@@ -522,8 +630,12 @@ class Organization(UuidMixin, BaseMixin, db.Model):
         :param str buid: Buid of the organization
         :param bool defercols: Defer loading non-critical columns
         """
-        param, value = require_one_of(True, name=name, buid=buid)
-        query = cls.query.filter_by(**{param: value})
+        require_one_of(name=name, buid=buid)
+
+        if name is not None:
+            query = cls.query.join(Name).filter(Name.name == name)
+        else:
+            query = cls.query.filter_by(buid=buid)
         if defercols:
             query = query.options(*cls._defercols)
         return query.one_or_none()
@@ -537,7 +649,7 @@ class Organization(UuidMixin, BaseMixin, db.Model):
                 query = query.options(*cls._defercols)
             orgs.extend(query.all())
         if names:
-            query = cls.query.filter(cls.name.in_(names))
+            query = cls.query.join(Name).filter(Name.name.in_(names))
             if defercols:
                 query = query.options(*cls._defercols)
             orgs.extend(query.all())
@@ -546,8 +658,9 @@ class Organization(UuidMixin, BaseMixin, db.Model):
 
 class Team(UuidMixin, BaseMixin, db.Model):
     __tablename__ = 'team'
+    __title_length__ = 250
     #: Displayed name
-    title = db.Column(db.Unicode(250), nullable=False)
+    title = db.Column(db.Unicode(__title_length__), nullable=False)
     #: Organization
     org_id = db.Column(None, db.ForeignKey('organization.id'), nullable=False)
     org = db.relationship(Organization, primaryjoin=org_id == Organization.id,
@@ -593,7 +706,7 @@ class Team(UuidMixin, BaseMixin, db.Model):
         return cls.query.filter_by(buid=buid).one_or_none()
 
 
-# -- User/Org/Team email/phone and misc
+# -- User email/phone and misc
 
 class UserEmail(BaseMixin, db.Model):
     __tablename__ = 'useremail'
@@ -606,6 +719,11 @@ class UserEmail(BaseMixin, db.Model):
 
     private = db.Column(db.Boolean, nullable=False, default=False)
     type = db.Column(db.Unicode(30), nullable=True)
+
+    __table_args__ = (
+        db.Index('ix_useremail_email_lower', db.func.lower(_email).label('email_lower'),
+            unique=True, postgresql_ops={'email_lower': 'varchar_pattern_ops'}),
+        )
 
     def __init__(self, email, **kwargs):
         super(UserEmail, self).__init__(**kwargs)
@@ -658,15 +776,6 @@ class UserEmail(BaseMixin, db.Model):
             return cls.query.filter(cls.email.in_([email, email.lower()])).one_or_none()
         else:
             return cls.query.filter_by(md5sum=md5sum).one_or_none()
-
-
-create_useremail_index = DDL(
-    'CREATE UNIQUE INDEX ix_useremail_email_lower ON useremail (lower(email) varchar_pattern_ops);')
-event.listen(UserEmail.__table__, 'after_create',
-    create_useremail_index.execute_if(dialect='postgresql'))
-
-event.listen(UserEmail.__table__, 'before_drop',
-    DDL('DROP INDEX ix_useremail_email_lower').execute_if(dialect='postgresql'))
 
 
 class UserEmailClaim(BaseMixin, db.Model):
@@ -889,7 +998,11 @@ class UserExternalId(BaseMixin, db.Model):
     oauth_token_secret = db.Column(db.String(1000), nullable=True)
     oauth_token_type = db.Column(db.String(250), nullable=True)
 
-    __table_args__ = (db.UniqueConstraint('service', 'userid'), {})
+    __table_args__ = (
+        db.UniqueConstraint('service', 'userid'),
+        db.Index('ix_userexternalid_username_lower', db.func.lower(username).label('username_lower'),
+            postgresql_ops={'username_lower': 'varchar_pattern_ops'})
+        )
 
     def __repr__(self):
         return '<UserExternalId {service}:{username} of {user}>'.format(
@@ -921,11 +1034,3 @@ class UserExternalId(BaseMixin, db.Model):
 
 add_primary_relationship(User, 'primary_email', UserEmail, 'user', 'user_id')
 add_primary_relationship(User, 'primary_phone', UserPhone, 'user', 'user_id')
-
-create_userexternalid_index = DDL(
-    'CREATE INDEX ix_userexternalid_username_lower ON userexternalid (lower(username) varchar_pattern_ops);')
-event.listen(UserExternalId.__table__, 'after_create',
-    create_userexternalid_index.execute_if(dialect='postgresql'))
-
-event.listen(UserExternalId.__table__, 'before_drop',
-    DDL('DROP INDEX ix_userexternalid_username_lower;').execute_if(dialect='postgresql'))

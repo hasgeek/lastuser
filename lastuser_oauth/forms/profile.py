@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from flask import current_app
-from coaster.utils import valid_username, sorted_timezones
+from coaster.utils import sorted_timezones
 from baseframe import _, __
 import baseframe.forms as forms
 
-from lastuser_core.models import UserEmail, getuser
+from lastuser_core.models import Name, User, UserEmail, getuser
 
 timezones = sorted_timezones()
 
@@ -51,32 +51,35 @@ class PasswordChangeForm(forms.Form):
 
 class ProfileForm(forms.Form):
     fullname = forms.StringField(__("Full name"),
-        validators=[forms.validators.DataRequired(), forms.validators.Length(max=80)])
+        validators=[forms.validators.DataRequired(), forms.validators.Length(max=User.__title_length__)])
     email = forms.EmailField(__("Email address"),
         validators=[forms.validators.DataRequired(), forms.ValidEmail()],
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
-    username = forms.AnnotatedTextField(__("Username"), validators=[forms.validators.DataRequired()],
+    username = forms.AnnotatedTextField(__("Username"),
+        validators=[forms.validators.DataRequired(), forms.validators.Length(max=Name.__name_length__)],
         filters=[forms.filters.none_if_empty()],
-        prefix=u"https://hasgeek.com/…",
+        prefix=u"https://hasgeek.com/",
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     timezone = forms.SelectField(__("Timezone"), validators=[forms.validators.DataRequired()], choices=timezones)
 
     def validate_username(self, field):
-        # # Usernames are now mandatory. This should be commented out:
-        # if not field.data:
-        #     field.data = None
-        #     return
-        field.data = field.data.lower()  # Usernames can only be lowercase
-        if not valid_username(field.data):
+        if field.data.lower() in current_app.config['RESERVED_USERNAMES']:
+            raise forms.ValidationError(_("This name is reserved"))  # To be deprecated in favour of one below
+
+        reason = self.edit_obj.validate_name_candidate(field.data)
+        if not reason:
+            return  # Username is available
+        if reason == 'invalid':
             raise forms.ValidationError(_("Usernames can only have alphabets, numbers and dashes (except at the ends)"))
-        if field.data in current_app.config.get('RESERVED_USERNAMES', []):
-            raise forms.ValidationError(_("This name is reserved"))
-        if not self.edit_user.is_valid_username(field.data):
-            raise forms.ValidationError(_("This username is taken"))
+        elif reason == 'reserved':
+            raise forms.ValidationError(_("This username is reserved"))
+        elif reason in ('user', 'org'):
+            raise forms.ValidationError(_("This username has been taken"))
+        else:
+            raise forms.ValidationError(_("This username is not available"))
 
     # TODO: Move to function and place before ValidEmail()
     def validate_email(self, field):
-        field.data = field.data.lower()  # Convert to lowercase
         existing = UserEmail.get(email=field.data)
         if existing is not None and existing.user != self.edit_obj:
             raise forms.ValidationError(_("This email address has been claimed by another user"))

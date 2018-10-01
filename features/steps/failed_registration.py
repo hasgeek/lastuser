@@ -40,5 +40,5 @@ def when_form_submit(context):
 @then('the new user will not be registered')
 def then_user_registered(context):
     # just one user exists, the first one
-    user_query = User.query.filter_by(username=context.test_user['username'])
-    assert user_query.count() == 1
+    user = User.get(username=context.test_user['username'])
+    assert user is not None

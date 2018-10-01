@@ -104,8 +104,8 @@ class TestOrganization(TestDatabaseFixture):
         Test for checking if given is a valid organization name
         """
         hufflepuffs = models.Organization(name=u'hufflepuffs', title=u'Huffle Puffs')
-        self.assertFalse(hufflepuffs.valid_name(u'#$%#%___2836273untitled'))
-        self.assertTrue(hufflepuffs.valid_name(u'hufflepuffs'))
+        self.assertFalse(hufflepuffs.is_valid_name(u'#$%#%___2836273untitled'))
+        self.assertTrue(hufflepuffs.is_valid_name(u'hufflepuffs'))
 
     def test_organization_pickername(self):
         """
@@ -173,10 +173,10 @@ class TestOrganization(TestDatabaseFixture):
         name is a setter method
         """
         insurgent = models.Organization(title=u'Insurgent')
-        insurgent.name = u'35453496*%&^$%^'
-        self.assertIsNone(insurgent.name)
-        insurgent.name = u'Insurgent'
-        self.assertIsNone(insurgent.name)
+        with self.assertRaises(ValueError):
+            insurgent.name = u'35453496*%&^$%^'
+        with self.assertRaises(ValueError):
+            insurgent.name = u'Insurgent'
         insurgent.name = u'insurgent'
         self.assertEqual(insurgent.name, u'insurgent')
 
