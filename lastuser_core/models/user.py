@@ -996,6 +996,8 @@ class UserExternalId(BaseMixin, db.Model):
     oauth_token_secret = db.Column(db.String(1000), nullable=True)
     oauth_token_type = db.Column(db.String(250), nullable=True)
 
+    last_used_at = db.Column(db.DateTime, default=db.func.utcnow(), nullable=False)
+
     __table_args__ = (
         db.UniqueConstraint('service', 'userid'),
         db.Index('ix_userexternalid_username_lower', db.func.lower(username).label('username_lower'),

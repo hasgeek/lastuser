@@ -108,6 +108,7 @@ def login_service_postcallback(service, userdata):
         extid.oauth_refresh_token = userdata.get('oauth_refresh_token')
         extid.oauth_expiry_date = userdata.get('oauth_expiry_date')
         extid.oauth_refresh_expiry = userdata.get('oauth_refresh_expiry')  # TODO: Check this
+        extid.last_used_at = db.func.utcnow()
     else:
         # New external id. Register it.
         extid = UserExternalId(
@@ -117,7 +118,8 @@ def login_service_postcallback(service, userdata):
             username=userdata.get('username'),
             oauth_token=userdata.get('oauth_token'),
             oauth_token_secret=userdata.get('oauth_token_secret'),
-            oauth_token_type=userdata.get('oauth_token_type')
+            oauth_token_type=userdata.get('oauth_token_type'),
+            last_used_at=db.func.utcnow()
             # TODO: Save refresh token
             )
 

@@ -38,6 +38,7 @@
           {% for extid in current_auth.user.externalids %}
             <tr>
               <td><i class="fa fa-fw fa-{{ extid.service }}"></i> {{ extid.username }}</td>
+              <td>{% trans %}Last used{% endtrans %} {{ extid.last_used_at|age }}</td>
               <td><a title="{% trans %}Remove{% endtrans %}" href="{{ url_for('.remove_extid', service=extid.service, userid=extid.userid) }}"><i class="fa fa-trash-o"></i></a></td>
             </tr>
           {% endfor %}
