@@ -1,38 +1,29 @@
-body {
-  padding-top: 70px;
+.page-content {
+  padding-top: 2em;
 }
 
-header {
-  min-height: 0;
-  margin-bottom: 0;
+.content-head--top-padding {
+  padding-top: 1em;
+  padding-bottom: 1em;
+  border-bottom: 1px solid rgba(132, 146, 166, 0.3);
 }
 
-#hgnav {
-  background: #F3F3F3;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.4);
+.card--limited {
+  width: 340px;
 }
 
-a.loginbutton {
-  display: block;
-  float: left;
-  text-indent: -119988px;
-  overflow: hidden;
-  text-align: center;
-  background-repeat: no-repeat;
-  background-position: 50% 50%;
-  width: 120px;
-  height: 50px;
-  border: 1px solid #b7b7b7;
-  line-height: 40px;
-  padding: 5px;
-  margin: 0 4px 4px 0;
-  -moz-border-radius: 3px;
-  -webkit-border-radius: 3px;
-  border-radius: 3px;
-  -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+.card .card__body--lgtext {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.webfont-svg {
+	width: 15px;
+  vertical-align: text-top;
+}
+
+.card__body .mui-btn--fab + .mui-btn--fab {
+  margin-left: 10px;
 }
 
 a.loginbutton.hidden, .js a.loginbutton.jshidden, .no-js a.loginbutton.no-jshidden {
@@ -40,126 +31,6 @@ a.loginbutton.hidden, .js a.loginbutton.jshidden, .no-js a.loginbutton.no-jshidd
   visibility: hidden;
 }
 
-a.loginbutton.lastused, a.loginbutton.lastused:hover {
-  border: 1px solid rgba(82, 168, 236, 0.8);
-  -moz-box-shadow: 0 0 8px rgba(82, 168, 236, 0.6);
-  -webkit-box-shadow: 0 0 8px rgba(82, 168, 236, 0.6);
-  box-shadow: 0 0 8px rgba(82, 168, 236, 0.6);
-}
-
-a.loginbutton.caption {
-  text-indent: 0;
-}
-
-a.loginbutton:hover {
-  -moz-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
-  -webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
-  border-color: #969696;
-  text-decoration: none;
-}
-
-input[name="field-openid"] {
-  background: url('../img/openid.png?1366451008') 4px no-repeat;
-  width: 230px;
-  padding-left: 25px;
-}
-
-#logo {
-  text-indent: -119988px;
-  overflow: hidden;
-  text-align: left;
-  text-transform: capitalize;
-  background-image: url('../img/logo.png?1372854153');
-  background-repeat: no-repeat;
-  background-position: 50% 50%;
-  width: 113px;
-  height: 75px;
-}
-
-@media only screen and (-webkit-min-device-pixel-ratio: 2) {
-  #logo {
-    background-image: url('../img/logo@2x.png?1372854195');
-    -moz-background-size: 113px 75px;
-    -o-background-size: 113px 75px;
-    -webkit-background-size: 113px 75px;
-    background-size: 113px 75px;
-  }
-}
-.detail-box {
-  margin: 10px;
-  border-bottom: 1px solid #ddd;
-  margin: 0 -15px;
-  padding: 15px;
-}
-.detail-box .heading, .detail-box .heading-special {
-  margin: 0;
-}
-.detail-box .heading-special {
-  cursor: pointer;
-}
-.detail-box .para {
-  margin: 0;
-}
-.detail-box .button-box {
-  margin: 12px auto 0;
-}
-.detail-box .button-box-button {
-  margin-bottom: 12px;
-}
-.detail-box .detail-box-form {
-  padding: 12px 0 0;
-}
-.detail-box .detail-box-form .well {
-  margin-bottom: 0;
-}
-.detail-box .detail-box-panel {
-  margin-bottom: 0;
-  margin-top: 5px;
-}
-.detail-box .detail-box-table {
-  margin-bottom: 0;
-}
-.detail-box .detail-box-table tr:first-child > td {
-  border-top: 0;
-}
-.detail-box .detail-box-table td:first-child {
-  padding-left: 0;
-}
-.detail-box .detail-box-table .listwidget ul input {
-  top: 3px;
-}
-
-@media screen and (min-width: 768px) {
-  .detail > div {
-    display: inline-block;
-    float: none;
-    vertical-align: top;
-    margin: 0 -1px 30px;
-  }
-
-  .detail-box {
-    -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 0 10px rgba(0, 0, 0, 0.1) inset;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 0 10px rgba(0, 0, 0, 0.1) inset;
-    padding: 15px;
-    margin: 0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-  }
-  .detail-box .button-box {
-    float: right;
-  }
-  .detail-box .button-box-button {
-    margin-bottom: 0;
-  }
-  .detail-box .detail-box-form {
-    clear: both;
-  }
-}
-@media (min-width: 992px) and (max-width: 1199px) {
-  .detail-box .form-horizontal .help-required {
-    position: absolute;
-    right: -10px;
-    bottom: 0;
-  }
+.passwordform-heading {
+  margin-top: 40px;
 }

@@ -1,20 +1,38 @@
 {% extends "layout.html.jinja2" %}
 {% block title %}Organization: {{ org.title }}{% endblock %}
-{% block content %}
-<h2>Teams</h2>
-<ol>
+
+{% block top_title %}
+  <h1 class="mui--text-display1">Organization: {{ org.title }}</h1>
+  <p><a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ url_for('.team_new', name=org.name) }}">New team</a></p>
+{% endblock %}
+
+{% block contentwrapper %}
+<div class="grid">
+  <div class="grid__col-xs-12">
+    <h2><strong>Teams</strong></h2>
+  </div>
   {% for team in org.teams -%}
-    <li>
-      <strong>{{ team.title }}</strong>
-      (<a href="{{ url_for('.team_edit', name=org.name, buid=team.buid) }}">edit</a>
-      {%- if team != org.owners and team != org.members %},
-        <a href="{{ url_for('.team_delete', name=org.name, buid=team.buid) }}">delete</a>
-      {%- endif %})
-      <ol>{% for user in team.users %}<li>{{ user.pickername }}</li>{% endfor %}</ol>
-    </li>
+    <div class="grid__col-xs-12 grid__col-sm-6">
+      <div class="card">
+        <div class="card__header">
+          <h3><strong>{{ team.title }}</strong></h3>
+        </div>
+        <div class="card__body">
+          <ol class="mui-list--aligned mui--text-subhead">
+            {% for user in team.users %}
+              <li>{{ user.pickername }}</li>
+            {% endfor %}
+          </ol>
+        </div>
+        <div class="mui-divider"></div>
+        <div class="card__footer">
+          <a href="{{ url_for('.team_edit', name=org.name, buid=team.buid) }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Edit</a>
+          {%- if team != org.owners and team != org.members %}
+            <a href="{{ url_for('.team_delete', name=org.name, buid=team.buid) }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--danger">delete</a>
+          {%- endif %}
+        </div>
+      </div>
+    </div>
   {% endfor %}
-</ol>
-<p>
-  <a class="btn btn-primary" href="{{ url_for('.team_new', name=org.name) }}">New team</a>
-</p>
+</div>
 {% endblock %}

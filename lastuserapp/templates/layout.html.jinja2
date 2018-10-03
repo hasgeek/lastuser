@@ -1,52 +1,46 @@
 {% extends "baseframe.html.jinja2" -%}
-{% from "baseframe/components.html.jinja2" import hgnav %}
+{% from "baseframe/components.html.jinja2" import hgtopnav %}
 
-{% block headerbox -%}
-<header>
-  {% block networkbar %}
-    {% macro site_title() %}
-      <div class="page-header">
-        <h1><a href="{{ url_for('index') }}">HasGeek Auth</a></h1>
-      </div>
-    {% endmacro %}
-    {{ hgnav(site_title=site_title(), loginbtntext="Login or sign up") }}
-  {% endblock %}
-</header>
+{% block sidedrawer -%}
 {%- endblock %}
 
-{% block baseheadline -%}
+{% block header -%}
+  {% macro site_title() %}
+    <div class="page-header">
+      <a href="{{ url_for('index') }}" title="{{ config['SITE_TITLE'] }}" class="mui--text-light">{{ config['SITE_TITLE'] }}</a>
+    </div>
+  {% endmacro %}
+  {{ hgtopnav(site_title=site_title(), loginbtntext="Login or sign up") }}
 {%- endblock %}
 
-{% block basecontent -%}
-  {# Show a sidebar only if the user is logged in -#}
-{#  {%- if current_auth.is_authenticated %}
-  <div class="row">
-    <div class="span9 col-xs-12 col-sm-8 col-md-9 col-lg-9">
-  {%- endif %} #}
-      {% block headline -%}
-        <div class="page-header">
-          <h1>{{ self.title()|e }}</h1>
+{% block bodytag %}<body class="mui--bg-primary">{% endblock %}
+
+{% block contenthead %}
+  {% block headline -%}
+    <div class="content-head content-head--top-padding mui--bg-accent">
+      <div class="mui-container">
+        <div class="grid">
+          <div class="grid__col-xs-12">
+            {% block top_title %}
+            <h1 class="mui--text-display1">
+              {{ self.title()|e }}
+            </h1>
+            {% endblock %}
+          </div>
         </div>
-      {%- endblock %}
-      {% block content %}{% endblock %}
-{#  {%- if current_auth.is_authenticated %}
+      </div>
     </div>
-    <div class="span3 col-xs-12 col-sm-4 col-md-3 col-lg-3">
-      <ul class="well nav nav-list">
-        <li class="nav-header">Account</li>
-        <li{% if request.endpoint=='lastuser_ui.account' %} class="active"{% endif %}><a href="{{ url_for('lastuser_ui.account') }}"><span class="icon-user">Profile</span></a></li>
-        <li class="nav-header">Applications</li>
-        <li{% if request.endpoint=='lastuser_ui.client_list' %} class="active"{% endif %}><a href="{{ url_for('lastuser_ui.client_list') }}"><span class="icon-cog">My applications</span></a></li>
-        <li{% if request.endpoint=='lastuser_ui.permission_list' %} class="active"{% endif %}><a href="{{ url_for('lastuser_ui.permission_list') }}"><span class="icon-lock">Permissions</span></a></li>
-        <li class="nav-header">Organizations</li>
-        {%- for org in current_auth.user.organizations_owned() %}
-          <li{% if request.endpoint=='lastuser_ui.org_info' and request.view_args['name']==org.name %} class="active"{% endif %}><a href="{{ url_for('lastuser_ui.org_info', name=org.name) }}"><span class="icon-group">{{ org.title }}</span></a></li>
-        {%- endfor %}
-        <li{% if request.endpoint=='lastuser_ui.org_new' %} class="active"{% endif %}><a href="{{ url_for('lastuser_ui.org_new') }}"><span class="icon-plus">New organization...</span></a></li>
-      </ul>
-    </div>
-  </div>
-  {%- endif %} #}
-{%- endblock %}
+  {%- endblock %}
+{% endblock %}
 
-{% block footer %}{{ config['MESSAGE_FOOTER'] }}{% endblock %}
+{% block basecontent %}
+  <div class="page-content">
+    {% block contentwrapper %}
+    <div class="grid">
+      <div class="grid__col-xs-12">
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+    {% endblock %}
+  </div>
+{% endblock %}

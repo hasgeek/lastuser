@@ -1,21 +1,33 @@
 {% extends "layout.html.jinja2" %}
+
 {% block title %}Client access key{% endblock %}
+
 {% block content %}
-  <p>
+  <p class="mui--text-titlle">
     Here is your new application access key. Save this somewhere safe. You will not be able
     to view this secret again.
   </p>
-  <dl class="infobox">
-    <dt>Application title</dt>
-    <dd>{{ cred.client.title }}</dd>
-    <dt>Access key for</dt>
-    <dd>{{ cred.title }}</dd>
-    <dt>Client access key</dt>
-    <dd><strong>{{ cred.name }}</strong></dd>
-    <dt>Client secret</dt>
-    <dd><strong>{{ secret }}</strong></dd>
-  </dl>
+  <table class="mui-table mui-table--bordered">
+    <tbody class="mui--text-subhead">
+      <tr>
+        <td>Application title</td>
+        <td>{{ cred.client.title }}</td>
+      </tr>
+      <tr>
+        <td>Access key for</td>
+        <td>{{ cred.title }}</td>
+      </tr>
+      <tr>
+        <td>Client access key</td>
+        <td><strong>{{ cred.name }}</strong></td>
+      </tr>
+      <tr>
+        <td>Client secret</td>
+        <td><strong>{{ secret }}</strong></td>
+      </tr>
+    </tbody>
+  </table>
   <p>
-    <a class="btn btn-primary" href="{{ url_for('.client_info', key=cred.client.key) }}"><i class="fa fa-angle-left"></i> Return to client info</a>
+    <a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ url_for('.client_info', key=cred.client.key) }}"><i class="fa fa-angle-left"></i> Return to client info</a>
   </p>
 {% endblock %}

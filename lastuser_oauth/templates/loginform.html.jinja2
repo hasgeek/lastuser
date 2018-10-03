@@ -1,4 +1,4 @@
-{% from "baseframe/forms.html.jinja2" import ajaxform %}
+{% from "baseframe/mui/forms.html.jinja2" import ajaxform %}
 {% from "forms/login.html.jinja2" import passwordlogin %}
 {{ passwordlogin(loginform, Markup) }}
 {{ ajaxform('passwordlogin', request) }}

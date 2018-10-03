@@ -1,7 +1,13 @@
 {% extends "layout.html.jinja2" %}
 {% block title %}Organizations{% endblock %}
+
+{% block top_title %}
+  <h1 class="mui--text-display1">Organizations</h1>
+  <p><a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ url_for('.org_new') }}">New organization</a></p>
+{% endblock %}
+
 {% block content %}
-<table class="table">
+<table class="mui-table mui-table--bordered mui-table--responsive">
   <thead>
     <tr>
       <th>#</th>
@@ -9,13 +15,13 @@
       <th>Owners</th>
     </tr>
   </thead>
-  <tbody>
+  <tbody class="mui--text-subhead">
     {% for org in organizations %}
       {%- set link = url_for('.org_info', name=org.name)|e %}
-      <tr class="link">
-        <td><a href="{{ link }}">{{ loop.index }}</a></td>
-        <td><a href="{{ link }}">{{ org.title }}</a></td>
-        <td><a href="{{ link }}">
+      <tr>
+        <td><a href="{{ link }}" title="org.title">{{ loop.index }}</a></td>
+        <td><a href="{{ link }}" title="org.title">{{ org.title }}</a></td>
+        <td><a href="{{ link }}" title="org.title">
           {%- for user in org.owners.users %}
             {%- if not loop.first %}, {% endif -%}
             {{ user.displayname() }}
@@ -29,8 +35,4 @@
     {% endfor %}
   </tbody>
 </table>
-<p>
-  <a class="btn btn-primary" href="{{ url_for('.org_new') }}">New organization</a>
-</p>
-
 {% endblock %}

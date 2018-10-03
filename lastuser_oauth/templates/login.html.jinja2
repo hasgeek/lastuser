@@ -1,28 +1,27 @@
 {% extends "layout.html.jinja2" %}
-{% from "baseframe/forms.html.jinja2" import renderfield, renderform_inner, rendersubmit, ajaxform %}
+{% from "baseframe/mui/forms.html.jinja2" import renderfield, renderform_inner, rendersubmit, ajaxform %}
 {% from "forms/login.html.jinja2" import passwordlogin %}
 {% block title %}Login{% endblock %}
 {% block headline %}{% endblock %}
 {% block content %}
-  <div class="flash cookies-required-alert">
-    <div class="flashmessage">
-      Cookies are required to login. Please enable cookies in your browser’s settings and reload this page.
-    </div>
+  <div class="alert alert--error fade in cookies-required-alert">
+    <a href="#" class="close" data-dismiss="alert">&times;</a>
+    Cookies are required to login. Please enable cookies in your browser’s settings and reload this page.
   </div>
-  <div class="cookies-required form-horizontal">
-    <div class="page-header"><h2>
+  <div class="cookies-required mui-form mui-form--margins">
+    <div><h2>
       {%- if config['LOGIN_MESSAGE_1'] -%}
         {{ config['LOGIN_MESSAGE_1'] }}
       {%- else -%}
         Login with your existing account at any of these <small>(pick one)</small>
       {%- endif -%}
     </h2></div>
-    <div class="clearfix">
-      <p style="line-height: 2.5">
+    <div>
+      <p>
       {% for provider in login_registry %}
-        <a class="btn btn-default login-{{ provider }} {%- if lastused==provider %} lastused{% elif not login_registry[provider].priority %} optional jshidden{% endif %}" href="{{ url_for('.login_service', service=provider, next=request.args.get('next')) }}"><i class="fa fa-{{ login_registry[provider].icon }}"></i>&nbsp;&nbsp;{{ login_registry[provider]['title'] }}</a>
+        <a class="mui-btn mui-btn--small mui-btn--fab mui-btn--default login-{{ provider }} {%- if lastused==provider %} lastused{% elif not login_registry[provider].priority %} optional jshidden{% endif %}" href="{{ url_for('.login_service', service=provider, next=request.args.get('next')) }}"><img src="{{ url_for('static', filename='oauth/img/' + login_registry[provider].icon + '.svg') }}" class="webfont-svg" alt="{{ login_registry[provider]['title'] }}"/></i></a>
       {% endfor %}
-        <a class="btn btn-default caption no-jshidden" id="showmore" href="#">Show more...</a>
+        <a class="mui-btn mui-btn--small mui-btn--flat mui-btn--accent caption no-jshidden" id="showmore" href="#">Show more...</a>
       </p>
     </div>
     {%- for service, formdata in service_forms.items() %}{% with form = formdata['form'] %}
@@ -35,14 +34,16 @@
       </form>
     {%- endwith %}{% endfor %}
     <div id="passwordform" {%- if lastused != 'password' %} class="jshidden"{% endif %}>
-      <h2>
+      <h2 class="passwordform-heading">
         {%- if config['LOGIN_MESSAGE_2'] -%}
           {{ config['LOGIN_MESSAGE_2'] }}
         {%- else -%}
           Or, login with a password
         {%- endif -%}
       </h2>
-      {{ passwordlogin(loginform, Markup) }}
+      <div class="grid__col-xs-12 grid__col-md-6 grid__col--bleed">
+        {{ passwordlogin(loginform, Markup) }}
+      </div>
     </div>
   </div>
 {% endblock %}
@@ -57,7 +58,7 @@
         $("#form-openid").hide().removeClass('jshidden');
       {% endif -%}
       {% if lastused != 'password' %}$("#passwordform").removeClass('jshidden').hide();{% endif %}
-      $(".btn.optional").hide().removeClass('jshidden');
+      $(".mui-btn.optional").hide().removeClass('jshidden');
       $(".login-openid").click(function() {
         $("#form-openid").fadeToggle();
         $("#openid").focus();
@@ -65,7 +66,7 @@
       });
       $("#showmore").click(function() {
         $("#showmore").hide();
-        $(".btn.optional").fadeToggle();
+        $(".mui-btn.optional").fadeToggle();
         $("#passwordform").fadeIn();
         $("#username").focus();
         return false;
