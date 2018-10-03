@@ -26,7 +26,7 @@ class TestUserClientPermissions(TestDatabaseFixture):
         """
         # scenario 1: when *only* olduser has UserClientPermissions instance
         old_crusoe = self.fixtures.crusoe
-        new_crusoe = models.User(username=u'chef_crusoe')
+        new_crusoe = models.User(username=u'chef-crusoe')
         models.UserClientPermissions.migrate_user(old_crusoe, new_crusoe)
         for each in new_crusoe.client_permissions:
             self.assertIsInstance(each, models.UserClientPermissions)
@@ -38,7 +38,7 @@ class TestUserClientPermissions(TestDatabaseFixture):
         access_permissions_old_oakley = u'siteadmin'
         access_permissions_new_oakley = u'siteeditor'
         old_oakley_userclientperms = models.UserClientPermissions(user=old_oakley, client=client, access_permissions=access_permissions_old_oakley)
-        new_oakley = models.User(username=u'oakley_the_stud')
+        new_oakley = models.User(username=u'oakley-the-stud')
         new_oakley_userclientperms = models.UserClientPermissions(user=new_oakley, client=client, access_permissions=access_permissions_new_oakley)
         db.session.add(old_oakley_userclientperms)
         db.session.add(new_oakley_userclientperms)
@@ -55,7 +55,7 @@ class TestUserClientPermissions(TestDatabaseFixture):
         """
         Test for UserClientPermissions' pickername
         """
-        finnick = models.User(username=u'finnick', fullname=u'Finnick Odair')
+        finnick = models.User(username=u'finnick', fullname=u"Finnick Odair")
         district4 = models.Client(title=u"District 4")
         access_permissions = u'siteadmin'
         result = models.UserClientPermissions(user=finnick, client=district4, access_permissions=access_permissions)
@@ -65,7 +65,7 @@ class TestUserClientPermissions(TestDatabaseFixture):
         """
         Test for UserClientPermissions' buid
         """
-        beetee = models.User(username=u'beetee', fullname=u'Beetee')
+        beetee = models.User(username=u'beetee', fullname=u"Beetee")
         district3 = models.Client(title=u'District 3')
         access_permissions = u'siteadmin'
         result = models.UserClientPermissions(user=beetee, client=district3, access_permissions=access_permissions)

@@ -13,29 +13,29 @@ class TestUser(TestDatabaseFixture):
         """
         Test for creation of user object from User model
         """
-        user = models.User(username=u"lena", fullname=u"Lena Audrey Dachshund")
+        user = models.User(username=u'lena', fullname=u"Lena Audrey Dachshund")
         db.session.add_all([user])
         db.session.commit()
-        lena = models.User.query.filter_by(username=u"lena").first()
+        lena = models.User.get(username=u'lena')
         self.assertIsInstance(lena, models.User)
-        self.assertEqual(user.username, u"lena")
+        self.assertEqual(user.username, u'lena')
         self.assertEqual(user.fullname, u"Lena Audrey Dachshund")
 
-    def test_user_is_valid_username(self):
+    def test_user_is_valid_name(self):
         """
         Test to check if given is a valid username associated with the user
         """
         crusoe = self.fixtures.crusoe
         # scenario 1: not a valid username
         number_one = models.User(username=u'number1', fullname=u'Number One')
-        self.assertFalse(number_one.is_valid_username(u'Number1'))
+        self.assertFalse(number_one.is_valid_name(u'Number1'))
         # scenario 2: a valid username but not the username of instance passed
-        self.assertFalse(crusoe.is_valid_username(u"oakley"))
+        self.assertFalse(crusoe.is_valid_name(u"oakley"))
         # scenario 3: a existing username
-        self.assertTrue(crusoe.is_valid_username(u"crusoe"))
+        self.assertTrue(crusoe.is_valid_name(u"crusoe"))
         # scenario 4: a existing org
         batdog = self.fixtures.batdog
-        self.assertFalse(crusoe.is_valid_username(batdog.name))
+        self.assertFalse(crusoe.is_valid_name(batdog.name))
 
     def test_user_profileid(self):
         """
@@ -304,7 +304,7 @@ class TestUser(TestDatabaseFixture):
         """
         crusoe = self.fixtures.crusoe
         self.assertEqual(crusoe.status, 0)
-        oakley = models.User.query.filter_by(username=u"oakley").first()
+        oakley = models.User.get(username=u'oakley')
         oakley.status = 1
         self.assertEqual(oakley.status, 1)
 
@@ -341,7 +341,7 @@ class TestUser(TestDatabaseFixture):
         """
         # ## Merge a user onto an older user ###
         crusoe = self.fixtures.crusoe
-        crusoe2 = models.User(username=u"batdog", fullname=u"Batdog")
+        crusoe2 = models.User(username=u"crusoe2", fullname=u"Crusoe2")
         db.session.add(crusoe2)
         db.session.commit()
         merged_user = models.merge_users(crusoe, crusoe2)

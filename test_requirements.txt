@@ -1,6 +1,6 @@
-pytest==3.8.1
+pytest==3.8.2
 coverage==4.5.1
 behave==1.2.6
 mock==2.0.0
 selenium==3.14.1
-coveralls==1.5.0
+coveralls==1.5.1

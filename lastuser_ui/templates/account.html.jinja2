@@ -36,11 +36,10 @@
         <ol class="mui-list--aligned">
           {% for extid in current_auth.user.externalids %}
             <li>
-              <img src="{{ url_for('static', filename='oauth/img/' + extid.username + '.svg') }}" class="webfont-svg" alt="{{ extid.username }}"/>&nbsp;{{ extid.username }}
-              <a href="{{ url_for('event', profile=space.profile.name, space=space.name, name=event.name) }}" class="mui--text-subhead">{{ event.title }}</a>
+              <img src="{{ url_for('static', filename='oauth/img/' + extid.username + '.svg') }}" class="webfont-svg" alt="{{ extid.username }}"/>{% trans %}Last used{% endtrans %} {{ extid.last_used_at|age }}
               <a href="{{ url_for('.remove_extid', service=extid.service, userid=extid.userid) }}" class="mui--pull-right" title="{% trans %}Remove{% endtrans %}"><i class="material-icons mui--text-subhead mui--align-middle">delete</i></a>
             </li>
-          {%- endfor %}
+          {% endfor %}
         </ol>
         <p>{% trans %}Add External ID{% endtrans %}</p>
         {% for provider in login_registry %}

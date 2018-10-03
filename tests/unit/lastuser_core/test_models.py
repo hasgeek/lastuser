@@ -12,21 +12,21 @@ class TestModels(TestDatabaseFixture):
         """
         # Scenario 1: if first user's created_at date younger than second user's created_at
         crusoe = self.fixtures.crusoe
-        batdog = models.User(username=u"batdog", fullname=u"Batdog")
-        db.session.add(batdog)
+        bathound = models.User(username=u"bathound", fullname=u"Bathound")
+        db.session.add(bathound)
         db.session.commit()
-        merged = models.merge_users(crusoe, batdog)
+        merged = models.merge_users(crusoe, bathound)
         self.assertEqual(merged, crusoe)
         self.assertIsInstance(merged, models.User)
         # because the logic is to merge into older account
         self.assertEqual(crusoe.status, 0)
-        self.assertEqual(batdog.status, 2)
+        self.assertEqual(bathound.status, 2)
 
         # Scenario 1: if second user's created_at date older than first user 's created_at
-        tyrion = models.User(username=u'tyrion', fullname=u'Tyrion Lannister')
+        tyrion = models.User(username=u'tyrion', fullname=u"Tyrion Lannister")
         db.session.add(tyrion)
         db.session.commit()
-        subramanian = models.User(username=u'subramanian', fullname=u'Tyrion subramanian')
+        subramanian = models.User(username=u'subramanian', fullname=u"Tyrion Subramanian")
         db.session.add(subramanian)
         db.session.commit()
         merged = models.merge_users(subramanian, tyrion)
@@ -54,7 +54,7 @@ class TestModels(TestDatabaseFixture):
 
         # scenario 2: with @ in name and not extid
         d_email = u'd@dothraki.vly'
-        daenerys = models.User(username=d_email, fullname=u'Daenerys Targaryen', email=d_email)
+        daenerys = models.User(username=u'daenerys', fullname=u"Daenerys Targaryen", email=d_email)
         daenerys_email = models.UserEmail(email=d_email,
         user=daenerys)
         db.session.add_all([daenerys, daenerys_email])
@@ -67,7 +67,7 @@ class TestModels(TestDatabaseFixture):
 
         # scenario 3: with no @ starting in name, check by UserEmailClaim
         j_email = u'jonsnow@nightswatch.co.uk'
-        jonsnow = models.User(username=u'jonsnow', fullname=u'Jon Snow')
+        jonsnow = models.User(username=u'jonsnow', fullname=u"Jon Snow")
         jonsnow_email_claimed = models.UserEmailClaim(email=j_email, user=jonsnow)
         db.session.add_all([jonsnow, jonsnow_email_claimed])
         db.session.commit()
@@ -76,14 +76,14 @@ class TestModels(TestDatabaseFixture):
         self.assertEqual(result4, jonsnow)
 
         # scenario 5: with no @ anywhere in name, fetch username
-        arya = models.User(username=u'arya', fullname=u'Arya Stark')
+        arya = models.User(username=u'arya', fullname=u"Arya Stark")
         db.session.add(arya)
         db.session.commit()
         result5 = models.getuser(u'arya')
         self.assertEqual(result5, arya)
 
         # scenario 6: with no starting with @ name and no UserEmailClaim or UserEmail
-        cersei = models.User(username=u'cersei', fullname=u'Cersei Lannister')
+        cersei = models.User(username=u'cersei', fullname=u"Cersei Lannister")
         db.session.add(cersei)
         db.session.commit()
         result6 = models.getuser(u'cersei@thelannisters.co.uk')
