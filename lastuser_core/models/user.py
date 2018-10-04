@@ -33,10 +33,12 @@ class Name(UuidMixin, BaseMixin, db.Model):
     # Only one of the following three may be set:
     #: User that owns this name (limit one per user)
     user_id = db.Column(None, db.ForeignKey('user.id', ondelete='CASCADE'), unique=True, nullable=True)
-    user = db.relationship('User', backref=db.backref('_name', uselist=False, cascade='all, delete-orphan'))
+    user = db.relationship('User',
+        backref=db.backref('_name', lazy='joined', uselist=False, cascade='all, delete-orphan'))
     #: Organization that owns this name (limit one per organization)
     org_id = db.Column(None, db.ForeignKey('organization.id', ondelete='CASCADE'), unique=True, nullable=True)
-    org = db.relationship('Organization', backref=db.backref('_name', uselist=False, cascade='all, delete-orphan'))
+    org = db.relationship('Organization',
+        backref=db.backref('_name', lazy='joined', uselist=False, cascade='all, delete-orphan'))
     #: Reserved name (not assigned to any party)
     reserved = db.Column(db.Boolean, nullable=False, default=False, index=True)
 
@@ -695,13 +697,17 @@ class Team(UuidMixin, BaseMixin, db.Model):
         olduser.teams = []
 
     @classmethod
-    def get(cls, buid=None):
+    def get(cls, buid, with_parent=False):
         """
         Return a Team with matching buid.
 
-        :param str buid: Buid of the organization
+        :param str buid: Buid of the team
         """
-        return cls.query.filter_by(buid=buid).one_or_none()
+        if with_parent:
+            query = cls.query.options(db.joinedload(cls.org))
+        else:
+            query = cls.query
+        return query.filter_by(buid=buid).one_or_none()
 
 
 # -- User email/phone and misc

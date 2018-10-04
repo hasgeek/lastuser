@@ -33,7 +33,8 @@ class TestOrganization(TestDatabaseFixture):
         self.assertIsInstance(dachsunited.members, models.Team)
         self.assertEqual(dachsunited.owners.users.all(), [])
         self.assertEqual(dachsunited.members.users.all(), [])
-        self.assertIsNone(dachsunited.members.get())
+        with self.assertRaises(TypeError):
+            dachsunited.members.get()
         # After adding users to the organization
         dachsunited.owners.users.append(crusoe)
         dachsunited.members.users.append(oakley)

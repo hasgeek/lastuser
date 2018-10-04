@@ -25,7 +25,7 @@ def organization_links(self):
     """
     return []
     return [{
-        'link': url_for('lastuser_ui.org_info', name=org.name),
+        'link': org.url_for(),
         'title': org.title} for org in self.organizations_owned()]
 
 

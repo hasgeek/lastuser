@@ -14,8 +14,8 @@ class TestTeam(TestDatabaseFixture):
         dachshunds_buid = dachshunds.buid
         result_with_buid = models.Team.get(buid=dachshunds_buid)
         assert u'<Team {team} of {org}>'.format(team=dachshunds.title, org=repr(dachshunds.org)[1:-1]) in repr(result_with_buid)
-        result_without_buid = models.Team.get()
-        self.assertIsNone(result_without_buid)
+        with self.assertRaises(TypeError):
+            models.Team.get()
 
     def test_team_pickername(self):
         """

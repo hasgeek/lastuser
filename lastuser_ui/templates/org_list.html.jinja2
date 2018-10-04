@@ -11,7 +11,7 @@
   </thead>
   <tbody>
     {% for org in organizations %}
-      {%- set link = url_for('.org_info', name=org.name)|e %}
+      {%- set link = org.url_for()|e %}
       <tr class="link">
         <td><a href="{{ link }}">{{ loop.index }}</a></td>
         <td><a href="{{ link }}">{{ org.title }}</a></td>
@@ -30,7 +30,7 @@
   </tbody>
 </table>
 <p>
-  <a class="btn btn-primary" href="{{ url_for('.org_new') }}">New organization</a>
+  <a class="btn btn-primary" href="{{ url_for('.OrgView_new') }}">New organization</a>
 </p>
 
 {% endblock %}

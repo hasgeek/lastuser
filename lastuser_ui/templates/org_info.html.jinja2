@@ -6,15 +6,15 @@
   {% for team in org.teams -%}
     <li>
       <strong>{{ team.title }}</strong>
-      (<a href="{{ url_for('.team_edit', name=org.name, buid=team.buid) }}">edit</a>
+      (<a href="{{ team.url_for('edit') }}">edit</a>
       {%- if team != org.owners and team != org.members %},
-        <a href="{{ url_for('.team_delete', name=org.name, buid=team.buid) }}">delete</a>
+        <a href="{{ team.url_for('delete') }}">delete</a>
       {%- endif %})
       <ol>{% for user in team.users %}<li>{{ user.pickername }}</li>{% endfor %}</ol>
     </li>
   {% endfor %}
 </ol>
 <p>
-  <a class="btn btn-primary" href="{{ url_for('.team_new', name=org.name) }}">New team</a>
+  <a class="btn btn-primary" href="{{ org.url_for('new_team') }}">New team</a>
 </p>
 {% endblock %}

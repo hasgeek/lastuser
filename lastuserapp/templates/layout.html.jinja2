@@ -40,9 +40,9 @@
         <li{% if request.endpoint=='lastuser_ui.permission_list' %} class="active"{% endif %}><a href="{{ url_for('lastuser_ui.permission_list') }}"><span class="icon-lock">Permissions</span></a></li>
         <li class="nav-header">Organizations</li>
         {%- for org in current_auth.user.organizations_owned() %}
-          <li{% if request.endpoint=='lastuser_ui.org_info' and request.view_args['name']==org.name %} class="active"{% endif %}><a href="{{ url_for('lastuser_ui.org_info', name=org.name) }}"><span class="icon-group">{{ org.title }}</span></a></li>
+          <li{% if request.endpoint=='lastuser_ui.OrgView_view' and request.view_args['name']==org.name %} class="active"{% endif %}><a href="{{ org.url_for() }}"><span class="icon-group">{{ org.title }}</span></a></li>
         {%- endfor %}
-        <li{% if request.endpoint=='lastuser_ui.org_new' %} class="active"{% endif %}><a href="{{ url_for('lastuser_ui.org_new') }}"><span class="icon-plus">New organization...</span></a></li>
+        <li{% if request.endpoint=='lastuser_ui.OrgView_new' %} class="active"{% endif %}><a href="{{ url_for('lastuser_ui.OrgView_new') }}"><span class="icon-plus">New organization...</span></a></li>
       </ul>
     </div>
   </div>
