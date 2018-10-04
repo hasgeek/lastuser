@@ -19,7 +19,7 @@
     <div>
       <p>
       {% for provider in login_registry %}
-        <a class="mui-btn mui-btn--small mui-btn--primary mui-btn--default login-{{ provider }} {%- if lastused==provider %} lastused{% elif not login_registry[provider].priority %} optional jshidden{% endif %}" href="{{ url_for('.login_service', service=provider, next=request.args.get('next')) }}"><img src="{{ url_for('static', filename='oauth/img/' + login_registry[provider].icon + '.png') }}" class="webfont-svg" alt="{{ login_registry[provider]['title'] }}"/></i> {{ login_registry[provider]['title'] }}</a>
+        <a class="mui-btn mui-btn--small mui-btn--primary mui-btn--default login-{{ provider }} {%- if lastused==provider %} lastused{% elif not login_registry[provider].priority %} optional jshidden{% endif %}" href="{{ url_for('.login_service', service=provider, next=request.args.get('next')) }}"><img src="{{ url_for('static', filename='oauth/img/' + login_registry[provider].icon + '.png') }}" class="icon-img" alt="{{ login_registry[provider]['title'] }}"/></i> {{ login_registry[provider]['title'] }}</a>
       {% endfor %}
         <a class="mui-btn mui-btn--small mui-btn--flat mui-btn--accent caption no-jshidden" id="showmore" href="#">Show more...</a>
       </p>
