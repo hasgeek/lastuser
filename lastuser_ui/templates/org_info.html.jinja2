@@ -3,7 +3,7 @@
 
 {% block top_title %}
   <h1 class="mui--text-display1">Organization: {{ org.title }}</h1>
-  <p><a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ url_for('.team_new', name=org.name) }}">New team</a></p>
+  <p><a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ org.url_for('new_team') }}">New team</a></p>
 {% endblock %}
 
 {% block contentwrapper %}
@@ -26,9 +26,9 @@
         </div>
         <div class="mui-divider"></div>
         <div class="card__footer">
-          <a href="{{ url_for('.team_edit', name=org.name, buid=team.buid) }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Edit</a>
+          <a href="{{ team.url_for('edit') }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Edit</a>
           {%- if team != org.owners and team != org.members %}
-            <a href="{{ url_for('.team_delete', name=org.name, buid=team.buid) }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--danger">delete</a>
+            <a href="{{  team.url_for('delete') }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--danger">delete</a>
           {%- endif %}
         </div>
       </div>

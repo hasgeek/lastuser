@@ -5,6 +5,7 @@
 {%- endblock %}
 
 {% block headline -%}{% endblock %}
+
 {% block contentwrapper %}
 <div class="grid">
   <div class="mui--text-subhead grid__col-xs-12 {% if current_auth.is_authenticated %}grid__col-sm-7 grid__col-md-8 grid__col-lg-8 {% endif %}">
@@ -42,7 +43,7 @@
           <ol class="mui-list--aligned mui--text-subhead">
             <li><a href="{{ url_for('.client_list') }}">Client applications</a></li>
             <li><a href="{{ url_for('.permission_list') }}">Permissions</a></li>
-            <li><a href="{{ url_for('.org_list') }}">Organizations</a></li>
+            <li><a href="{{ url_for('.OrgView_index') }}">Organizations</a></li>
           </ol>
         </div>
       </div>

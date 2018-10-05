@@ -3,7 +3,7 @@
 
 {% block top_title %}
   <h1 class="mui--text-display1">Organizations</h1>
-  <p><a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ url_for('.org_new') }}">New organization</a></p>
+  <p><a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ url_for('.OrgView_new') }}">New organization</a></p>
 {% endblock %}
 
 {% block content %}
@@ -17,7 +17,7 @@
   </thead>
   <tbody class="mui--text-subhead">
     {% for org in organizations %}
-      {%- set link = url_for('.org_info', name=org.name)|e %}
+      {%- set link = org.url_for()|e %}
       <tr>
         <td><a href="{{ link }}" title="org.title">{{ loop.index }}</a></td>
         <td><a href="{{ link }}" title="org.title">{{ org.title }}</a></td>
