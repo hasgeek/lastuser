@@ -44,8 +44,7 @@
       <div class="mui--text-subhead">{{ accountinfo(other_user) }}</div>
     </div>
   </div>
-  <form class="cookies-required mui-form mui-form--margins" id="merge-accounts" method="POST">
-    <input type="hidden" name="_charset_"/>
+  <form class="cookies-required mui-form mui-form--margins" id="merge-accounts" method="POST" accept-charset="UTF-8">
     <input type="hidden" name="form.id" value="authorize"/>
     {{ form.hidden_tag() }}
     {% if form.csrf_token.errors %}

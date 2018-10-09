@@ -25,8 +25,7 @@
       </p>
     </div>
     {%- for service, formdata in service_forms.items() %}{% with form = formdata['form'] %}
-      <form id="form-{{ service }}" method="POST" class="jshidden">
-        <input type="hidden" name="_charset_"/>
+      <form id="form-{{ service }}" method="POST" class="jshidden" accept-charset="UTF-8">
         <input type="hidden" name="next" value="{{ formdata['next'] }}"/>
         {% if formdata['error'] %}<div class=error>{{ formdata['error'] }}</div>{% endif %}
         {{ renderform_inner(form, service) }}

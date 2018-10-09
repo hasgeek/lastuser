@@ -1,7 +1,6 @@
 {% from "baseframe/forms.html.jinja2" import renderfield, rendersubmit %}
 {% macro passwordlogin(loginform, markup) %}
-  <form id="passwordlogin" method="POST" class="mui-form mui-form--margins">
-    <input type="hidden" name="_charset_"/>
+  <form id="passwordlogin" method="POST" class="mui-form mui-form--margins" accept-charset="UTF-8">
     <input type="hidden" name="form.id" value="passwordlogin"/>
     {{ loginform.hidden_tag() }}
     {% if loginform.csrf_token is defined %}

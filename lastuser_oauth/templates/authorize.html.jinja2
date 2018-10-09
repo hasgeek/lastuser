@@ -53,8 +53,7 @@
   You should authorize this only if you initiated the request
   and trust the application with your data.
 </p>
-<form id="authorize" method="POST" class="mui-form mui-form--margins">
-  <input type="hidden" name="_charset_"/>
+<form id="authorize" method="POST" class="mui-form mui-form--margins" accept-charset="UTF-8">
   <input type="hidden" name="form.id" value="authorize"/>
   {{ form.hidden_tag() }}
   <p>
