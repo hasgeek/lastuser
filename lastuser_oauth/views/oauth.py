@@ -392,7 +392,7 @@ def oauth_token():
     if grant_type == 'client_credentials':
         # Client data; user isn't part of it OR trusted client and automatic scope
         try:
-            # FIXME: What is this verifyscope doing? That this scope is valid or that this client has access?
+            # Confirm the client has access to the scope it wants
             verifyscope(scope, client)
         except ScopeException as scopeex:
             return oauth_token_error('invalid_scope', unicode(scopeex))
@@ -401,6 +401,10 @@ def oauth_token():
             if client.trusted:
                 user = User.get(buid=buid)
                 if user:
+                    # This client is trusted and can receive a user access token.
+                    # However, don't grant it the scope it wants as the user's
+                    # permission was not obtained. Instead, the client's
+                    # pre-approved scope will be used for the token's effective scope.
                     token = oauth_make_token(user=user, client=client, scope=[])
                     return oauth_token_success(
                         token,
