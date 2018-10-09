@@ -28,8 +28,9 @@
 {% endmacro %}
 
 {% block contentwrapper %}
-  <div class="alert alert--error fade in cookies-required-alert">
-    Cookies are required to perform this operation. Please enable cookies in your browser’s settings and reload this page.
+  <div class="alert alert--error cookies-required-alert test alert--dismissable">
+    <a class="alert__close" href="javascript:void(0);" aria-label="close"><i class="material-icons">clear</i></a>
+    <p class="alert__text">Cookies are required to perform this operation. Please enable cookies in your browser’s settings and reload this page.</p>
   </div>
   <p class="cookies-required">
     You appear to have two accounts. Would you like to merge them?
