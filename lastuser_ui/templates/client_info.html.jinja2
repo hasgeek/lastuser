@@ -27,70 +27,44 @@
   {% endif %}
 
   <div class="grid__col-xs-12 grid__col--bleed {%- if client.owner_is(current_auth.user) or client.owner_is(current_auth.user) %} grid__col-md-7 grid__col-lg-8{% endif %}">
-    <table class="mui-table mui-table--bordered grid__col--bleed-y">
-      <tbody class="mui--text-subhead mui-panel">
-        <tr>
-          <td>Application title</td>
-          <td><strong>{{ client.title }}</strong></td>
-        </tr>
-        <tr>
-          <td>Description</td>
-          <td>{{ client.description }}</td>
-        </tr>
-        <tr>
-          <td>Owner</td>
-          <td>{{ client.owner.pickername }}</td>
-        </tr>
-        <tr>
-          <td>Type</td>
-          <td>{% if client.confidential %}Confidential{% else %}Public{% endif %}</td>
-        </td>
-        <tr>
-          <td>Website</td>
-          <td><a rel="nofollow" href="{{ client.website }}" target="_blank">{{ client.website }}</a></td>
-        </tr>
+    <div class="grid__col--bleed-y">
+    <div class="mui-panel">
+      <dl class="infobox">
+        <dt class="mui--text-subhead">Application title</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead"><strong>{{ client.title }}</strong></dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">Description</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.description }}</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">Owner</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.owner.pickername }}</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">Type</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{% if client.confidential %}Confidential{% else %}Public{% endif %}
+        <dt class="mui--text-subhead">Website</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead"><a rel="nofollow" href="{{ client.website }}">{{ client.website }}</a></dd class="mui--text-subhead">
         {%- if client.namespace %}
-          <tr>
-            <td>Namespace</td>
-            <td>{{ client.namespace }}</td>
-          </tr>
+          <dt class="mui--text-subhead">Namespace</dt class="mui--text-subhead">
+          <dd class="mui--text-subhead">{{ client.namespace }}</dd class="mui--text-subhead">
         {%- endif %}
-        <tr>
-          <td>Redirect URL</td>
-          <td>{{ client.redirect_uri }}</td>
-        </tr>
-        <tr>
-          <td>Notification URL</td>
-          <td>{{ client.notification_uri }}</td>
-        </tr>
-        <tr>
-          <td>IFrame URL</td>
-          <td>{{ client.iframe_uri }}</td>
-        </tr>
-        <tr>
-          <td>Resource URL</td>
-          <td>{{ client.resource_uri }}</td>
-        </tr>
-        <tr>
-          <td>Active?</td>
-          <td>{{ client.active }}</td>
-        </tr>
-        <tr>
-          <td>Allow anyone to login?</td>
-          <td>{{ client.allow_any_login }}</td>
-        </tr>
-        <tr>
-          <td>Registered date</td>
-          <td>{{ client.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</td>
-        </tr>
+        <dt class="mui--text-subhead">Redirect URL</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.redirect_uri }}</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">Notification URL</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.notification_uri }}</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">IFrame URL</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.iframe_uri }}</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">Resource URL</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.resource_uri }}</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">Active?</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.active }}</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">Allow anyone to login?</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.allow_any_login }}</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">Registered date</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</dd class="mui--text-subhead">
         {%- if client.owner_is(current_auth.user) %}
-        <tr>
-          <td>Users</td>
-          <td>{{ client.authtokens.count() }}</td>
-        </tr>
+          <dt class="mui--text-subhead">Users</dt class="mui--text-subhead">
+          <dd class="mui--text-subhead">{{ client.authtokens.count() }}</dd class="mui--text-subhead">
         {%- endif %}
-      </tbody>
-    </table>
+      </dl>
+    </div>
+    </div>
     {%- if client.owner_is(current_auth.user) %}
       <div class="grid__col--bleed-y">
         <h2>Access Keys</h2>

@@ -9,9 +9,14 @@
 }
 
 .card--limited {
-  width: 340px;
+  min-width: 200px;
 }
 
+@media(min-width: 768px) {
+  .card--limited {
+    min-width: 300px;
+  }
+}
 .card .card__body--lgtext {
   font-size: inherit;
   line-height: inherit;
@@ -44,4 +49,39 @@ a.loginbutton.hidden,
 
 .mui-list--border li:last-child {
   border-bottom: none;
+}
+
+.infobox dt {
+  font-weight: bold;
+  margin: 0;
+  padding: 5px 0;
+}
+.infobox dd {
+  padding: 5px 0;
+  margin-left: 0;
+  word-break: break-all;
+}
+
+@media(min-width: 768px) {
+  .infobox dt {
+    width: 10em;
+    float: left;
+    clear: left;
+    text-align: right;
+    padding: 4px 0 0 0;
+  }
+  .infobox dd {
+    position: relative;
+    text-indent: 0;
+    clear: none;
+    margin: 0;
+    margin-left: 11.25em;
+    border-left: 1px solid #d7d7d7;
+    padding: 4px 0 0 0.75em;
+  }
+  .infobox dd:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
 }
