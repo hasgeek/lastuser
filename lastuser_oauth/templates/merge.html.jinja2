@@ -3,7 +3,7 @@
 {% block title %}Merge accounts{% endblock %}
 
 {% macro accountinfo(user) %}
-  <ul>
+  <ul class="mui-list--aligned mui--text-subhead">
     <li><strong>Name:</strong> {{ user.fullname }}</li>
     <li><strong>Username:</strong> {{ user.username or ''}}</li>
     <li><strong>Email addresses:</strong>
@@ -27,35 +27,33 @@
   </ul>
 {% endmacro %}
 
-{% block content %}
-  <div class="flash cookies-required-alert">
-    <div class="flashmessage">
-      Cookies are required to perform this operation. Please enable cookies in your browser’s settings and reload this page.
-    </div>
+{% block contentwrapper %}
+  <div class="alert alert--error cookies-required-alert test alert--dismissable">
+    <a class="alert__close" href="javascript:void(0);" aria-label="close"><i class="material-icons">clear</i></a>
+    <p class="alert__text">Cookies are required to perform this operation. Please enable cookies in your browser’s settings and reload this page.</p>
   </div>
   <p class="cookies-required">
     You appear to have two accounts. Would you like to merge them?
   </p>
-  <div class="cookies-required row">
-    <div class="span4 col-xs-12 col-sm-4 col-md-4 col-lg-4">
+  <div class="cookies-required grid">
+    <div class="grid__col-xs-12 grid__col-sm-4">
       <h2 class="htile">Logged in account</h2>
-      {{ accountinfo(user) }}
+      <div class="mui--text-subhead">{{ accountinfo(user) }}</div>
     </div>
-    <div class="span4 col-sm-4 col-md-4 col-lg-4">
+    <div class="grid__col-xs-12 grid__col-sm-4">
       <h2 class="htile">Other account</h2>
-      {{ accountinfo(other_user) }}
+      <div class="mui--text-subhead">{{ accountinfo(other_user) }}</div>
     </div>
   </div>
-  <form class="cookies-required" id="merge-accounts" method="POST">
-    <input type="hidden" name="_charset_"/>
+  <form class="cookies-required mui-form mui-form--margins" id="merge-accounts" method="POST" accept-charset="UTF-8">
     <input type="hidden" name="form.id" value="authorize"/>
     {{ form.hidden_tag() }}
     {% if form.csrf_token.errors %}
       {% for error in form.csrf_token.errors %}<div class="error">{{ error }}</div>{% endfor %}
     {% endif %}
     <div class="form-actions">
-      <input class="btn btn-primary" type="submit" name="merge" value="Merge accounts"/>
-      <input class="btn btn-default" type="submit" name="skip" value="Skip"/>
+      <input class="mui-btn mui-btn--raised mui-btn--primary" type="submit" name="merge" value="Merge accounts"/>
+      <input class="mui-btn mui-btn--raised mui-btn--accent" type="submit" name="skip" value="Skip"/>
     </div>
   </form>
 {% endblock %}

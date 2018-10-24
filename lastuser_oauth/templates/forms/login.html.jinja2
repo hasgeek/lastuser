@@ -1,7 +1,6 @@
 {% from "baseframe/forms.html.jinja2" import renderfield, rendersubmit %}
 {% macro passwordlogin(loginform, markup) %}
-  <form id="passwordlogin" method="POST" class="form-horizontal">
-    <input type="hidden" name="_charset_"/>
+  <form id="passwordlogin" method="POST" class="mui-form mui-form--margins" accept-charset="UTF-8">
     <input type="hidden" name="form.id" value="passwordlogin"/>
     {{ loginform.hidden_tag() }}
     {% if loginform.csrf_token is defined %}
@@ -11,6 +10,6 @@
     {% endif %}
     {{ renderfield(loginform.username, tabindex='1', autofocus=true, sidetext=markup('<a href="' + url_for('.register') + '">Create a new account?</a>')) }}
     {{ renderfield(loginform.password, tabindex='2', sidetext=markup('<a href="' + url_for('.reset') + '">Forgot password?</a>')) }}
-    {{ rendersubmit([(none, "Login", 'btn-primary')], "small", tabindex='3') }}
+    {{ rendersubmit([(none, "Login", 'mui-btn--raised mui-btn--primary')], tabindex='3') }}
   </form>
 {% endmacro %}

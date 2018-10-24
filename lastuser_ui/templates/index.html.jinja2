@@ -5,38 +5,49 @@
 {%- endblock %}
 
 {% block headline -%}{% endblock %}
-{% block content %}
-<p>
-  Hello there! This site is powered by <a href="https://github.com/hasgeek/lastuser">Lastuser</a>,
-  <a href="http://hasgeek.in">HasGeek</a>’s experimental, open source user management app.
-  This site is a work-in-progress. The most useful thing you can do with it at the moment
-  is to <a href="{{ url_for('lastuser_oauth.login') }}">login with Twitter or Google</a>. Or, if you prefer
-  to have a separate password for this site, you can <a href="{{ url_for('lastuser_oauth.register') }}">register
-  an account</a>.
-</p>
-<p>
-  Lastuser is a backend service that enables federated user management and services, allowing us
-  to build websites for specific goals using whatever technology is most appropriate. When Lastuser
-  becomes production-ready, integration will be seamless. You will not be shown this page as an
-  excuse for poor usability.
-</p>
-<p>
-  At its core, Lastuser is an <a href="http://oauth.net/2/">OAuth 2.0 (draft 22)</a> authorization
-  server with custom extensions to fill gaps in the spec. OAuth 2.0 distinguishes between the roles
-  of authorization and resource servers but does not define communication between the two. Lastuser
-  is an authorization-only server and defines a protocol for passing authorization tokens to resource
-  servers. The accompanying <a href="https://github.com/hasgeek/flask-lastuser">flask-lastuser</a>
-  library implements the client side for the <a href="http://flask.pocoo.org/">Flask</a>
-  microframework. Lastuser is itself implemented in Flask.
-</p>
-{% if current_auth.is_authenticated %}
-  <p>
-    Since you are logged in, you can explore the innards:
-  </p>
-  <ol>
-    <li><a href="{{ url_for('.client_list') }}">Client applications</a></li>
-    <li><a href="{{ url_for('.permission_list') }}">Permissions</a></li>
-    <li><a href="{{ url_for('.OrgView_index') }}">Organizations</a></li>
-  </ol>
-{% endif %}
+
+{% block contentwrapper %}
+<div class="grid">
+  <div class="mui--text-subhead grid__col-xs-12 {% if current_auth.is_authenticated %}grid__col-sm-7 grid__col-md-8 grid__col-lg-8 {% endif %}">
+    <p>
+      Hello there! This site is powered by <a href="https://github.com/hasgeek/lastuser">Lastuser</a>,
+      <a href="http://hasgeek.in">HasGeek</a>’s experimental, open source user management app.
+      This site is a work-in-progress. The most useful thing you can do with it at the moment
+      is to <a href="{{ url_for('lastuser_oauth.login') }}">login with Twitter or Google</a>. Or, if you prefer
+      to have a separate password for this site, you can <a href="{{ url_for('lastuser_oauth.register') }}">register
+      an account</a>.
+    </p>
+    <p>
+      Lastuser is a backend service that enables federated user management and services, allowing us
+      to build websites for specific goals using whatever technology is most appropriate. When Lastuser
+      becomes production-ready, integration will be seamless. You will not be shown this page as an
+      excuse for poor usability.
+    </p>
+    <p>
+      At its core, Lastuser is an <a href="http://oauth.net/2/">OAuth 2.0 (draft 22)</a> authorization
+      server with custom extensions to fill gaps in the spec. OAuth 2.0 distinguishes between the roles
+      of authorization and resource servers but does not define communication between the two. Lastuser
+      is an authorization-only server and defines a protocol for passing authorization tokens to resource
+      servers. The accompanying <a href="https://github.com/hasgeek/flask-lastuser">flask-lastuser</a>
+      library implements the client side for the <a href="http://flask.pocoo.org/">Flask</a>
+      microframework. Lastuser is itself implemented in Flask.
+    </p>
+  </div>
+  {% if current_auth.is_authenticated %}
+    <div class="grid__col-xs-12 grid__col-sm-5 grid__col-md-4 grid__col-lg-4">
+      <div class="card">
+        <div class="card__header">
+          <h3 class="mui--text-subhead">Since you are logged in, you can explore the innards:</h3>
+        </div>
+        <div class="card__body">
+          <ol class="mui-list--aligned mui--text-subhead">
+            <li><a href="{{ url_for('.client_list') }}">Client applications</a></li>
+            <li><a href="{{ url_for('.permission_list') }}">Permissions</a></li>
+            <li><a href="{{ url_for('.OrgView_index') }}">Organizations</a></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
 {% endblock %}

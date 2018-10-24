@@ -1,205 +1,206 @@
 {% extends "layout.html.jinja2" %}
 {% block title %}Client application information{% endblock %}
-{% block content %}
-<dl class="infobox">
-  <dt>Application title</dt>
-  <dd><strong>{{ client.title }}</strong></dd>
-  <dt>Description</dt>
-  <dd>{{ client.description }}</dd>
-  <dt>Owner</dt>
-  <dd>{{ client.owner.pickername }}</dd>
-  <dt>Type</dt>
-  <dd>{% if client.confidential %}Confidential{% else %}Public{% endif %}
-  <dt>Website</dt>
-  <dd><a rel="nofollow" href="{{ client.website }}">{{ client.website }}</a></dd>
-  {%- if client.namespace %}
-    <dt>Namespace</dt>
-    <dd>{{ client.namespace }}</dd>
-  {%- endif %}
-  <dt>Redirect URL</dt>
-  <dd>{{ client.redirect_uri }}</dd>
-  <dt>Notification URL</dt>
-  <dd>{{ client.notification_uri }}</dd>
-  <dt>IFrame URL</dt>
-  <dd>{{ client.iframe_uri }}</dd>
-  <dt>Resource URL</dt>
-  <dd>{{ client.resource_uri }}</dd>
-  <dt>Active?</dt>
-  <dd>{{ client.active }}</dd>
-  <dt>Allow anyone to login?</dt>
-  <dd>{{ client.allow_any_login }}</dd>
-  <dt>Registered date</dt>
-  <dd>{{ client.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</dd>
+{% block contentwrapper %}
+<div class="grid">
   {%- if client.owner_is(current_auth.user) %}
-    <dt>Users</dt>
-    <dd>{{ client.authtokens.count() }}</dd>
-  {%- endif %}
-</dl>
-{%- if client.owner_is(current_auth.user) %}
-  <p>
-    <a class="btn btn-info" href="{{ url_for('.client_edit', key=client.key) }}">Edit this application</a>
-    <a class="btn btn-danger" href="{{ url_for('.client_delete', key=client.key) }}">Delete</a>
-    <a class="btn btn-default" href="{{ url_for('.client_cred_new', key=client.key) }}">New access key</a>
-  </p>
-  <h2>Access Keys</h2>
-  <table class="table table-condensed table-responsive">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Purpose</th>
-        <th>Key</th>
-        <th>Created</th>
-        <th colspan="2">Last used</th>
-      </tr>
-    </thead>
-    <tbody>
+    <div class="grid__col-xs-12 grid__col-md-5 grid__col-lg-4">
+      <div class="sticky-admin-panel">
+        <div class="card">
+          <div class="card__header">
+            <h3 class="mui--text-title"><strong>ADMIN PANEL</strong></h3>
+          </div>
+          <div class="card__body card--text mui--text-subhead">
+            <ol class="mui-list--aligned">
+              <li><a href="{{ url_for('.client_edit', key=client.key) }}" title="Edit">Edit this application</a></li>
+              <li><a href="{{ url_for('.client_delete', key=client.key) }}" title="Delete">Delete</a></li>
+              <li><a href="{{ url_for('.client_cred_new', key=client.key) }}" title="New access key">New access key</a></li>
+              <li><a href="{{ url_for('.permission_new') }}">Define a new permission</a></li>
+              <li><a href="{{ url_for('.permission_user_new', key=client.key) }}">Assign permissions to another {% if client.user %}user{% else %}team{% endif %}</a></li>
+              {% if current_auth.is_authenticated and client.team_access and current_auth.user.organizations_owned() %}
+                <li><a href="{{ url_for('.client_team_access', key=client.key) }}" title="Change access permissions">Change access permissions</a></li>
+              {% endif %}
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="grid__col-xs-12 grid__col--bleed {%- if client.owner_is(current_auth.user) or client.owner_is(current_auth.user) %} grid__col-md-7 grid__col-lg-8{% endif %}">
+    <div class="grid__col--bleed-y">
+    <div class="mui-panel">
+      <dl class="infobox">
+        <dt class="mui--text-subhead">Application title</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead"><strong>{{ client.title }}</strong></dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">Description</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.description }}</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">Owner</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.owner.pickername }}</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">Type</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{% if client.confidential %}Confidential{% else %}Public{% endif %}
+        <dt class="mui--text-subhead">Website</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead"><a rel="nofollow" href="{{ client.website }}">{{ client.website }}</a></dd class="mui--text-subhead">
+        {%- if client.namespace %}
+          <dt class="mui--text-subhead">Namespace</dt class="mui--text-subhead">
+          <dd class="mui--text-subhead">{{ client.namespace }}</dd class="mui--text-subhead">
+        {%- endif %}
+        <dt class="mui--text-subhead">Redirect URL</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.redirect_uri }}</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">Notification URL</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.notification_uri }}</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">IFrame URL</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.iframe_uri }}</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">Resource URL</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.resource_uri }}</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">Active?</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.active }}</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">Allow anyone to login?</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.allow_any_login }}</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">Registered date</dt class="mui--text-subhead">
+        <dd class="mui--text-subhead">{{ client.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</dd class="mui--text-subhead">
+        {%- if client.owner_is(current_auth.user) %}
+          <dt class="mui--text-subhead">Users</dt class="mui--text-subhead">
+          <dd class="mui--text-subhead">{{ client.authtokens.count() }}</dd class="mui--text-subhead">
+        {%- endif %}
+      </dl>
+    </div>
+    </div>
+    {%- if client.owner_is(current_auth.user) %}
+      <div class="grid__col--bleed-y">
+        <h2>Access Keys</h2>
+      </div>
+      <div class="grid grid--align-baseline">
       {% for cred in client.credentials.values() %}
-        <tr>
-          <td>{{ loop.index }}</td>
-          <td>{{ cred.title }}</td>
-          <td>{{ cred.name }}</td>
-          <td>{{ cred.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</td>
-          <td>{% if cred.accessed_at %}{{ cred.accessed_at|age }}{% else %}never{% endif %}</td>
-          <td><a class="btn btn-xs btn-danger" href="{{ url_for('.client_cred_delete', key=client.key, name=cred.name) }}">Revoke</a></td>
-        </tr>
+        <div class="grid__col-auto">
+          <div class="card card--limited">
+            <div class="card__header">
+              <h3 class="mui--text-title">{{ cred.title }}</h3>
+            </div>
+            <div class="card__body">
+              <p><b>Purpose</b>: {{ cred.title }}</p>
+              <p><b>Key</b>: {{ cred.name }}</p>
+              <p><b>Created</b>: {{ cred.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</p>
+              <p><b>Last used</b>: {% if cred.accessed_at %}{{ cred.accessed_at|age }}{% else %}never{% endif %}</p>
+            </div>
+            <div class="mui-divider"></div>
+            <div class="card__footer">
+              <a href="{{ url_for('.client_cred_delete', key=client.key, name=cred.name) }}" title="{% trans %}Revoke{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Revoke</a>
+            </div>
+          </div>
+        </div>
       {%- else %}
-        <tr>
-          <td colspan="6"><em>(This application does not have any access keys)</em></td>
-        </tr>
+        <div class="grid__col-auto">
+          <p class="mui--text-subhead"><em>This application does not have any access keys</em></p>
+        </div>
       {% endfor %}
-    </tbody>
-  </table>
-{%- endif %}
-<h2>Resources</h2>
-<p>
-  This app provides the following resources and actions on resources.
-</p>
-<table class="table table-condensed table-responsive">
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>Name</th>
-      <th>Title</th>
-      <th>Description</th>
-      {% if client.owner_is(current_auth.user) %}
-        <th colspan="2">Action</th>
-      {% endif %}
-    </tr>
-  </thead>
-  <tbody>
-    {% for resource in resources %}
-      <tr>
-        <td><strong>{{ loop.index }}</strong></td>
-        <td><strong>{{ resource.name }}</strong>{% if resource.siteresource %} <em>(site)</em>{% endif %}</td>
-        <td><strong>{{ resource.title }}</strong></td>
-        <td><strong>{{ resource.description }}</strong></td>
-        {% if client.owner_is(current_auth.user) %}
-          <td>
-            <a class="btn btn-xs btn-info" href="{{ url_for('.resource_edit', key=client.key, idr=resource.id) }}">Edit</a>
-            <a class="btn btn-xs btn-danger" href="{{ url_for('.resource_delete', key=client.key, idr=resource.id) }}">Delete</a>
-          </td>
-        {% endif %}
-      </tr>
-      {% set outer_loop_index = loop.index %}
-      {% for action in resource.actions %}
-        <tr>
-          <td>{{ outer_loop_index }}.{{ loop.index }}</td>
-          <td>{{ action.name }}</td>
-          <td>{{ action.title }}</td>
-          <td>{{ action.description }}</td>
-          {% if client.owner_is(current_auth.user) %}
-            <td>
-              <a class="btn btn-xs btn-info" href="{{ url_for('.resource_action_edit', key=client.key, idr=resource.id, ida=action.id) }}">Edit</a>
-              <a class="btn btn-xs btn-danger" href="{{ url_for('.resource_action_delete', key=client.key, idr=resource.id, ida=action.id) }}">Delete</a>
-            </td>
-          {% endif %}
-        </tr>
-      {% endfor %}
-      {% if client.owner_is(current_auth.user) %}
-        <tr>
-          <td class="separator"></td>
-          <td colspan="5" class="separator">
-            <a class="btn btn-sm btn-info" href="{{ url_for('.resource_action_new', key=client.key, idr=resource.id) }}">Add action</a>
-          </td>
-        </tr>
-      {% endif %}
-    {% else %}
-      <tr>
-        <td colspan="6">
-          <em>(This application does not provide any resources)</em>
-        </td>
-      </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{%- if client.owner_is(current_auth.user) %}
-<p>
-  <a class="btn btn-info" href="{{ url_for('.resource_new', key=client.key) }}">New resource</a>
-</p>
-{%- endif %}
-{% if client.owner_is(current_auth.user) %}
-  <h2>Permissions</h2>
-  <p>
-    The following {% if client.user %}users{% else %}teams{% endif %} have permissions to this app.
-  </p>
-  <table class="table table-condensed table-responsive">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>{% if client.user %}User{% else %}Team{% endif %}</th>
-        <th>Permissions</th>
-        <th colspan="2">Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {%- for pa in permassignments %}
-      <tr>
-        <td>{{ loop.index }}</td>
-        <td>{{ pa.pickername }}</td>
-        <td>{{ pa.access_permissions }}</td>
-        <td>
-          <a class="btn btn-xs btn-info" href="{{ url_for('.permission_user_edit', key=client.key, buid=pa.buid) }}">Edit</a>
-          <a class="btn btn-xs btn-danger" href="{{ url_for('.permission_user_delete', key=client.key, buid=pa.buid) }}">Delete</a>
-        </td>
+      </div>
+    {%- endif %}
+
+    <div class="grid__col--bleed-y">
+      <h2>Resources</h2>
+      <p class="mui--text-subhead">
+        This app provides the following resources and actions on resources.
+      </p>
+    </div>
+    <div class="grid grid--align-baseline">
+      {% for resource in resources %}
+        <div class="grid__col-auto">
+          <div class="card card--limited">
+            <div class="card__header">
+              <h3 class="mui--text-title"><strong>{{ resource.name }}</strong>{% if resource.siteresource %} <em>(site)</em>{% endif %}</h3>
+            </div>
+            <div class="card__body">
+              <p><b>Title</b>: {{ resource.title }}</p>
+              <p><b>Description</b>: {{ resource.description }}</p>
+            </div>
+            {% if client.owner_is(current_auth.user) %}
+              <div class="mui-divider"></div>
+              <div class="card__footer">
+                <a href="{{ url_for('.resource_edit', key=client.key, idr=resource.id) }}" title="{% trans %}Edit{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Edit</a>
+                <a href="{{ url_for('.resource_delete', key=client.key, idr=resource.id) }}" title="{% trans %}Delete{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Delete</a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="grid__col-auto">
+          {% for action in resource.actions %}
+            <div class="card card--limited">
+              <div class="card__header">
+                <h3 class="mui--text-title">{{ action.name }}</h3>
+              </div>
+              <div class="card__body card--text mui--text-subhead">
+                <p><b>Title</b>: {{ action.title }}</p>
+                <p><b>Description</b>: {{ action.description }}</p>
+              </div>
+              {% if client.owner_is(current_auth.user) %}
+                <div class="mui-divider"></div>
+                <div class="card__footer">
+                  <a href="{{ url_for('.resource_edit', key=client.key, idr=resource.id) }}" title="{% trans %}Edit{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Edit</a>
+                  <a href="{{ url_for('.resource_delete', key=client.key, idr=resource.id) }}" title="{% trans %}Delete{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Delete</a>
+                  <a href="{{ url_for('.resource_action_new', key=client.key, idr=resource.id) }}" title="{% trans %}Add action{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Add action</a>
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
       {%- else %}
-      <tr>
-        <td colspan="4">
-          <em>(No permissions assigned)</em>
-        </td>
-      </tr>
-      {%- endfor %}
-    </tbody>
-  </table>
-  <p>
-    <a class="btn btn-info" href="{{ url_for('.permission_new') }}">Define a new permission</a>
-    <a class="btn btn-info" href="{{ url_for('.permission_user_new', key=client.key) }}">Assign permissions to another {% if client.user %}user{% else %}team{% endif %}</a>
-  </p>
-{% endif %}
-{% if current_auth.is_authenticated and client.team_access and current_auth.user.organizations_owned() %}
-  <h2>Team Access</h2>
-  <p>
-    This application can manage access permissions per team. Select the organizations whose teams it has access to.
-  </p>
-  <table class="table table-condensed table-responsive">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Organization</th>
-        <th>Access</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for org in current_auth.user.organizations_owned() %}
-      <tr>
-        <td>{{ loop.index }}</td>
-        <td>{{ org.title }}</td>
-        <td>{% if client in org.clients_with_team_access() %}Yes{% else %}No{% endif %}</td>
-      </tr>
+        <div class="grid__col-auto">
+          <p class="mui--text-subhead"><em>This application does not provide any resources</em></p>
+        </div>
       {% endfor %}
-    </tbody>
-  </table>
-  <p>
-    <a class="btn btn-info" href="{{ url_for('.client_team_access', key=client.key) }}">Change access permissions</a>
-  </p>
-{% endif %}
+    </div>
+
+    {% if client.owner_is(current_auth.user) %}
+      <div class="grid__col--bleed-y">
+        <h2>Permissions</h2>
+        <p>The following {% if client.user %}users{% else %}teams{% endif %} have permissions to this app.</p>
+      </div>
+      <div class="grid grid--align-baseline">
+        {%- for pa in permassignments %}
+          <div class="grid__col-auto">
+            <div class="card card--limited">
+              <div class="card__header">
+                <h3 class="mui--text-title">{{ pa.pickername }}</h3>
+              </div>
+              <div class="card__body card--text mui--text-subhead">
+                <p><b>Permissions</b>: {{ pa.access_permissions }}</p>
+              </div>
+              <div class="mui-divider"></div>
+              <div class="card__footer">
+                <a href="{{ url_for('.permission_user_edit', key=client.key, buid=pa.buid) }}" title="{% trans %}Edit{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Edit</a>
+                <a href="{{ url_for('.permission_user_delete', key=client.key, buid=pa.buid) }}" title="{% trans %}Delete{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Delete</a>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <div class="grid__col-auto">
+            <p class="mui--text-subhead"><em>No permissions assigned</em></p>
+          </div>
+        {% endfor %}
+      </div>
+    {%- endif %}
+
+    {% if current_auth.is_authenticated and client.team_access and current_auth.user.organizations_owned() %}
+      <div class="grid__col--bleed-y">
+        <h2>Team Access</h2>
+        <p>This application can manage access permissions per team. Select the organizations whose teams it has access to.</p>
+      </div>
+       <div class="grid grid--align-baseline">
+        {% for org in current_auth.user.organizations_owned() %}
+          <div class="grid__col-auto">
+            <div class="card card--limited">
+              <div class="card__header">
+                <h3 class="mui--text-title">{{ org.title }}</h3>
+              </div>
+              <div class="card__body card--text mui--text-subhead">
+                <p><b>Access</b>: {% if client in org.clients_with_team_access() %}Yes{% else %}No{% endif %}</p>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {%- endif %}
+  </div>
+<div>
 {% endblock %}

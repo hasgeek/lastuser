@@ -1,32 +1,36 @@
 {% extends "layout.html.jinja2" %}
+
 {% block title %}Application list{% endblock %}
+
+{% block top_title %}
+  <h1 class="mui--text-display1">Application list</h1>
+  <p><a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ url_for('.client_new') }}">New application</a></p>
+{% endblock %}
+
 {% block content %}
-<table class="table table-condensed table-hover table-responsive">
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>Title</th>
-      <th>Owner</th>
-      <th>Website</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for client in clients %}
-      {%- set link = url_for('.client_info', key=client.key)|e %}
-      <tr class="link">
-        <td><a href="{{ link }}">{{ loop.index }}</a></td>
-        <td><a href="{{ link }}">{{ client.title }}</a></td>
-        <td><a href="{{ link }}">{{ client.owner.pickername }}</a></td>
-        <td><a href="{{ link }}">{{ client.website }}</a></td>
-      </tr>
-    {% else %}
+  <table class="mui-table mui-table--bordered mui-table--responsive">
+    <thead>
       <tr>
-        <td colspan="4">No applications have been registered</td>
+        <th>#</th>
+        <th>Title</th>
+        <th>Owner</th>
+        <th>Website</th>
       </tr>
-    {% endfor %}
-  </tbody>
-</table>
-<p>
-  <a class="btn btn-primary" href="{{ url_for('.client_new') }}">New application</a>
-</p>
+    </thead>
+    <tbody class="mui--text-subhead">
+      {% for client in clients %}
+        {%- set link = url_for('.client_info', key=client.key)|e %}
+        <tr>
+          <td><a href="{{ link }}" title="{{ client.title }}">{{ loop.index }}</a></td>
+          <td><a href="{{ link }}" title="{{ client.title }}">{{ client.title }}</a></td>
+          <td><a href="{{ link }}" title="{{ client.title }}">{{ client.owner.pickername }}</a></td>
+          <td><a href="{{ link }}" title="{{ client.title }}">{{ client.website }}</a></td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="4">No applications have been registered</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 {% endblock %}

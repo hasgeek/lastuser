@@ -2,58 +2,68 @@
 {% block title %}Authorization Required{% endblock %}
 
 {% block content %}
-<p>
+<p class="mui--text-subhead">
   An application is requesting access to your data.
 </p>
-<dl class="infobox">
-  <dt>Application name</dt>
-  <dd>{{ client.title }}</dd>
-  <dt>Description</dt>
-  <dd>{{ client.description }}</dd>
-  <dt>Owner</dt>
-  <dd>{{ client.owner.pickername }}</dd>
-  <dt>Website</dt>
-  <dd><a rel="nofollow" href="{{ client.website }}">{{ client.website }}</a></dd>
-  <dt>Access scope</dt>
-  <dd>
-    <ol>
-      {% for key in internal_resources -%}
-        <li>{{ resource_registry[key]['description'] }}</li>
-      {%- endfor %}
-      {% for resource in external_resources -%}
-        <li>{{ resource.title }}
-          {% if external_resources[resource] -%}
-            <ul>
-              {%- for action in external_resources[resource] %}
-                <li>{{ action.title }}</li>
-              {%- endfor %}
-            </ul>
-          {%- endif %}
-        </li>
-      {%- endfor %}
-      {% for client in full_client_access -%}
-        <li>Full access to all your data in {{ client.title }}</li>
-      {%- endfor %}
-    </ol>
-  </dd>
-</dl>
-<p>
+<table class="mui-table mui-table--bordered grid__col--bleed-y">
+  <tbody class="mui--text-subhead mui-panel">
+    <tr>
+      <td>Application name</td>
+      <td>{{ client.title }}</td>
+    </tr>
+    <tr>
+      <td>Description</td>
+      <td>{{ client.description }}</td>
+    </tr>
+    <tr>
+      <td>Owner</td>
+      <td>{{ client.owner.pickername }}</td>
+    </tr>
+    <tr>
+      <td>Website</td>
+      <td><a rel="nofollow" href="{{ client.website }}" target="_blank">{{ client.website }}</a></td>
+    </tr>
+    <tr>
+      <td>Access scope</td>
+      <td>
+        <ol>
+          {% for key in internal_resources -%}
+            <li>{{ resource_registry[key]['description'] }}</li>
+          {%- endfor %}
+          {% for resource in external_resources -%}
+            <li>{{ resource.title }}
+              {% if external_resources[resource] -%}
+                <ul>
+                  {%- for action in external_resources[resource] %}
+                    <li>{{ action.title }}</li>
+                  {%- endfor %}
+                </ul>
+              {%- endif %}
+            </li>
+          {%- endfor %}
+          {% for client in full_client_access -%}
+            <li>Full access to all your data in {{ client.title }}</li>
+          {%- endfor %}
+        </ol>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="mui--text-subhead">
   You should authorize this only if you initiated the request
   and trust the application with your data.
 </p>
-<form id="authorize" method="POST">
-  <input type="hidden" name="_charset_"/>
+<form id="authorize" method="POST" class="mui-form mui-form--margins" accept-charset="UTF-8">
   <input type="hidden" name="form.id" value="authorize"/>
   {{ form.hidden_tag() }}
   <p>
-    <input class="btn btn-primary" type="submit" name="accept" value="Authorize"/>
-    <input class="btn btn-danger" type="submit" name="deny" value="Deny"/>
+    <input class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary" type="submit" name="accept" value="Authorize"/>
+    <input class="mui-btn mui-btn--small mui-btn--flat mui-btn--danger" type="submit" name="deny" value="Deny"/>
   </p>
   {%- if form.csrf_token.errors %}
-    <div><p class="help-error">{% trans -%}
+    <div><p class="mui-form--error">{% trans -%}
       This form has timed out. Please submit again to confirm
     {%- endtrans %}</p></div>
   {%- endif %}
 </form>
-  
 {% endblock %}

@@ -1,82 +1,81 @@
 {% extends "layout.html.jinja2" %}
+
 {% block title %}List of permissions{% endblock %}
 
-{% block content %}
-<p>
-  Lastuser can manage access permissions for client applications. Users can be
-  assigned one or more permissions for each application. These permissions are
-  then passed on to the application when the user logs in. If you manage multiple
-  applications, this is a useful way to define access rights from a central
-  location. Lastuser can only manage site-level permissions at this time. Support
-  for specifying access to a specific context within each application is forthcoming.
-</p>
-<p>
-  This page lists the available permission <em>terms</em>. Some terms are generic
-  enough to be pre-defined for all users. Others may be specific to your applications
-  and are therefore listed for you alone.
-</p>
-<h2>Global permissions</h2>
-<table class="table table-condensed table-responsive">
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>Name</th>
-      <th>Title</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for perm in allperms %}
-      <tr>
-        <td>{{ loop.index }}</td>
-        <td>{{ perm.name }}</td>
-        <td>{{ perm.title }}</td>
-        <td>{{ perm.description }}</td>
-      </tr>
-    {% else %}
-      <tr>
-        <td colspan="4"><em>(No global permissions have been defined)</em></td>
-      </tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% block top_title %}
+  <h1 class="mui--text-display1">Client access key</h1>
+  <p>Users can be assigned permissions from each application's info page.</p>
+  <p><a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{url_for('.permission_new') }}">New permission</a></p>
+{% endblock %}
 
-<h2>Your permissions</h2>
-<table class="table table-condensed table-responsive">
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>Name</th>
-      <th>Title</th>
-      <th>Description</th>
-      <th>Owner</th>
-      <th colspan="2">Action</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for perm in userperms %}
-      <tr>
-        <td>{{ loop.index }}</td>
-        <td>{{ perm.name }}</td>
-        <td>{{ perm.title }}</td>
-        <td>{{ perm.description }}</td>
-        <td>{{ perm.owner.pickername }}</td>
-        <td>
-          <a class="btn btn-xs btn-info" href="{{ url_for('.permission_edit', id=perm.id) }}">Edit</a>
-          <a class="btn btn-xs btn-danger" href="{{ url_for('.permission_delete', id=perm.id) }}">Delete</a>
-        </td>
-      </tr>
-    {% else %}
-      <tr>
-        <td colspan="6"><em>(You have not defined any permissions)</em></td>
-      </tr>
-    {% endfor %}
-  </tbody>
-</table>
-<p>
-  <a class="btn btn-info" href="{{url_for('.permission_new') }}">New permission</a>
-</p>
-<p>
-  Users can be assigned permissions from each application's info page.
-</p>
+{% block contentwrapper %}
+<div class="grid">
+  <div class="grid__col-xs-12">
+    <p class="mui--text-subhead">
+      Lastuser can manage access permissions for client applications. Users can be
+      assigned one or more permissions for each application. These permissions are
+      then passed on to the application when the user logs in. If you manage multiple
+      applications, this is a useful way to define access rights from a central
+      location. Lastuser can only manage site-level permissions at this time. Support
+      for specifying access to a specific context within each application is forthcoming.
+    </p>
+    <p class="mui--text-subhead">
+      This page lists the available permission <em>terms</em>. Some terms are generic
+      enough to be pre-defined for all users. Others may be specific to your applications
+      and are therefore listed for you alone.
+    </p>
+    <h2>Global permissions</h2>
+    <table class="mui-table mui-table--bordered mui-table--responsive">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Title</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody class="mui--text-subhead">
+        {% for perm in allperms %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ perm.name }}</td>
+            <td>{{ perm.title }}</td>
+            <td>{{ perm.description }}</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="4"><em>(No global permissions have been defined)</em></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2>Your permissions</h2>
+  </div>
+</div>
+<div class="grid grid--align-baseline">
+  {% for perm in userperms %}
+  <div class="grid__col-auto">
+    <div class="card card--limited">
+      <div class="card__header">
+        <h3 class="mui--text-title">{{ perm.name }}</h3>
+      </div>
+      <div class="card__body">
+        <p><b>Title</b>: {{ perm.title }}</p>
+        <p><b>Description</b>: {{ perm.description }}</p>
+        <p><b>Owner</b>: {{ perm.owner.pickername }}</p>
+      </div>
+      <div class="mui-divider"></div>
+      <div class="card__footer">
+        <a class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary" href="{{ url_for('.permission_edit', id=perm.id) }}">Edit</a>
+        <a class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary" href="{{ url_for('.permission_delete', id=perm.id) }}">Delete</a>
+      </div>
+    </div>
+  </div>
+  {% else %}
+    <div class="grid__col-auto">
+        <p class="mui--text-subhead"><em>You have not defined any permissions</em></p>
+      </div>
+  {% endfor %}
+</div>
 {% endblock %}

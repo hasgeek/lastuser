@@ -1,159 +1,153 @@
 {% extends "layout.html.jinja2" %}
-{% from "baseframe/forms.html.jinja2" import rendersubmit %}
+{% from "baseframe/mui/forms.html.jinja2" import rendersubmit %}
 {% block title %}{% trans %}My account{% endtrans %}{% endblock %}
 
-{% block content %}
-<div class="row detail">
-  <div class="col-xs-12 col-sm-12 col-md-6">
-    <div class="detail-box clearfix">
-      <h2 class="heading">{% trans %}Info{% endtrans %}</h2>
-      <table class="table detail-box-table">
-      <tr>
-        <td><strong>{% trans %}Name{% endtrans %}</strong></td>
-        <td>{{ current_auth.user.fullname }}</td>
-      </tr>
-      <tr>
-        <td><strong>{% trans %}Username{% endtrans %}</strong></td>
-        <td>
+{% block contentwrapper %}
+<div class="grid">
+  <div class="grid__col-xs-12 grid__col-sm-6">
+    <div class="card">
+      <div class="card__header">
+        <h3><b>{% trans %}Info{% endtrans %}</b></h3>
+      </div>
+      <div class="card__body card__body--lgtext mui--text-subhead">
+        <p><b>{% trans %}Name{% endtrans %}</b>: {{ current_auth.user.fullname }}</p>
+        <p><b>{% trans %}Username{% endtrans %}</b>: 
           {% if current_auth.user.username %}
             {{ current_auth.user.username }}
           {% else %}
             <em>{% trans %}(none){% endtrans %}</em>
           {% endif %}
-        </td>
-      </tr>
-      </table>
-      <div class="button-box">
-        <a class="btn btn-sm btn-info" href="{{ url_for('lastuser_oauth.account_edit') }}">{% trans %}Edit this{% endtrans %}</a>
-        <a class="btn btn-sm btn-success" href="{{ url_for('.change_password') }}">{% trans %}Change password{% endtrans %}</a>
+        </p>
       </div>
-    </div><!--eof detail-box-->
-  </div><!--eof info-->
-
-  <div class="col-xs-12 col-sm-12 col-md-6">
-    <div class="detail-box clearfix">
-      <h2 class="heading">{% trans %}External IDs{% endtrans %} <small>{% trans %}Use any of these to login to your account{% endtrans %}</small></h2>
-      {% if current_auth.user.externalids %}
-        <table class="table detail-box-table">
-          {% for extid in current_auth.user.externalids %}
-            <tr>
-              <td><i class="fa fa-fw fa-{{ extid.service }}"></i> {{ extid.username }}</td>
-              <td>{% trans %}Last used{% endtrans %} {{ extid.last_used_at|age }}</td>
-              <td><a title="{% trans %}Remove{% endtrans %}" href="{{ url_for('.remove_extid', service=extid.service, userid=extid.userid) }}"><i class="fa fa-trash-o"></i></a></td>
-            </tr>
-          {% endfor %}
-        </table>
-      {% else %}
-        <p class="para"><em>(none)</em></p>
-      {% endif %}
-      <h2 class="heading">{% trans %}Add External ID{% endtrans %}</h2>
-      <p class="button-bar">
-        {% for provider in login_registry %}
-          <a class="btn btn-default login-{{ provider }}" href="{{ url_for('lastuser_oauth.login_service', service=provider, next=url_for('.account')) }}"><i class="fa fa-{{ login_registry[provider].icon }}"></i>&nbsp;&nbsp;{{ login_registry[provider]['title'] }}</a>
-        {% endfor %}
-      </p>
+      <div class="mui-divider"></div>
+      <div class="card__footer">
+        <a class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary" href="{{ url_for('lastuser_oauth.account_edit') }}" title="Edit">{% trans %}Edit this{% endtrans %}</a>
+        <a class="mui-btn mui-btn--small mui-btn--flat mui-btn--accent" href="{{ url_for('.change_password') }}" title="Change password">{% trans %}Change password{% endtrans %}</a>
+      </div>
     </div>
-  </div><!--eof connected ids-->
+  </div>
 
-  <div class="col-xs-12 col-sm-12 col-md-6">
-    <div class="detail-box clearfix">
-      <h2 class="heading">{% trans %}Email addresses{% endtrans %}</h2>
+  <div class="grid__col-xs-12 grid__col-sm-6">
+    <div class="card">
+      <div class="card__header">
+        <h3><b>{% trans %}External IDs{% endtrans %} <small>{% trans %}Use any of these to login to your account{% endtrans %}</small></b></h3>
+      </div>
+      <div class="card__body card__body--lgtext mui--text-subhead">
+        <ol class="mui-list--aligned mui-list--border">
+          {% for extid in current_auth.user.externalids %}
+            <li>
+              <img src="{{ url_for('static', filename='oauth/img/' + extid.username + '.svg') }}" class="icon-img " alt="{{ extid.username }}"/>&nbsp;{{ extid.username }}&nbsp;<small><em>{% trans %}Last used{% endtrans %} {{ extid.last_used_at|age }}</em></small>
+              <a href="{{ url_for('.remove_extid', service=extid.service, userid=extid.userid) }}" class="mui--pull-right" title="{% trans %}Remove{% endtrans %}"><i class="material-icons mui--text-subhead mui--align-middle">delete</i></a>
+            </li>
+          {% endfor %}
+        </ol>
+        <p>{% trans %}Add External ID{% endtrans %}</p>
+        {% for provider in login_registry %}
+          <a class="mui-btn mui-btn--small mui-btn--primary login-{{ provider }}" href="{{ url_for('lastuser_oauth.login_service', service=provider, next=url_for('.account')) }}" title="{{ login_registry[provider]['title'] }}"><img src="{{ url_for('static', filename='oauth/img/' + login_registry[provider].icon + '.png') }}" class="icon-img" alt="{{ login_registry[provider]['title'] }}"/> {{ login_registry[provider]['title'] }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="grid__col-xs-12 grid__col-sm-6">
+    <div class="card">
+      <div class="card__header">
+        <h3><b>{% trans %}Email addresses{% endtrans %}</b></h3>
+      </div>
       <form action="{{ url_for('.make_email_primary') }}" method="POST">
-        {{ primary_email_form.hidden_tag() }}
-        <table class="table detail-box-table">
-          {% for useremail in current_auth.user.emails %}
-            <tr>
-              <td>
-                <input id="useremail-{{loop.index}}" name="email" value="{{useremail}}" type="radio">&nbsp;
-                <label for="useremail-{{loop.index}}">{{ useremail }}</label>
-                {% if useremail.primary %}
-                  <em>{% trans %}(primary){% endtrans %}</em>
-                {% endif %}
-              </td>
-              <td>
-                {%- if not useremail.primary %}
-                  <a  title="{% trans %}Remove{% endtrans %}" href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a>
-                {%- endif %}
-              </td>
-            </tr>
-          {% endfor %}
-          {% for useremail in current_auth.user.emailclaims %}
-            <tr>
-              <td>
-                <input type="radio" disabled="disabled">&nbsp;
-                {{ useremail }} <em><a href="{{ url_for('.verify_email', md5sum=useremail.md5sum) }}">{% trans %}(pending verification){% endtrans %}</a></em>
-              </td>
-              <td>
-                <a  title="{% trans %}Remove{% endtrans %}" href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}"><i class="fa fa-trash-o"></i></a>
-              </td>
-            </tr>
-          {% endfor %}
-        </table>
-        <div class="button-box">
-          {% if current_auth.user.emails %}<button class="btn btn-sm btn-info" type="submit">{% trans %}Set as primary{% endtrans %}</button>{% endif %}
-          <a class="btn btn-sm btn-success" href="{{ url_for('.add_email') }}">{% trans %}Add an email address{% endtrans %}</a>
+        <div class="card__body card__body--lgtext mui--text-subhead">
+          {{ primary_email_form.hidden_tag() }}
+          <ol class="mui-list--aligned mui-list--border">
+            {% for useremail in current_auth.user.emails %}
+            <li>
+              <input id="useremail-{{loop.index}}" name="email" value="{{useremail}}" type="radio">&nbsp;
+              <label for="useremail-{{loop.index}}">{{ useremail }}</label>
+              {% if useremail.primary %}
+                <em>{% trans %}(primary){% endtrans %}</em>
+              {% endif %}
+              {%- if not useremail.primary %}
+                <a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}" class="mui--pull-right" title="{% trans %}Remove{% endtrans %}"><i class="material-icons mui--text-subhead mui--align-middle">delete</i></a>
+              {%- endif %}
+            </li>
+            {% endfor %}
+            {% for useremail in current_auth.user.emailclaims %}
+            <li>
+              <input type="radio" disabled="disabled">&nbsp;
+              {{ useremail }} <em><a href="{{ url_for('.verify_email', md5sum=useremail.md5sum) }}">{% trans %}(pending verification){% endtrans %}</a></em>
+              <a href="{{ url_for('.remove_email', md5sum=useremail.md5sum) }}" title="{% trans %}Remove{% endtrans %}" class="mui--pull-right"><i class="material-icons mui--text-subhead mui--align-middle">delete</i></a>
+            </li>
+            {% endfor %}
+          </ol>
+        </div>
+        <div class="mui-divider"></div>
+        <div class="card__footer">
+          {% if current_auth.user.emails %}
+            <button class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary" type="submit" title="Set as primary email">{% trans %}Set as primary{% endtrans %}</button>
+          {% endif %}
+          <a class="mui-btn mui-btn--small mui-btn--flat mui-btn--accent" href="{{ url_for('.add_email') }}" title="Add an email address">{% trans %}Add an email address{% endtrans %}</a>
         </div>
       </form>
-    </div><!--eof detail-box-->
-  </div><!--eof email-->
+    </div>
+  </div>
 
-  <div class="col-xs-12 col-sm-12 col-md-6">
-    <div class="detail-box clearfix">
-      <h2 class="heading">Mobile numbers</h2>
+  <div class="grid__col-xs-12 grid__col-sm-6">
+    <div class="card">
+      <div class="card__header">
+        <h3><b>{% trans %}Mobile numbers{% endtrans %}</b></h3>
+      </div>
       <form action="{{ url_for('.make_phone_primary') }}" method="POST">
-        {{ primary_phone_form.hidden_tag() }}
-        <table class="table detail-box-table">
-          {% for userphone in current_auth.user.phones %}
-            <tr>
-              <td>
+        <div class="card__body card__body--lgtext mui--text-subhead">
+          {{ primary_phone_form.hidden_tag() }}
+          <ol class="mui-list--aligned mui-list--border">
+            {% for userphone in current_auth.user.phones %}
+              <li>
                 <input id="userphone-{{loop.index}}" name="phone" value="{{userphone}}" type="radio">&nbsp;
                 <label for="userphone-{{loop.index}}">{{ userphone.formatted() }}</label>
-                 {% if userphone.primary %} <em>{% trans %}(primary){% endtrans %}</em> {% endif -%}
-              </td>
-              <td>
+                {% if userphone.primary %} <em>{% trans %}(primary){% endtrans %}</em> {% endif -%}
                 {%- if not userphone.primary %}
-                  <a  title="{% trans %}Remove{% endtrans %}" href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a>
+                  <a href="{{ url_for('.remove_phone', number=userphone.phone) }}" title="{% trans %}Remove{% endtrans %}" class="mui--pull-right"><i class="material-icons mui--text-subhead mui--align-middle">delete</i></a>
                 {%- endif %}
-              </td>
-            </tr>
-          {% endfor %}
-          {% for userphone in current_auth.user.phoneclaims %}
-            <tr>
-              <td>
+              </li>
+            {% endfor %}
+            {% for userphone in current_auth.user.phoneclaims %}
+              <li>
                 <input type="radio" disabled="disabled">&nbsp;
                 <label>{{ userphone.formatted() }}</label> <em>{% if userphone.verification_expired %}{% trans %}(blocked){% endtrans %}{% else %}<a href="{{ url_for('.verify_phone', number=userphone) }}">{% trans %}(pending verification){% endtrans %}</a>{% endif %}</em>
-              </td>
-              <td>
-                {% if not userphone.verification_expired %}<a title="{% trans %}Remove{% endtrans %}" href="{{ url_for('.remove_phone', number=userphone.phone) }}"><i class="fa fa-trash-o"></i></a>{% endif %}
-              </td>
-            </tr>
-          {% endfor %}
-        </table>
-        <div class="button-box">
-          {% if current_auth.user.phones %}<button class="btn btn-sm btn-info" type="submit">{% trans %}Set as primary{% endtrans %}</button>{% endif %}
-          <a class="btn btn-sm btn-success" href="{{ url_for('.add_phone') }}">{% trans %}Add a mobile number{% endtrans %}</a>
+                {% if not userphone.verification_expired %}
+                  <a href="{{ url_for('.remove_phone', number=userphone.phone) }}" title="{% trans %}Remove{% endtrans %}" class="mui--pull-right"><i class="material-icons mui--text-subhead mui--align-middle">delete</i></a>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ol>
+        </div>
+        <div class="mui-divider"></div>
+        <div class="card__footer">
+          {% if current_auth.user.phones %}<button class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary" type="submit">{% trans %}Set as primary{% endtrans %}</button>{% endif %}
+          <a class="mui-btn mui-btn--small mui-btn--flat mui-btn--accent" href="{{ url_for('.add_phone') }}">{% trans %}Add a mobile number{% endtrans %}</a>
         </div>
       </form>
-    </div><!--eof detail-box-->
-  </div><!--eof phone-->
+    </div>
+  </div>
 
-  <div class="col-xs-12">
-    <div class="detail-box clearfix">
-      <h2 class="heading">My sessions</h2>
-      <div class="panel panel-default detail-box-panel">
-        <ul class="list-group">
+  <div class="grid__col-xs-12">
+    <div class="card">
+      <div class="card__header">
+        <h3><b>{% trans %}My sessions{% endtrans %}</b></h3>
+      </div>
+      <div class="card__body">
+        <ul class="mui-list--aligned mui-list--unstyled mui--text-subhead mui-list--border">
           {%- for session in current_auth.user.active_sessions %}
-            <li class="list-group-item">From {{ session.ipaddr }} since {{ session.created_at|age }} with {{ session.ua['user_agent']['family']}} {{ session.ua['user_agent']['major'] }} on {{ session.ua['os']['family'] }} {{ session.ua['os']['major'] }}.{{ session.ua['os']['minor'] }}, last active {{ session.accessed_at|age }}
+            <li>From {{ session.ipaddr }} since {{ session.created_at|age }} with {{ session.ua['user_agent']['family']}} {{ session.ua['user_agent']['major'] }} on {{ session.ua['os']['family'] }} {{ session.ua['os']['major'] }}.{{ session.ua['os']['minor'] }}, last active {{ session.accessed_at|age }}
             {% if session == current_auth.usersession -%}
               {% trans %}(current){% endtrans %}
             {%- else -%}
-              <a href="{{ url_for('lastuser_oauth.logout_session', session=session.buid) }}">{% trans %}(logout){% endtrans %}</a>
+              <a href="{{ url_for('lastuser_oauth.logout_session', session=session.buid) }}" title="logout">{% trans %}(logout){% endtrans %}</a>
             {%- endif %}
             </li>
           {%- endfor %}
         </ul>
       </div>
-    </div><!--eof detail-box-->
-  </div><!--eof sessions-->
-</div><!--eof row-->
+    </div>
+  </div>
+</div>
 {% endblock %}
