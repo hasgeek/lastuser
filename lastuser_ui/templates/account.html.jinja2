@@ -11,7 +11,7 @@
       </div>
       <div class="card__body card__body--lgtext mui--text-subhead">
         <p><b>{% trans %}Name{% endtrans %}</b>: {{ current_auth.user.fullname }}</p>
-        <p><b>{% trans %}Username{% endtrans %}</b>: 
+        <p><b>{% trans %}Username{% endtrans %}</b>:
           {% if current_auth.user.username %}
             {{ current_auth.user.username }}
           {% else %}
@@ -36,7 +36,7 @@
         <ol class="mui-list--aligned mui-list--border">
           {% for extid in current_auth.user.externalids %}
             <li>
-              <img src="{{ url_for('static', filename='oauth/img/' + extid.username + '.svg') }}" class="icon-img " alt="{{ extid.username }}"/>&nbsp;{{ extid.username }}&nbsp;<small><em>{% trans %}Last used{% endtrans %} {{ extid.last_used_at|age }}</em></small>
+              <img src="{{ url_for('static', filename='oauth/img/' + extid.service + '.svg') }}" class="icon-img " alt="{{ extid.service }}" title="{{ extid.service }}"/>&nbsp;{{ extid.username }}&nbsp;<small><em>{% trans %}Last used{% endtrans %} {{ extid.last_used_at|age }}</em></small>
               <a href="{{ url_for('.remove_extid', service=extid.service, userid=extid.userid) }}" class="mui--pull-right" title="{% trans %}Remove{% endtrans %}"><i class="material-icons mui--text-subhead mui--align-middle">delete</i></a>
             </li>
           {% endfor %}
