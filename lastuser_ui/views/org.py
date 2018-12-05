@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from flask import current_app, render_template, url_for, abort, redirect, request
-from baseframe import _
-from baseframe.forms import render_form, render_redirect, render_delete_sqla
-from coaster.auth import current_auth, add_auth_attribute
-from coaster.views import route, requires_permission, UrlForView, ModelView
+from flask import abort, current_app, redirect, render_template, request, url_for
 
-from lastuser_core.models import db, Organization, Team
+from baseframe import _
+from baseframe.forms import render_delete_sqla, render_form, render_redirect
+
+from coaster.auth import current_auth
+from coaster.views import ModelView, UrlForView, requires_permission, route
+
+from lastuser_core.models import Organization, Team, db
 from lastuser_core.signals import org_data_changed, team_data_changed
+
 from lastuser_oauth.views.helpers import requires_login
+
 from .. import lastuser_ui
 from ..forms.org import OrganizationForm, TeamForm
 
@@ -22,17 +26,12 @@ class OrgView(UrlForView, ModelView):
     model = Organization
     route_model_map = {'name': 'name'}  # Map <name> in URL to attribute `name`, for `url_for` automation
 
-    def loader(self, kwargs):
-        obj = None  # Bypass loading for views that don't operate on an object
-        if kwargs:
-            obj = Organization.get(**kwargs)
+    def loader(self, name=None):
+        if name:
+            obj = Organization.get(name=name)
             if not obj:
                 abort(404)
-            perms = obj.current_permissions
-            if hasattr(current_auth, 'permissions'):
-                perms = perms | current_auth.permissions
-            add_auth_attribute('permissions', perms)
-        return obj
+            return obj
 
     @route('')
     def index(self):
@@ -58,12 +57,12 @@ class OrgView(UrlForView, ModelView):
 
     @route('<name>')
     @requires_permission('view')
-    def view(self, name):
+    def view(self):
         return render_template('org_info.html.jinja2', org=self.obj)
 
     @route('<name>/edit', methods=['GET', 'POST'])
     @requires_permission('edit')
-    def edit(self, name):
+    def edit(self):
         form = OrganizationForm(obj=self.obj)
         form.name.description = current_app.config.get('ORG_NAME_REASON')
         form.title.description = current_app.config.get('ORG_TITLE_REASON')
@@ -76,11 +75,12 @@ class OrgView(UrlForView, ModelView):
 
     @route('<name>/delete', methods=['GET', 'POST'])
     @requires_permission('delete')
-    def delete(self, name):
+    def delete(self):
         if request.method == 'POST':
             # FIXME: Find a better way to do this
             org_data_changed.send(self.obj, changes=['delete'], user=current_auth.user)
-        return render_delete_sqla(self.obj, db, title=_(u"Confirm delete"),
+        return render_delete_sqla(
+            self.obj, db, title=_(u"Confirm delete"),
             message=_(u"Delete organization ‘{title}’? ").format(
                 title=self.obj.title),
             success=_(u"You have deleted organization ‘{title}’ and all its associated teams").format(
@@ -89,13 +89,13 @@ class OrgView(UrlForView, ModelView):
 
     @route('<name>/teams')
     @requires_permission('view-teams')
-    def teams(self, name):
+    def teams(self):
         # There's no separate teams page at the moment
         return redirect(self.obj.url_for('view'))
 
     @route('<name>/teams/new', methods=['GET', 'POST'])
     @requires_permission('new-team')
-    def new_team(self, name):
+    def new_team(self):
         form = TeamForm()
         if form.validate_on_submit():
             team = Team(org=self.obj)
@@ -104,7 +104,8 @@ class OrgView(UrlForView, ModelView):
             db.session.commit()
             team_data_changed.send(team, changes=['new'], user=current_auth.user)
             return render_redirect(self.obj.url_for('view'), code=303)
-        return render_form(form=form, title=_(u"Create new team"),
+        return render_form(
+            form=form, title=_(u"Create new team"),
             formid='new_team', submit=_("Create"))
 
 
@@ -118,39 +119,37 @@ class TeamView(UrlForView, ModelView):
     route_model_map = {  # Map <name> and <buid> in URLs to model attributes, for `url_for` automation
         'name': 'org.name',
         'buid': 'buid'
-        }
+    }
 
-    def loader(self, kwargs):
-        obj = Team.get(buid=kwargs['buid'], with_parent=True)
-        if not obj or obj.org.name != kwargs['name']:
+    def loader(self, name, buid):
+        obj = Team.get(buid=buid, with_parent=True)
+        if not obj or obj.org.name != name:
             abort(404)
-        perms = obj.current_permissions
-        if hasattr(current_auth, 'permissions'):
-            perms = perms | current_auth.permissions
-        add_auth_attribute('permissions', perms)
         return obj
 
     @route('', methods=['GET', 'POST'])
     @requires_permission('edit')
-    def edit(self, name, buid):
+    def edit(self):
         form = TeamForm(obj=self.obj)
         if form.validate_on_submit():
             form.populate_obj(self.obj)
             db.session.commit()
             team_data_changed.send(self.obj, changes=['edit'], user=current_auth.user)
             return render_redirect(self.obj.org.url_for(), code=303)
-        return render_form(form=form,
+        return render_form(
+            form=form,
             title=_(u"Edit team: {title}").format(title=self.obj.title),
             formid='team_edit', submit=_("Save"), ajax=False)
 
     @route('delete', methods=['GET', 'POST'])
     @requires_permission('delete')
-    def delete(self, name, buid):
+    def delete(self):
         if self.obj == self.obj.org.owners or self.obj == self.obj.org.members:
             abort(403)
         if request.method == 'POST':
             team_data_changed.send(self.obj, changes=['delete'], user=current_auth.user)
-        return render_delete_sqla(self.obj, db,
+        return render_delete_sqla(
+            self.obj, db,
             title=_(u"Confirm delete"),
             message=_(u"Delete team {title}?").format(title=self.obj.title),
             success=_(u"You have deleted team ‘{team}’ from organization ‘{org}’").format(
