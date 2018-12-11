@@ -103,3 +103,19 @@ class TestName(TestDatabaseFixture):
         self.fixtures.specialdachs.name = None
         db.session.commit()
         assert models.Name.get(u'specialdachs') is None
+
+    def test_name_transfer(self):
+        assert self.fixtures.nameless.username is None
+        assert models.Name.get(u'newname') is None
+        newname = models.User(username=u'newname', fullname="New Name")
+        db.session.add(newname)
+        db.session.commit()
+        assert models.Name.get(u'newname') is not None
+        assert newname.username == u'newname'
+
+        merged = models.merge_users(self.fixtures.nameless, newname)
+        assert merged is not newname
+        assert merged is self.fixtures.nameless
+        assert newname.username is None
+        assert merged.username == u'newname'
+        assert self.fixtures.nameless.username == u'newname'

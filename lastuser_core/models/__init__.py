@@ -51,7 +51,11 @@ def merge_users(user1, user2):
     # 1. Release the username
     if not keep_user.username:
         if merge_user.username:
-            keep_user.username = merge_user.username
+            # Flush before re-assigning to avoid dupe name constraint
+            username = merge_user.username
+            merge_user.username = None
+            db.session.flush()
+            keep_user.username = username
     merge_user.username = None
 
     # 2. Inspect all tables for foreign key references to merge_user and switch to keep_user.

@@ -13,11 +13,13 @@ class Fixtures(object):
         crusoe = User(username=u"crusoe", fullname=u"Crusoe Celebrity Dachshund")
         oakley = User(username=u"oakley")
         piglet = User(username=u"piglet")
+        nameless = User(fullname="Nameless")
 
-        db.session.add_all([crusoe, oakley, piglet])
+        db.session.add_all([crusoe, oakley, piglet, nameless])
         self.crusoe = crusoe
         self.oakley = oakley
         self.piglet = piglet
+        self.nameless = nameless
 
         crusoe_email = UserEmail(email=u"crusoe@keepballin.ca", primary=True, user=crusoe)
         crusoe_phone = UserPhone(phone=u"+8080808080", primary=True, user=crusoe)
