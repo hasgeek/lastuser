@@ -67,3 +67,7 @@
   {%- endif %}
 </form>
 {% endblock %}
+
+{% block footerscripts %}
+  {{ ajaxform('authorize', request) }}
+{% endblock %}
