@@ -1,5 +1,5 @@
 {% extends "layout.html.jinja2" %}
-{% from "baseframe/mui/forms.html.jinja2" import rendersubmit %}
+{% from "baseframe/mui/forms.html.jinja2" import rendersubmit, ajaxform %}
 {% block title %}{% trans %}My account{% endtrans %}{% endblock %}
 
 {% block contentwrapper %}
@@ -54,7 +54,7 @@
       <div class="card__header">
         <h3><b>{% trans %}Email addresses{% endtrans %}</b></h3>
       </div>
-      <form action="{{ url_for('.make_email_primary') }}" method="POST">
+      <form action="{{ url_for('.make_email_primary') }}" method="POST" id="email-primary-form">
         <div class="card__body card__body--lgtext mui--text-subhead">
           {{ primary_email_form.hidden_tag() }}
           <ol class="mui-list--aligned mui-list--border">
@@ -85,6 +85,7 @@
             <button class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary" type="submit" title="Set as primary email">{% trans %}Set as primary{% endtrans %}</button>
           {% endif %}
           <a class="mui-btn mui-btn--small mui-btn--flat mui-btn--accent" href="{{ url_for('.add_email') }}" title="Add an email address">{% trans %}Add an email address{% endtrans %}</a>
+          <span class="loading mui--hide"><i class="material-icons mui--align-middle mui--text-dark-secondary">refresh</i></span>
         </div>
       </form>
     </div>
@@ -95,7 +96,7 @@
       <div class="card__header">
         <h3><b>{% trans %}Mobile numbers{% endtrans %}</b></h3>
       </div>
-      <form action="{{ url_for('.make_phone_primary') }}" method="POST">
+      <form action="{{ url_for('.make_phone_primary') }}" method="POST" id="phone-primary-form">
         <div class="card__body card__body--lgtext mui--text-subhead">
           {{ primary_phone_form.hidden_tag() }}
           <ol class="mui-list--aligned mui-list--border">
@@ -124,6 +125,7 @@
         <div class="card__footer">
           {% if current_auth.user.phones %}<button class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary" type="submit">{% trans %}Set as primary{% endtrans %}</button>{% endif %}
           <a class="mui-btn mui-btn--small mui-btn--flat mui-btn--accent" href="{{ url_for('.add_phone') }}">{% trans %}Add a mobile number{% endtrans %}</a>
+          <span class="loading mui--hide"><i class="material-icons mui--align-middle mui--text-dark-secondary">refresh</i></span>
         </div>
       </form>
     </div>
@@ -150,4 +152,9 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block footerscripts %}
+  {{ ajaxform('email-primary-form', request) }}
+  {{ ajaxform('phone-primary-form', request) }}
 {% endblock %}

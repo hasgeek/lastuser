@@ -1,4 +1,5 @@
 {% extends "layout.html.jinja2" %}
+{% from "baseframe/mui/forms.html.jinja2" import ajaxform %}
 {% block title %}Authorization Required{% endblock %}
 
 {% block content %}
@@ -57,8 +58,9 @@
   <input type="hidden" name="form.id" value="authorize"/>
   {{ form.hidden_tag() }}
   <p>
-    <input class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary" type="submit" name="accept" value="Authorize"/>
-    <input class="mui-btn mui-btn--small mui-btn--flat mui-btn--danger" type="submit" name="deny" value="Deny"/>
+    <input class="mui-btn mui-btn--small mui-btn--primary" type="submit" name="accept" value="Authorize"/>
+    <input class="mui-btn mui-btn--small mui-btn--danger" type="submit" name="deny" value="Deny"/>
+    <span class="loading mui--hide"><i class="material-icons mui--align-middle mui--text-dark-secondary">refresh</i></span>
   </p>
   {%- if form.csrf_token.errors %}
     <div><p class="mui-form--error">{% trans -%}
@@ -66,4 +68,8 @@
     {%- endtrans %}</p></div>
   {%- endif %}
 </form>
+{% endblock %}
+
+{% block footerscripts %}
+  {{ ajaxform('authorize', request) }}
 {% endblock %}

@@ -54,6 +54,11 @@
     <div class="form-actions">
       <input class="mui-btn mui-btn--raised mui-btn--primary" type="submit" name="merge" value="Merge accounts"/>
       <input class="mui-btn mui-btn--raised mui-btn--accent" type="submit" name="skip" value="Skip"/>
+      <span class="loading mui--hide"><i class="material-icons mui--align-middle mui--text-dark-secondary">refresh</i></span>
     </div>
   </form>
+{% endblock %}
+
+{% block footerscripts %}
+  {{ ajaxform('merge-accounts', request) }}
 {% endblock %}
