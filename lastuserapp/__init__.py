@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask
-from flask_rq import RQ
 from flask_migrate import Migrate
 import coaster.app
 from baseframe import baseframe, assets, Version
@@ -11,7 +10,7 @@ import lastuser_oauth
 import lastuser_ui
 from lastuser_core import login_registry
 from lastuser_core.models import db
-from lastuser_oauth import providers
+from lastuser_oauth import providers, rq
 from ._version import __version__
 
 version = Version(__version__)
@@ -32,7 +31,7 @@ coaster.app.init_app(app)
 db.init_app(app)
 db.app = app  # To make it work without an app context
 migrate = Migrate(app, db)
-RQ(app)  # Pick up RQ configuration from the app
+rq.init_app(app)  # Pick up RQ configuration from the app
 baseframe.init_app(app, requires=['lastuser-oauth'],
     ext_requires=['baseframe-mui', 'jquery.cookie', 'timezone'], theme='mui')
 

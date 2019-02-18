@@ -3,6 +3,7 @@
 from itsdangerous import JSONWebSignatureSerializer
 from flask import Blueprint
 from flask_assets import Bundle
+from flask_rq2 import RQ
 
 
 class LastuserOAuthBlueprint(Blueprint):
@@ -21,5 +22,6 @@ lastuser_oauth = LastuserOAuthBlueprint('lastuser_oauth', __name__,
 
 lastuser_oauth_js = Bundle('lastuser_oauth/js/app.js')
 lastuser_oauth_css = Bundle('lastuser_oauth/css/app.css')
+rq = RQ()
 
 from . import forms, views  # NOQA

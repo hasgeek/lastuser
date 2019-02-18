@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import requests
-from flask_rq import job
 from lastuser_core.models import AuthToken
 from lastuser_core.signals import user_data_changed, org_data_changed, team_data_changed, session_revoked
+from lastuser_oauth import rq
 
 
 user_changes_to_notify = set(['merge', 'profile', 'email', 'email-claim', 'email-delete',
@@ -14,7 +14,7 @@ user_changes_to_notify = set(['merge', 'profile', 'email', 'email-claim', 'email
 def notify_session_revoked(session):
     for client in session.clients:
         if client.notification_uri:
-            send_notice.delay(client.notification_uri, data={
+            send_notice.queue(client.notification_uri, data={
                 'userid': session.user.buid,  # XXX: Deprecated parameter
                 'buid': session.user.buid,
                 'type': 'user',
@@ -50,7 +50,7 @@ def notify_user_data_changed(user, changes):
                                 'teams' in tokenscope or 'teams/*' in tokenscope):
                             notify_changes.append(change)
                 if notify_changes:
-                    send_notice.delay(token.client.notification_uri, data={
+                    send_notice.queue(token.client.notification_uri, data={
                         'userid': user.buid,  # XXX: Deprecated parameter
                         'buid': user.buid,
                         'type': 'user',
@@ -81,7 +81,7 @@ def notify_org_data_changed(org, user, changes, team=None):
             notify_user = user
         else:
             notify_user = users[0]  # First user available
-        send_notice.delay(client.notification_uri, data={
+        send_notice.queue(client.notification_uri, data={
             'userid': notify_user.buid,  # XXX: Deprecated parameter
             'buid': notify_user.buid,
             'type': 'org' if team is None else 'team',
@@ -99,6 +99,6 @@ def notify_team_data_changed(team, user, changes):
     notify_org_data_changed(team.org, user=user, changes=['team-' + c for c in changes], team=team)
 
 
-@job('lastuser')
+@rq.job('lastuser')
 def send_notice(url, params=None, data=None, method='POST'):
     requests.request(method, url, params=params, data=data)

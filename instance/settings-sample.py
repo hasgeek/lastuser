@@ -22,6 +22,10 @@ SQLALCHEMY_DATABASE_URI = 'postgresql:///localhost/lastuser'
 #: Cache type
 CACHE_TYPE = 'redis'
 
+#: For RQ
+RQ_REDIS_URL = 'redis://localhost:6379/0'
+RQ_SCHEDULER_INTERVAL = 1
+
 #: Secret key
 SECRET_KEY = 'make this something random'
 
