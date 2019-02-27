@@ -70,7 +70,7 @@ def notify_org_data_changed(org, user, changes, team=None):
     else:
         team_access = []
     for token in AuthToken.all(users=org.owners.users):
-        if ('organizations' in token.effective_scope or 'organizations/*' in token.effective_scope) and token.client.notification_uri and token.is_valid():
+        if ('*' in token.effective_scope or 'organizations' in token.effective_scope or 'organizations/*' in token.effective_scope) and token.client.notification_uri and token.is_valid():
             if team is not None:
                 if token.client not in team_access:
                     continue
