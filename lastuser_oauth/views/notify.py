@@ -40,14 +40,13 @@ def notify_user_data_changed(user, changes):
                     if change in ['merge', 'profile']:
                         notify_changes.append(change)
                     elif change in ['email', 'email-claim', 'email-delete', 'email-update-primary']:
-                        if 'email' in tokenscope or 'email/*' in tokenscope:
+                        if {'email', 'email/*'}.intersection(tokenscope):
                             notify_changes.append(change)
                     elif change in ['phone', 'phone-claim', 'phone-delete', 'phone-update-primary']:
-                        if 'phone' in tokenscope or 'phone/*' in tokenscope:
+                        if {'phone', 'phone/*'}.intersection(tokenscope):
                             notify_changes.append(change)
                     elif change in ['team-membership']:
-                        if ('organizations' in tokenscope or 'organizations/*' in tokenscope or
-                                'teams' in tokenscope or 'teams/*' in tokenscope):
+                        if {'organizations', 'organizations/*', 'teams', 'teams/*'}.intersection(tokenscope):
                             notify_changes.append(change)
                 if notify_changes:
                     send_notice.queue(token.client.notification_uri, data={
@@ -70,7 +69,7 @@ def notify_org_data_changed(org, user, changes, team=None):
     else:
         team_access = []
     for token in AuthToken.all(users=org.owners.users):
-        if ('*' in token.effective_scope or 'organizations' in token.effective_scope or 'organizations/*' in token.effective_scope) and token.client.notification_uri and token.is_valid():
+        if {'*', 'organizations', 'organizations/*'}.intersection(token.effective_scope) and token.client.notification_uri and token.is_valid():
             if team is not None:
                 if token.client not in team_access:
                     continue

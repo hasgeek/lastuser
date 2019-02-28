@@ -392,10 +392,8 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         """
         Return a list of clients with access to the user's organizations' teams.
         """
-        return [token.client for token in self.authtokens if (
-            '*' in token.effective_scope or
-            'teams' in token.effective_scope or
-            'teams/*' in token.effective_scope)]
+        return [token.client for token in self.authtokens
+            if {'*', 'teams', 'teams/*'}.intersection(token.effective_scope)]
 
     @classmethod
     def get(cls, username=None, buid=None, defercols=False):
