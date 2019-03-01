@@ -287,8 +287,6 @@ def oauth_authorize():
             return oauth_auth_error(redirect_uri, state, 'access_denied')
         else:
             raise ValueError("Received an authorize form without a valid action.")
-    elif request.method == 'POST':
-        flash(_("This prompt timed out. Please try submitting again."))
 
     # GET request or POST with invalid CSRF
     return render_template('authorize.html.jinja2',
