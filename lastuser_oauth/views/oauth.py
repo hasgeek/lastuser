@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import render_template, redirect, request, jsonify, get_flashed_messages
+from flask import flash, render_template, redirect, request, jsonify, get_flashed_messages
 from coaster.utils import newsecret
 from coaster.auth import current_auth
 from coaster.sqlalchemy import failsafe_add
@@ -266,14 +266,14 @@ def oauth_authorize():
         existing_token = AuthToken.query.filter_by(user=current_auth.user, client=client).first()
     else:
         existing_token = AuthToken.query.filter_by(user_session=current_auth.session, client=client).first()
-    if existing_token and set(scope).issubset(set(existing_token.effective_scope)):
+    if existing_token and ('*' in existing_token.effective_scope or set(scope).issubset(set(existing_token.effective_scope))):
         if response_type == 'code':
             return oauth_auth_success(client, redirect_uri, state, oauth_make_auth_code(client, scope, redirect_uri))
         else:
             return oauth_auth_success(client, redirect_uri, state, code=None,
                 token=oauth_make_token(current_auth.user, client, scope, current_auth.session))
 
-    # First request. Ask user.
+    # If the user was prompted, take their input.
     if form.validate_on_submit():
         if 'accept' in request.form:
             # User said yes. Return an auth code to the client
@@ -285,7 +285,10 @@ def oauth_authorize():
         elif 'deny' in request.form:
             # User said no. Return "access_denied" error (OAuth2 spec)
             return oauth_auth_error(redirect_uri, state, 'access_denied')
-        # else: shouldn't happen, so just show the form again
+        else:
+            raise ValueError("Received an authorize form without a valid action.")
+    elif request.method == 'POST':
+        flash(_("This prompt timed out. Please try submitting again."))
 
     # GET request or POST with invalid CSRF
     return render_template('authorize.html.jinja2',
