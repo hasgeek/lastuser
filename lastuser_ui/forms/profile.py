@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from coaster.utils import nullunicode
+from coaster.utils import nullstr
 from coaster.auth import current_auth
 from baseframe import _, __
 import baseframe.forms as forms
@@ -15,7 +15,7 @@ __all__ = ['NewEmailAddressForm', 'EmailPrimaryForm', 'VerifyEmailForm',
 class NewEmailAddressForm(forms.Form):
     email = forms.EmailField(__("Email address"), validators=[forms.validators.DataRequired(), forms.ValidEmail()],
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
-    type = forms.RadioField(__("Type"), coerce=nullunicode, validators=[forms.validators.Optional()], choices=[
+    type = forms.RadioField(__("Type"), coerce=nullstr, validators=[forms.validators.Optional()], choices=[
         (__(u"Home"), __(u"Home")),
         (__(u"Work"), __(u"Work")),
         (__(u"Other"), __(u"Other"))])
@@ -51,7 +51,7 @@ class NewPhoneForm(forms.Form):
     # Temporarily removed since we only support mobile numbers at this time. When phone call validation is added,
     # we can ask for other types of numbers:
 
-    # type = forms.RadioField(__("Type"), coerce=nullunicode, validators=[forms.validators.Optional()], choices=[
+    # type = forms.RadioField(__("Type"), coerce=nullstr, validators=[forms.validators.Optional()], choices=[
     #     (__(u"Mobile"), __(u"Mobile")),
     #     (__(u"Home"), __(u"Home")),
     #     (__(u"Work"), __(u"Work")),
