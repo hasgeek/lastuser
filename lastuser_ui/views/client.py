@@ -22,7 +22,7 @@ from ..forms import (RegisterClientForm, PermissionForm, UserPermissionAssignFor
 def client_list():
     if current_auth.is_authenticated:
         return render_template('client_list.html.jinja2', clients=Client.query.filter(db.or_(Client.user == current_auth.user,
-            Client.org_id.in_(current_auth.user.organizations_owned_ids()))).order_by('title').all())
+            Client.org_id.in_(current_auth.user.organizations_owned_ids()))).order_by(Client.title).all())
     else:
         # TODO: Show better UI for non-logged in users
         return render_template('client_list.html.jinja2', clients=[])
@@ -30,7 +30,7 @@ def client_list():
 
 @lastuser_ui.route('/apps/all')
 def client_list_all():
-    return render_template('client_list.html.jinja2', clients=Client.query.order_by('title').all())
+    return render_template('client_list.html.jinja2', clients=Client.query.order_by(Client.title).all())
 
 
 def available_client_owners():
@@ -74,7 +74,7 @@ def client_info(client):
         permassignments = UserClientPermissions.query.filter_by(client=client).all()
     else:
         permassignments = TeamClientPermissions.query.filter_by(client=client).all()
-    resources = Resource.query.filter_by(client=client).order_by('name').all()
+    resources = Resource.query.filter_by(client=client).order_by(Resource.name).all()
     return render_template('client_info.html.jinja2', client=client,
         permassignments=permassignments,
         resources=resources)
@@ -163,11 +163,11 @@ def client_cred_delete(client, cred):
 @lastuser_ui.route('/perms')
 @requires_login
 def permission_list():
-    allperms = Permission.query.filter_by(allusers=True).order_by('name').all()
+    allperms = Permission.query.filter_by(allusers=True).order_by(Permission.name).all()
     userperms = Permission.query.filter(
         db.or_(Permission.user_id == current_auth.user.id,
                Permission.org_id.in_(current_auth.user.organizations_owned_ids()))
-        ).order_by('name').all()
+        ).order_by(Permission.name).all()
     return render_template('permission_list.html.jinja2', allperms=allperms, userperms=userperms)
 
 
@@ -235,12 +235,12 @@ def permission_user_new(client):
     if client.user:
         available_perms = Permission.query.filter(db.or_(
             Permission.allusers == True,
-            Permission.user == current_auth.user)).order_by('name').all()  # NOQA
+            Permission.user == current_auth.user)).order_by(Permission.name).all()  # NOQA
         form = UserPermissionAssignForm()
     elif client.org:
         available_perms = Permission.query.filter(db.or_(
             Permission.allusers == True,
-            Permission.org == client.org)).order_by('name').all()  # NOQA
+            Permission.org == client.org)).order_by(Permssion.name).all()  # NOQA
         form = TeamPermissionAssignForm()
         form.org = client.org
         form.team_id.choices = [(team.buid, team.title) for team in client.org.teams]
@@ -285,7 +285,7 @@ def permission_user_edit(client, kwargs):
             abort(404)
         available_perms = Permission.query.filter(db.or_(
             Permission.allusers == True,
-            Permission.user == current_auth.user)).order_by('name').all()  # NOQA
+            Permission.user == current_auth.user)).order_by(Permission.name).all()  # NOQA
         permassign = UserClientPermissions.query.filter_by(user=user, client=client).first_or_404()
     elif client.org:
         team = Team.get(buid=kwargs['buid'])
@@ -293,7 +293,7 @@ def permission_user_edit(client, kwargs):
             abort(404)
         available_perms = Permission.query.filter(db.or_(
             Permission.allusers == True,
-            Permission.org == client.org)).order_by('name').all()  # NOQA
+            Permission.org == client.org)).order_by(Permission.name).all()  # NOQA
         permassign = TeamClientPermissions.query.filter_by(team=team, client=client).first_or_404()
     form = PermissionEditForm()
     form.perms.choices = [(ap.name, _(u"{name} – {title}").format(name=ap.name, title=ap.title)) for ap in available_perms]
