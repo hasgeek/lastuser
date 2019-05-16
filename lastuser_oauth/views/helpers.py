@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from functools import wraps
 from urllib import unquote
 from pytz import common_timezones
 import itsdangerous
 from flask import current_app, request, session, flash, redirect, url_for, Response
+from coaster.utils import utcnow
 from coaster.auth import current_auth, add_auth_attribute, request_has_auth
 from coaster.sqlalchemy import failsafe_add
 from coaster.views import get_current_url
@@ -67,7 +68,7 @@ class LoginManager(object):
         else:
             lastuser_cookie.pop('userid', None)
 
-        lastuser_cookie['updated_at'] = datetime.utcnow().isoformat()
+        lastuser_cookie['updated_at'] = utcnow().isoformat()
 
         add_auth_attribute('cookie', lastuser_cookie)
         # This will be set to True downstream by the requires_login decorator
@@ -80,7 +81,7 @@ def lastuser_cookie(response):
     Save lastuser login cookie and hasuser JS-readable flag cookie.
     """
     if request_has_auth() and hasattr(current_auth, 'cookie'):
-        expires = datetime.utcnow() + timedelta(days=365)
+        expires = utcnow() + timedelta(days=365)
         response.set_cookie('lastuser',
             value=lastuser_oauth.serializer.dumps(current_auth.cookie, header_fields={'v': 1}),
             max_age=31557600,                                         # Keep this cookie for a year.
@@ -280,7 +281,7 @@ def register_internal(username, fullname, password):
 
 def set_loginmethod_cookie(response, value):
     response.set_cookie('login', value, max_age=31557600,  # Keep this cookie for a year
-        expires=datetime.utcnow() + timedelta(days=365),   # Expire one year from now
+        expires=utcnow() + timedelta(days=365),   # Expire one year from now
         secure=current_app.config['SESSION_COOKIE_SECURE'],
         httponly=True)
     return response

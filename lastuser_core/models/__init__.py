@@ -4,6 +4,7 @@
 from coaster.sqlalchemy import TimestampMixin, BaseMixin, BaseScopedNameMixin, UuidMixin  # NOQA
 from coaster.db import db
 
+TimestampMixin.__with_timezone__ = True
 
 from .user import *          # NOQA
 from .session import *       # NOQA

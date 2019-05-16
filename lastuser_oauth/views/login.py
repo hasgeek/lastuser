@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-from datetime import datetime, timedelta
+from datetime import timedelta
 import urlparse
 from openid import oidutil
 from flask import current_app, redirect, request, flash, render_template, url_for, Markup, escape, abort
 from flask_openid import OpenID
-from coaster.utils import getbool
+from coaster.utils import getbool, utcnow
 from coaster.auth import current_auth
 from coaster.views import get_next_url, load_model
 from baseframe import _, __
@@ -231,7 +231,7 @@ def reset_email(user, kwargs):
     if not resetreq:
         return render_message(title=_("Invalid reset link"),
             message=_(u"The reset link you clicked on is invalid"))
-    if resetreq.created_at < datetime.utcnow() - timedelta(days=1):
+    if resetreq.created_at < utcnow() - timedelta(days=1):
         # Reset code has expired (> 24 hours). Delete it
         db.session.delete(resetreq)
         db.session.commit()

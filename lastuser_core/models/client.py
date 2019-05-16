@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 import urlparse
 from hashlib import sha256
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import load_only
 from sqlalchemy.orm.query import Query as QueryBaseClass
 from sqlalchemy.orm.collections import attribute_mapped_collection
-from coaster.utils import buid, newsecret, require_one_of
+from coaster.utils import buid, newsecret, require_one_of, utcnow
 from baseframe import _
 
 from . import db, BaseMixin, BaseScopedNameMixin
@@ -186,7 +186,7 @@ class ClientCredential(BaseMixin, db.Model):
     #: OAuth client secret, hashed (64 chars hash plus 7 chars id prefix = 71 chars)
     secret_hash = db.Column(db.String(71), nullable=False)
     #: When was this credential last used for an API call?
-    accessed_at = db.Column(db.DateTime, nullable=True)
+    accessed_at = db.Column(db.TIMESTAMP(timezone=True), nullable=True)
 
     def secret_is(self, candidate):
         return self.secret_hash == 'sha256$' + sha256(candidate).hexdigest()
@@ -323,7 +323,7 @@ class AuthCode(ScopeMixin, BaseMixin, db.Model):
     def is_valid(self):
         # Time limit: 3 minutes. Should be reasonable enough to load a page
         # on a slow mobile connection, without keeping the code valid too long
-        return not self.used and self.created_at >= datetime.utcnow() - timedelta(minutes=3)
+        return not self.used and self.created_at >= utcnow() - timedelta(minutes=3)
 
 
 class AuthToken(ScopeMixin, BaseMixin, db.Model):
@@ -414,7 +414,7 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
     def is_valid(self):
         if self.validity == 0:
             return True  # This token is perpetually valid
-        now = datetime.utcnow()
+        now = utcnow()
         if self.created_at < now - timedelta(seconds=self.validity):
             return False
         return True

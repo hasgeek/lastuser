@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from coaster.utils import utcnow
 from lastuserapp import db
 import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
-from datetime import datetime
 
 
 class TestClient(TestDatabaseFixture):
@@ -80,7 +80,7 @@ class TestClient(TestDatabaseFixture):
         # scenario 2: for a client that has confidential=False
         varys = models.User(username=u'varys', fullname=u'Lord Varys')
         house_lannisters = models.Client(title=u'House of Lannisters', confidential=False, user=varys, website=u'houseoflannisters.westeros')
-        varys_session = models.UserSession(user=varys, ipaddr='192.168.1.99', user_agent=u'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36', accessed_at=datetime.utcnow())
+        varys_session = models.UserSession(user=varys, ipaddr='192.168.1.99', user_agent=u'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36', accessed_at=utcnow())
         lannisters_auth_token = models.AuthToken(client=house_lannisters, user=varys, scope=u'throne', validity=0, user_session=varys_session)
         db.session.add_all([varys, house_lannisters, lannisters_auth_token, varys_session])
         db.session.commit()

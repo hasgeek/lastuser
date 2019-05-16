@@ -113,7 +113,7 @@ class SMSMessage(BaseMixin, db.Model):
     message = db.Column(db.UnicodeText, nullable=False)
     # Flags
     status = db.Column(db.Integer, default=0, nullable=False)
-    status_at = db.Column(db.DateTime, nullable=True)
+    status_at = db.Column(db.TIMESTAMP(timezone=True), nullable=True)
     fail_reason = db.Column(db.Unicode(25), nullable=True)
 
 

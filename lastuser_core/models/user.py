@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from hashlib import md5
 from werkzeug import check_password_hash, cached_property
 import bcrypt
@@ -9,7 +9,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import defer, deferred
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
-from coaster.utils import newsecret, newpin, valid_username, require_one_of, LabeledEnum
+from coaster.utils import newsecret, newpin, valid_username, require_one_of, LabeledEnum, utcnow
 from coaster.sqlalchemy import make_timestamp_columns, failsafe_add, add_primary_relationship
 from baseframe import _, __
 
@@ -160,9 +160,9 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
     #: Bcrypt hash of the user's password
     pw_hash = db.Column(db.String(80), nullable=True)
     #: Timestamp for when the user's password last changed
-    pw_set_at = db.Column(db.DateTime, nullable=True)
+    pw_set_at = db.Column(db.TIMESTAMP(timezone=True), nullable=True)
     #: Expiry date for the password (to prompt user to reset it)
-    pw_expires_at = db.Column(db.DateTime, nullable=True)
+    pw_expires_at = db.Column(db.TIMESTAMP(timezone=True), nullable=True)
     #: User's timezone
     timezone = db.Column(db.Unicode(40), nullable=True)
     #: User's status (active, suspended, merged, etc)
@@ -249,7 +249,7 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
     password = property(fset=_set_password)
 
     def password_has_expired(self):
-        return self.pw_hash is not None and self.pw_expires_at is not None and self.pw_expires_at <= datetime.utcnow()
+        return self.pw_hash is not None and self.pw_expires_at is not None and self.pw_expires_at <= utcnow()
 
     def password_is(self, password):
         if self.pw_hash is None:
@@ -1003,7 +1003,7 @@ class UserExternalId(BaseMixin, db.Model):
     oauth_token_secret = db.Column(db.String(1000), nullable=True)
     oauth_token_type = db.Column(db.String(250), nullable=True)
 
-    last_used_at = db.Column(db.DateTime, default=db.func.utcnow(), nullable=False)
+    last_used_at = db.Column(db.TIMESTAMP(timezone=True), default=db.func.utcnow(), nullable=False)
 
     __table_args__ = (
         db.UniqueConstraint('service', 'userid'),

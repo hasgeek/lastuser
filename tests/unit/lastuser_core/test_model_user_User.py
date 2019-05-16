@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
+from datetime import timedelta
+from sqlalchemy.orm.collections import InstrumentedList
+from coaster.utils import utcnow
+
 from lastuserapp import db
 import lastuser_core.models as models
-from sqlalchemy.orm.collections import InstrumentedList
-from datetime import datetime, timedelta
 from .test_db import TestDatabaseFixture
 
 
@@ -277,7 +279,7 @@ class TestUser(TestDatabaseFixture):
         """
         alexis = models.User(username=u'alexis', fullname=u'Alexis Castle')
         alexis.password = u'unfortunateincidents'
-        alexis.pw_expires_at = datetime.utcnow() + timedelta(0, 0, 1)
+        alexis.pw_expires_at = utcnow() + timedelta(0, 0, 1)
         db.session.add(alexis)
         db.session.commit()
         result = models.User.get(buid=alexis.buid)

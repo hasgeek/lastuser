@@ -3,8 +3,8 @@
 from lastuserapp import db
 import lastuser_core.models as models
 from .test_db import TestDatabaseFixture
-from datetime import datetime, timedelta
-from coaster.utils import buid
+from datetime import timedelta
+from coaster.utils import buid, utcnow
 
 
 class TestAuthToken(TestDatabaseFixture):
@@ -50,12 +50,12 @@ class TestAuthToken(TestDatabaseFixture):
 
         # scenario 3: when validity is limited
         harry = models.User(username=u'harry', fullname=u'Harry Potter')
-        harry_token = models.AuthToken(client=client, user=harry, scope=scope, validity=3600, created_at=datetime.utcnow())
+        harry_token = models.AuthToken(client=client, user=harry, scope=scope, validity=3600, created_at=utcnow())
         self.assertTrue(harry_token.is_valid())
 
         # scenario 4: when validity is limited *and* the token has expired
         cedric = models.User(username=u'cedric', fullname=u'Cedric Diggory')
-        cedric_token = models.AuthToken(client=client, user=cedric, scope=scope, validity=1, created_at=datetime.utcnow() - timedelta(1))
+        cedric_token = models.AuthToken(client=client, user=cedric, scope=scope, validity=1, created_at=utcnow() - timedelta(1))
         self.assertFalse(cedric_token.is_valid())
 
     def test_AuthToken_get(self):

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from werkzeug import cached_property
 from ua_parser import user_agent_parser
 from flask import request
-from coaster.utils import buid as make_buid
+from coaster.utils import buid as make_buid, utcnow
 from coaster.sqlalchemy import make_timestamp_columns
 from . import db, BaseMixin
 from .user import User
@@ -33,9 +33,9 @@ class UserSession(BaseMixin, db.Model):
     ipaddr = db.Column(db.String(45), nullable=False)
     user_agent = db.Column(db.Unicode(250), nullable=False)
 
-    accessed_at = db.Column(db.DateTime, nullable=False)
-    revoked_at = db.Column(db.DateTime, nullable=True)
-    sudo_enabled_at = db.Column(db.DateTime, nullable=False, default=db.func.utcnow())
+    accessed_at = db.Column(db.TIMESTAMP(timezone=True), nullable=False)
+    revoked_at = db.Column(db.TIMESTAMP(timezone=True), nullable=True)
+    sudo_enabled_at = db.Column(db.TIMESTAMP(timezone=True), nullable=False, default=db.func.utcnow())
 
     def __init__(self, **kwargs):
         super(UserSession, self).__init__(**kwargs)
@@ -72,7 +72,7 @@ class UserSession(BaseMixin, db.Model):
 
     @property
     def has_sudo(self):
-        return self.sudo_enabled_at > datetime.utcnow() - timedelta(hours=1)
+        return self.sudo_enabled_at > utcnow() - timedelta(hours=1)
 
     def set_sudo(self):
         self.sudo_enabled_at = db.func.utcnow()

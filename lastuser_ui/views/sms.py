@@ -5,7 +5,7 @@ Adds support for texting Indian mobile numbers
 """
 
 from datetime import datetime
-from pytz import timezone
+from pytz import timezone, UTC
 import requests
 # from urllib2 import urlopen, URLError
 # from urllib import urlencode
@@ -134,6 +134,6 @@ def report_smsgupshup():
         # This delivery time is in IST, GMT+0530
         # Convert this into a naive UTC timestamp before saving
         local_status_at = datetime.fromtimestamp(deliveredTS)
-        msg.status_at = local_status_at - SMSGUPSHUP_TIMEZONE.utcoffset(local_status_at)
+        msg.status_at = SMSGUPSHUP_TIMEZONE.localize(local_status_at).astimezone(UTC)
     db.session.commit()
     return _("Status updated")

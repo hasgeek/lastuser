@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from datetime import datetime, timedelta
+from datetime import timedelta
+from coaster.utils import utcnow
 from coaster.manage import init_manager, Manager
 
 import lastuser_core
@@ -19,7 +20,7 @@ def phoneclaims():
     """Sweep phone claims to close all unclaimed beyond expiry period (10m)"""
     pc = models.UserPhoneClaim
     pc.query.filter(
-        pc.updated_at < (datetime.utcnow() - timedelta(hours=1)),
+        pc.updated_at < (utcnow() - timedelta(hours=1)),
         pc.verification_expired
         ).delete()
     db.session.commit()
