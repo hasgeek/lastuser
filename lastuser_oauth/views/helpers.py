@@ -67,6 +67,8 @@ class LoginManager(object):
         else:
             lastuser_cookie.pop('userid', None)
 
+        lastuser_cookie['updated_at'] = datetime.utcnow().isoformat()
+
         add_auth_attribute('cookie', lastuser_cookie)
         # This will be set to True downstream by the requires_login decorator
         add_auth_attribute('login_required', False)
@@ -84,13 +86,15 @@ def lastuser_cookie(response):
             max_age=31557600,                                         # Keep this cookie for a year.
             expires=expires,                                          # Expire one year from now.
             domain=current_app.config.get('LASTUSER_COOKIE_DOMAIN'),  # Place cookie in master domain.
+            secure=current_app.config['SESSION_COOKIE_SECURE'],       # HTTPS cookie if session is too.
             httponly=True)                                            # Don't allow reading this from JS.
 
         response.set_cookie('hasuser',
             value='1' if current_auth.is_authenticated else '0',
-            max_age=31557600,              # Keep this cookie for a year.
-            expires=expires,               # Expire one year from now.
-            httponly=False)                # Allow reading this from JS.
+            max_age=31557600,                                    # Keep this cookie for a year.
+            expires=expires,                                     # Expire one year from now.
+            secure=current_app.config['SESSION_COOKIE_SECURE'],  # HTTPS cookie if session is too.
+            httponly=False)                                      # Allow reading this from JS.
 
     return response
 
@@ -277,5 +281,6 @@ def register_internal(username, fullname, password):
 def set_loginmethod_cookie(response, value):
     response.set_cookie('login', value, max_age=31557600,  # Keep this cookie for a year
         expires=datetime.utcnow() + timedelta(days=365),   # Expire one year from now
+        secure=current_app.config['SESSION_COOKIE_SECURE'],
         httponly=True)
     return response
