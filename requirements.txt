@@ -12,7 +12,7 @@ pytz==2019.1
 bcrypt>=2.0.0
 ordereddict==1.1
 Flask-WTF==0.14.2
-requests==2.21.0
+requests==2.22.0
 blinker==1.4
 Flask-RQ2==18.3
 tweepy==3.7.0
