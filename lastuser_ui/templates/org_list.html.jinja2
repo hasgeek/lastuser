@@ -19,9 +19,9 @@
     {% for org in organizations %}
       {%- set link = org.url_for()|e %}
       <tr>
-        <td><a href="{{ link }}" title="org.title">{{ loop.index }}</a></td>
-        <td><a href="{{ link }}" title="org.title">{{ org.title }}</a></td>
-        <td><a href="{{ link }}" title="org.title">
+        <td data-th="#"><a href="{{ link }}" title="org.title">{{ loop.index }}</a></td>
+        <td data-th="Title"><a href="{{ link }}" title="org.title">{{ org.title }}</a></td>
+        <td data-th="Owners"><a href="{{ link }}" title="org.title">
           {%- for user in org.owners.users %}
             {%- if not loop.first %}, {% endif -%}
             {{ user.displayname() }}

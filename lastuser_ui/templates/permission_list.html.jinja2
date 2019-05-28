@@ -37,10 +37,10 @@
       <tbody class="mui--text-subhead">
         {% for perm in allperms %}
           <tr>
-            <td>{{ loop.index }}</td>
-            <td>{{ perm.name }}</td>
-            <td>{{ perm.title }}</td>
-            <td>{{ perm.description }}</td>
+            <td data-th="#">{{ loop.index }}</td>
+            <td data-th="Name">{{ perm.name }}</td>
+            <td data-th="Title">{{ perm.title }}</td>
+            <td data-th="Description">{{ perm.description }}</td>
           </tr>
         {% else %}
           <tr>

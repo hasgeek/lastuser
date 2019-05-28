@@ -21,10 +21,10 @@
       {% for client in clients %}
         {%- set link = url_for('.client_info', key=client.key)|e %}
         <tr>
-          <td><a href="{{ link }}" title="{{ client.title }}">{{ loop.index }}</a></td>
-          <td><a href="{{ link }}" title="{{ client.title }}">{{ client.title }}</a></td>
-          <td><a href="{{ link }}" title="{{ client.title }}">{{ client.owner.pickername }}</a></td>
-          <td><a href="{{ link }}" title="{{ client.title }}">{{ client.website }}</a></td>
+          <td data-th="#"><a href="{{ link }}" title="{{ client.title }}">{{ loop.index }}</a></td>
+          <td data-th="Title"><a href="{{ link }}" title="{{ client.title }}">{{ client.title }}</a></td>
+          <td data-th="Owner"><a href="{{ link }}" title="{{ client.title }}">{{ client.owner.pickername }}</a></td>
+          <td data-th="Website"><a href="{{ link }}" title="{{ client.title }}">{{ client.website }}</a></td>
         </tr>
       {% else %}
         <tr>
