@@ -637,7 +637,7 @@ def resource_login_providers(authtoken, args, files=None):
                 'oauth_token': unicode(extid.oauth_token),
                 'oauth_token_secret': unicode(extid.oauth_token_secret),
                 'oauth_token_type': unicode(extid.oauth_token_type)
-            }
+                }
     return response
 
 

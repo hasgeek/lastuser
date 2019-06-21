@@ -10,7 +10,7 @@ def given_new_user(context):
         username='alyssa',
         password='alyssa',
         confirm_password='alyssa'
-    )
+        )
     # registering the test user
     context.browser.visit('/register')
     assert context.browser.find_element_by_name('csrf_token').is_enabled()

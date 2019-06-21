@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import flash, render_template, redirect, request, jsonify, get_flashed_messages
+from flask import render_template, redirect, request, jsonify, get_flashed_messages
 from coaster.utils import newsecret
 from coaster.auth import current_auth
 from coaster.sqlalchemy import failsafe_add

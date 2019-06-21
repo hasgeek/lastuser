@@ -5,11 +5,11 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 from lastuserapp import app, db
-from lastuser_core.models import *
+from lastuser_core.models import User, Organization, Client, Permission
 
-#incase data exists from previously run tests
+# incase data exists from previously run tests
 db.drop_all()
-#create schema again
+# create schema again
 db.create_all()
 
 # Add fixtures for test app

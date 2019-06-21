@@ -24,9 +24,9 @@ def upgrade():
     op.create_foreign_key('useremail_org_id_fkey', 'useremail', 'organization', ['org_id'], ['id'])
     op.create_foreign_key('useremail_team_id_fkey', 'useremail', 'team', ['team_id'], ['id'])
     op.create_check_constraint('useremail_user_id_or_org_id_or_team_id', 'useremail',
-        sa.case([(column('user_id') != None, 1)], else_=0) +
-        sa.case([(column('org_id') != None, 1)], else_=0) +
-        sa.case([(column('team_id') != None, 1)], else_=0) == 1)  # NOQA
+        sa.case([(column('user_id') != None, 1)], else_=0)
+        + sa.case([(column('org_id') != None, 1)], else_=0)
+        + sa.case([(column('team_id') != None, 1)], else_=0) == 1)  # NOQA
 
     op.add_column('useremailclaim', sa.Column('org_id', sa.Integer(), nullable=True))
     op.add_column('useremailclaim', sa.Column('team_id', sa.Integer(), nullable=True))
@@ -40,9 +40,9 @@ def upgrade():
     op.create_foreign_key('useremailclaim_org_id_fkey', 'useremailclaim', 'organization', ['org_id'], ['id'])
     op.create_foreign_key('useremailclaim_team_id_fkey', 'useremailclaim', 'team', ['team_id'], ['id'])
     op.create_check_constraint('useremailclaim_user_id_or_org_id_or_team_id', 'useremailclaim',
-        sa.case([(column('user_id') != None, 1)], else_=0) +
-        sa.case([(column('org_id') != None, 1)], else_=0) +
-        sa.case([(column('team_id') != None, 1)], else_=0) == 1)  # NOQA
+        sa.case([(column('user_id') != None, 1)], else_=0)
+        + sa.case([(column('org_id') != None, 1)], else_=0)
+        + sa.case([(column('team_id') != None, 1)], else_=0) == 1)  # NOQA
 
     op.alter_column('userphone', 'phone', type_=sa.Unicode(16))
     op.add_column('userphone', sa.Column('org_id', sa.Integer(), nullable=True))
@@ -53,9 +53,9 @@ def upgrade():
     op.create_foreign_key('userphone_org_id_fkey', 'userphone', 'organization', ['org_id'], ['id'])
     op.create_foreign_key('userphone_team_id_fkey', 'userphone', 'team', ['team_id'], ['id'])
     op.create_check_constraint('userphone_user_id_or_org_id_or_team_id', 'userphone',
-        sa.case([(column('user_id') != None, 1)], else_=0) +
-        sa.case([(column('org_id') != None, 1)], else_=0) +
-        sa.case([(column('team_id') != None, 1)], else_=0) == 1)  # NOQA
+        sa.case([(column('user_id') != None, 1)], else_=0)
+        + sa.case([(column('org_id') != None, 1)], else_=0)
+        + sa.case([(column('team_id') != None, 1)], else_=0) == 1)  # NOQA
 
     op.alter_column('userphoneclaim', 'phone', type_=sa.Unicode(16))
     op.add_column('userphoneclaim', sa.Column('org_id', sa.Integer(), nullable=True))
@@ -69,9 +69,9 @@ def upgrade():
     op.create_foreign_key('userphoneclaim_org_id_fkey', 'userphoneclaim', 'organization', ['org_id'], ['id'])
     op.create_foreign_key('userphoneclaim_team_id_fkey', 'userphoneclaim', 'team', ['team_id'], ['id'])
     op.create_check_constraint('userphoneclaim_user_id_or_org_id_or_team_id', 'userphoneclaim',
-        sa.case([(column('user_id') != None, 1)], else_=0) +
-        sa.case([(column('org_id') != None, 1)], else_=0) +
-        sa.case([(column('team_id') != None, 1)], else_=0) == 1)  # NOQA
+        sa.case([(column('user_id') != None, 1)], else_=0)
+        + sa.case([(column('org_id') != None, 1)], else_=0)
+        + sa.case([(column('team_id') != None, 1)], else_=0) == 1)  # NOQA
 
 
 def downgrade():

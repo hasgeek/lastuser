@@ -119,7 +119,7 @@ class TeamView(UrlForView, ModelView):
     route_model_map = {  # Map <name> and <buid> in URLs to model attributes, for `url_for` automation
         'name': 'org.name',
         'buid': 'buid'
-    }
+        }
 
     def loader(self, name, buid):
         obj = Team.get(buid=buid, with_parent=True)

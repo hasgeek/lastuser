@@ -78,7 +78,7 @@ migrate_table_columns = [
     ('userphone', 'updated_at'),
     ('userphoneclaim', 'created_at'),
     ('userphoneclaim', 'updated_at'),
-]
+    ]
 
 
 def upgrade():
@@ -86,7 +86,7 @@ def upgrade():
         op.execute(sa.DDL(
             'ALTER TABLE "%(table)s" ALTER COLUMN "%(column)s" TYPE TIMESTAMP WITH TIME ZONE USING "%(column)s" AT TIME ZONE \'UTC\'',
             context={'table': table, 'column': column}
-        ))
+            ))
 
 
 def downgrade():
@@ -94,4 +94,4 @@ def downgrade():
         op.execute(sa.DDL(
             'ALTER TABLE "%(table)s" ALTER COLUMN "%(column)s" TYPE TIMESTAMP WITHOUT TIME ZONE',
             context={'table': table, 'column': column}
-        ))
+            ))

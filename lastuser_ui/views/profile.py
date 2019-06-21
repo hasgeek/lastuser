@@ -97,7 +97,7 @@ def make_email_primary():
         else:
             flash(_("No such email address is linked to this user account"), 'danger')
     else:
-            flash(_("Please select an email address"), 'danger')
+        flash(_("Please select an email address"), 'danger')
     return render_redirect(url_for('.account'), code=303)
 
 
@@ -118,7 +118,7 @@ def make_phone_primary():
         else:
             flash(_("No such phone number is linked to this user account"), 'danger')
     else:
-            flash(_("Please select a phone number"), 'danger')
+        flash(_("Please select a phone number"), 'danger')
     return render_redirect(url_for('.account'), code=303)
 
 

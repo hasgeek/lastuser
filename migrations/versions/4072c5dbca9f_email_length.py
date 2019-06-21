@@ -18,6 +18,7 @@ def upgrade():
     op.alter_column('useremail', 'email', type_=sa.Unicode(254))
     op.alter_column('useremailclaim', 'email', type_=sa.Unicode(254))
 
+
 def downgrade():
     op.alter_column('useremailclaim', 'email', type_=sa.Unicode(80))
     op.alter_column('useremail', 'email', type_=sa.Unicode(80))

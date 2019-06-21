@@ -18,6 +18,7 @@ def upgrade():
     op.alter_column('authcode', 'scope', type_=sa.UnicodeText)
     op.alter_column('authtoken', 'scope', type_=sa.UnicodeText)
 
+
 def downgrade():
     op.alter_column('authtoken', 'scope', type_=sa.Unicode(250))
     op.alter_column('authcode', 'scope', type_=sa.Unicode(250))

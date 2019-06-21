@@ -56,9 +56,9 @@ def downgrade():
     op.create_unique_constraint(u'userphoneclaim_org_id_phone_key', 'userphoneclaim', ['org_id', 'phone'])
     op.alter_column('userphoneclaim', 'user_id', existing_type=sa.INTEGER(), nullable=True)
     op.create_check_constraint('userphoneclaim_user_id_or_org_id_or_team_id', 'userphoneclaim',
-        sa.case([(column('user_id') != None, 1)], else_=0) +
-        sa.case([(column('org_id') != None, 1)], else_=0) +
-        sa.case([(column('team_id') != None, 1)], else_=0) == 1)  # NOQA
+        sa.case([(column('user_id') != None, 1)], else_=0)
+        + sa.case([(column('org_id') != None, 1)], else_=0)
+        + sa.case([(column('team_id') != None, 1)], else_=0) == 1)  # NOQA
 
     op.add_column('userphone', sa.Column('org_id', sa.INTEGER(), autoincrement=False, nullable=True))
     op.add_column('userphone', sa.Column('team_id', sa.INTEGER(), autoincrement=False, nullable=True))
@@ -66,9 +66,9 @@ def downgrade():
     op.create_foreign_key(u'userphone_org_id_fkey', 'userphone', 'organization', ['org_id'], ['id'])
     op.alter_column('userphone', 'user_id', existing_type=sa.INTEGER(), nullable=True)
     op.create_check_constraint('userphone_user_id_or_org_id_or_team_id', 'userphone',
-        sa.case([(column('user_id') != None, 1)], else_=0) +
-        sa.case([(column('org_id') != None, 1)], else_=0) +
-        sa.case([(column('team_id') != None, 1)], else_=0) == 1)  # NOQA
+        sa.case([(column('user_id') != None, 1)], else_=0)
+        + sa.case([(column('org_id') != None, 1)], else_=0)
+        + sa.case([(column('team_id') != None, 1)], else_=0) == 1)  # NOQA
 
     op.add_column('useremailclaim', sa.Column('org_id', sa.INTEGER(), autoincrement=False, nullable=True))
     op.add_column('useremailclaim', sa.Column('team_id', sa.INTEGER(), autoincrement=False, nullable=True))
@@ -78,9 +78,9 @@ def downgrade():
     op.create_unique_constraint(u'useremailclaim_org_id_email_key', 'useremailclaim', ['org_id', 'email'])
     op.alter_column('useremailclaim', 'user_id', existing_type=sa.INTEGER(), nullable=True)
     op.create_check_constraint('useremailclaim_user_id_or_org_id_or_team_id', 'useremailclaim',
-        sa.case([(column('user_id') != None, 1)], else_=0) +
-        sa.case([(column('org_id') != None, 1)], else_=0) +
-        sa.case([(column('team_id') != None, 1)], else_=0) == 1)  # NOQA
+        sa.case([(column('user_id') != None, 1)], else_=0)
+        + sa.case([(column('org_id') != None, 1)], else_=0)
+        + sa.case([(column('team_id') != None, 1)], else_=0) == 1)  # NOQA
 
     op.add_column('useremail', sa.Column('org_id', sa.INTEGER(), autoincrement=False, nullable=True))
     op.add_column('useremail', sa.Column('team_id', sa.INTEGER(), autoincrement=False, nullable=True))
@@ -88,6 +88,6 @@ def downgrade():
     op.create_foreign_key(u'useremail_team_id_fkey', 'useremail', 'team', ['team_id'], ['id'])
     op.alter_column('useremail', 'user_id', existing_type=sa.INTEGER(), nullable=True)
     op.create_check_constraint('useremail_user_id_or_org_id_or_team_id', 'useremail',
-        sa.case([(column('user_id') != None, 1)], else_=0) +
-        sa.case([(column('org_id') != None, 1)], else_=0) +
-        sa.case([(column('team_id') != None, 1)], else_=0) == 1)  # NOQA
+        sa.case([(column('user_id') != None, 1)], else_=0)
+        + sa.case([(column('org_id') != None, 1)], else_=0)
+        + sa.case([(column('team_id') != None, 1)], else_=0) == 1)  # NOQA

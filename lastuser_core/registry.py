@@ -198,4 +198,4 @@ class LoginProvider(object):
             'email': None,               # Verified email address. Service can be trusted
             'emailclaim': None,          # Claimed email address. Must be verified
             'email_md5sum': None,        # For when we have the email md5sum, but not the email itself
-        }
+            }

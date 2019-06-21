@@ -30,7 +30,7 @@ class ScopeMixin(object):
         if not self._scope:
             return ()
         else:
-            return tuple(sorted([t.strip() for t in self._scope.replace('\r', ' ').replace('\n', ' ').split(u' ') if t]))
+            return tuple(sorted(self._scope.split()))
 
     def _scope_set(self, value):
         if isinstance(value, basestring):

@@ -44,9 +44,9 @@ class Name(UuidMixin, BaseMixin, db.Model):
 
     __table_args__ = (
         db.CheckConstraint(
-            db.case([(user_id != None, 1)], else_=0) +
-            db.case([(org_id != None, 1)], else_=0) +
-            db.case([(reserved == True, 1)], else_=0) == 1,
+            db.case([(user_id != None, 1)], else_=0)
+            + db.case([(org_id != None, 1)], else_=0)
+            + db.case([(reserved == True, 1)], else_=0) == 1,
             name='username_owner_check'),  # NOQA
         db.Index('ix_name_name_lower', db.func.lower(name).label('name_lower'),
             unique=True, postgresql_ops={'name_lower': 'varchar_pattern_ops'})
@@ -478,12 +478,12 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
                 db.session.query(UserExternalId.user_id).filter(
                     UserExternalId.service.in_(UserExternalId.__at_username_services__),
                     db.func.lower(UserExternalId.username).like(db.func.lower(query[1:]))
-                ).subquery())).options(*cls._defercols).limit(100).all() + users
+                    ).subquery())).options(*cls._defercols).limit(100).all() + users
         elif '@' in query:
             users = cls.query.filter(cls.status == USER_STATUS.ACTIVE, cls.id.in_(
                 db.session.query(UserEmail.user_id).filter(UserEmail.user_id != None).filter(  # NOQA
                     db.func.lower(UserEmail.email).like(db.func.lower(query))
-                ).subquery())).options(*cls._defercols).limit(100).all() + users
+                    ).subquery())).options(*cls._defercols).limit(100).all() + users
         return users
 
 

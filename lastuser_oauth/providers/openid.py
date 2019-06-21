@@ -42,8 +42,8 @@ def login_openid_success(resp):
     Called when OpenID login succeeds
     """
     openid = resp.identity_url
-    if (openid.startswith('https://profiles.google.com/') or
-            openid.startswith('https://www.google.com/accounts/o8/id?id=')):
+    if (openid.startswith('https://profiles.google.com/')
+            or openid.startswith('https://www.google.com/accounts/o8/id?id=')):
         service = 'google'
     else:
         service = 'openid'
@@ -55,7 +55,7 @@ def login_openid_success(resp):
         'oauth_token': None,
         'oauth_token_secret': None,
         'oauth_token_type': None,
-    }
+        }
     if resp.email:
         if service == 'google':
             # Google id. Trust the email address.

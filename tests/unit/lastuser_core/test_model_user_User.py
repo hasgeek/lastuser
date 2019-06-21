@@ -231,7 +231,7 @@ class TestUser(TestDatabaseFixture):
         self.assertTrue(snowball.phone.primary)
         # scenario 3: when there is no phone on db
         piglet = self.fixtures.piglet
-        assert piglet.phone is u''
+        assert piglet.phone == u''
 
     def test_user_password(self):
         """

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from lastuserapp import db
-from lastuser_core.models import *  # NOQA
+from lastuser_core.models import (User, UserEmail, UserPhone, Organization, Client, Team,
+    TeamClientPermissions, ClientTeamAccess, Permission, UserClientPermissions, Resource,
+    ResourceAction, SMSMessage, CLIENT_TEAM_ACCESS)
 
 
 class Fixtures(object):

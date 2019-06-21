@@ -8,7 +8,7 @@ def given_existing_user(context):
     context.test_user = dict(
         username='bobthehacker',
         password='bobthehacker'
-    )
+        )
 
 
 @when("the nonexisting user tries to log in")

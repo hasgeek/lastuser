@@ -68,7 +68,7 @@ def dashboard_data_users_by_client():
             ):
         clients = db.session.query('client_id', 'count', 'title', 'website').from_statement(db.text(
             '''SELECT client_users.client_id, count(*) AS count, client.title AS title, client.website AS website FROM (SELECT user_session.user_id, session_client.client_id FROM user_session, session_client, "user" WHERE user_session.user_id = "user".id AND session_client.user_session_id = user_session.id AND "user".status = :status AND session_client.updated_at >= (NOW() AT TIME ZONE 'UTC') - INTERVAL :interval GROUP BY session_client.client_id, user_session.user_id) AS client_users, client WHERE client.id = client_users.client_id GROUP by client_users.client_id, client.title, client.website ORDER BY count DESC'''
-        )).params(status=USER_STATUS.ACTIVE, interval=interval).all()
+            )).params(status=USER_STATUS.ACTIVE, interval=interval).all()
         for row in clients:
             client_users[row.client_id]['title'] = row.title
             client_users[row.client_id]['website'] = row.website

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from lastuser_core.utils import *  # NOQA
+from lastuser_core.utils import (strip_phone, valid_phone, get_gravatar_md5sum, make_redirect_url,
+    mask_email)
 
 
 class FlaskrTestCase(unittest.TestCase):

@@ -10,7 +10,7 @@ def given_new_user(context):
         username='alyssa',
         password='alyssa',
         confirm_password='alyssa'
-    )
+        )
 
 
 @when('a new user submits the registration form with the proper details')
@@ -29,4 +29,4 @@ def when_form_submit(context):
 def then_user_registered(context):
     user = User.get(username=context.test_user['username'])
     assert user is not None
-    assert len(user.emailclaims) is 1
+    assert len(user.emailclaims) == 1

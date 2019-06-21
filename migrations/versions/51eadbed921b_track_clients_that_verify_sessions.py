@@ -23,7 +23,7 @@ def upgrade():
         sa.ForeignKeyConstraint(['client_id'], ['client.id'], ),
         sa.ForeignKeyConstraint(['user_session_id'], ['user_session.id'], ),
         sa.PrimaryKeyConstraint('user_session_id', 'client_id')
-    )
+        )
 
 
 def downgrade():

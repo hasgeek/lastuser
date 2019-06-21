@@ -28,6 +28,7 @@ def openid_log(message, level=0):
         import sys
         print(message, file=sys.stderr)
 
+
 oidutil.log = openid_log
 
 
