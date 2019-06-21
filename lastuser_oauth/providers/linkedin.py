@@ -31,7 +31,7 @@ class LinkedInProvider(LoginProvider):
         return redirect(self.auth_url.format(
             client_id=self.key,
             redirect_uri=quote(callback_url),
-            scope='r_basicprofile r_emailaddress',
+            scope='r_liteprofile r_emailaddress',
             state=session['linkedin_state']))
 
     def callback(self):
