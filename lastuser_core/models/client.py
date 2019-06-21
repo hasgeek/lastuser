@@ -66,15 +66,15 @@ class Client(ScopeMixin, BaseMixin, db.Model):
     #: Confidential or public client? Public has no secret key
     confidential = db.Column(db.Boolean, nullable=False)
     #: Website
-    website = db.Column(db.Unicode(250), nullable=False)
+    website = db.Column(db.UnicodeText, nullable=False)
     #: Namespace: determines inter-app resource access
-    namespace = db.Column(db.Unicode(250), nullable=True, unique=True)
+    namespace = db.Column(db.UnicodeText, nullable=True, unique=True)
     #: Redirect URI
-    redirect_uri = db.Column(db.Unicode(250), nullable=True, default=u'')
+    redirect_uri = db.Column(db.UnicodeText, nullable=True, default=u'')
     #: Back-end notification URI
-    notification_uri = db.Column(db.Unicode(250), nullable=True, default=u'')
+    notification_uri = db.Column(db.UnicodeText, nullable=True, default=u'')
     #: Front-end notification URI
-    iframe_uri = db.Column(db.Unicode(250), nullable=True, default=u'')
+    iframe_uri = db.Column(db.UnicodeText, nullable=True, default=u'')
     #: Active flag
     active = db.Column(db.Boolean, nullable=False, default=True)
     #: Allow anyone to login to this app?
@@ -219,8 +219,8 @@ class UserFlashMessage(BaseMixin, db.Model):
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('flashmessages', cascade='delete, delete-orphan'))
     seq = db.Column(db.Integer, default=0, nullable=False)
-    category = db.Column(db.Unicode(20), nullable=False)
-    message = db.Column(db.Unicode(250), nullable=False)
+    category = db.Column(db.UnicodeText, nullable=False)
+    message = db.Column(db.UnicodeText, nullable=False)
 
 
 class Resource(BaseScopedNameMixin, db.Model):
@@ -317,7 +317,7 @@ class AuthCode(ScopeMixin, BaseMixin, db.Model):
     session_id = db.Column(None, db.ForeignKey('user_session.id'), nullable=True)
     session = db.relationship(UserSession)
     code = db.Column(db.String(44), default=newsecret, nullable=False)
-    redirect_uri = db.Column(db.Unicode(1024), nullable=False)
+    redirect_uri = db.Column(db.UnicodeText, nullable=False)
     used = db.Column(db.Boolean, default=False, nullable=False)
 
     def is_valid(self):
@@ -543,7 +543,7 @@ class UserClientPermissions(BaseMixin, db.Model):
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('user_permissions', cascade='all, delete-orphan'))
     #: The permissions as a string of tokens
-    access_permissions = db.Column('permissions', db.Unicode(250), default=u'', nullable=False)
+    access_permissions = db.Column('permissions', db.UnicodeText, default=u'', nullable=False)
 
     # Only one assignment per user and client
     __table_args__ = (db.UniqueConstraint('user_id', 'client_id'), {})
@@ -588,7 +588,7 @@ class TeamClientPermissions(BaseMixin, db.Model):
     client = db.relationship(Client, primaryjoin=client_id == Client.id,
         backref=db.backref('team_permissions', cascade='all, delete-orphan'))
     #: The permissions as a string of tokens
-    access_permissions = db.Column('permissions', db.Unicode(250), default=u'', nullable=False)
+    access_permissions = db.Column('permissions', db.UnicodeText, default=u'', nullable=False)
 
     # Only one assignment per team and client
     __table_args__ = (db.UniqueConstraint('team_id', 'client_id'), {})

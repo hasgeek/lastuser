@@ -31,7 +31,7 @@ class UserSession(BaseMixin, db.Model):
     user = db.relationship(User, backref=db.backref('sessions', cascade='all, delete-orphan', lazy='dynamic'))
 
     ipaddr = db.Column(db.String(45), nullable=False)
-    user_agent = db.Column(db.Unicode(250), nullable=False)
+    user_agent = db.Column(db.UnicodeText, nullable=False)
 
     accessed_at = db.Column(db.TIMESTAMP(timezone=True), nullable=False)
     revoked_at = db.Column(db.TIMESTAMP(timezone=True), nullable=True)

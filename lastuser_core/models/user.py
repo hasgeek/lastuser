@@ -168,7 +168,7 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
     #: User's status (active, suspended, merged, etc)
     status = db.Column(db.SmallInteger, nullable=False, default=USER_STATUS.ACTIVE)
     #: User avatar (URL to browser-ready image)
-    avatar = db.Column(db.Unicode(250), nullable=True)
+    avatar = db.Column(db.UnicodeText, nullable=True)
 
     #: Client id that created this user account
     client_id = db.Column(None, db.ForeignKey('client.id',
@@ -853,7 +853,7 @@ class UserPhone(BaseMixin, db.Model):
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('phones', cascade='all, delete-orphan'))
-    _phone = db.Column('phone', db.Unicode(16), unique=True, nullable=False)
+    _phone = db.Column('phone', db.UnicodeText, unique=True, nullable=False)
     gets_text = db.Column(db.Boolean, nullable=False, default=True)
 
     private = db.Column(db.Boolean, nullable=False, default=False)
@@ -912,7 +912,7 @@ class UserPhoneClaim(BaseMixin, db.Model):
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('phoneclaims', cascade='all, delete-orphan'))
-    _phone = db.Column('phone', db.Unicode(16), nullable=False, index=True)
+    _phone = db.Column('phone', db.UnicodeText, nullable=False, index=True)
     gets_text = db.Column(db.Boolean, nullable=False, default=True)
     verification_code = db.Column(db.Unicode(4), nullable=False, default=newpin)
     verification_attempts = db.Column(db.Integer, nullable=False, default=0)
@@ -996,12 +996,12 @@ class UserExternalId(BaseMixin, db.Model):
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id,
         backref=db.backref('externalids', cascade='all, delete-orphan'))
-    service = db.Column(db.String(20), nullable=False)
-    userid = db.Column(db.String(250), nullable=False)  # Unique id (or OpenID)
-    username = db.Column(db.Unicode(250), nullable=True)  # LinkedIn returns full URLs
-    oauth_token = db.Column(db.String(1000), nullable=True)
-    oauth_token_secret = db.Column(db.String(1000), nullable=True)
-    oauth_token_type = db.Column(db.String(250), nullable=True)
+    service = db.Column(db.UnicodeText, nullable=False)
+    userid = db.Column(db.UnicodeText, nullable=False)  # Unique id (or OpenID)
+    username = db.Column(db.UnicodeText, nullable=True)  # LinkedIn returns full URLs
+    oauth_token = db.Column(db.UnicodeText, nullable=True)
+    oauth_token_secret = db.Column(db.UnicodeText, nullable=True)
+    oauth_token_type = db.Column(db.UnicodeText, nullable=True)
 
     last_used_at = db.Column(db.TIMESTAMP(timezone=True), default=db.func.utcnow(), nullable=False)
 

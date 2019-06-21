@@ -108,13 +108,13 @@ class SMSMessage(BaseMixin, db.Model):
     __tablename__ = 'smsmessage'
     # Phone number that the message was sent to
     phone_number = db.Column(db.String(15), nullable=False)
-    transaction_id = db.Column(db.Unicode(40), unique=True, nullable=True)
+    transaction_id = db.Column(db.UnicodeText, unique=True, nullable=True)
     # The message itself
     message = db.Column(db.UnicodeText, nullable=False)
     # Flags
     status = db.Column(db.Integer, default=0, nullable=False)
     status_at = db.Column(db.TIMESTAMP(timezone=True), nullable=True)
-    fail_reason = db.Column(db.Unicode(25), nullable=True)
+    fail_reason = db.Column(db.UnicodeText, nullable=True)
 
 
 # class ChannelMixin(object):
@@ -124,7 +124,7 @@ class SMSMessage(BaseMixin, db.Model):
 #         Preferred channels for sending this notification class (in order of preference).
 #         Only listed channels are available for delivery of this notification.
 #         """
-#         return db.Column('channels', db.Unicode(250), default=u'', nullable=False)
+#         return db.Column('channels', db.UnicodeText, default=u'', nullable=False)
 
 #     def _channels_get(self):
 #         return [c.strip() for c in self._channels.replace(u'\r', u' ').replace(u'\n', u' ').split(u' ') if c]
