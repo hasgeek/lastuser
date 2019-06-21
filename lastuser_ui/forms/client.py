@@ -52,9 +52,11 @@ class RegisterClientForm(forms.Form):
             u"For example, if your client website is <code>https://auth.hasgeek.com</code>, "
             u"use <code>com.hasgeek.auth</code>. Only required if your client app provides resources")),
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
-    redirect_uri = forms.URLField(__("Redirect URL"),
-        validators=[forms.validators.OptionalIf('confidential')],
-        description=__("OAuth2 Redirect URL"))
+    redirect_uris = forms.TextListField(__("Redirect URL"),
+        validators=[forms.validators.OptionalIf('confidential'), forms.ForEach([forms.URL()])],
+        filters=[forms.strip_each()],
+        description=__(u"OAuth2 Redirect URL. If your app is available on multiple hostnames, "
+            u"list each redirect URL on a separate line"))
     notification_uri = forms.URLField(__("Notification URL"),
         validators=[forms.validators.Optional(), forms.validators.URL()],
         description=__("When the user's data changes, Lastuser will POST a notice to this URL. "

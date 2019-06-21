@@ -69,8 +69,8 @@ class Client(ScopeMixin, BaseMixin, db.Model):
     website = db.Column(db.UnicodeText, nullable=False)
     #: Namespace: determines inter-app resource access
     namespace = db.Column(db.UnicodeText, nullable=True, unique=True)
-    #: Redirect URI
-    redirect_uri = db.Column(db.UnicodeText, nullable=True, default=u'')
+    #: Redirect URIs (one or more)
+    _redirect_uris = db.Column('redirect_uri', db.UnicodeText, nullable=True, default=u'')
     #: Back-end notification URI
     notification_uri = db.Column(db.UnicodeText, nullable=True, default=u'')
     #: Front-end notification URI
@@ -108,8 +108,25 @@ class Client(ScopeMixin, BaseMixin, db.Model):
         credential = self.credentials[name]
         return credential.secret_is(candidate)
 
+    @property
+    def redirect_uris(self):
+        return tuple(self._redirect_uris.split())
+
+    @redirect_uris.setter
+    def redirect_uris(self, value):
+        self._redirect_uris = u'\r\n'.join(value)
+
+    @property
+    def redirect_uri(self):
+        uris = self.redirect_uris  # Assign to local var to avoid splitting twice
+        if uris:
+            return uris[0]
+
     def host_matches(self, url):
-        return urlparse.urlsplit(url or '').netloc == urlparse.urlsplit(self.redirect_uri or self.website).netloc
+        netloc = urlparse.urlsplit(url or '').netloc
+        if netloc:
+            return netloc in [urlparse.urlsplit(r).netloc for r in list(self.redirect_uris) + [self.website]]
+        return False
 
     @property
     def owner(self):

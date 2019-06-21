@@ -44,14 +44,20 @@
           <dt class="mui--text-subhead">Namespace</dt class="mui--text-subhead">
           <dd class="mui--text-subhead">{{ client.namespace }}</dd class="mui--text-subhead">
         {%- endif %}
-        <dt class="mui--text-subhead">Redirect URL</dt class="mui--text-subhead">
-        <dd class="mui--text-subhead">{{ client.redirect_uri }}</dd class="mui--text-subhead">
-        <dt class="mui--text-subhead">Notification URL</dt class="mui--text-subhead">
-        <dd class="mui--text-subhead">{{ client.notification_uri }}</dd class="mui--text-subhead">
-        <dt class="mui--text-subhead">IFrame URL</dt class="mui--text-subhead">
-        <dd class="mui--text-subhead">{{ client.iframe_uri }}</dd class="mui--text-subhead">
-        <dt class="mui--text-subhead">Resource URL</dt class="mui--text-subhead">
-        <dd class="mui--text-subhead">{{ client.resource_uri }}</dd class="mui--text-subhead">
+        {%- if client.owner_is(current_auth.user) %}
+          <dt class="mui--text-subhead">Redirect URL</dt class="mui--text-subhead">
+          <dd class="mui--text-subhead">
+            {%- for r in client.redirect_uris -%}
+              {{ r }}{% if not loop.last %}<br>{% endif %}
+            {%- endfor -%}
+          </dd class="mui--text-subhead">
+          <dt class="mui--text-subhead">Notification URL</dt class="mui--text-subhead">
+          <dd class="mui--text-subhead">{{ client.notification_uri }}</dd class="mui--text-subhead">
+          <dt class="mui--text-subhead">IFrame URL</dt class="mui--text-subhead">
+          <dd class="mui--text-subhead">{{ client.iframe_uri }}</dd class="mui--text-subhead">
+          <dt class="mui--text-subhead">Resource URL</dt class="mui--text-subhead">
+          <dd class="mui--text-subhead">{{ client.resource_uri }}</dd class="mui--text-subhead">
+        {%- endif %}
         <dt class="mui--text-subhead">Active?</dt class="mui--text-subhead">
         <dd class="mui--text-subhead">{{ client.active }}</dd class="mui--text-subhead">
         <dt class="mui--text-subhead">Allow anyone to login?</dt class="mui--text-subhead">

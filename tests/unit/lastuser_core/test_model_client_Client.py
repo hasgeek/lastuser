@@ -22,7 +22,7 @@ class TestClient(TestDatabaseFixture):
         split the referrer URL correctly
         """
         client = self.fixtures.client
-        client.redirect_uri = u"http://hasjob.dev:5000"
+        client.redirect_uris = [u"http://hasjob.dev:5000"]
         referrer = u"http://hasjob.dev:5000/logout"
         self.assertTrue(client.host_matches(referrer))
 

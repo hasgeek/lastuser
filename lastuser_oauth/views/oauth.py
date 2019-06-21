@@ -219,7 +219,7 @@ def oauth_authorize():
         redirect_uri = client.redirect_uri
         if not redirect_uri:  # Validation 1.3.1: No redirect_uri specified
             return oauth_auth_403(_("No redirect URI specified"))
-    elif redirect_uri != client.redirect_uri:
+    elif redirect_uri not in client.redirect_uris:
         if not client.host_matches(redirect_uri):
             return oauth_auth_error(client.redirect_uri, state, 'invalid_request', _(u"Redirect URI hostname doesn't match"))
 
