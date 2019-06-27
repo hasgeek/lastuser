@@ -2,7 +2,7 @@ progressbar2==3.42.0
 Flask==1.0.3
 Flask-Assets==0.12
 Flask-Mail==0.9.1
-sqlalchemy_utils==0.33.11
+sqlalchemy_utils==0.34.0
 SQLAlchemy>=0.9
 Flask-SQLAlchemy==2.4.0
 jsmin==2.2.2
