@@ -149,9 +149,6 @@ def register():
     if current_auth.is_authenticated:
         return redirect(url_for('index'))
     form = RegisterForm()
-    # Make Recaptcha optional
-    if not (current_app.config.get('RECAPTCHA_PUBLIC_KEY') and current_app.config.get('RECAPTCHA_PRIVATE_KEY')):
-        del form.recaptcha
     form.fullname.description = current_app.config.get('FULLNAME_REASON')
     form.email.description = current_app.config.get('EMAIL_REASON')
     form.username.description = current_app.config.get('USERNAME_REASON')
@@ -221,7 +218,6 @@ def reset():
             it may have landed in your spam or junk folder.
             The reset link is valid for 24 hours.
             """.format(masked_email=mask_email(email))))
-
     return render_form(form=form, title=_("Reset password"), message=message, submit=_("Send reset code"), ajax=False)
 
 

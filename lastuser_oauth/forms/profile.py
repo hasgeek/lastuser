@@ -10,7 +10,7 @@ from lastuser_core.models import Name, User, UserEmail, getuser
 timezones = sorted_timezones()
 
 
-class PasswordResetRequestForm(forms.Form):
+class PasswordResetRequestForm(forms.RecaptchaForm):
     username = forms.StringField(__("Username or Email"), validators=[forms.validators.DataRequired()],
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
 
@@ -21,7 +21,7 @@ class PasswordResetRequestForm(forms.Form):
         self.user = user
 
 
-class PasswordResetForm(forms.Form):
+class PasswordResetForm(forms.RecaptchaForm):
     username = forms.StringField(__("Username or Email"), validators=[forms.validators.DataRequired()],
         description=__("Please reconfirm your username or email address"),
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from flask import Markup, url_for, current_app, escape
-import flask_wtf as wtf
 from coaster.utils import valid_username
 from baseframe import _, __
 import baseframe.forms as forms
@@ -36,7 +35,7 @@ class LoginForm(forms.Form):
         self.user = user
 
 
-class RegisterForm(forms.Form):
+class RegisterForm(forms.RecaptchaForm):
     fullname = forms.StringField(__("Full name"), validators=[forms.validators.DataRequired()])
     email = forms.EmailField(__("Email address"), validators=[forms.validators.DataRequired(), forms.validators.ValidEmail()],
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
@@ -46,7 +45,6 @@ class RegisterForm(forms.Form):
     password = forms.PasswordField(__("Password"), validators=[forms.validators.DataRequired()])
     confirm_password = forms.PasswordField(__("Confirm password"),
         validators=[forms.validators.DataRequired(), forms.validators.EqualTo('password')])
-    recaptcha = wtf.RecaptchaField(__("Are you human?"))
 
     def validate_username(self, field):
         if field.data in current_app.config['RESERVED_USERNAMES']:

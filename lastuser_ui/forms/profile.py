@@ -12,7 +12,7 @@ __all__ = ['NewEmailAddressForm', 'EmailPrimaryForm', 'VerifyEmailForm',
     'NewPhoneForm', 'PhonePrimaryForm', 'VerifyPhoneForm']
 
 
-class NewEmailAddressForm(forms.Form):
+class NewEmailAddressForm(forms.RecaptchaForm):
     email = forms.EmailField(__("Email address"), validators=[forms.validators.DataRequired(), forms.ValidEmail()],
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     type = forms.RadioField(__("Type"), coerce=nullstr, validators=[forms.validators.Optional()], choices=[
@@ -43,7 +43,7 @@ class VerifyEmailForm(forms.Form):
     pass
 
 
-class NewPhoneForm(forms.Form):
+class NewPhoneForm(forms.RecaptchaForm):
     phone = forms.TelField(__("Phone number"), default='+91',
         validators=[forms.validators.DataRequired()],
         description=__("Mobile numbers only at this time. Please prefix with '+' and country code."))

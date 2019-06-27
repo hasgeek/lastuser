@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import flash, render_template, url_for, request, redirect
+from flask import flash, render_template, url_for, request, redirect, current_app
 from coaster.auth import current_auth
 from coaster.views import load_model
 from baseframe import _
