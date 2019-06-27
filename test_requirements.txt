@@ -1,4 +1,4 @@
-pytest==4.6.2
+pytest==4.6.3
 coverage==4.5.3
 behave==1.2.6
 mock==3.0.5
