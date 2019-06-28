@@ -151,9 +151,8 @@ def register():
     form = RegisterForm()
     form.fullname.description = current_app.config.get('FULLNAME_REASON')
     form.email.description = current_app.config.get('EMAIL_REASON')
-    form.username.description = current_app.config.get('USERNAME_REASON')
     if form.validate_on_submit():
-        user = register_internal(form.username.data, form.fullname.data, form.password.data)
+        user = register_internal(None, form.fullname.data, form.password.data)
         useremail = UserEmailClaim(user=user, email=form.email.data)
         db.session.add(useremail)
         send_email_verify_link(useremail)

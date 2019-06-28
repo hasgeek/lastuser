@@ -56,7 +56,7 @@ class ProfileForm(forms.Form):
         validators=[forms.validators.DataRequired(), forms.ValidEmail()],
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     username = forms.AnnotatedTextField(__("Username"),
-        validators=[forms.validators.DataRequired(), forms.validators.Length(max=Name.__name_length__)],
+        validators=[forms.validators.Optional(), forms.validators.Length(max=Name.__name_length__)],
         filters=[forms.filters.none_if_empty()],
         prefix=u"https://hasgeek.com/",
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})

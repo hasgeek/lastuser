@@ -5,7 +5,7 @@ from coaster.utils import valid_username
 from baseframe import _, __
 import baseframe.forms as forms
 
-from lastuser_core.models import User, UserEmail, getuser, Organization
+from lastuser_core.models import UserEmail, getuser
 
 
 class LoginPasswordResetException(Exception):
@@ -39,21 +39,9 @@ class RegisterForm(forms.RecaptchaForm):
     fullname = forms.StringField(__("Full name"), validators=[forms.validators.DataRequired()])
     email = forms.EmailField(__("Email address"), validators=[forms.validators.DataRequired(), forms.validators.ValidEmail()],
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
-    username = forms.StringField(__("Username"), validators=[forms.validators.DataRequired()],
-        description=__("Single word that can contain letters, numbers and dashes"),
-        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     password = forms.PasswordField(__("Password"), validators=[forms.validators.DataRequired()])
     confirm_password = forms.PasswordField(__("Confirm password"),
         validators=[forms.validators.DataRequired(), forms.validators.EqualTo('password')])
-
-    def validate_username(self, field):
-        if field.data in current_app.config['RESERVED_USERNAMES']:
-            raise forms.ValidationError, _("This name is reserved")
-        if not valid_username(field.data):
-            raise forms.ValidationError(_(u"Invalid characters in name. Names must be made of ‘a-z’, ‘0-9’ and ‘-’, without trailing dashes"))
-        existing = User.get(username=field.data) or Organization.get(name=field.data)
-        if existing is not None:
-            raise forms.ValidationError(_("This username is taken"))
 
     def validate_email(self, field):
         field.data = field.data.lower()  # Convert to lowercase
