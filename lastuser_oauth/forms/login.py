@@ -36,7 +36,13 @@ class LoginForm(forms.Form):
 
 
 class RegisterForm(forms.RecaptchaForm):
-    fullname = forms.StringField(__("Full name"), validators=[forms.validators.DataRequired()])
+    fullname = forms.StringField(
+        __("Full name"),
+        validators=[
+            forms.validators.DataRequired(),
+            forms.validators.Length(max=80)
+        ]
+    )
     email = forms.EmailField(__("Email address"), validators=[forms.validators.DataRequired(), forms.validators.ValidEmail()],
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'})
     password = forms.PasswordField(__("Password"), validators=[forms.validators.DataRequired()])
