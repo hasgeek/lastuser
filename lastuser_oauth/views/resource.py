@@ -1,18 +1,35 @@
 # -*- coding: utf-8 -*-
 
 from urlparse import urlparse
-from werkzeug.exceptions import BadRequest
-from flask import request, abort, render_template, jsonify
-from coaster.utils import getbool
-from coaster.auth import current_auth
-from coaster.views import requestargs, jsonp
-from baseframe import _, __
 
-from lastuser_core.models import (db, getuser, User, Organization, AuthToken, Resource,
-    ResourceAction, UserClientPermissions, TeamClientPermissions, UserSession, ClientCredential)
+from flask import abort, jsonify, render_template, request
+from werkzeug.exceptions import BadRequest
+
+from baseframe import _, __
+from coaster.auth import current_auth
+from coaster.utils import getbool
+from coaster.views import jsonp, requestargs
 from lastuser_core import resource_registry
+from lastuser_core.models import (
+    AuthToken,
+    ClientCredential,
+    Organization,
+    Resource,
+    ResourceAction,
+    TeamClientPermissions,
+    User,
+    UserClientPermissions,
+    UserSession,
+    db,
+    getuser,
+)
+
 from .. import lastuser_oauth
-from .helpers import requires_client_login, requires_user_or_client_login, requires_client_id_or_user_or_client_login
+from .helpers import (
+    requires_client_id_or_user_or_client_login,
+    requires_client_login,
+    requires_user_or_client_login,
+)
 
 
 def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
@@ -20,15 +37,17 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
     teams = {}
 
     if '*' in scope or 'id' in scope or 'id/*' in scope:
-        userinfo = {'userid': user.buid,
-                    'buid': user.buid,
-                    'uuid': user.uuid,
-                    'username': user.username,
-                    'fullname': user.fullname,
-                    'timezone': user.timezone,
-                    'avatar': user.avatar,
-                    'oldids': [o.buid for o in user.oldids],
-                    'olduuids': [o.uuid for o in user.oldids]}
+        userinfo = {
+            'userid': user.buid,
+            'buid': user.buid,
+            'uuid': user.uuid,
+            'username': user.username,
+            'fullname': user.fullname,
+            'timezone': user.timezone,
+            'avatar': user.avatar,
+            'oldids': [o.buid for o in user.oldids],
+            'olduuids': [o.uuid for o in user.oldids],
+        }
     else:
         userinfo = {}
 
@@ -41,12 +60,45 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
         userinfo['phone'] = unicode(user.phone)
     if '*' in scope or 'organizations' in scope or 'organizations/*' in scope:
         userinfo['organizations'] = {
-            'owner': [{'userid': org.buid, 'buid': org.buid, 'uuid': org.uuid, 'name': org.name, 'title': org.title} for org in user.organizations_owned()],
-            'member': [{'userid': org.buid, 'buid': org.buid, 'uuid': org.uuid, 'name': org.name, 'title': org.title} for org in user.organizations_memberof()],
-            'all': [{'userid': org.buid, 'buid': org.buid, 'uuid': org.uuid, 'name': org.name, 'title': org.title} for org in user.organizations()],
-            }
+            'owner': [
+                {
+                    'userid': org.buid,
+                    'buid': org.buid,
+                    'uuid': org.uuid,
+                    'name': org.name,
+                    'title': org.title,
+                }
+                for org in user.organizations_owned()
+            ],
+            'member': [
+                {
+                    'userid': org.buid,
+                    'buid': org.buid,
+                    'uuid': org.uuid,
+                    'name': org.name,
+                    'title': org.title,
+                }
+                for org in user.organizations_memberof()
+            ],
+            'all': [
+                {
+                    'userid': org.buid,
+                    'buid': org.buid,
+                    'uuid': org.uuid,
+                    'name': org.name,
+                    'title': org.title,
+                }
+                for org in user.organizations()
+            ],
+        }
 
-    if '*' in scope or 'organizations' in scope or 'teams' in scope or 'organizations/*' in scope or 'teams/*' in scope:
+    if (
+        '*' in scope
+        or 'organizations' in scope
+        or 'teams' in scope
+        or 'organizations/*' in scope
+        or 'teams/*' in scope
+    ):
         for team in user.teams:
             teams[team.buid] = {
                 'userid': team.buid,
@@ -57,7 +109,8 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                 'org_uuid': team.org.uuid,
                 'owners': team == team.org.owners,
                 'members': team == team.org.members,
-                'member': True}
+                'member': True,
+            }
 
     if '*' in scope or 'teams' in scope or 'teams/*' in scope:
         for org in user.organizations_owned():
@@ -72,21 +125,31 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                         'org_uuid': team.org.uuid,
                         'owners': team == team.org.owners,
                         'members': team == team.org.members,
-                        'member': False}
+                        'member': False,
+                    }
 
     if teams:
         userinfo['teams'] = teams.values()
 
     if get_permissions:
         if client.user:
-            perms = UserClientPermissions.query.filter_by(user=user, client=client).first()
+            perms = UserClientPermissions.query.filter_by(
+                user=user, client=client
+            ).first()
             if perms:
                 userinfo['permissions'] = perms.access_permissions.split(u' ')
         else:
             permsset = set()
             if user.teams:
-                perms = TeamClientPermissions.query.filter_by(client=client).filter(
-                    TeamClientPermissions.team_id.in_([team.id for team in user.teams])).all()
+                perms = (
+                    TeamClientPermissions.query.filter_by(client=client)
+                    .filter(
+                        TeamClientPermissions.team_id.in_(
+                            [team.id for team in user.teams]
+                        )
+                    )
+                    .all()
+                )
                 for permob in perms:
                     permsset.update(permob.access_permissions.split(u' '))
             userinfo['permissions'] = sorted(permsset)
@@ -101,7 +164,9 @@ def resource_error(error, description=None, uri=None):
         params['error_uri'] = uri
 
     response = jsonify(params)
-    response.headers['Cache-Control'] = 'private, no-cache, no-store, max-age=0, must-revalidate'
+    response.headers[
+        'Cache-Control'
+    ] = 'private, no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     response.status_code = 400
     return response
@@ -118,12 +183,15 @@ def api_result(status, _jsonp=False, **params):
     else:
         response = jsonify(params)
     response.status_code = status_code
-    response.headers['Cache-Control'] = 'private, no-cache, no-store, max-age=0, must-revalidate'
+    response.headers[
+        'Cache-Control'
+    ] = 'private, no-cache, no-store, max-age=0, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     return response
 
 
 # --- Client access endpoints -------------------------------------------------
+
 
 @lastuser_oauth.route('/api/1/token/verify', methods=['POST'])
 @requires_client_login
@@ -145,8 +213,10 @@ def token_verify():
     if not authtoken:
         # No such auth token
         return api_result('error', error='no_token')
-    if (current_auth.client.namespace + ':' + client_resource not in authtoken.effective_scope) and (
-            current_auth.client.namespace + ':*' not in authtoken.effective_scope):
+    if (
+        current_auth.client.namespace + ':' + client_resource
+        not in authtoken.effective_scope
+    ) and (current_auth.client.namespace + ':*' not in authtoken.effective_scope):
         # Token does not grant access to this resource
         return api_result('error', error='access_denied')
     if '/' in client_resource:
@@ -163,15 +233,21 @@ def token_verify():
             # Resource does not exist or does not belong to this client
             return api_result('error', error='access_denied')
         if action_name and action_name != '*':
-            action = ResourceAction.query.filter_by(name=action_name, resource=resource).first()
+            action = ResourceAction.query.filter_by(
+                name=action_name, resource=resource
+            ).first()
             if not action:
                 return api_result('error', error='access_denied')
 
     # All validations passed. Token is valid for this client and scope. Return with information on the token
     # TODO: Don't return validity. Set the HTTP cache headers instead.
-    params = {'validity': 120}  # Period (in seconds) for which this assertion may be cached.
+    params = {
+        'validity': 120
+    }  # Period (in seconds) for which this assertion may be cached.
     if authtoken.user:
-        params['userinfo'] = get_userinfo(authtoken.user, current_auth.client, scope=authtoken.effective_scope)
+        params['userinfo'] = get_userinfo(
+            authtoken.user, current_auth.client, scope=authtoken.effective_scope
+        )
     params['clientinfo'] = {
         'title': authtoken.client.title,
         'userid': authtoken.client.owner.buid,
@@ -181,7 +257,7 @@ def token_verify():
         'website': authtoken.client.website,
         'key': authtoken.client.key,
         'trusted': authtoken.client.trusted,
-        }
+    }
     return api_result('ok', **params)
 
 
@@ -206,16 +282,20 @@ def token_get_scope():
     nsprefix = current_auth.client.namespace + ':'
     for item in authtoken.effective_scope:
         if item.startswith(nsprefix):
-            client_resources.append(item[len(nsprefix):])
+            client_resources.append(item[len(nsprefix) :])
 
     if not client_resources:
         return api_result('error', error='no_access')
 
     # All validations passed. Token is valid for this client. Return with information on the token
     # TODO: Don't return validity. Set the HTTP cache headers instead.
-    params = {'validity': 120}  # Period (in seconds) for which this assertion may be cached.
+    params = {
+        'validity': 120
+    }  # Period (in seconds) for which this assertion may be cached.
     if authtoken.user:
-        params['userinfo'] = get_userinfo(authtoken.user, current_auth.client, scope=authtoken.effective_scope)
+        params['userinfo'] = get_userinfo(
+            authtoken.user, current_auth.client, scope=authtoken.effective_scope
+        )
     params['clientinfo'] = {
         'title': authtoken.client.title,
         'userid': authtoken.client.owner.buid,
@@ -226,7 +306,7 @@ def token_get_scope():
         'key': authtoken.client.key,
         'trusted': authtoken.client.trusted,
         'scope': client_resources,
-        }
+    }
     return api_result('ok', **params)
 
 
@@ -241,7 +321,10 @@ def sync_resources():
         if '/' in name:
             parts = name.split('/')
             if len(parts) != 2:
-                results[name] = {'status': 'error', 'error': _(u"Invalid resource name {name}").format(name=name)}
+                results[name] = {
+                    'status': 'error',
+                    'error': _(u"Invalid resource name {name}").format(name=name),
+                }
                 continue
             resource_name, action_name = parts
         else:
@@ -264,9 +347,13 @@ def sync_resources():
                 resource.restricted = restricted
                 results[resource.name]['status'] = 'updated'
         else:
-            resource = Resource(client=current_auth.client, name=resource_name,
-                title=resources.get(resource_name, {}).get('title') or resource_name.title(),
-                description=resources.get(resource_name, {}).get('description') or u'')
+            resource = Resource(
+                client=current_auth.client,
+                name=resource_name,
+                title=resources.get(resource_name, {}).get('title')
+                or resource_name.title(),
+                description=resources.get(resource_name, {}).get('description') or u'',
+            )
             db.session.add(resource)
             results[resource.name] = {'status': 'added', 'actions': {}}
 
@@ -277,14 +364,22 @@ def sync_resources():
             if action:
                 if description != action.description:
                     action.description = description
-                    results[resource.name]['actions'][action.name] = {'status': 'updated'}
+                    results[resource.name]['actions'][action.name] = {
+                        'status': 'updated'
+                    }
                 else:
-                    results[resource.name]['actions'][action.name] = {'status': 'exists'}
+                    results[resource.name]['actions'][action.name] = {
+                        'status': 'exists'
+                    }
             else:
                 # FIXME: What is "title" here? This assignment doesn't seem right
-                action = ResourceAction(resource=resource, name=action_name,
-                    title=resources[name].get('title') or action_name.title() + " " + resource.title,
-                    description=description)
+                action = ResourceAction(
+                    resource=resource,
+                    name=action_name,
+                    title=resources[name].get('title')
+                    or action_name.title() + " " + resource.title,
+                    description=description,
+                )
                 db.session.add(action)
                 results[resource.name]['actions'][action.name] = {'status': 'added'}
 
@@ -292,14 +387,19 @@ def sync_resources():
     for resource_name in actions_list:
         resource = Resource.get(name=resource_name, client=current_auth.client)
         actions = ResourceAction.query.filter(
-            ~ResourceAction.name.in_(actions_list[resource_name]), ResourceAction.resource == resource)
+            ~ResourceAction.name.in_(actions_list[resource_name]),
+            ResourceAction.resource == resource,
+        )
         for action in actions.all():
             results[resource_name]['actions'][action.name] = {'status': 'deleted'}
         actions.delete(synchronize_session='fetch')
     del_resources = Resource.query.filter(
-        ~Resource.name.in_(actions_list.keys()), Resource.client == current_auth.client)
+        ~Resource.name.in_(actions_list.keys()), Resource.client == current_auth.client
+    )
     for resource in del_resources.all():
-        ResourceAction.query.filter_by(resource=resource).delete(synchronize_session='fetch')
+        ResourceAction.query.filter_by(resource=resource).delete(
+            synchronize_session='fetch'
+        )
         results[resource.name] = {'status': 'deleted'}
     del_resources.delete(synchronize_session='fetch')
 
@@ -319,7 +419,8 @@ def user_get_by_userid():
         return api_result('error', error='no_userid_provided')
     user = User.get(buid=buid, defercols=True)
     if user:
-        return api_result('ok',
+        return api_result(
+            'ok',
             _jsonp=True,
             type='user',
             userid=user.buid,
@@ -330,11 +431,13 @@ def user_get_by_userid():
             label=user.pickername,
             timezone=user.timezone,
             oldids=[o.buid for o in user.oldids],
-            olduuids=[o.uuid for o in user.oldids])
+            olduuids=[o.uuid for o in user.oldids],
+        )
     else:
         org = Organization.get(buid=buid, defercols=True)
         if org:
-            return api_result('ok',
+            return api_result(
+                'ok',
                 _jsonp=True,
                 type='organization',
                 userid=org.buid,
@@ -342,7 +445,8 @@ def user_get_by_userid():
                 uuid=org.uuid,
                 name=org.name,
                 title=org.title,
-                label=org.pickername)
+                label=org.pickername,
+            )
     return api_result('error', error='not_found', _jsonp=True)
 
 
@@ -359,27 +463,37 @@ def user_get_by_userids(userid):
         return api_result('error', error='no_userid_provided', _jsonp=True)
     users = User.all(buids=userid)
     orgs = Organization.all(buids=userid)
-    return api_result('ok',
+    return api_result(
+        'ok',
         _jsonp=True,
         results=[
-            {'type': 'user',
-             'buid': u.buid,
-             'userid': u.buid,
-             'uuid': u.uuid,
-             'name': u.username,
-             'title': u.fullname,
-             'label': u.pickername,
-             'timezone': u.timezone,
-             'oldids': [o.buid for o in u.oldids],
-             'olduuids': [o.uuid for o in u.oldids]} for u in users] + [
-            {'type': 'organization',
-             'buid': o.buid,
-             'userid': o.buid,
-             'uuid': o.uuid,
-             'name': o.name,
-             'title': o.fullname,
-             'label': o.pickername} for o in orgs]
-        )
+            {
+                'type': 'user',
+                'buid': u.buid,
+                'userid': u.buid,
+                'uuid': u.uuid,
+                'name': u.username,
+                'title': u.fullname,
+                'label': u.pickername,
+                'timezone': u.timezone,
+                'oldids': [o.buid for o in u.oldids],
+                'olduuids': [o.uuid for o in u.oldids],
+            }
+            for u in users
+        ]
+        + [
+            {
+                'type': 'organization',
+                'buid': o.buid,
+                'userid': o.buid,
+                'uuid': o.uuid,
+                'name': o.name,
+                'title': o.fullname,
+                'label': o.pickername,
+            }
+            for o in orgs
+        ],
+    )
 
 
 @lastuser_oauth.route('/api/1/user/get', methods=['GET', 'POST'])
@@ -393,7 +507,8 @@ def user_get(name):
         return api_result('error', error='no_name_provided')
     user = getuser(name)
     if user:
-        return api_result('ok',
+        return api_result(
+            'ok',
             type='user',
             userid=user.buid,
             buid=user.buid,
@@ -403,7 +518,8 @@ def user_get(name):
             label=user.pickername,
             timezone=user.timezone,
             oldids=[o.buid for o in user.oldids],
-            olduuids=[o.uuid for o in user.oldids])
+            olduuids=[o.uuid for o in user.oldids],
+        )
     else:
         return api_result('error', error='not_found')
 
@@ -423,18 +539,20 @@ def user_getall(name):
     for name in names:
         user = getuser(name)
         if user and user.buid not in buids:
-            results.append({
-                'type': 'user',
-                'userid': user.buid,
-                'buid': user.buid,
-                'uuid': user.uuid,
-                'name': user.username,
-                'title': user.fullname,
-                'label': user.pickername,
-                'timezone': user.timezone,
-                'oldids': [o.buid for o in user.oldids],
-                'olduuids': [o.uuid for o in user.oldids],
-                })
+            results.append(
+                {
+                    'type': 'user',
+                    'userid': user.buid,
+                    'buid': user.buid,
+                    'uuid': user.uuid,
+                    'name': user.username,
+                    'title': user.fullname,
+                    'label': user.pickername,
+                    'timezone': user.timezone,
+                    'oldids': [o.buid for o in user.oldids],
+                    'olduuids': [o.uuid for o in user.oldids],
+                }
+            )
             buids.add(user.buid)
     if not results:
         return api_result('error', error='not_found')
@@ -452,13 +570,17 @@ def user_autocomplete():
     if not q:
         return api_result('error', error='no_query_provided')
     users = User.autocomplete(q)
-    result = [{
-        'userid': u.buid,
-        'buid': u.buid,
-        'uuid': u.uuid,
-        'name': u.username,
-        'title': u.fullname,
-        'label': u.pickername} for u in users]
+    result = [
+        {
+            'userid': u.buid,
+            'buid': u.buid,
+            'uuid': u.uuid,
+            'name': u.username,
+            'title': u.fullname,
+            'label': u.pickername,
+        }
+        for u in users
+    ]
     return api_result('ok', users=result, _jsonp=True)
 
 
@@ -486,18 +608,23 @@ def org_team_get():
         # on login to HasGeek websites as that would have been very confusing to users.
         # XXX: Return user list here?
         if current_auth.client in org.clients_with_team_access():
-            orgteams[org.buid] = [{
-                'userid': team.buid,
-                'buid': team.buid,
-                'uuid': team.uuid,
-                'org': org.buid,
-                'org_uuid': org.uuid,
-                'title': team.title,
-                'owners': team == org.owners} for team in org.teams]
+            orgteams[org.buid] = [
+                {
+                    'userid': team.buid,
+                    'buid': team.buid,
+                    'uuid': team.uuid,
+                    'org': org.buid,
+                    'org_uuid': org.uuid,
+                    'title': team.title,
+                    'owners': team == org.owners,
+                }
+                for team in org.teams
+            ]
     return api_result('ok', org_teams=orgteams)
 
 
 # --- Public endpoints --------------------------------------------------------
+
 
 @lastuser_oauth.route('/api/1/login/beacon.html')
 @requestargs('client_id', 'login_url')
@@ -508,10 +635,14 @@ def login_beacon_iframe(client_id, login_url):
         abort(404)
     if not client.host_matches(login_url):
         abort(400)
-    return render_template('login_beacon.html.jinja2', client=client, login_url=login_url), 200, {
-        'Expires': 'Fri, 01 Jan 1990 00:00:00 GMT',
-        'Cache-Control': 'private, max-age=86400'
-        }
+    return (
+        render_template('login_beacon.html.jinja2', client=client, login_url=login_url),
+        200,
+        {
+            'Expires': 'Fri, 01 Jan 1990 00:00:00 GMT',
+            'Cache-Control': 'private, max-age=86400',
+        },
+    )
 
 
 @lastuser_oauth.route('/api/1/login/beacon.json')
@@ -525,15 +656,14 @@ def login_beacon_json(client_id):
         token = client.authtoken_for(current_auth.user)
     else:
         token = None
-    response = jsonify({
-        'hastoken': True if token else False
-        })
+    response = jsonify({'hastoken': True if token else False})
     response.headers['Expires'] = 'Fri, 01 Jan 1990 00:00:00 GMT'
     response.headers['Cache-Control'] = 'private, max-age=300'
     return response
 
 
 # --- Token-based resource endpoints ------------------------------------------
+
 
 @lastuser_oauth.route('/api/1/id')
 @resource_registry.resource('id', __(u"Read your name and basic profile data"))
@@ -542,9 +672,16 @@ def resource_id(authtoken, args, files=None):
     Return user's id
     """
     if 'all' in args and getbool(args['all']):
-        return get_userinfo(authtoken.user, authtoken.client, scope=authtoken.effective_scope, get_permissions=True)
+        return get_userinfo(
+            authtoken.user,
+            authtoken.client,
+            scope=authtoken.effective_scope,
+            get_permissions=True,
+        )
     else:
-        return get_userinfo(authtoken.user, authtoken.client, scope=['id'], get_permissions=False)
+        return get_userinfo(
+            authtoken.user, authtoken.client, scope=['id'], get_permissions=False
+        )
 
 
 @lastuser_oauth.route('/api/1/session/verify', methods=['POST'])
@@ -562,7 +699,7 @@ def session_verify(authtoken, args, files=None):
             'buid': session.user.buid,
             'user_uuid': session.user.uuid,
             'sudo': session.has_sudo,
-            }
+        }
     else:
         return {'active': False}
 
@@ -591,8 +728,12 @@ def resource_email(authtoken, args, files=None):
     Return user's email addresses.
     """
     if 'all' in args and getbool(args['all']):
-        return {'email': unicode(authtoken.user.email),
-                'all': [unicode(email) for email in authtoken.user.emails if not email.private]}
+        return {
+            'email': unicode(authtoken.user.email),
+            'all': [
+                unicode(email) for email in authtoken.user.emails if not email.private
+            ],
+        }
     else:
         return {'email': unicode(authtoken.user.email)}
 
@@ -614,15 +755,20 @@ def resource_phone(authtoken, args, files=None):
     Return user's phone numbers.
     """
     if 'all' in args and getbool(args['all']):
-        return {'phone': unicode(authtoken.user.phone),
-                'all': [unicode(phone) for phone in authtoken.user.phones]}
+        return {
+            'phone': unicode(authtoken.user.phone),
+            'all': [unicode(phone) for phone in authtoken.user.phones],
+        }
     else:
         return {'phone': unicode(authtoken.user.phone)}
 
 
 @lastuser_oauth.route('/api/1/user/externalids')
-@resource_registry.resource('user/externalids',
-    __(u"Access your external account information such as Twitter and Google"), trusted=True)
+@resource_registry.resource(
+    'user/externalids',
+    __(u"Access your external account information such as Twitter and Google"),
+    trusted=True,
+)
 def resource_login_providers(authtoken, args, files=None):
     """
     Return user's login providers' data.
@@ -636,8 +782,8 @@ def resource_login_providers(authtoken, args, files=None):
                 'username': unicode(extid.username),
                 'oauth_token': unicode(extid.oauth_token),
                 'oauth_token_secret': unicode(extid.oauth_token_secret),
-                'oauth_token_type': unicode(extid.oauth_token_type)
-                }
+                'oauth_token_type': unicode(extid.oauth_token_type),
+            }
     return response
 
 
@@ -649,44 +795,60 @@ def resource_user_new(authtoken, args, files=None):
 
 
 @lastuser_oauth.route('/api/1/organizations')
-@resource_registry.resource('organizations', __(u"Read the organizations you are a member of"))
+@resource_registry.resource(
+    'organizations', __(u"Read the organizations you are a member of")
+)
 def resource_organizations(authtoken, args, files=None):
     """
     Return user's organizations and teams that they are a member of.
     """
-    return get_userinfo(authtoken.user, authtoken.client, scope=['organizations'], get_permissions=False)
+    return get_userinfo(
+        authtoken.user, authtoken.client, scope=['organizations'], get_permissions=False
+    )
 
 
 @lastuser_oauth.route('/api/1/organizations/new', methods=['POST'])
-@resource_registry.resource('organizations/new', __(u"Create a new organization"), trusted=True)
+@resource_registry.resource(
+    'organizations/new', __(u"Create a new organization"), trusted=True
+)
 def resource_organizations_new(authtoken, args, files=None):
     pass
 
 
 @lastuser_oauth.route('/api/1/organizations/edit', methods=['POST'])
-@resource_registry.resource('organizations/edit', __(u"Edit your organizations"), trusted=True)
+@resource_registry.resource(
+    'organizations/edit', __(u"Edit your organizations"), trusted=True
+)
 def resource_organizations_edit(authtoken, args, files=None):
     pass
 
 
 @lastuser_oauth.route('/api/1/teams')
-@resource_registry.resource('teams', __(u"Read the list of teams in your organizations"))
+@resource_registry.resource(
+    'teams', __(u"Read the list of teams in your organizations")
+)
 def resource_teams(authtoken, args, files=None):
     """
     Return user's organizations' teams.
     """
-    return get_userinfo(authtoken.user, authtoken.client, scope=['teams'], get_permissions=False)
+    return get_userinfo(
+        authtoken.user, authtoken.client, scope=['teams'], get_permissions=False
+    )
 
 
 @lastuser_oauth.route('/api/1/teams/new', methods=['POST'])
-@resource_registry.resource('teams/new', __(u"Create a new team in your organizations"), trusted=True)
+@resource_registry.resource(
+    'teams/new', __(u"Create a new team in your organizations"), trusted=True
+)
 def resource_teams_new(authtoken, args, files=None):
     pass
 
 
 # GET to read member list, POST to write to it
 @lastuser_oauth.route('/api/1/teams/edit', methods=['GET', 'POST'])
-@resource_registry.resource('teams/edit', __(u"Edit your organizations' teams"), trusted=True)
+@resource_registry.resource(
+    'teams/edit', __(u"Edit your organizations' teams"), trusted=True
+)
 def resource_teams_edit(authtoken, args, files=None):
     pass
 

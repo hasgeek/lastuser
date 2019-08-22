@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+
 from lastuserapp import app, db
+
 from .fixtures import Fixtures
 
 

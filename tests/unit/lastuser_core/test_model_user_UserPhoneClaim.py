@@ -2,12 +2,12 @@
 
 from lastuserapp import db
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
 
 
 class TestUserPhoneClaim(TestDatabaseFixture):
-
-    def test_UserPhoneClaim(self):
+    def test_userphoneclaim(self):
         """
         Test for creation of UserPhoneClaim instance
         """
@@ -16,7 +16,7 @@ class TestUserPhoneClaim(TestDatabaseFixture):
         self.assertIsInstance(result, models.UserPhoneClaim)
         self.assertEqual(result.phone, phone)
 
-    def test_UserPhoneClaim_all(self):
+    def test_userphoneclaim_all(self):
         """
         Test for retrieving all instances of UserPhoneClaim given a
         phone number
@@ -32,7 +32,7 @@ class TestUserPhoneClaim(TestDatabaseFixture):
         self.assertIsInstance(result, list)
         self.assertItemsEqual(result, [claim_by_crusoe, claim_by_oakley])
 
-    def test_UserPhoneClaim_get(self):
+    def test_userphoneclaim_get(self):
         """
         Test for retrieving UserPhoneClaim instances given phone
         number and a user
@@ -47,7 +47,7 @@ class TestUserPhoneClaim(TestDatabaseFixture):
         self.assertEqual(result.phone, phone)
         self.assertEqual(result.user, snow)
 
-    def test_UserPhoneClaim_unicode(self):
+    def test_userphoneclaim_unicode(self):
         """
         Test for verifying whether UserPhoneClaim instance
         returns phone in unicode format

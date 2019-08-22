@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from lastuser_core.utils import (strip_phone, valid_phone, get_gravatar_md5sum, make_redirect_url,
-    mask_email)
+
+from lastuser_core.utils import (
+    get_gravatar_md5sum,
+    make_redirect_url,
+    mask_email,
+    strip_phone,
+    valid_phone,
+)
 
 
 class FlaskrTestCase(unittest.TestCase):
-
     def test_strip_phone(self):
         """
         Check if given has spaces or dashes and strip it
@@ -29,13 +34,42 @@ class FlaskrTestCase(unittest.TestCase):
         """
         Check if URL is gravatar URL and return extracted md5
         """
-        self.assertIsNone(get_gravatar_md5sum('https://secure.gravatar.com/a744b4c602f8fd32206eb44894259642'))
-        self.assertIsNone(get_gravatar_md5sum('gravatar.com/avatar/a744b4c602f8fd32206eb44894259642'))
-        self.assertIsNone(get_gravatar_md5sum('https://hasgeek.com/avatar/a744b4c602f8fd32206eb44894259642'))
-        self.assertEqual(get_gravatar_md5sum('https://secure.gravatar.com/avatar/a744b4c602f8fd32206eb44894259642'), 'a744b4c602f8fd32206eb44894259642')
-        self.assertEqual(get_gravatar_md5sum('https://gravatar.com/avatar/a744b4c602f8fd32206eb44894259642'), 'a744b4c602f8fd32206eb44894259642')
-        self.assertNotEqual(get_gravatar_md5sum('https://secure.gravatar.com/avatar/a744b4c602f8fd32206eb44894259642'), 'a744b4c602f8fd32206eb44894259641')
-        self.assertIsNone(get_gravatar_md5sum('https://secure.gravatar.com/avatar/a744b4c602f8fd32206eb44894'))
+        self.assertIsNone(
+            get_gravatar_md5sum(
+                'https://secure.gravatar.com/a744b4c602f8fd32206eb44894259642'
+            )
+        )
+        self.assertIsNone(
+            get_gravatar_md5sum('gravatar.com/avatar/a744b4c602f8fd32206eb44894259642')
+        )
+        self.assertIsNone(
+            get_gravatar_md5sum(
+                'https://hasgeek.com/avatar/a744b4c602f8fd32206eb44894259642'
+            )
+        )
+        self.assertEqual(
+            get_gravatar_md5sum(
+                'https://secure.gravatar.com/avatar/a744b4c602f8fd32206eb44894259642'
+            ),
+            'a744b4c602f8fd32206eb44894259642',
+        )
+        self.assertEqual(
+            get_gravatar_md5sum(
+                'https://gravatar.com/avatar/a744b4c602f8fd32206eb44894259642'
+            ),
+            'a744b4c602f8fd32206eb44894259642',
+        )
+        self.assertNotEqual(
+            get_gravatar_md5sum(
+                'https://secure.gravatar.com/avatar/a744b4c602f8fd32206eb44894259642'
+            ),
+            'a744b4c602f8fd32206eb44894259641',
+        )
+        self.assertIsNone(
+            get_gravatar_md5sum(
+                'https://secure.gravatar.com/avatar/a744b4c602f8fd32206eb44894'
+            )
+        )
 
     def test_make_redirect_url(self):
         # scenario 1: straight forward splitting
@@ -44,7 +78,9 @@ class FlaskrTestCase(unittest.TestCase):
         self.assertEqual(result, expected_result)
 
         # scenario 2: with use_fragment set as True
-        result = make_redirect_url('http://example.com/?foo=bar', use_fragment=True, foo='baz')
+        result = make_redirect_url(
+            'http://example.com/?foo=bar', use_fragment=True, foo='baz'
+        )
         expected_result = 'http://example.com/?foo=bar#foo=baz'
         self.assertEqual(result, expected_result)
 

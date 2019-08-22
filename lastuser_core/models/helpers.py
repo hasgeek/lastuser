@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from .user import db, User, UserEmail, UserEmailClaim, UserExternalId, UserOldId, USER_STATUS
+from .user import (
+    USER_STATUS,
+    User,
+    UserEmail,
+    UserEmailClaim,
+    UserExternalId,
+    UserOldId,
+    db,
+)
 
 __all__ = ['getuser', 'getextid', 'merge_users']
 

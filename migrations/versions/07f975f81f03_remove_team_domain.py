@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Remove team domain
 
 Revision ID: 07f975f81f03
@@ -7,7 +8,6 @@ Create Date: 2017-08-04 15:12:11.992856
 """
 from alembic import op
 import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
 revision = '07f975f81f03'
@@ -22,5 +22,8 @@ def upgrade():
 
 
 def downgrade():
-    op.add_column('team', sa.Column('domain', sa.VARCHAR(length=253), autoincrement=False, nullable=True))
+    op.add_column(
+        'team',
+        sa.Column('domain', sa.VARCHAR(length=253), autoincrement=False, nullable=True),
+    )
     op.create_index('ix_team_domain', 'team', ['domain'], unique=False)

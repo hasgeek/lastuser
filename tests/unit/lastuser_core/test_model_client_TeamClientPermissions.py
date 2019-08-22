@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
 
 
 class TestTeamClientPermissions(TestDatabaseFixture):
-
-    def test_TeamClientPermissions(self):
+    def test_teamclientpermissions(self):
         """Test for verifying creation of TeamClientPermissions' instance"""
         result = models.TeamClientPermissions()
         self.assertIsInstance(result, models.TeamClientPermissions)

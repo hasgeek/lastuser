@@ -1,9 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from flask.signals import Namespace
 from sqlalchemy import event as sqla_event
-from .models import User, Organization, Team, UserEmail, UserEmailClaim, UserPhone, UserPhoneClaim
 
+from flask.signals import Namespace
+
+from .models import (
+    Organization,
+    Team,
+    User,
+    UserEmail,
+    UserEmailClaim,
+    UserPhone,
+    UserPhoneClaim,
+)
 
 lastuser_signals = Namespace()
 

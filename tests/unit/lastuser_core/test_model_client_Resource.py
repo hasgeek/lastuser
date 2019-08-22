@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
 
 
 class TestResource(TestDatabaseFixture):
-
-    def test_Resource_get(self):
+    def test_resource_get(self):
         """
         Test for retrieving a Resource given a name
         """
@@ -26,7 +26,7 @@ class TestResource(TestDatabaseFixture):
         self.assertIsInstance(query_with_name_namespace, models.Resource)
         self.assertEqual(query_with_name_namespace.name, name)
 
-    def test_Resource_permissions(self):
+    def test_resource_permissions(self):
         """
         Test for adding and retrieving permissions on a Resource instance
         """
@@ -35,13 +35,13 @@ class TestResource(TestDatabaseFixture):
         client = self.fixtures.client
         # permissions method checks if client attached to Resource is owned by user
         result = resource.permissions(crusoe)
-        permissions_expected = ['edit', 'delete', 'new-action']
+        permissions_expected = {'edit', 'delete', 'new-action'}
         existing_perms = client.permissions(crusoe)
-        permissions_to_be_checked_against = list(existing_perms | set(permissions_expected))
+        permissions_to_be_checked_against = existing_perms | permissions_expected
         self.assertIsInstance(result, set)
-        self.assertItemsEqual(result, permissions_to_be_checked_against)
+        self.assertEqual(result, permissions_to_be_checked_against)
 
-    def test_Resource_get_action(self):
+    def test_resource_get_action(self):
         """
         Test for retreiving a ResourceAction on this Resource given a action name
         """

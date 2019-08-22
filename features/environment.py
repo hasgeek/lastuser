@@ -1,6 +1,9 @@
-import threading
+# -*- coding: utf-8 -*-
 from wsgiref.simple_server import make_server
+import threading
+
 from selenium import webdriver
+
 from lastuser_core.models import db
 from lastuserapp import app
 

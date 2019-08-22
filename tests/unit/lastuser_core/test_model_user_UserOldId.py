@@ -2,6 +2,7 @@
 
 from lastuserapp import db
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
 
 
@@ -12,7 +13,7 @@ class TestUserOldId(TestDatabaseFixture):
         """
         super(TestUserOldId, self).setUp()
 
-    def test_UserOldId_get(self):
+    def test_useroldid_get(self):
         """
         Test for verifying creation and retrieval of UserOldId instance
         """

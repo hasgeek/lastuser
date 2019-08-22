@@ -1,3 +1,4 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa
 
-from . import helpers, login, account, oauth, resource, profile, notify  # NOQA
+from . import account, helpers, login, notify, oauth, profile, resource

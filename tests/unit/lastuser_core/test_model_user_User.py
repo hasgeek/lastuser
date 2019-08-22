@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 
 from datetime import timedelta
-from sqlalchemy.orm.collections import InstrumentedList
-from coaster.utils import utcnow
 
+from sqlalchemy.orm.collections import InstrumentedList
+
+from coaster.utils import utcnow
 from lastuserapp import db
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
 
 
 class TestUser(TestDatabaseFixture):
-
-    def test_User(self):
+    def test_user(self):
         """
         Test for creation of user object from User model
         """
@@ -70,7 +71,9 @@ class TestUser(TestDatabaseFixture):
         # scenario 1: when username exists
         crusoe = self.fixtures.crusoe
         result = crusoe.pickername
-        expected_result = u'{fullname} (@{username})'.format(fullname=crusoe.fullname, username=crusoe.username)
+        expected_result = u'{fullname} (@{username})'.format(
+            fullname=crusoe.fullname, username=crusoe.username
+        )
         self.assertEqual(result, expected_result)
         # scenario 2: when username doesnt exist
         mr_fedrick = models.User(fullname=u'Mr. Fedrick')
@@ -154,7 +157,7 @@ class TestUser(TestDatabaseFixture):
         self.assertEqual(result[0].owner, crusoe)
         self.assertEqual(result[0].title, bdfl.title)
 
-    def test_User_username(self):
+    def test_user_username(self):
         """
         Test to retrieve User property username
         """
@@ -173,7 +176,9 @@ class TestUser(TestDatabaseFixture):
         self.assertEqual(crusoe.email, crusoe.email)
         # scenario 2: when there is no primary email address
         mr_pilkington = models.User(username=u'pilkington')
-        mr_pilkington_email = models.UserEmail(user=mr_pilkington, email=u'pilkington@animalfarm.co.uk')
+        mr_pilkington_email = models.UserEmail(
+            user=mr_pilkington, email=u'pilkington@animalfarm.co.uk'
+        )
         db.session.add_all([mr_pilkington, mr_pilkington_email])
         db.session.commit()
         self.assertEqual(mr_pilkington.email.email, mr_pilkington_email.email)
@@ -189,10 +194,23 @@ class TestUser(TestDatabaseFixture):
         Test to delete email address for a user
         """
         mr_jones = models.User(username=u'mrjones')
-        mr_jones_primary_email = models.UserEmail(email=u'mrjones@animalfarm.co.uk', primary=True, user=mr_jones)
-        mr_jones_secondary_email = models.UserEmail(email=u'jones@animalfarm.co.uk', user=mr_jones)
-        mr_jones_spare_email = models.UserEmail(email=u'j@animalfarm.co.uk', user=mr_jones)
-        db.session.add_all([mr_jones, mr_jones_primary_email, mr_jones_secondary_email, mr_jones_spare_email])
+        mr_jones_primary_email = models.UserEmail(
+            email=u'mrjones@animalfarm.co.uk', primary=True, user=mr_jones
+        )
+        mr_jones_secondary_email = models.UserEmail(
+            email=u'jones@animalfarm.co.uk', user=mr_jones
+        )
+        mr_jones_spare_email = models.UserEmail(
+            email=u'j@animalfarm.co.uk', user=mr_jones
+        )
+        db.session.add_all(
+            [
+                mr_jones,
+                mr_jones_primary_email,
+                mr_jones_secondary_email,
+                mr_jones_spare_email,
+            ]
+        )
         db.session.commit()
         # scenario 1: when email requested to be deleted is primary
         primary_email = mr_jones_primary_email.email
@@ -240,7 +258,7 @@ class TestUser(TestDatabaseFixture):
         # Scenario 1: Set None as password
         castle = models.User(username=u'castle', fullname=u'Rick Castle')
         castle.password = None
-        self.assertEqual(castle.pw_hash, None)
+        self.assertIsNone(castle.pw_hash)
         # Scenario 2: Set valid password
         kate = models.User(username=u'kate', fullname=u'Detective Kate Beckette')
         kate.password = u'12thprecinct'
@@ -263,12 +281,26 @@ class TestUser(TestDatabaseFixture):
         volturi.members.users.append(marcus)
         volturi.members.users.append(jane)
         volturi.make_teams()
-        volterra = models.Client(title=u'Volterra, Tuscany', org=volturi, confidential=True, website=u'volterra.co.it')
-        enforcers = models.Client(title=u'Volturi\'s thugs', org=volturi, confidential=True, website=u'volturi.co.it')
-        volterra_auth_token = models.AuthToken(client=volterra, user=aro, scope=u'teams', validity=0)
-        volterra_auth_token  # NOQA
-        enforcers_auth_token = models.AuthToken(client=enforcers, user=marcus, scope=u'teams', validity=0)
-        enforcers_auth_token  # NOQA
+        volterra = models.Client(
+            title=u'Volterra, Tuscany',
+            org=volturi,
+            confidential=True,
+            website=u'volterra.co.it',
+        )
+        enforcers = models.Client(
+            title=u'Volturi\'s thugs',
+            org=volturi,
+            confidential=True,
+            website=u'volturi.co.it',
+        )
+        volterra_auth_token = models.AuthToken(
+            client=volterra, user=aro, scope=u'teams', validity=0
+        )
+        volterra_auth_token
+        enforcers_auth_token = models.AuthToken(
+            client=enforcers, user=marcus, scope=u'teams', validity=0
+        )
+        enforcers_auth_token
         self.assertItemsEqual(aro.clients_with_team_access(), [volterra])
         self.assertItemsEqual(marcus.clients_with_team_access(), [enforcers])
         self.assertEqual(jane.clients_with_team_access(), [])
@@ -310,7 +342,7 @@ class TestUser(TestDatabaseFixture):
         oakley.status = 1
         self.assertEqual(oakley.status, 1)
 
-    def test_User_autocomplete(self):
+    def test_user_autocomplete(self):
         """
         Test for User's autocomplete method
         """
@@ -355,9 +387,11 @@ class TestUser(TestDatabaseFixture):
         self.assertEqual(crusoe2.status, 2)
         self.assertEqual(merged_user.username, u"crusoe")
         self.assertIsInstance(merged_user.oldids, InstrumentedList)
-        assert u'of User crusoe "Crusoe Celebrity Dachshund">' in repr(merged_user.oldids)
+        assert u'of User crusoe "Crusoe Celebrity Dachshund">' in repr(
+            merged_user.oldids
+        )
 
-    def test_User_get(self):
+    def test_user_get(self):
         """
         Test for User's get method
         """
@@ -392,13 +426,13 @@ class TestUser(TestDatabaseFixture):
         db.session.add(piggy)
         db.session.commit()
         merged_user = models.merge_users(piglet, piggy)
-        merged_user  # NOQA
+        merged_user
         db.session.commit()
         lookup_by_buid_merged = models.User.get(buid=piggy.buid)
         self.assertIsInstance(lookup_by_buid_merged, models.User)
         self.assertEqual(lookup_by_buid_merged.username, piglet.username)
 
-    def test_User_all(self):
+    def test_user_all(self):
         """
         Test for User's all method
         """
@@ -409,7 +443,9 @@ class TestUser(TestDatabaseFixture):
         oakley = self.fixtures.oakley
         expected_result = [crusoe, oakley]
         # scenario 2: when both buids and usernames are passed
-        lookup_by_both = models.User.all(buids=[crusoe.buid], usernames=[oakley.username])
+        lookup_by_both = models.User.all(
+            buids=[crusoe.buid], usernames=[oakley.username]
+        )
         self.assertIsInstance(lookup_by_both, list)
         self.assertItemsEqual(lookup_by_both, expected_result)
         # scenario 3: when only buids are passed
@@ -417,12 +453,16 @@ class TestUser(TestDatabaseFixture):
         self.assertIsInstance(lookup_by_buids, list)
         self.assertItemsEqual(lookup_by_buids, expected_result)
         # scenario 4: when only usernames are passed
-        lookup_by_usernames = models.User.all(usernames=[crusoe.username, oakley.username])
+        lookup_by_usernames = models.User.all(
+            usernames=[crusoe.username, oakley.username]
+        )
         self.assertIsInstance(lookup_by_usernames, list)
         self.assertItemsEqual(lookup_by_usernames, expected_result)
         # scenario 5: when defercols is set to True
-        lookup_by_usernames_defercols = models.User.all(usernames=[crusoe.username, oakley.username], defercols=True)
-        lookup_by_usernames_defercols  # NOQA
+        lookup_by_usernames_defercols = models.User.all(
+            usernames=[crusoe.username, oakley.username], defercols=True
+        )
+        lookup_by_usernames_defercols
         self.assertIsInstance(lookup_by_usernames, list)
         self.assertItemsEqual(lookup_by_usernames, expected_result)
         # scenario 6: when user.status is active
@@ -439,7 +479,7 @@ class TestUser(TestDatabaseFixture):
         db.session.add_all([jykll, hyde])
         db.session.commit()
         merged_user = models.merge_users(jykll, hyde)
-        merged_user  # NOQA
+        merged_user
         db.session.commit()
         lookup_by_buid_merged = models.User.all(buids=[hyde.buid])
         self.assertIsInstance(lookup_by_buid_merged, list)
@@ -480,4 +520,4 @@ class TestUser(TestDatabaseFixture):
         whymper_result = mr_whymper.add_email(whymper_email)
         mr_whymper.primary_email = whymper_result
         self.assertEqual(whymper_result.email, whymper_email)
-        self.assertEqual(whymper_result.primary, True)
+        self.assertTrue(whymper_result.primary)

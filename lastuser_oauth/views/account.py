@@ -1,19 +1,33 @@
 # -*- coding: utf-8 -*-
-from flask import abort, url_for, flash, redirect, session, render_template, request
+from flask import abort, flash, redirect, render_template, request, session, url_for
 
-from coaster.utils import valid_username
-from coaster.auth import current_auth
-from coaster.views import get_next_url
 from baseframe import _
 from baseframe.signals import exception_catchall
+from coaster.auth import current_auth
+from coaster.utils import valid_username
+from coaster.views import get_next_url
 from lastuser_core import login_registry
-from lastuser_core.models import db, getextid, merge_users, User, UserEmail, UserExternalId, UserEmailClaim
-from lastuser_core.registry import LoginInitError, LoginCallbackError
+from lastuser_core.models import (
+    User,
+    UserEmail,
+    UserEmailClaim,
+    UserExternalId,
+    db,
+    getextid,
+    merge_users,
+)
+from lastuser_core.registry import LoginCallbackError, LoginInitError
 from lastuser_core.signals import user_data_changed
+
 from .. import lastuser_oauth
 from ..forms.profile import ProfileMergeForm
 from ..mailclient import send_email_verify_link
-from ..views.helpers import login_internal, register_internal, set_loginmethod_cookie, requires_login
+from ..views.helpers import (
+    login_internal,
+    register_internal,
+    requires_login,
+    set_loginmethod_cookie,
+)
 
 
 @lastuser_oauth.route('/login/<service>', methods=['GET', 'POST'])
@@ -25,11 +39,15 @@ def login_service(service):
         abort(404)
     provider = login_registry[service]
     next_url = get_next_url(referrer=False, default=None)
-    callback_url = url_for('.login_service_callback', service=service, next=next_url, _external=True)
+    callback_url = url_for(
+        '.login_service_callback', service=service, next=next_url, _external=True
+    )
     try:
         return provider.do(callback_url=callback_url)
     except (LoginInitError, LoginCallbackError) as e:
-        msg = _(u"{service} login failed: {error}").format(service=provider.title, error=unicode(e))
+        msg = _(u"{service} login failed: {error}").format(
+            service=provider.title, error=unicode(e)
+        )
         exception_catchall.send(e, message=msg)
         flash(msg, category='danger')
         return redirect(next_url or get_next_url(referrer=True))
@@ -46,7 +64,9 @@ def login_service_callback(service):
     try:
         userdata = provider.callback()
     except (LoginInitError, LoginCallbackError) as e:
-        msg = _(u"{service} login failed: {error}").format(service=provider.title, error=unicode(e))
+        msg = _(u"{service} login failed: {error}").format(
+            service=provider.title, error=unicode(e)
+        )
         exception_catchall.send(e, message=msg)
         flash(msg, category='danger')
         if current_auth.is_authenticated:
@@ -79,7 +99,10 @@ def get_user_extid(service, userdata):
         # Cross-check with all other instances of the same LoginProvider (if we don't have a user)
         # This is (for eg) for when we have two Twitter services with different access levels.
         for other_service, other_provider in login_registry.items():
-            if other_service != service and other_provider.__class__ == provider.__class__:
+            if (
+                other_service != service
+                and other_provider.__class__ == provider.__class__
+            ):
                 other_extid = getextid(service=other_service, userid=userdata['userid'])
                 if other_extid is not None:
                     user = other_extid.user
@@ -107,7 +130,9 @@ def login_service_postcallback(service, userdata):
         # TODO: Save refresh token and expiry date where present
         extid.oauth_refresh_token = userdata.get('oauth_refresh_token')
         extid.oauth_expiry_date = userdata.get('oauth_expiry_date')
-        extid.oauth_refresh_expiry = userdata.get('oauth_refresh_expiry')  # TODO: Check this
+        extid.oauth_refresh_expiry = userdata.get(
+            'oauth_refresh_expiry'
+        )  # TODO: Check this
         extid.last_used_at = db.func.utcnow()
     else:
         # New external id. Register it.
@@ -121,7 +146,7 @@ def login_service_postcallback(service, userdata):
             oauth_token_type=userdata.get('oauth_token_type'),
             last_used_at=db.func.utcnow()
             # TODO: Save refresh token
-            )
+        )
 
     if user is None:
         if current_auth:
@@ -133,7 +158,9 @@ def login_service_postcallback(service, userdata):
             user = register_internal(None, userdata.get('fullname'), None)
             extid.user = user
             if userdata.get('username'):
-                if valid_username(userdata['username']) and user.is_valid_name(userdata['username']):
+                if valid_username(userdata['username']) and user.is_valid_name(
+                    userdata['username']
+                ):
                     # Set a username for this user if it's available
                     user.username = userdata['username']
     else:  # We have an existing user account from extid or useremail
@@ -173,7 +200,12 @@ def login_service_postcallback(service, userdata):
 
     if not current_auth:  # If a user isn't already logged in, login now.
         login_internal(user)
-        flash(_(u"You have logged in via {service}").format(service=login_registry[service].title), 'success')
+        flash(
+            _(u"You have logged in via {service}").format(
+                service=login_registry[service].title
+            ),
+            'success',
+        )
     next_url = get_next_url(session=True)
 
     db.session.add(extid)  # If we made a new extid, add it to the session now
@@ -186,7 +218,9 @@ def login_service_postcallback(service, userdata):
         login_next = next_url
 
     if 'merge_buid' in session:
-        return set_loginmethod_cookie(redirect(url_for('.account_merge', next=login_next), code=303), service)
+        return set_loginmethod_cookie(
+            redirect(url_for('.account_merge', next=login_next), code=303), service
+        )
     else:
         return set_loginmethod_cookie(redirect(login_next, code=303), service)
 
@@ -213,5 +247,10 @@ def account_merge():
         else:
             session.pop('merge_buid', None)
             return redirect(get_next_url(), code=303)
-    return render_template('merge.html.jinja2', form=form, user=current_auth.user, other_user=other_user,
-        login_registry=login_registry)
+    return render_template(
+        'merge.html.jinja2',
+        form=form,
+        user=current_auth.user,
+        other_user=other_user,
+        login_registry=login_registry,
+    )

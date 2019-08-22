@@ -3,13 +3,15 @@
 # Handle top-level views for url routing
 
 from flask import url_for
-from .. import app
+
 from lastuser_core.models import User
 import lastuser_oauth.views
 import lastuser_ui.views
 
+from .. import app
 
 # These endpoints are replicated here so that Baseframe's routing does not choke
+
 
 # Monkeypatch these methods into the User model
 def profile_url(self):
@@ -24,9 +26,10 @@ def organization_links(self):
     Links to organizations owned by this user.
     """
     return []
-    return [{
-        'link': org.url_for(),
-        'title': org.title} for org in self.organizations_owned()]
+    return [
+        {'link': org.url_for(), 'title': org.title}
+        for org in self.organizations_owned()
+    ]
 
 
 User.profile_url = property(profile_url)

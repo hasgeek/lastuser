@@ -4,8 +4,7 @@ from .test_db import TestDatabaseFixture
 
 
 class TestLoginProvider(TestDatabaseFixture):
-
-    def test_LoginProvider(self):
+    def test_loginprovider(self):
         pass
 
     def test_loginprovider_get_form(self):

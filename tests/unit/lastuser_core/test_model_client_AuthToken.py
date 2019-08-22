@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 
+from datetime import timedelta
+
+from coaster.utils import buid, utcnow
 from lastuserapp import db
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
-from datetime import timedelta
-from coaster.utils import buid, utcnow
 
 
 class TestAuthToken(TestDatabaseFixture):
-
-    def test_AuthToken_init(self):
+    def test_authtoken_init(self):
         """
         Test for verifying creation of AuthToken instance
         note: Only one authtoken per user and client
@@ -39,7 +40,9 @@ class TestAuthToken(TestDatabaseFixture):
         # scenario 1: when validity is unlimited (0)
         tomriddle = models.User(username=u'voldemort', fullname=u'Tom Riddle')
         scope = [u'id', u'email']
-        tomriddle_token = models.AuthToken(client=client, user=tomriddle, scope=scope, validity=0)
+        tomriddle_token = models.AuthToken(
+            client=client, user=tomriddle, scope=scope, validity=0
+        )
         self.assertTrue(tomriddle_token.is_valid())
 
         # scenario 2: when validity has not been given
@@ -50,22 +53,35 @@ class TestAuthToken(TestDatabaseFixture):
 
         # scenario 3: when validity is limited
         harry = models.User(username=u'harry', fullname=u'Harry Potter')
-        harry_token = models.AuthToken(client=client, user=harry, scope=scope, validity=3600, created_at=utcnow())
+        harry_token = models.AuthToken(
+            client=client, user=harry, scope=scope, validity=3600, created_at=utcnow()
+        )
         self.assertTrue(harry_token.is_valid())
 
         # scenario 4: when validity is limited *and* the token has expired
         cedric = models.User(username=u'cedric', fullname=u'Cedric Diggory')
-        cedric_token = models.AuthToken(client=client, user=cedric, scope=scope, validity=1, created_at=utcnow() - timedelta(1))
+        cedric_token = models.AuthToken(
+            client=client,
+            user=cedric,
+            scope=scope,
+            validity=1,
+            created_at=utcnow() - timedelta(1),
+        )
         self.assertFalse(cedric_token.is_valid())
 
-    def test_AuthToken_get(self):
+    def test_authtoken_get(self):
         """
         Test for retreiving a AuthToken instance given a token
         """
         specialdachs = self.fixtures.specialdachs
         oakley = self.fixtures.oakley
         scope = [u'id']
-        dachsadv = models.Client(title=u"Dachshund Adventures", org=specialdachs, confidential=True, website=u"http://dachsadv.com")
+        dachsadv = models.Client(
+            title=u"Dachshund Adventures",
+            org=specialdachs,
+            confidential=True,
+            website=u"http://dachsadv.com",
+        )
         auth_token = models.AuthToken(client=dachsadv, user=oakley, scope=scope)
         token = auth_token.token
         db.session.add(dachsadv, auth_token)
@@ -73,7 +89,7 @@ class TestAuthToken(TestDatabaseFixture):
         self.assertIsInstance(result, models.AuthToken)
         self.assertEqual(result.client, dachsadv)
 
-    def test_AuthToken_all(self):
+    def test_authtoken_all(self):
         """
         Test for retreiving all AuthToken instances for given users
         """
@@ -93,7 +109,19 @@ class TestAuthToken(TestDatabaseFixture):
         pottermania_members = [hermione, alastor, greyback, myrtle]
         for member in pottermania_members:
             pottermania.members.users.append(member)
-        db.session.add_all([myrtle, myrtle_token, hermione, herminone_token, alastor, alastor_token, greyback, greyback_token, pottermania])
+        db.session.add_all(
+            [
+                myrtle,
+                myrtle_token,
+                hermione,
+                herminone_token,
+                alastor,
+                alastor_token,
+                greyback,
+                greyback_token,
+                pottermania,
+            ]
+        )
         db.session.commit()
 
         # scenario 1 and count == 1
@@ -107,7 +135,9 @@ class TestAuthToken(TestDatabaseFixture):
         self.assertIsInstance(result2, list)
         for each in result2:
             self.assertIsInstance(each, models.AuthToken)
-        self.assertItemsEqual(result2, [herminone_token, alastor_token, greyback_token, myrtle_token])
+        self.assertItemsEqual(
+            result2, [herminone_token, alastor_token, greyback_token, myrtle_token]
+        )
 
         # Scenario 2: When users passed are not an instance of Query class
         lily = models.User(username=u'lily', fullname=u'Lily Evans Potter')
@@ -145,15 +175,19 @@ class TestAuthToken(TestDatabaseFixture):
         client = self.fixtures.client
 
         user_session = models.UserSession(buid=buid(), user=crusoe)
-        auth_token_with_user_session = models.AuthToken(user=crusoe, user_session=user_session)
-        self.assertIsInstance(auth_token_with_user_session.user_session.user, models.User)
+        auth_token_with_user_session = models.AuthToken(
+            user=crusoe, user_session=user_session
+        )
+        self.assertIsInstance(
+            auth_token_with_user_session.user_session.user, models.User
+        )
         self.assertEqual(auth_token_with_user_session.user_session.user, crusoe)
 
         auth_token_without_user_session = models.AuthToken(client=client, user=crusoe)
         self.assertIsInstance(auth_token_without_user_session._user, models.User)
         self.assertEqual(auth_token_without_user_session._user, crusoe)
 
-    # def test_AuthToken_migrate_user(self):
+    # def test_authtoken_migrate_user(self):
     #     """
     #     FIXME: Test for migrating user who has an AuthToken issued
     #     """
@@ -196,7 +230,7 @@ class TestAuthToken(TestDatabaseFixture):
         valid_algorithm = 'hmac-sha-1'
         auth_token = models.AuthToken(user=snape)
         auth_token.algorithm = None
-        self.assertEqual(auth_token._algorithm, None)
+        self.assertIsNone(auth_token._algorithm)
         auth_token.algorithm = valid_algorithm
         self.assertEqual(auth_token._algorithm, valid_algorithm)
         self.assertEqual(auth_token.algorithm, valid_algorithm)

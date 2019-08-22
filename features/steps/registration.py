@@ -1,16 +1,17 @@
-from behave import given, when, then
+# -*- coding: utf-8 -*-
+from behave import given, then, when
+
 from lastuser_core.models import User
 
 
 @given('we have a new user')
 def given_new_user(context):
-    context.test_user = dict(
-        fullname='Alyssa P Hacker',
-        email='alyssa@hacker.com',
-        username='alyssa',
-        password='alyssa',
-        confirm_password='alyssa'
-        )
+    context.test_user = {
+        'fullname': 'Alyssa P Hacker',
+        'email': 'alyssa@hacker.com',
+        'password': 'alyssa',
+        'confirm_password': 'alyssa',
+    }
 
 
 @when('a new user submits the registration form with the proper details')

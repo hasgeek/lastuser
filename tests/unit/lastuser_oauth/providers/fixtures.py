@@ -8,4 +8,3 @@ class Fixtures(object):
         Create test client app, add test
         resource, action and message.
         """
-        pass

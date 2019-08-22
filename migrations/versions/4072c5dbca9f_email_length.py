@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Email length
 
 Revision ID: 4072c5dbca9f

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """namespace column
 
 Revision ID: 3b3583fcbaea
@@ -11,21 +12,25 @@ revision = '3b3583fcbaea'
 down_revision = '7b0ba76b89e'
 
 from alembic import op
+from sqlalchemy.sql import bindparam, column, select, table
 import sqlalchemy as sa
-from sqlalchemy.sql import select, bindparam, table, column
 
 from coaster.utils import namespace_from_url
 
 
 def upgrade():
-    op.add_column('client', sa.Column('namespace', sa.Unicode(length=250), nullable=True))
+    op.add_column(
+        'client', sa.Column('namespace', sa.Unicode(length=250), nullable=True)
+    )
     op.create_unique_constraint('client_namespace_key', 'client', ['namespace'])
 
     connection = op.get_bind()
-    client = table('client',
+    client = table(
+        'client',
         column('id', sa.Integer),
         column('website', sa.Unicode(250)),
-        column('namespace', sa.Unicode(250)))
+        column('namespace', sa.Unicode(250)),
+    )
     results = connection.execute(select([client.c.id, client.c.website]))
     namespaces = []
     namespace_list = []
@@ -39,7 +44,11 @@ def upgrade():
         namespace_list.append(new_namespace)
 
     if len(namespaces) > 0:
-        updt_stmt = client.update().where(client.c.id == bindparam('clientid')).values(namespace=bindparam('namespace'))
+        updt_stmt = (
+            client.update()
+            .where(client.c.id == bindparam('clientid'))
+            .values(namespace=bindparam('namespace'))
+        )
         connection.execute(updt_stmt, namespaces)
 
 

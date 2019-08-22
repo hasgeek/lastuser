@@ -41,7 +41,7 @@ TIMEZONE = 'Asia/Kolkata'
 #: Reserved usernames
 #: Add to this list but do not remove any unless you want to break
 #: the website
-RESERVED_USERNAMES = set([
+RESERVED_USERNAMES = {
     'app',
     'apps',
     'auth',
@@ -66,7 +66,7 @@ RESERVED_USERNAMES = set([
     'pop',
     'pop3',
     'email',
-    ])
+}
 
 #: Mail settings
 #: MAIL_FAIL_SILENTLY : default True
@@ -129,7 +129,9 @@ SMS_TWILIO_TOKEN = ''
 SMS_TWILIO_FROM = ''
 
 #: Messages (text or HTML)
-MESSAGE_FOOTER = Markup('Copyright &copy; <a href="http://hasgeek.com/">HasGeek</a>. Powered by <a href="https://github.com/hasgeek/lastuser" title="GitHub project page">Lastuser</a>, open source software from <a href="https://github.com/hasgeek">HasGeek</a>.')
+MESSAGE_FOOTER = Markup(
+    'Copyright &copy; <a href="http://hasgeek.com/">HasGeek</a>. Powered by <a href="https://github.com/hasgeek/lastuser" title="GitHub project page">Lastuser</a>, open source software from <a href="https://github.com/hasgeek">HasGeek</a>.'
+)
 USERNAME_REASON = ''
 EMAIL_REASON = 'Please provide an email address to complete your profile'
 TIMEZONE_REASON = 'Dates and times will be shown in your preferred timezone'
@@ -137,6 +139,10 @@ ORG_NAME_REASON = u"Your company’s name as it will appear in the URL. Letters,
 ORG_TITLE_REASON = u"Your organization’s given name, preferably without legal suffixes"
 LOGIN_MESSAGE_1 = ""
 LOGIN_MESSAGE_2 = ""
-SMS_VERIFICATION_TEMPLATE = 'Your verification code is {code}. If you did not request this, please ignore.'
-CREATE_ACCOUNT_MESSAGE = u"This account is for you as an individual. We’ll make one for your company later"
+SMS_VERIFICATION_TEMPLATE = (
+    'Your verification code is {code}. If you did not request this, please ignore.'
+)
+CREATE_ACCOUNT_MESSAGE = (
+    u"This account is for you as an individual. We’ll make one for your company later"
+)
 LOGOUT_UNAUTHORIZED_MESSAGE = "We detected a possibly unauthorized attempt to log you out. If you really did intend to logout, please click on the logout link again"

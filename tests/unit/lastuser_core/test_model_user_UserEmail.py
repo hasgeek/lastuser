@@ -1,32 +1,34 @@
 # -*- coding: utf-8 -*-
 
+from coaster.utils import md5sum
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
-from hashlib import md5
 
 
 class TestUserEmail(TestDatabaseFixture):
-
-    def test_UserEmail(self):
+    def test_useremail(self):
         """
         Test for verifying creation of UserEmail object
         """
         oakley = self.fixtures.oakley
         email_domain = u'batdog.ca'
-        oakley_new_email = models.user.UserEmail(email=u'oakley@' + email_domain, user=oakley)
+        oakley_new_email = models.user.UserEmail(
+            email=u'oakley@' + email_domain, user=oakley
+        )
         self.assertIsInstance(oakley_new_email, models.user.UserEmail)
         self.assertTrue(hasattr(oakley_new_email, '_email'))
         self.assertTrue(hasattr(oakley_new_email, 'md5sum'))
         self.assertTrue(hasattr(oakley_new_email, 'domain'))
         self.assertEqual(oakley_new_email.domain, email_domain)
 
-    def test_UserEmail_get(self):
+    def test_useremail_get(self):
         """
         Test for verifying UserEmail's get that should return a UserEmail object with matching email or md5sum
         """
         crusoe = self.fixtures.crusoe
         email = crusoe.email.email
-        email_md5 = md5(email).hexdigest()
+        email_md5 = md5sum(email)
         # scenario 1: when both email and md5sum are not passed
         with self.assertRaises(TypeError):
             models.UserEmail.get()
@@ -41,7 +43,7 @@ class TestUserEmail(TestDatabaseFixture):
         self.assertIsInstance(get_by_md5sum, models.UserEmail)
         self.assertEqual(get_by_md5sum.user, crusoe)
 
-    def test_UserEmail_unicode(self):
+    def test_useremail_unicode(self):
         """
         Test for verifying email is returned in unicode format
         """

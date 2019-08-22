@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Longer external usernames
 
 Revision ID: 25c7f8680a52
@@ -15,8 +16,18 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.alter_column('userexternalid', 'username', type_=sa.Unicode(250), existing_type=sa.Unicode(80))
+    op.alter_column(
+        'userexternalid',
+        'username',
+        type_=sa.Unicode(250),
+        existing_type=sa.Unicode(80),
+    )
 
 
 def downgrade():
-    op.alter_column('userexternalid', 'username', type_=sa.Unicode(80), existing_type=sa.Unicode(250))
+    op.alter_column(
+        'userexternalid',
+        'username',
+        type_=sa.Unicode(80),
+        existing_type=sa.Unicode(250),
+    )

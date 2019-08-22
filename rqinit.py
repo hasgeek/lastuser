@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 from urlparse import urlparse
+
 from lastuserapp import app
 
 REDIS_URL = app.config.get('REDIS_URL', 'redis://localhost:6379/0')

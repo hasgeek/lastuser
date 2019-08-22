@@ -2,9 +2,12 @@
 
 from flask import Blueprint
 
-lastuser_ui = Blueprint('lastuser_ui', __name__,
+lastuser_ui = Blueprint(
+    'lastuser_ui',
+    __name__,
     static_folder='static',
     static_url_path='/static/ui',
-    template_folder='templates')
+    template_folder='templates',
+)
 
-from . import forms, views  # NOQA
+from . import forms, views  # NOQA # isort:skip

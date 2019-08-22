@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
 
 
@@ -11,7 +12,7 @@ class TestPasswordResetRequest(TestDatabaseFixture):
         """
         super(TestPasswordResetRequest, self).setUp()
 
-    def test_PasswordResetRequest_init(self):
+    def test_passwordresetrequest_init(self):
         """
         Test for checking PasswordResetRequest's instance creation
         """

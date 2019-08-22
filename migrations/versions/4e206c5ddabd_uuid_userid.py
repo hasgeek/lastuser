@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Replace userid of principals with uuid
 
 Revision ID: 4e206c5ddabd
@@ -6,13 +7,14 @@ Create Date: 2017-06-28 18:17:08.664550
 
 """
 from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.sql import table, column
+from sqlalchemy.sql import column, table
 from sqlalchemy_utils import UUIDType
+import sqlalchemy as sa
+
 from progressbar import ProgressBar
 import progressbar.widgets
-from coaster.utils import buid2uuid, uuid2buid
 
+from coaster.utils import buid2uuid, uuid2buid
 
 # revision identifiers, used by Alembic.
 revision = '4e206c5ddabd'
@@ -21,41 +23,51 @@ branch_labels = None
 depends_on = None
 
 
-user = table('user',
+user = table(
+    'user',
     column('id', sa.Integer()),
     column('created_at', sa.DateTime()),
     column('userid', sa.Unicode(22)),
     column('uuid', UUIDType(binary=False)),
-    )
-organization = table('organization',
+)
+organization = table(
+    'organization',
     column('id', sa.Integer()),
     column('created_at', sa.DateTime()),
     column('userid', sa.Unicode(22)),
     column('uuid', UUIDType(binary=False)),
-    )
-team = table('team',
+)
+team = table(
+    'team',
     column('id', sa.Integer()),
     column('created_at', sa.DateTime()),
     column('userid', sa.Unicode(22)),
     column('uuid', UUIDType(binary=False)),
-    )
-useroldid = table('useroldid',
+)
+useroldid = table(
+    'useroldid',
     column('id', UUIDType(binary=False)),
     column('user_id', sa.Integer()),
     column('created_at', sa.DateTime()),
     column('userid', sa.Unicode(22)),
     column('uuid', UUIDType(binary=False)),
-    )
+)
 
 
 def get_progressbar(label, maxval):
-    return ProgressBar(maxval=maxval,
+    return ProgressBar(
+        maxval=maxval,
         widgets=[
-            label, ': ',
-            progressbar.widgets.Percentage(), ' ',
-            progressbar.widgets.Bar(), ' ',
-            progressbar.widgets.ETA(), ' '
-            ])
+            label,
+            ': ',
+            progressbar.widgets.Percentage(),
+            ' ',
+            progressbar.widgets.Bar(),
+            ' ',
+            progressbar.widgets.ETA(),
+            ' ',
+        ],
+    )
 
 
 def upgrade():
@@ -77,9 +89,11 @@ def upgrade():
     progress.start()
     items = conn.execute(sa.select([organization.c.id, organization.c.userid]))
     for counter, item in enumerate(items):
-        conn.execute(sa.update(
-            organization).where(organization.c.id == item.id).values(uuid=buid2uuid(item.userid)
-            ))
+        conn.execute(
+            sa.update(organization)
+            .where(organization.c.id == item.id)
+            .values(uuid=buid2uuid(item.userid))
+        )
         progress.update(counter)
     progress.finish()
 
@@ -92,9 +106,11 @@ def upgrade():
     progress.start()
     items = conn.execute(sa.select([team.c.id, team.c.userid]))
     for counter, item in enumerate(items):
-        conn.execute(sa.update(
-            team).where(team.c.id == item.id).values(uuid=buid2uuid(item.userid)
-            ))
+        conn.execute(
+            sa.update(team)
+            .where(team.c.id == item.id)
+            .values(uuid=buid2uuid(item.userid))
+        )
         progress.update(counter)
     progress.finish()
 
@@ -107,9 +123,11 @@ def upgrade():
     progress.start()
     items = conn.execute(sa.select([user.c.id, user.c.userid]))
     for counter, item in enumerate(items):
-        conn.execute(sa.update(
-            user).where(user.c.id == item.id).values(uuid=buid2uuid(item.userid)
-            ))
+        conn.execute(
+            sa.update(user)
+            .where(user.c.id == item.id)
+            .values(uuid=buid2uuid(item.userid))
+        )
         progress.update(counter)
     progress.finish()
 
@@ -122,9 +140,11 @@ def upgrade():
     progress.start()
     items = conn.execute(sa.select([useroldid.c.userid]))
     for counter, item in enumerate(items):
-        conn.execute(sa.update(
-            useroldid).where(useroldid.c.userid == item.userid).values(uuid=buid2uuid(item.userid))
-            )
+        conn.execute(
+            sa.update(useroldid)
+            .where(useroldid.c.userid == item.userid)
+            .values(uuid=buid2uuid(item.userid))
+        )
         progress.update(counter)
     progress.finish()
 
@@ -157,9 +177,11 @@ def downgrade():
     progress.start()
     items = conn.execute(sa.select([organization.c.id, organization.c.uuid]))
     for counter, item in enumerate(items):
-        conn.execute(sa.update(
-            organization).where(organization.c.id == item.id).values(userid=uuid2buid(item.uuid)
-            ))
+        conn.execute(
+            sa.update(organization)
+            .where(organization.c.id == item.id)
+            .values(userid=uuid2buid(item.uuid))
+        )
         progress.update(counter)
     progress.finish()
 
@@ -173,9 +195,11 @@ def downgrade():
     progress.start()
     items = conn.execute(sa.select([team.c.id, team.c.uuid]))
     for counter, item in enumerate(items):
-        conn.execute(sa.update(
-            team).where(team.c.id == item.id).values(userid=uuid2buid(item.uuid)
-            ))
+        conn.execute(
+            sa.update(team)
+            .where(team.c.id == item.id)
+            .values(userid=uuid2buid(item.uuid))
+        )
         progress.update(counter)
     progress.finish()
 
@@ -189,9 +213,11 @@ def downgrade():
     progress.start()
     items = conn.execute(sa.select([user.c.id, user.c.uuid]))
     for counter, item in enumerate(items):
-        conn.execute(sa.update(
-            user).where(user.c.id == item.id).values(userid=uuid2buid(item.uuid)
-            ))
+        conn.execute(
+            sa.update(user)
+            .where(user.c.id == item.id)
+            .values(userid=uuid2buid(item.uuid))
+        )
         progress.update(counter)
     progress.finish()
 
@@ -205,9 +231,11 @@ def downgrade():
     progress.start()
     items = conn.execute(sa.select([useroldid.c.id]))
     for counter, item in enumerate(items):
-        conn.execute(sa.update(
-            useroldid).where(useroldid.c.id == item.id).values(userid=uuid2buid(item.id))
-            )
+        conn.execute(
+            sa.update(useroldid)
+            .where(useroldid.c.id == item.id)
+            .values(userid=uuid2buid(item.id))
+        )
         progress.update(counter)
     progress.finish()
 

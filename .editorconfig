@@ -1,0 +1,43 @@
+# HasGeek code style config
+root = True
+
+# For all files
+[*]
+end_of_line = lf
+insert_final_newline = true
+
+# For all code, config and documentation
+[*.{js,py,jinja2,j2,html,css,sass,scss,json,yml,md,rst}]
+charset = utf-8
+indent_style = space
+tab_width = 8
+
+# Python code
+[*.py]
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+# JavaScript and HTML/CSS
+[*.{js,jinja2,j2,html,css,sass,scss}]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+# Makefile
+[Makefile]
+indent_style = tab
+indent_size = tab
+trim_trailing_whitespace = true
+
+# Config
+[*.{json,yml,toml}]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+# Documentation
+[*.{md,rst,md.jinja2}]
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = false

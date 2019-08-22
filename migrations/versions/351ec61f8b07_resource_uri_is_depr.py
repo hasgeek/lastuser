@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Resource URI is deprecated
 
 Revision ID: 351ec61f8b07
@@ -19,4 +20,6 @@ def upgrade():
 
 
 def downgrade():
-    op.add_column('client', sa.Column('resource_uri', sa.VARCHAR(length=250), nullable=True))
+    op.add_column(
+        'client', sa.Column('resource_uri', sa.VARCHAR(length=250), nullable=True)
+    )

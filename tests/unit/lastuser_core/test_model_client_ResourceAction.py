@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
 
 
@@ -23,7 +24,7 @@ class TestResourceAction(TestDatabaseFixture):
         self.assertIsInstance(received_permissions, set)
         self.assertItemsEqual(received_permissions, expected_permissions)
 
-    def test_ResourceAction_get(self):
+    def test_resourceaction_get(self):
         """
         Test for retrieving a ResourceAction instance given a name and resource.
         """

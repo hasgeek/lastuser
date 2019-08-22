@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from lastuserapp import app
+import unittest
+
 from lastuser_core import login_registry
 from lastuser_core.registry import LoginProviderRegistry
-import unittest
+from lastuserapp import app
 
 
 class TestLoginProviderRegistry(unittest.TestCase):
-
-    def test_LoginProviderRegistry(self):
+    def test_loginproviderregistry(self):
         """
         Test for verifying creation of LoginProviderRegistry
         instance.
@@ -19,11 +19,15 @@ class TestLoginProviderRegistry(unittest.TestCase):
         # we temporarily do not use the app instance available globally
         # and construct app instance separately
         expected_login_providers = []
-        if app.config.get('OAUTH_TWITTER_KEY') and app.config.get('OAUTH_TWITTER_SECRET'):
+        if app.config.get('OAUTH_TWITTER_KEY') and app.config.get(
+            'OAUTH_TWITTER_SECRET'
+        ):
             expected_login_providers.append('twitter')
         if app.config.get('OAUTH_GOOGLE_KEY') and app.config.get('OAUTH_GOOGLE_SECRET'):
             expected_login_providers.append('google')
-        if app.config.get('OAUTH_LINKEDIN_KEY') and app.config.get('OAUTH_LINKEDIN_SECRET'):
+        if app.config.get('OAUTH_LINKEDIN_KEY') and app.config.get(
+            'OAUTH_LINKEDIN_SECRET'
+        ):
             expected_login_providers.append('linkedin')
         if app.config.get('OAUTH_GITHUB_KEY') and app.config.get('OAUTH_GITHUB_SECRET'):
             expected_login_providers.append('github')

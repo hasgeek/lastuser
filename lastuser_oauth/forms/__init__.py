@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa
 
-from .login import *    # NOQA
-from .profile import *  # NOQA
-from .auth import *     # NOQA
+from .auth import *
+from .login import *
+from .profile import *

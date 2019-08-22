@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """User password and client credentials
 
 Revision ID: 4d2baa5b1c46
@@ -15,7 +16,8 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.create_table('client_credential',
+    op.create_table(
+        'client_credential',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=False),
         sa.Column('updated_at', sa.DateTime(), nullable=False),
@@ -24,10 +26,10 @@ def upgrade():
         sa.Column('title', sa.Unicode(length=250), nullable=False),
         sa.Column('secret_hash', sa.String(length=71), nullable=False),
         sa.Column('accessed_at', sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(['client_id'], ['client.id'], ),
+        sa.ForeignKeyConstraint(['client_id'], ['client.id']),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('name')
-        )
+        sa.UniqueConstraint('name'),
+    )
     op.add_column(u'user', sa.Column('pw_expires_at', sa.DateTime(), nullable=True))
     op.add_column(u'user', sa.Column('pw_set_at', sa.DateTime(), nullable=True))
 

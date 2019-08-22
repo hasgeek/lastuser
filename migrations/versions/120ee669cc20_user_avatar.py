@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """User avatar
 
 Revision ID: 120ee669cc20

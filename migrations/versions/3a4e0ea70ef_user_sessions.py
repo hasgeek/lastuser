@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """User sessions
 
 Revision ID: 3a4e0ea70ef
@@ -15,7 +16,8 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.create_table('user_session',
+    op.create_table(
+        'user_session',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=False),
         sa.Column('updated_at', sa.DateTime(), nullable=False),
@@ -26,11 +28,16 @@ def upgrade():
         sa.Column('accessed_at', sa.DateTime(), nullable=False),
         sa.Column('revoked_at', sa.DateTime(), nullable=True),
         sa.Column('sudo_enabled_at', sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+        sa.ForeignKeyConstraint(['user_id'], ['user.id']),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('buid')
-        )
-    op.add_column('authcode', sa.Column('session_id', sa.Integer(), sa.ForeignKey('user_session.id'), nullable=True))
+        sa.UniqueConstraint('buid'),
+    )
+    op.add_column(
+        'authcode',
+        sa.Column(
+            'session_id', sa.Integer(), sa.ForeignKey('user_session.id'), nullable=True
+        ),
+    )
 
 
 def downgrade():

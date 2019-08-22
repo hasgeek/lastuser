@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Scope for trusted clients
 
 Revision ID: 3d4b7578d2e9
@@ -15,7 +16,10 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.add_column('client', sa.Column('scope', sa.UnicodeText(), nullable=False, server_default=''))
+    op.add_column(
+        'client',
+        sa.Column('scope', sa.UnicodeText(), nullable=False, server_default=''),
+    )
     op.alter_column('client', 'scope', server_default=None)
 
 

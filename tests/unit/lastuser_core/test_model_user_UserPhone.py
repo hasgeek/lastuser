@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
 
 
@@ -11,7 +12,7 @@ class TestUserPhone(TestDatabaseFixture):
         """
         super(TestUserPhone, self).setUp()
 
-    def test_UserPhone(self):
+    def test_userphone(self):
         """
         Test for verifying creationg of UserPhone instance
         """
@@ -19,7 +20,7 @@ class TestUserPhone(TestDatabaseFixture):
         result = models.UserPhone(phone=phone)
         self.assertIsInstance(result, models.UserPhone)
 
-    def test_UserPhone_get(self):
+    def test_userphone_get(self):
         """
         Test for verifying UserPhone's get given a phone number
         """
@@ -30,7 +31,7 @@ class TestUserPhone(TestDatabaseFixture):
         self.assertEqual(result.user, crusoe)
         self.assertEqual(result.phone, phone)
 
-    def test_UserPhone_unicode(self):
+    def test_userphone_unicode(self):
         """
         Test for verifying whether UserPhone's unicode method returns
         phone number in unicode

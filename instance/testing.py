@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from os import environ
+
 from flask import Markup
 
 TESTING = True
@@ -8,7 +9,9 @@ SITE_TITLE = 'Lastuser'
 DEBUG_TB_ENABLED = False
 DEBUG_TB_INTERCEPT_REDIRECTS = False
 LOGFILE = 'error.log'
-SQLALCHEMY_DATABASE_URI = environ.get('SQLALCHEMY_DATABASE_URI', 'postgresql:///lastuser_test_app')
+SQLALCHEMY_DATABASE_URI = environ.get(
+    'SQLALCHEMY_DATABASE_URI', 'postgresql:///lastuser_test_app'
+)
 SQLALCHEMY_ECHO = False
 SECRET_KEY = 'random_string_here'
 TIMEZONE = 'Asia/Kolkata'
@@ -72,7 +75,7 @@ SMS_TWILIO_FROM = environ.get('SMS_TWILIO_FROM')
 #: Reserved usernames
 #: Add to this list but do not remove any unless you want to break
 #: the website
-RESERVED_USERNAMES = set([
+RESERVED_USERNAMES = {
     'app',
     'apps',
     'auth',
@@ -86,16 +89,20 @@ RESERVED_USERNAMES = set([
     'register',
     'token',
     'organizations',
-    ])
+}
 
 #: Messages (text or HTML)
-MESSAGE_FOOTER = Markup('Copyright &copy; <a href="http://hasgeek.com/">HasGeek</a>. Powered by <a href="https://github.com/hasgeek/lastuser" title="GitHub project page">Lastuser</a>, open source software from <a href="https://github.com/hasgeek">HasGeek</a>.')
+MESSAGE_FOOTER = Markup(
+    'Copyright &copy; <a href="http://hasgeek.com/">HasGeek</a>. Powered by <a href="https://github.com/hasgeek/lastuser" title="GitHub project page">Lastuser</a>, open source software from <a href="https://github.com/hasgeek">HasGeek</a>.'
+)
 USERNAME_REASON = ''
 EMAIL_REASON = 'Please provide an email address to complete your profile'
 BIO_REASON = ''
 TIMEZONE_REASON = 'Dates and times will be shown in your preferred timezone'
 ORG_NAME_REASON = u"Your company’s name as it will appear in the URL. Letters, numbers and dashes only"
 ORG_TITLE_REASON = u"Your organization’s given name, preferably without legal suffixes"
-ORG_DESCRIPTION_REASON = u"A few words about your organization (optional). Plain text only"
+ORG_DESCRIPTION_REASON = (
+    u"A few words about your organization (optional). Plain text only"
+)
 LOGIN_MESSAGE_1 = ""
 LOGIN_MESSAGE_2 = ""

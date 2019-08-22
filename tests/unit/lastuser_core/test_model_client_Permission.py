@@ -2,18 +2,20 @@
 
 from lastuserapp import db
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
 
 
 class TestPermission(TestDatabaseFixture):
-
     def test_permission_get(self):
         """
         Test for retrieving a Permission instance given it's name and owner (user or org) or if it's available to all users.
         """
         # scenario 1: when allusers is False
         specialdachs = self.fixtures.specialdachs
-        netizens = models.Permission(name=u"netizens", title=u"Netizens", org=specialdachs, allusers=True)
+        netizens = models.Permission(
+            name=u"netizens", title=u"Netizens", org=specialdachs, allusers=True
+        )
         db.session.add(netizens)
         db.session.commit()
 
@@ -58,7 +60,9 @@ class TestPermission(TestDatabaseFixture):
         self.assertEqual(get_owner_by_user, crusoe)
         specialdachs = self.fixtures.specialdachs
         permission_name = u"netizens"
-        netizens = models.Permission(name=permission_name, title=u"Netizens", allusers=True, org=specialdachs)
+        netizens = models.Permission(
+            name=permission_name, title=u"Netizens", allusers=True, org=specialdachs
+        )
         db.session.add(netizens)
         db.session.commit()
         get_owner_by_org = netizens.owner

@@ -1,48 +1,61 @@
 # -*- coding: utf-8 -*-
 
-from coaster.utils import LabeledEnum
+from collections import OrderedDict
+
 from baseframe import __
-from ..registry import OrderedDict
-from . import db, BaseMixin
+from coaster.utils import LabeledEnum
+
+from . import BaseMixin, db
 
 __all__ = ['SMSMessage', 'SMS_STATUS']
 
 
 # --- Flags -------------------------------------------------------------------
 
-class SMS_STATUS(LabeledEnum):
-    QUEUED    = (0, __(u"Queued"))     # NOQA: E221
-    PENDING   = (1, __(u"Pending"))    # NOQA: E221
-    DELIVERED = (2, __(u"Delivered"))  # NOQA: E221
-    FAILED    = (3, __(u"Failed"))     # NOQA: E221
-    UNKNOWN   = (4, __(u"Unknown"))    # NOQA: E221
+
+class SMS_STATUS(LabeledEnum):  # NOQA: N801
+    QUEUED = (0, __(u"Queued"))
+    PENDING = (1, __(u"Pending"))
+    DELIVERED = (2, __(u"Delivered"))
+    FAILED = (3, __(u"Failed"))
+    UNKNOWN = (4, __(u"Unknown"))
 
 
-class NOTIFICATION_FLAGS(LabeledEnum):
-    DELIVERY = (0, __(u"Delivery"))  # NOQA: E221
-    READ     = (1, __(u"Read"))      # NOQA: E221
-    BOUNCE   = (2, __(u"Bounce"))    # NOQA: E221
+class NOTIFICATION_FLAGS(LabeledEnum):  # NOQA: N801
+    DELIVERY = (0, __(u"Delivery"))
+    READ = (1, __(u"Read"))
+    BOUNCE = (2, __(u"Bounce"))
 
 
-class NOTIFICATION_TYPE(LabeledEnum):
-    MANDATORY     = (0, u'mandatory',     __(u"Mandatory"))      # Mandatory service announcement        # NOQA: E221,E241
-    TRANSACTIONAL = (1, u'transactional', __(u"Transactional"))  # Result of user activity               # NOQA: E221,E241
-    ALERT         = (2, u'alert',         __(u"Alert"))          # Periodic alert based on set criteria  # NOQA: E221,E241
-    MASS          = (3, u'mass',          __(u"Mass"))           # Mass mail from the service provider   # NOQA: E221,E241
+class NOTIFICATION_TYPE(LabeledEnum):  # NOQA: N801
+    #: Mandatory service announcement
+    MANDATORY = (0, u'mandatory', __(u"Mandatory"))
+    #: Result of user activity
+    TRANSACTIONAL = (1, u'transactional', __(u"Transactional"))
+    #: Periodic alert based on set criteria
+    ALERT = (2, u'alert', __(u"Alert"))
+    # "" Mass mail from the service provider
+    MASS = (3, u'mass', __(u"Mass"))
 
 
 # A note on frequency: scheduling/batching is done by Lastuser, not by the client app
-class NOTIFICATION_FREQUENCY(LabeledEnum):
-    IMMEDIATE = (0, u'immed',   __(u"Immediately"))      # Alert user immediately  # NOQA: E221,E241
-    DELAYED   = (1, u'delay',   __(u"Delayed"))          # Send after a timeout, allowing app to cancel (tentative)  # NOQA: E221,E241
-    DAILY     = (2, u'daily',   __(u"Batched daily"))    # Send a daily digest     # NOQA: E221,E241
-    WEEKLY    = (3, u'weekly',  __(u"Batched weekly"))   # Send a weekly digest    # NOQA: E221,E241
-    MONTHLY   = (4, u'monthly', __(u"Batched monthly"))  # Send a monthly digest   # NOQA: E221,E241
+class NOTIFICATION_FREQUENCY(LabeledEnum):  # NOQA: N801
+    #: Alert user immediately
+    IMMEDIATE = (0, u'immed', __(u"Immediately"))
+    #: Send after a timeout, allowing app to cancel (tentative)
+    DELAYED = (1, u'delay', __(u"Delayed"))
+    #: Send a daily digest
+    DAILY = (2, u'daily', __(u"Batched daily"))
+    #: Send a weekly digest
+    WEEKLY = (3, u'weekly', __(u"Batched weekly"))
+    #: Send a monthly digest
+    MONTHLY = (4, u'monthly', __(u"Batched monthly"))
 
 
 # --- Transport Channels ------------------------------------------------------
 
 # Move these into a registry like the LoginRegistry
+
 
 class Channel(object):
     name = u''
@@ -94,12 +107,16 @@ class ChannelSMS(Channel):
     read_flag = False
 
 
-channel_registry = OrderedDict([(c.name, c.title) for c in [
-    ChannelBrowser, ChannelEmail, ChannelSMS, ChannelTwitter
-    ]])
+channel_registry = OrderedDict(
+    [
+        (c.name, c.title)
+        for c in [ChannelBrowser, ChannelEmail, ChannelSMS, ChannelTwitter]
+    ]
+)
 
 
 # --- Models ------------------------------------------------------------------
+
 
 class SMSMessage(BaseMixin, db.Model):
     __tablename__ = 'smsmessage'

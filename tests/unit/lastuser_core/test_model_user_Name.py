@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from sqlalchemy.exc import IntegrityError
+
 from lastuserapp import db
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
 
 
 class TestName(TestDatabaseFixture):
-
     def test_is_available_name(self):
         """
         Names are only available if valid and unused

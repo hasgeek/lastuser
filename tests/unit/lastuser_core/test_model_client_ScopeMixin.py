@@ -2,29 +2,33 @@
 
 from lastuserapp import db
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
 
 
 class TestScopeMixin(TestDatabaseFixture):
-
-    def test_ScopeMixin__scope(self):
+    def test_scopemixin__scope(self):
         """
         Test to retrieve scope on an ScopeMixin inherited class instance via _scope method
         """
         scope = u'id'
         bellatrix = models.User(username=u'bellatrix', fullname=u'Bellatrix Lestrange')
         client = self.fixtures.client
-        bellatrix_token = models.AuthToken(client=client, user=bellatrix, scope=scope, validity=0)
+        bellatrix_token = models.AuthToken(
+            client=client, user=bellatrix, scope=scope, validity=0
+        )
         db.session.add_all([bellatrix, bellatrix_token])
         db.session.commit()
         self.assertEqual(bellatrix_token._scope, scope)
 
-    def test_ScopeMixin_scope(self):
+    def test_scopemixin_scope(self):
         """Test to retrieve scope on an ScopeMixin inherited class instance via scope method"""
-        scope = (u'tricks')
+        scope = u'tricks'
         ginny = models.User(username=u'ginny', fullname=u'Ginny Weasley')
         client = self.fixtures.client
-        ginny_token = models.AuthToken(client=client, user=ginny, scope=scope, validity=0)
+        ginny_token = models.AuthToken(
+            client=client, user=ginny, scope=scope, validity=0
+        )
         db.session.add_all([ginny, ginny_token])
         db.session.commit()
         self.assertEqual(ginny_token.scope, (scope,))
@@ -59,7 +63,9 @@ class TestScopeMixin(TestDatabaseFixture):
         scope2 = u'charms'
         neville = models.User(username=u'neville', fullname=u'Neville Longbottom')
         client = self.fixtures.client
-        neville_token = models.AuthToken(client=client, user=neville, validity=0, scope=scope1)
+        neville_token = models.AuthToken(
+            client=client, user=neville, validity=0, scope=scope1
+        )
         db.session.add_all([neville, neville_token])
         neville_token.add_scope(scope2)
         self.assertEqual(neville_token.scope, (scope2, scope1))

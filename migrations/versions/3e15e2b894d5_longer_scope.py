@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Longer scope
 
 Revision ID: 3e15e2b894d5

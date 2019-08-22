@@ -3,18 +3,22 @@
 from datetime import timedelta
 from functools import wraps
 from urllib import unquote
-from pytz import common_timezones
-import itsdangerous
-from flask import current_app, request, session, flash, redirect, url_for, Response
-from coaster.utils import utcnow
-from coaster.auth import current_auth, add_auth_attribute, request_has_auth
-from coaster.sqlalchemy import failsafe_add
-from coaster.views import get_current_url
-from baseframe import _
-from lastuser_core.models import db, User, ClientCredential, UserSession
-from lastuser_core.signals import user_login, user_registered
-from .. import lastuser_oauth
 from urlparse import urlparse
+
+from flask import Response, current_app, flash, redirect, request, session, url_for
+import itsdangerous
+
+from pytz import common_timezones
+
+from baseframe import _
+from coaster.auth import add_auth_attribute, current_auth, request_has_auth
+from coaster.sqlalchemy import failsafe_add
+from coaster.utils import utcnow
+from coaster.views import get_current_url
+from lastuser_core.models import ClientCredential, User, UserSession, db
+from lastuser_core.signals import user_login, user_registered
+
+from .. import lastuser_oauth
 
 valid_timezones = set(common_timezones)
 
@@ -39,13 +43,19 @@ class LoginManager(object):
 
         if 'lastuser' in request.cookies:
             try:
-                lastuser_cookie, lastuser_cookie_headers = lastuser_oauth.serializer.loads(
-                    request.cookies['lastuser'], return_header=True)
+                (
+                    lastuser_cookie,
+                    lastuser_cookie_headers,
+                ) = lastuser_oauth.serializer.loads(
+                    request.cookies['lastuser'], return_header=True
+                )
             except itsdangerous.BadSignature:
                 lastuser_cookie = {}
 
         if 'sessionid' in lastuser_cookie:
-            add_auth_attribute('session', UserSession.authenticate(buid=lastuser_cookie['sessionid']))
+            add_auth_attribute(
+                'session', UserSession.authenticate(buid=lastuser_cookie['sessionid'])
+            )
             if current_auth.session:
                 current_auth.session.access()
                 db.session.commit()  # Save access
@@ -82,20 +92,32 @@ def lastuser_cookie(response):
     """
     if request_has_auth() and hasattr(current_auth, 'cookie'):
         expires = utcnow() + timedelta(days=365)
-        response.set_cookie('lastuser',
-            value=lastuser_oauth.serializer.dumps(current_auth.cookie, header_fields={'v': 1}),
-            max_age=31557600,                                         # Keep this cookie for a year.
-            expires=expires,                                          # Expire one year from now.
-            domain=current_app.config.get('LASTUSER_COOKIE_DOMAIN'),  # Place cookie in master domain.
-            secure=current_app.config['SESSION_COOKIE_SECURE'],       # HTTPS cookie if session is too.
-            httponly=True)                                            # Don't allow reading this from JS.
+        response.set_cookie(
+            'lastuser',
+            value=lastuser_oauth.serializer.dumps(
+                current_auth.cookie, header_fields={'v': 1}
+            ),
+            max_age=31557600,  # Keep this cookie for a year.
+            expires=expires,  # Expire one year from now.
+            domain=current_app.config.get(
+                'LASTUSER_COOKIE_DOMAIN'
+            ),  # Place cookie in master domain.
+            secure=current_app.config[
+                'SESSION_COOKIE_SECURE'
+            ],  # HTTPS cookie if session is too.
+            httponly=True,
+        )  # Don't allow reading this from JS.
 
-        response.set_cookie('hasuser',
+        response.set_cookie(
+            'hasuser',
             value='1' if current_auth.is_authenticated else '0',
-            max_age=31557600,                                    # Keep this cookie for a year.
-            expires=expires,                                     # Expire one year from now.
-            secure=current_app.config['SESSION_COOKIE_SECURE'],  # HTTPS cookie if session is too.
-            httponly=False)                                      # Allow reading this from JS.
+            max_age=31557600,  # Keep this cookie for a year.
+            expires=expires,  # Expire one year from now.
+            secure=current_app.config[
+                'SESSION_COOKIE_SECURE'
+            ],  # HTTPS cookie if session is too.
+            httponly=False,
+        )  # Allow reading this from JS.
 
     return response
 
@@ -106,7 +128,9 @@ def cache_expiry_headers(response):
         response.headers['Expires'] = 'Fri, 01 Jan 1990 00:00:00 GMT'
     if 'Cache-Control' in response.headers:
         if 'private' not in response.headers['Cache-Control']:
-            response.headers['Cache-Control'] = 'private, ' + response.headers['Cache-Control']
+            response.headers['Cache-Control'] = (
+                'private, ' + response.headers['Cache-Control']
+            )
     else:
         response.headers['Cache-Control'] = 'private'
     return response
@@ -116,6 +140,7 @@ def requires_login(f):
     """
     Decorator to require a login for the given view.
     """
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         add_auth_attribute('login_required', True)
@@ -124,6 +149,7 @@ def requires_login(f):
             session['next'] = get_current_url()
             return redirect(url_for('login'))
         return f(*args, **kwargs)
+
     return decorated_function
 
 
@@ -135,6 +161,7 @@ def requires_login_no_message(f):
     it is displayed. This is an insecure channel for client apps
     to display a helper message.
     """
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         add_auth_attribute('login_required', True)
@@ -144,17 +171,24 @@ def requires_login_no_message(f):
                 flash(request.args['message'], 'info')
             return redirect(url_for('login'))
         return f(*args, **kwargs)
+
     return decorated_function
 
 
 def _client_login_inner():
     if request.authorization is None or not request.authorization.username:
-        return Response('Client credentials required', 401,
-            {'WWW-Authenticate': 'Basic realm="Client credentials"'})
+        return Response(
+            'Client credentials required',
+            401,
+            {'WWW-Authenticate': 'Basic realm="Client credentials"'},
+        )
     credential = ClientCredential.get(name=request.authorization.username)
     if credential is None or not credential.secret_is(request.authorization.password):
-        return Response('Invalid client credentials', 401,
-            {'WWW-Authenticate': 'Basic realm="Client credentials"'})
+        return Response(
+            'Invalid client credentials',
+            401,
+            {'WWW-Authenticate': 'Basic realm="Client credentials"'},
+        )
     if credential:
         credential.accessed_at = db.func.utcnow()
         db.session.commit()
@@ -165,6 +199,7 @@ def requires_client_login(f):
     """
     Decorator to require a client login via HTTP Basic Authorization.
     """
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         result = _client_login_inner()
@@ -172,6 +207,7 @@ def requires_client_login(f):
             return f(*args, **kwargs)
         else:
             return result
+
     return decorated_function
 
 
@@ -179,6 +215,7 @@ def requires_user_or_client_login(f):
     """
     Decorator to require a user or client login (user by cookie, client by HTTP Basic).
     """
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         add_auth_attribute('login_required', True)
@@ -191,6 +228,7 @@ def requires_user_or_client_login(f):
             return f(*args, **kwargs)
         else:
             return result
+
     return decorated_function
 
 
@@ -204,14 +242,21 @@ def requires_client_id_or_user_or_client_login(f):
     Decorator to require a client_id and session or a user or client login
     (client_id and session in the request args, user by cookie, client by HTTP Basic).
     """
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         add_auth_attribute('login_required', True)
 
         # Check if http referrer and given client id match a registered client
-        if 'client_id' in request.values and 'session' in request.values and request.referrer:
+        if (
+            'client_id' in request.values
+            and 'session' in request.values
+            and request.referrer
+        ):
             client_cred = ClientCredential.get(request.values['client_id'])
-            if client_cred is not None and get_scheme_netloc(client_cred.client.website) == get_scheme_netloc(request.referrer):
+            if client_cred is not None and get_scheme_netloc(
+                client_cred.client.website
+            ) == get_scheme_netloc(request.referrer):
                 if UserSession.authenticate(buid=request.values['session']) is not None:
                     return f(*args, **kwargs)
 
@@ -226,6 +271,7 @@ def requires_client_id_or_user_or_client_login(f):
             return f(*args, **kwargs)
         else:
             return result
+
     return decorated_function
 
 
@@ -280,8 +326,12 @@ def register_internal(username, fullname, password):
 
 
 def set_loginmethod_cookie(response, value):
-    response.set_cookie('login', value, max_age=31557600,  # Keep this cookie for a year
-        expires=utcnow() + timedelta(days=365),   # Expire one year from now
+    response.set_cookie(
+        'login',
+        value,
+        max_age=31557600,  # Keep this cookie for a year
+        expires=utcnow() + timedelta(days=365),  # Expire one year from now
         secure=current_app.config['SESSION_COOKIE_SECURE'],
-        httponly=True)
+        httponly=True,
+    )
     return response

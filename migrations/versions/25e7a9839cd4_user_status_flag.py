@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """User status flag
 
 Revision ID: 25e7a9839cd4
@@ -15,8 +16,12 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.add_column('user', sa.Column('status', sa.SmallInteger(), nullable=False,
-        server_default=sa.text('0')))
+    op.add_column(
+        'user',
+        sa.Column(
+            'status', sa.SmallInteger(), nullable=False, server_default=sa.text('0')
+        ),
+    )
     op.alter_column('user', 'status', server_default=None)
 
 

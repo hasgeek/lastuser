@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """User name index
 
 Revision ID: 4d19ada674c2
@@ -15,14 +16,26 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.execute(sa.DDL(
-        "CREATE INDEX ix_user_username_lower ON \"user\" (lower(username) varchar_pattern_ops);"))
-    op.execute(sa.DDL(
-        "CREATE INDEX ix_user_fullname_lower ON \"user\" (lower(fullname) varchar_pattern_ops);"))
-    op.execute(sa.DDL(
-        "CREATE INDEX ix_useremail_email_lower ON useremail (lower(email) varchar_pattern_ops);"))
-    op.execute(sa.DDL(
-        "CREATE INDEX ix_userexternalid_username_lower ON userexternalid (lower(username) varchar_pattern_ops);"))
+    op.execute(
+        sa.DDL(
+            "CREATE INDEX ix_user_username_lower ON \"user\" (lower(username) varchar_pattern_ops);"
+        )
+    )
+    op.execute(
+        sa.DDL(
+            "CREATE INDEX ix_user_fullname_lower ON \"user\" (lower(fullname) varchar_pattern_ops);"
+        )
+    )
+    op.execute(
+        sa.DDL(
+            "CREATE INDEX ix_useremail_email_lower ON useremail (lower(email) varchar_pattern_ops);"
+        )
+    )
+    op.execute(
+        sa.DDL(
+            "CREATE INDEX ix_userexternalid_username_lower ON userexternalid (lower(username) varchar_pattern_ops);"
+        )
+    )
 
 
 def downgrade():

@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from flask import Blueprint
-from .registry import ResourceRegistry, LoginProviderRegistry, OrderedDict
+from collections import OrderedDict
 
+from flask import Blueprint
+
+from .registry import LoginProviderRegistry, ResourceRegistry
 
 lastuser_core = Blueprint('lastuser_core', __name__)
 
@@ -12,4 +14,4 @@ login_registry = LoginProviderRegistry()
 channel_registry = OrderedDict()
 
 # Register signals
-from . import signals  # NOQA
+from . import signals  # NOQA  # isort:skip

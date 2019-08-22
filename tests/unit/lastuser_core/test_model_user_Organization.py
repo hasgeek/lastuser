@@ -2,12 +2,12 @@
 
 from lastuserapp import db
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
 
 
 class TestOrganization(TestDatabaseFixture):
-
-    def test_Organization_init(self):
+    def test_organization_init(self):
         """
         Test for initializing a Organization instance
         """
@@ -39,10 +39,14 @@ class TestOrganization(TestDatabaseFixture):
         dachsunited.owners.users.append(crusoe)
         dachsunited.members.users.append(oakley)
         dachsunited.members.users.append(piglet)
-        assert u'<Team Owners of Organization {name} "{title}">'.format(name=name, title=title) in repr(dachsunited.owners)
-        assert u'<Team Members of Organization {name} "{title}">'.format(name=name, title=title) in repr(dachsunited.members)
+        assert u'<Team Owners of Organization {name} "{title}">'.format(
+            name=name, title=title
+        ) in repr(dachsunited.owners)
+        assert u'<Team Members of Organization {name} "{title}">'.format(
+            name=name, title=title
+        ) in repr(dachsunited.members)
 
-    def test_Organization_get(self):
+    def test_organization_get(self):
         """
         Test for retrieving an organization
         """
@@ -63,13 +67,17 @@ class TestOrganization(TestDatabaseFixture):
         # scenario 3: when username is passed
         get_by_name = models.Organization.get(name=name)
         self.assertIsInstance(get_by_name, models.Organization)
-        assert u'<Organization {name} "{title}">'.format(name=name, title=title) in repr(get_by_name)
+        assert u'<Organization {name} "{title}">'.format(
+            name=name, title=title
+        ) in repr(get_by_name)
         # scenario 4: when defercols is set to True
         get_by_name_with_defercols = models.Organization.get(name=name, defercols=True)
         self.assertIsInstance(get_by_name_with_defercols, models.Organization)
-        assert u'<Organization {name} "{title}">'.format(name=name, title=title) in repr(get_by_name_with_defercols)
+        assert u'<Organization {name} "{title}">'.format(
+            name=name, title=title
+        ) in repr(get_by_name_with_defercols)
 
-    def test_Organization_all(self):
+    def test_organization_all(self):
         """
         Test for getting all organizations (takes buid or name optionally)
         """
@@ -125,7 +133,10 @@ class TestOrganization(TestDatabaseFixture):
         db.session.add(olympic_coven)
         db.session.commit()
         self.assertIsInstance(olympic_coven.pickername, unicode)
-        assert u'{title} (@{name})'.format(title=title, name=name) in olympic_coven.pickername
+        assert (
+            u'{title} (@{name})'.format(title=title, name=name)
+            in olympic_coven.pickername
+        )
 
     def test_organization_permissions(self):
         """
@@ -148,7 +159,7 @@ class TestOrganization(TestDatabaseFixture):
         perms.add('view')
         oakley_query = batdog.permissions(oakley)
         self.assertIsInstance(oakley_query, set)
-        self.assertEqual(oakley_query, set([]))
+        self.assertEqual(oakley_query, set())
 
     def test_organization_available_permissions(self):
         """
@@ -161,7 +172,9 @@ class TestOrganization(TestDatabaseFixture):
         self.assertEqual(org_with_no_permissions, [])
         specialdachs = self.fixtures.specialdachs
         permission_name = u"netizens"
-        netizens = models.client.Permission(name=permission_name, title=permission_name, allusers=True, org=specialdachs)
+        netizens = models.client.Permission(
+            name=permission_name, title=permission_name, allusers=True, org=specialdachs
+        )
         db.session.add(netizens)
         db.session.commit()
         org_with_permissions = specialdachs.available_permissions()

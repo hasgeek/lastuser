@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Email/phone type and private columns
 
 Revision ID: 28eeea165ad
@@ -15,21 +16,37 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.add_column('useremail', sa.Column('private', sa.Boolean(), nullable=False, server_default='0'))
+    op.add_column(
+        'useremail',
+        sa.Column('private', sa.Boolean(), nullable=False, server_default='0'),
+    )
     op.alter_column('useremail', 'private', server_default=None)
     op.add_column('useremail', sa.Column('type', sa.Unicode(length=30), nullable=True))
 
-    op.add_column('useremailclaim', sa.Column('private', sa.Boolean(), nullable=False, server_default='0'))
+    op.add_column(
+        'useremailclaim',
+        sa.Column('private', sa.Boolean(), nullable=False, server_default='0'),
+    )
     op.alter_column('useremailclaim', 'private', server_default=None)
-    op.add_column('useremailclaim', sa.Column('type', sa.Unicode(length=30), nullable=True))
+    op.add_column(
+        'useremailclaim', sa.Column('type', sa.Unicode(length=30), nullable=True)
+    )
 
-    op.add_column('userphone', sa.Column('private', sa.Boolean(), nullable=False, server_default='0'))
+    op.add_column(
+        'userphone',
+        sa.Column('private', sa.Boolean(), nullable=False, server_default='0'),
+    )
     op.alter_column('userphone', 'private', server_default=None)
     op.add_column('userphone', sa.Column('type', sa.Unicode(length=30), nullable=True))
 
-    op.add_column('userphoneclaim', sa.Column('private', sa.Boolean(), nullable=False, server_default='0'))
+    op.add_column(
+        'userphoneclaim',
+        sa.Column('private', sa.Boolean(), nullable=False, server_default='0'),
+    )
     op.alter_column('userphoneclaim', 'private', server_default=None)
-    op.add_column('userphoneclaim', sa.Column('type', sa.Unicode(length=30), nullable=True))
+    op.add_column(
+        'userphoneclaim', sa.Column('type', sa.Unicode(length=30), nullable=True)
+    )
 
 
 def downgrade():

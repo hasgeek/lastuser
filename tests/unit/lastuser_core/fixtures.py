@@ -1,9 +1,22 @@
 # -*- coding: utf-8 -*-
 
+from lastuser_core.models import (
+    CLIENT_TEAM_ACCESS,
+    Client,
+    ClientTeamAccess,
+    Organization,
+    Permission,
+    Resource,
+    ResourceAction,
+    SMSMessage,
+    Team,
+    TeamClientPermissions,
+    User,
+    UserClientPermissions,
+    UserEmail,
+    UserPhone,
+)
 from lastuserapp import db
-from lastuser_core.models import (User, UserEmail, UserPhone, Organization, Client, Team,
-    TeamClientPermissions, ClientTeamAccess, Permission, UserClientPermissions, Resource,
-    ResourceAction, SMSMessage, CLIENT_TEAM_ACCESS)
 
 
 class Fixtures(object):
@@ -23,7 +36,9 @@ class Fixtures(object):
         self.piglet = piglet
         self.nameless = nameless
 
-        crusoe_email = UserEmail(email=u"crusoe@keepballin.ca", primary=True, user=crusoe)
+        crusoe_email = UserEmail(
+            email=u"crusoe@keepballin.ca", primary=True, user=crusoe
+        )
         crusoe_phone = UserPhone(phone=u"+8080808080", primary=True, user=crusoe)
         oakley_email = UserEmail(email=u"huh@keepballin.ca", user=oakley)
         db.session.add_all([crusoe_email, crusoe_phone, oakley_email])
@@ -42,7 +57,13 @@ class Fixtures(object):
         db.session.add(specialdachs)
         self.specialdachs = specialdachs
 
-        client = Client(title=u"Batdog Adventures", org=batdog, confidential=True, namespace=u'fun.batdogadventures.com', website=u"http://batdogadventures.com")
+        client = Client(
+            title=u"Batdog Adventures",
+            org=batdog,
+            confidential=True,
+            namespace=u'fun.batdogadventures.com',
+            website=u"http://batdogadventures.com",
+        )
         db.session.add(client)
         self.client = client
 
@@ -50,11 +71,15 @@ class Fixtures(object):
         db.session.add(dachshunds)
         self.dachshunds = dachshunds
 
-        team_client_permission = TeamClientPermissions(team=dachshunds, client=client, access_permissions=u"admin")
+        team_client_permission = TeamClientPermissions(
+            team=dachshunds, client=client, access_permissions=u"admin"
+        )
         self.team_client_permission = team_client_permission
         db.session.add(team_client_permission)
 
-        client_team_access = ClientTeamAccess(org=batdog, client=client, access_level=CLIENT_TEAM_ACCESS.ALL)
+        client_team_access = ClientTeamAccess(
+            org=batdog, client=client, access_level=CLIENT_TEAM_ACCESS.ALL
+        )
         db.session.add(client_team_access)
 
         bdfl = Permission(name=u"bdfl", title=u"BDFL", user=crusoe)
@@ -65,7 +90,9 @@ class Fixtures(object):
         db.session.add(user_client_permissions)
         self.user_client_permissions = user_client_permissions
 
-        resource = Resource(name=u"test_resource", title=u"Test Resource", client=client)
+        resource = Resource(
+            name=u"test_resource", title=u"Test Resource", client=client
+        )
         db.session.add(resource)
         self.resource = resource
 
@@ -77,7 +104,11 @@ class Fixtures(object):
         db.session.add(action)
         self.action = action
 
-        message = SMSMessage(phone_number=crusoe_phone.phone, transaction_id=u"Ruff" * 5, message=u"Wuff Wuff")
+        message = SMSMessage(
+            phone_number=crusoe_phone.phone,
+            transaction_id=u"Ruff" * 5,
+            message=u"Wuff Wuff",
+        )
         db.session.add(message)
         db.session.commit()
         self.message = message

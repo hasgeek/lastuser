@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Referring user for invitees
 
 Revision ID: 11a71745a9a8
@@ -15,8 +16,15 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.add_column('user', sa.Column('referrer_id', sa.Integer(),
-        sa.ForeignKey('user.id', name='user_referrer_id_fkey'), nullable=True))
+    op.add_column(
+        'user',
+        sa.Column(
+            'referrer_id',
+            sa.Integer(),
+            sa.ForeignKey('user.id', name='user_referrer_id_fkey'),
+            nullable=True,
+        ),
+    )
 
 
 def downgrade():

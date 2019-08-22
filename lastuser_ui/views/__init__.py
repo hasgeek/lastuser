@@ -1,3 +1,4 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa
 
-from . import index, client, sms, org, profile, dashboard  # NOQA
+from . import client, dashboard, index, org, profile, sms

@@ -1,26 +1,28 @@
 # -*- coding: utf-8 -*-
 
+from coaster.utils import md5sum
 from lastuserapp import db
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
-from hashlib import md5
 
 
 class TestUserEmailClaim(TestDatabaseFixture):
-
-    def test_UserEmailClaim(self):
+    def test_useremailclaim(self):
         crusoe = self.fixtures.crusoe
         domain = u'batdogs.ca'
         new_email = u'crusoe@' + domain
-        md5sum = md5(new_email).hexdigest()
+        emd5sum = md5sum(new_email)
         result = models.UserEmailClaim(email=new_email, user=crusoe)
         db.session.add(result)
         db.session.commit()
         self.assertIsInstance(result, models.UserEmailClaim)
-        self.assertEqual(md5sum, result.md5sum)
+        self.assertEqual(emd5sum, result.md5sum)
         self.assertEqual(domain, result.domain)
         self.assertEqual(crusoe, result.user)
-        assert u'<UserEmailClaim {email} of {user}>'.format(email=new_email, user=repr(crusoe)[1:-1]) in (repr(result))
+        assert u'<UserEmailClaim {email} of {user}>'.format(
+            email=new_email, user=repr(crusoe)[1:-1]
+        ) in (repr(result))
 
     def test_useremailclaim_permissions(self):
         """
@@ -37,7 +39,7 @@ class TestUserEmailClaim(TestDatabaseFixture):
             permissions_received.append(each)
         self.assertItemsEqual(permissions_expected, permissions_received)
 
-    def test_UserEmailClaim_get(self):
+    def test_useremailclaim_get(self):
         """
         Test for retrieving a UserEmailClaim instance given a user
         """
@@ -52,7 +54,7 @@ class TestUserEmailClaim(TestDatabaseFixture):
         self.assertEqual(result.email, email)
         self.assertEqual(result.user, katnis)
 
-    def test_UserEmailClaim_all(self):
+    def test_useremailclaim_all(self):
         """
         Test for retrieving all UserEmailClaim instances given an email address
         """

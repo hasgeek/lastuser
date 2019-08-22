@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Restricted resources
 
 Revision ID: 35a6ffd7a079
@@ -11,7 +12,6 @@ revision = '35a6ffd7a079'
 down_revision = '3b3583fcbaea'
 
 from alembic import op
-import sqlalchemy as sa  # NOQA
 
 
 def upgrade():

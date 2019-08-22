@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Client confidential flag
 
 Revision ID: 1bfb508c7ceb
@@ -15,7 +16,10 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.add_column('client', sa.Column('confidential', sa.Boolean(), nullable=False, server_default='1'))
+    op.add_column(
+        'client',
+        sa.Column('confidential', sa.Boolean(), nullable=False, server_default='1'),
+    )
     op.alter_column('client', 'confidential', server_default=None)
 
 

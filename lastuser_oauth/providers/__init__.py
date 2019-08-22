@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa
 
-from .twitter import *   # NOQA
-from .google import *    # NOQA
-from .github import *    # NOQA
-from .openid import *    # NOQA
-from .linkedin import *  # NOQA
+from .github import *
+from .google import *
+from .linkedin import *
+from .openid import *
+from .twitter import *

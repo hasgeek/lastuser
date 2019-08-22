@@ -1,16 +1,17 @@
-from behave import when, then, given
+# -*- coding: utf-8 -*-
+from behave import given, then, when
 import selenium.webdriver.support.ui as ui
 
 
 @given("we have an existing user")
 def given_existing_user(context):
-    context.test_user = dict(
-        fullname='Alyssa P Hacker',
-        email='alyssa@hacker.com',
-        username='alyssa',
-        password='alyssa',
-        confirm_password='alyssa'
-        )
+    context.test_user = {
+        'fullname': 'Alyssa P Hacker',
+        'email': 'alyssa@hacker.com',
+        'username': 'alyssa',
+        'password': 'alyssa',
+        'confirm_password': 'alyssa',
+    }
 
     context.browser.visit('/register')
     assert context.browser.find_element_by_name('csrf_token').is_enabled()
@@ -25,8 +26,8 @@ def given_existing_user(context):
 def when_login_form_submit(context):
     context.login_data = {
         'username': context.test_user['username'],
-        'password': context.test_user['password']
-        }
+        'password': context.test_user['password'],
+    }
     wait = ui.WebDriverWait(context.browser, 30)
 
     context.browser.visit('/login')
@@ -38,7 +39,9 @@ def when_login_form_submit(context):
 
     context.browser.find_element_by_name('username').submit()
 
-    context.user_button = wait.until(lambda browser: browser.find_element_by_id('hg-user-btn'))
+    context.user_button = wait.until(
+        lambda browser: browser.find_element_by_id('hg-user-btn')
+    )
 
 
 @then("we log the user in")

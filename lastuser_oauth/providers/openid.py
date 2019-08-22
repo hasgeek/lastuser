@@ -3,19 +3,26 @@
 from __future__ import absolute_import
 
 from flask import Markup, session
+
 from baseframe import _, __
+from lastuser_core.registry import LoginInitError, LoginProvider
 import baseframe.forms as forms
-from lastuser_core.registry import LoginProvider, LoginInitError
-from ..views.login import oid
+
 from ..views.account import login_service_postcallback
+from ..views.login import oid
 
 __all__ = ['OpenIdProvider']
 
 
 class OpenIdForm(forms.Form):
-    openid = forms.URLField(__("Login with OpenID"), validators=[forms.validators.DataRequired()],
+    openid = forms.URLField(
+        __("Login with OpenID"),
+        validators=[forms.validators.DataRequired()],
         default='http://',
-        description=Markup(__("Don't forget the <code>http://</code> or <code>https://</code> prefix")))
+        description=Markup(
+            __("Don't forget the <code>http://</code> or <code>https://</code> prefix")
+        ),
+    )
 
 
 class OpenIdProvider(LoginProvider):
@@ -25,14 +32,15 @@ class OpenIdProvider(LoginProvider):
         return {
             'error': oid.fetch_error(),
             'next': oid.get_next_url(),
-            'form': self.form() if self.form else None
-            }
+            'form': self.form() if self.form else None,
+        }
 
     def do(self, callback_url=None, form=None):
         if form and form.validate_on_submit():
             session['openid_service'] = self.name
-            return oid.try_login(form.openid.data,
-                ask_for=['email', 'fullname', 'nickname'])
+            return oid.try_login(
+                form.openid.data, ask_for=['email', 'fullname', 'nickname']
+            )
         raise LoginInitError(_("OpenID URL is invalid"))
 
 
@@ -42,8 +50,9 @@ def login_openid_success(resp):
     Called when OpenID login succeeds
     """
     openid = resp.identity_url
-    if (openid.startswith('https://profiles.google.com/')
-            or openid.startswith('https://www.google.com/accounts/o8/id?id=')):
+    if openid.startswith('https://profiles.google.com/') or openid.startswith(
+        'https://www.google.com/accounts/o8/id?id='
+    ):
         service = 'google'
     else:
         service = 'openid'
@@ -55,7 +64,7 @@ def login_openid_success(resp):
         'oauth_token': None,
         'oauth_token_secret': None,
         'oauth_token_type': None,
-        }
+    }
     if resp.email:
         if service == 'google':
             # Google id. Trust the email address.

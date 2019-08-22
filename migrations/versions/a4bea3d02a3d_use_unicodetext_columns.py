@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Use UnicodeText columns
 
 Revision ID: a4bea3d02a3d
@@ -7,7 +8,6 @@ Create Date: 2019-06-21 09:59:01.059481
 """
 from alembic import op
 import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
 revision = 'a4bea3d02a3d'
@@ -39,7 +39,7 @@ table_column_type = [
     ('userexternalid', 'oauth_token', sa.String(1000)),
     ('userexternalid', 'oauth_token_secret', sa.String(1000)),
     ('userexternalid', 'oauth_token_type', sa.String(250)),
-    ]
+]
 
 
 def upgrade():

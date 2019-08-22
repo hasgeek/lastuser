@@ -1,16 +1,17 @@
-from behave import given, when, then
+# -*- coding: utf-8 -*-
+from behave import given, then, when
+
 from lastuser_core.models import User
 
 
 @given('a new user trying to register with a used username')
 def given_new_user(context):
-    context.test_user = dict(
-        fullname='Alyssa P Hacker',
-        email='alyssa@hacker.com',
-        username='alyssa',
-        password='alyssa',
-        confirm_password='alyssa'
-        )
+    context.test_user = {
+        'fullname': 'Alyssa P Hacker',
+        'email': 'alyssa@hacker.com',
+        'password': 'alyssa',
+        'confirm_password': 'alyssa',
+    }
     # registering the test user
     context.browser.visit('/register')
     assert context.browser.find_element_by_name('csrf_token').is_enabled()
@@ -21,7 +22,9 @@ def given_new_user(context):
     register_form.submit()
 
 
-@when('this new user submits the registration form with a username that has already been used')
+@when(
+    'this new user submits the registration form with a username that has already been used'
+)
 def when_form_submit(context):
     # trying to register another used with same username
     # this will fail
@@ -33,7 +36,9 @@ def when_form_submit(context):
     register_form = context.browser.find_element_by_id('form-register')
     register_form.submit()
     # page will have error message
-    alert = context.browser.find_elements_by_xpath("//*[contains(text(), 'This username is taken')]")
+    alert = context.browser.find_elements_by_xpath(
+        "//*[contains(text(), 'This username is taken')]"
+    )
     assert len(alert) == 1
 
 

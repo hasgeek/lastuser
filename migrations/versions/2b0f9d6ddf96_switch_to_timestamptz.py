@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Switch to timestamptz
 
 Revision ID: 2b0f9d6ddf96
@@ -7,7 +8,6 @@ Create Date: 2019-05-10 01:22:55.904783
 """
 from alembic import op
 import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
 revision = '2b0f9d6ddf96'
@@ -78,20 +78,24 @@ migrate_table_columns = [
     ('userphone', 'updated_at'),
     ('userphoneclaim', 'created_at'),
     ('userphoneclaim', 'updated_at'),
-    ]
+]
 
 
 def upgrade():
     for table, column in migrate_table_columns:
-        op.execute(sa.DDL(
-            'ALTER TABLE "%(table)s" ALTER COLUMN "%(column)s" TYPE TIMESTAMP WITH TIME ZONE USING "%(column)s" AT TIME ZONE \'UTC\'',
-            context={'table': table, 'column': column}
-            ))
+        op.execute(
+            sa.DDL(
+                'ALTER TABLE "%(table)s" ALTER COLUMN "%(column)s" TYPE TIMESTAMP WITH TIME ZONE USING "%(column)s" AT TIME ZONE \'UTC\'',
+                context={'table': table, 'column': column},
+            )
+        )
 
 
 def downgrade():
     for table, column in reversed(migrate_table_columns):
-        op.execute(sa.DDL(
-            'ALTER TABLE "%(table)s" ALTER COLUMN "%(column)s" TYPE TIMESTAMP WITHOUT TIME ZONE',
-            context={'table': table, 'column': column}
-            ))
+        op.execute(
+            sa.DDL(
+                'ALTER TABLE "%(table)s" ALTER COLUMN "%(column)s" TYPE TIMESTAMP WITHOUT TIME ZONE',
+                context={'table': table, 'column': column},
+            )
+        )

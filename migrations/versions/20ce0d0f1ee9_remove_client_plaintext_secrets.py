@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Remove client plaintext secrets
 
 Revision ID: 20ce0d0f1ee9
@@ -19,5 +20,14 @@ def upgrade():
 
 
 def downgrade():
-    op.add_column('client', sa.Column('secret', sa.VARCHAR(length=44), autoincrement=False, nullable=False, server_default=''))
+    op.add_column(
+        'client',
+        sa.Column(
+            'secret',
+            sa.VARCHAR(length=44),
+            autoincrement=False,
+            nullable=False,
+            server_default='',
+        ),
+    )
     op.alter_column('client', 'secret', server_default=None)

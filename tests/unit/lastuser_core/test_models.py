@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
+from os import environ
+
 from lastuserapp import db
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
-from os import environ
 
 
 class TestModels(TestDatabaseFixture):
-
     def test_merge_users(self):
         """
         Test to verify merger of user accounts and return new user
@@ -26,7 +28,9 @@ class TestModels(TestDatabaseFixture):
         tyrion = models.User(username=u'tyrion', fullname=u"Tyrion Lannister")
         db.session.add(tyrion)
         db.session.commit()
-        subramanian = models.User(username=u'subramanian', fullname=u"Tyrion Subramanian")
+        subramanian = models.User(
+            username=u'subramanian', fullname=u"Tyrion Subramanian"
+        )
         db.session.add(subramanian)
         db.session.commit()
         merged = models.merge_users(subramanian, tyrion)
@@ -44,8 +48,15 @@ class TestModels(TestDatabaseFixture):
         crusoe = self.fixtures.crusoe
         service_twitter = u'twitter'
         oauth_token = environ.get('TWITTER_OAUTH_TOKEN')
-        oauth_token_type = u'Bearer'
-        externalid = models.UserExternalId(service=service_twitter, user=crusoe, userid=crusoe.email.email, username=crusoe.username, oauth_token=oauth_token, oauth_token_type=oauth_token_type)
+        oauth_token_type = u'Bearer'  # NOQA: S105
+        externalid = models.UserExternalId(
+            service=service_twitter,
+            user=crusoe,
+            userid=crusoe.email.email,
+            username=crusoe.username,
+            oauth_token=oauth_token,
+            oauth_token_type=oauth_token_type,
+        )
         db.session.add(externalid)
         db.session.commit()
         result1 = models.getuser(u'@crusoe')
@@ -54,9 +65,10 @@ class TestModels(TestDatabaseFixture):
 
         # scenario 2: with @ in name and not extid
         d_email = u'd@dothraki.vly'
-        daenerys = models.User(username=u'daenerys', fullname=u"Daenerys Targaryen", email=d_email)
-        daenerys_email = models.UserEmail(email=d_email,
-        user=daenerys)
+        daenerys = models.User(
+            username=u'daenerys', fullname=u"Daenerys Targaryen", email=d_email
+        )
+        daenerys_email = models.UserEmail(email=d_email, user=daenerys)
         db.session.add_all([daenerys, daenerys_email])
         db.session.commit()
         result2 = models.getuser(d_email)
@@ -97,11 +109,19 @@ class TestModels(TestDatabaseFixture):
         email = crusoe.email.email
         service_facebook = u'facebook'
 
-        externalid = models.UserExternalId(service=service_facebook, user=crusoe, userid=crusoe.email.email, username=crusoe.email.email, oauth_token=environ.get('FACEBOOK_OAUTH_TOKEN'), oauth_token_type=u'bearer')
+        externalid = models.UserExternalId(  # NOQA: S106
+            service=service_facebook,
+            user=crusoe,
+            userid=crusoe.email.email,
+            username=crusoe.email.email,
+            oauth_token=environ.get('FACEBOOK_OAUTH_TOKEN'),
+            oauth_token_type=u'Bearer',
+        )
 
         db.session.add(externalid)
         db.session.commit()
         result = models.getextid(service_facebook, userid=email)
         self.assertIsInstance(result, models.UserExternalId)
         assert u'<UserExternalId {service}:{username} of {user}>'.format(
-            service=service_facebook, username=email, user=repr(crusoe)[1:-1]) in repr(result)
+            service=service_facebook, username=email, user=repr(crusoe)[1:-1]
+        ) in repr(result)

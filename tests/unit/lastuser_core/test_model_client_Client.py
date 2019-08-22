@@ -3,11 +3,11 @@
 from coaster.utils import utcnow
 from lastuserapp import db
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
 
 
 class TestClient(TestDatabaseFixture):
-
     def test_client_secret_is(self):
         """
         Test for checking if Client's secret is a ClientCredential
@@ -55,7 +55,13 @@ class TestClient(TestDatabaseFixture):
         """
         crusoe = self.fixtures.crusoe
         client = self.fixtures.client
-        permissions_expected_to_be_added = ['view', 'edit', 'delete', 'assign-permissions', 'new-resource']
+        permissions_expected_to_be_added = [
+            'view',
+            'edit',
+            'delete',
+            'assign-permissions',
+            'new-resource',
+        ]
         permissions_received = []
         result = client.permissions(crusoe)
         self.assertIsInstance(result, set)
@@ -71,7 +77,9 @@ class TestClient(TestDatabaseFixture):
         client = self.fixtures.client
         crusoe = self.fixtures.crusoe
         result = client.authtoken_for(crusoe)
-        client_token = models.AuthToken(client=client, user=crusoe, scope=u'id', validity=0)
+        client_token = models.AuthToken(
+            client=client, user=crusoe, scope=u'id', validity=0
+        )
         result = client.authtoken_for(user=crusoe)
         self.assertEqual(client_token, result)
         self.assertIsInstance(result, models.AuthToken)
@@ -79,10 +87,28 @@ class TestClient(TestDatabaseFixture):
 
         # scenario 2: for a client that has confidential=False
         varys = models.User(username=u'varys', fullname=u'Lord Varys')
-        house_lannisters = models.Client(title=u'House of Lannisters', confidential=False, user=varys, website=u'houseoflannisters.westeros')
-        varys_session = models.UserSession(user=varys, ipaddr='192.168.1.99', user_agent=u'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36', accessed_at=utcnow())
-        lannisters_auth_token = models.AuthToken(client=house_lannisters, user=varys, scope=u'throne', validity=0, user_session=varys_session)
-        db.session.add_all([varys, house_lannisters, lannisters_auth_token, varys_session])
+        house_lannisters = models.Client(
+            title=u'House of Lannisters',
+            confidential=False,
+            user=varys,
+            website=u'houseoflannisters.westeros',
+        )
+        varys_session = models.UserSession(
+            user=varys,
+            ipaddr='192.168.1.99',
+            user_agent=u'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36',
+            accessed_at=utcnow(),
+        )
+        lannisters_auth_token = models.AuthToken(
+            client=house_lannisters,
+            user=varys,
+            scope=u'throne',
+            validity=0,
+            user_session=varys_session,
+        )
+        db.session.add_all(
+            [varys, house_lannisters, lannisters_auth_token, varys_session]
+        )
         db.session.commit()
         result = house_lannisters.authtoken_for(varys, user_session=varys_session)
         self.assertIsInstance(result, models.AuthToken)
@@ -98,7 +124,7 @@ class TestClient(TestDatabaseFixture):
         self.assertIsInstance(result, list)
         self.assertItemsEqual(result, [batdog])
 
-    def test_Client_get(self):
+    def test_client_get(self):
         """
         Test for verifying Client's get method
         """

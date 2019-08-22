@@ -4,18 +4,14 @@ from flask import abort, current_app, redirect, render_template, request, url_fo
 
 from baseframe import _
 from baseframe.forms import render_delete_sqla, render_form, render_redirect
-
 from coaster.auth import current_auth
 from coaster.views import ModelView, UrlForView, requires_permission, route
-
 from lastuser_core.models import Organization, Team, db
 from lastuser_core.signals import org_data_changed, team_data_changed
-
 from lastuser_oauth.views.helpers import requires_login
 
 from .. import lastuser_ui
 from ..forms.org import OrganizationForm, TeamForm
-
 
 # --- Routes: Organizations ---------------------------------------------------
 
@@ -24,7 +20,8 @@ from ..forms.org import OrganizationForm, TeamForm
 class OrgView(UrlForView, ModelView):
     __decorators__ = [requires_login]
     model = Organization
-    route_model_map = {'name': 'name'}  # Map <name> in URL to attribute `name`, for `url_for` automation
+    # Map <name> in URL to attribute `name`, for `url_for` automation
+    route_model_map = {'name': 'name'}
 
     def loader(self, name=None):
         if name:
@@ -35,7 +32,10 @@ class OrgView(UrlForView, ModelView):
 
     @route('')
     def index(self):
-        return render_template('org_list.html.jinja2', organizations=current_auth.user.organizations_owned())
+        return render_template(
+            'org_list.html.jinja2',
+            organizations=current_auth.user.organizations_owned(),
+        )
 
     @route('new', methods=['GET', 'POST'])
     def new(self):
@@ -53,7 +53,13 @@ class OrgView(UrlForView, ModelView):
             db.session.commit()
             org_data_changed.send(org, changes=['new'], user=current_auth.user)
             return render_redirect(org.url_for('view'), code=303)
-        return render_form(form=form, title=_("New organization"), formid='org_new', submit=_("Create"), ajax=False)
+        return render_form(
+            form=form,
+            title=_("New organization"),
+            formid='org_new',
+            submit=_("Create"),
+            ajax=False,
+        )
 
     @route('<name>')
     @requires_permission('view')
@@ -71,7 +77,13 @@ class OrgView(UrlForView, ModelView):
             db.session.commit()
             org_data_changed.send(self.obj, changes=['edit'], user=current_auth.user)
             return render_redirect(self.obj.url_for('view'), code=303)
-        return render_form(form=form, title=_("Edit organization"), formid='org_edit', submit=_("Save"), ajax=False)
+        return render_form(
+            form=form,
+            title=_("Edit organization"),
+            formid='org_edit',
+            submit=_("Save"),
+            ajax=False,
+        )
 
     @route('<name>/delete', methods=['GET', 'POST'])
     @requires_permission('delete')
@@ -80,12 +92,15 @@ class OrgView(UrlForView, ModelView):
             # FIXME: Find a better way to do this
             org_data_changed.send(self.obj, changes=['delete'], user=current_auth.user)
         return render_delete_sqla(
-            self.obj, db, title=_(u"Confirm delete"),
-            message=_(u"Delete organization ‘{title}’? ").format(
-                title=self.obj.title),
-            success=_(u"You have deleted organization ‘{title}’ and all its associated teams").format(
-                title=self.obj.title),
-            next=url_for('.OrgView_index'))
+            self.obj,
+            db,
+            title=_(u"Confirm delete"),
+            message=_(u"Delete organization ‘{title}’? ").format(title=self.obj.title),
+            success=_(
+                u"You have deleted organization ‘{title}’ and all its associated teams"
+            ).format(title=self.obj.title),
+            next=url_for('.OrgView_index'),
+        )
 
     @route('<name>/teams')
     @requires_permission('view-teams')
@@ -105,8 +120,11 @@ class OrgView(UrlForView, ModelView):
             team_data_changed.send(team, changes=['new'], user=current_auth.user)
             return render_redirect(self.obj.url_for('view'), code=303)
         return render_form(
-            form=form, title=_(u"Create new team"),
-            formid='new_team', submit=_("Create"))
+            form=form,
+            title=_(u"Create new team"),
+            formid='new_team',
+            submit=_("Create"),
+        )
 
 
 OrgView.init_app(lastuser_ui)
@@ -118,8 +136,8 @@ class TeamView(UrlForView, ModelView):
     model = Team
     route_model_map = {  # Map <name> and <buid> in URLs to model attributes, for `url_for` automation
         'name': 'org.name',
-        'buid': 'buid'
-        }
+        'buid': 'buid',
+    }
 
     def loader(self, name, buid):
         obj = Team.get(buid=buid, with_parent=True)
@@ -139,7 +157,10 @@ class TeamView(UrlForView, ModelView):
         return render_form(
             form=form,
             title=_(u"Edit team: {title}").format(title=self.obj.title),
-            formid='team_edit', submit=_("Save"), ajax=False)
+            formid='team_edit',
+            submit=_("Save"),
+            ajax=False,
+        )
 
     @route('delete', methods=['GET', 'POST'])
     @requires_permission('delete')
@@ -149,12 +170,15 @@ class TeamView(UrlForView, ModelView):
         if request.method == 'POST':
             team_data_changed.send(self.obj, changes=['delete'], user=current_auth.user)
         return render_delete_sqla(
-            self.obj, db,
+            self.obj,
+            db,
             title=_(u"Confirm delete"),
             message=_(u"Delete team {title}?").format(title=self.obj.title),
-            success=_(u"You have deleted team ‘{team}’ from organization ‘{org}’").format(
-                team=self.obj.title, org=self.obj.org.title),
-            next=self.obj.org.url_for())
+            success=_(
+                u"You have deleted team ‘{team}’ from organization ‘{org}’"
+            ).format(team=self.obj.title, org=self.obj.org.title),
+            next=self.obj.org.url_for(),
+        )
 
 
 TeamView.init_app(lastuser_ui)

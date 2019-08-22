@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import lastuser_core.models as models
+
 from .test_db import TestDatabaseFixture
 
 
@@ -11,7 +12,7 @@ class TestClientCredential(TestDatabaseFixture):
         """
         super(TestClientCredential, self).setUp()
 
-    def test_ClientCredential_new(self):
+    def test_clientcredential_new(self):
         """
         Test for ClientCredential model's new()
         """
@@ -23,7 +24,7 @@ class TestClientCredential(TestDatabaseFixture):
         client_secret = credentials[0].secret_hash
         self.assertTrue(client_secret.startswith('sha256$'))
 
-    def test_ClientCredential_get(self):
+    def test_clientcredential_get(self):
         """
         Test for ClientCredential model's get()
         """
@@ -40,5 +41,7 @@ class TestClientCredential(TestDatabaseFixture):
         """
         client = self.fixtures.client
         credentials = models.ClientCredential.new(client)
-        self.assertTrue(models.ClientCredential.secret_is(credentials[0], credentials[1]))
-        self.assertTrue(len(credentials[1]), 64)
+        self.assertTrue(
+            models.ClientCredential.secret_is(credentials[0], credentials[1])
+        )
+        self.assertEqual(len(credentials[1]), 44)

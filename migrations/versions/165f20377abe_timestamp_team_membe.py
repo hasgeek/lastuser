@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Timestamp team membership
 
 Revision ID: 165f20377abe
@@ -15,11 +16,23 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.add_column('team_membership', sa.Column('created_at', sa.DateTime(), server_default=sa.func.now(), nullable=False))
-    op.add_column('team_membership', sa.Column('updated_at', sa.DateTime(), server_default=sa.func.now(), nullable=False))
+    op.add_column(
+        'team_membership',
+        sa.Column(
+            'created_at', sa.DateTime(), server_default=sa.func.now(), nullable=False
+        ),
+    )
+    op.add_column(
+        'team_membership',
+        sa.Column(
+            'updated_at', sa.DateTime(), server_default=sa.func.now(), nullable=False
+        ),
+    )
     op.alter_column('team_membership', 'created_at', server_default=None)
     op.alter_column('team_membership', 'updated_at', server_default=None)
-    op.create_primary_key('team_membership_pkey', 'team_membership', ['user_id', 'team_id'])
+    op.create_primary_key(
+        'team_membership_pkey', 'team_membership', ['user_id', 'team_id']
+    )
 
 
 def downgrade():

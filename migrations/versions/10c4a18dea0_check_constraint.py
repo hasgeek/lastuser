@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Check constraint
 
 Revision ID: 10c4a18dea0
@@ -11,18 +12,26 @@ revision = '10c4a18dea0'
 down_revision = '11a71745a9a8'
 
 from alembic import op
-import sqlalchemy as sa
 from sqlalchemy.sql import column
+import sqlalchemy as sa
 
 
 def upgrade():
-    op.create_check_constraint('client_user_id_or_org_id', 'client',
-        sa.case([(column('user_id') != None, 1)], else_=0) + sa.case([(column('org_id') != None, 1)], else_=0) == 1  # NOQA
-        )
+    op.create_check_constraint(
+        'client_user_id_or_org_id',
+        'client',
+        sa.case([(column('user_id').isnot(None), 1)], else_=0)
+        + sa.case([(column('org_id').isnot(None), 1)], else_=0)
+        == 1,
+    )
 
-    op.create_check_constraint('permission_user_id_or_org_id', 'permission',
-        sa.case([(column('user_id') != None, 1)], else_=0) + sa.case([(column('org_id') != None, 1)], else_=0) == 1  # NOQA
-        )
+    op.create_check_constraint(
+        'permission_user_id_or_org_id',
+        'permission',
+        sa.case([(column('user_id').isnot(None), 1)], else_=0)
+        + sa.case([(column('org_id').isnot(None), 1)], else_=0)
+        == 1,
+    )
 
 
 def downgrade():

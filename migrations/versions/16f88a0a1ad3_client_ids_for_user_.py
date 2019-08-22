@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Client ids for user/org/team
 
 Revision ID: 16f88a0a1ad3
@@ -15,12 +16,33 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.add_column('organization', sa.Column('client_id', sa.Integer(),
-        sa.ForeignKey('client.id', name='organization_client_id_fkey'), nullable=True))
-    op.add_column('team', sa.Column('client_id', sa.Integer(),
-        sa.ForeignKey('client.id', name='team_client_id_fkey'), nullable=True))
-    op.add_column('user', sa.Column('client_id', sa.Integer(),
-        sa.ForeignKey('client.id', name='user_client_id_fkey'), nullable=True))
+    op.add_column(
+        'organization',
+        sa.Column(
+            'client_id',
+            sa.Integer(),
+            sa.ForeignKey('client.id', name='organization_client_id_fkey'),
+            nullable=True,
+        ),
+    )
+    op.add_column(
+        'team',
+        sa.Column(
+            'client_id',
+            sa.Integer(),
+            sa.ForeignKey('client.id', name='team_client_id_fkey'),
+            nullable=True,
+        ),
+    )
+    op.add_column(
+        'user',
+        sa.Column(
+            'client_id',
+            sa.Integer(),
+            sa.ForeignKey('client.id', name='user_client_id_fkey'),
+            nullable=True,
+        ),
+    )
 
 
 def downgrade():

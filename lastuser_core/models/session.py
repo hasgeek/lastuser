@@ -1,24 +1,46 @@
 # -*- coding: utf-8 -*-
 
 from datetime import timedelta
-from werkzeug import cached_property
-from ua_parser import user_agent_parser
+
 from flask import request
-from coaster.utils import buid as make_buid, utcnow
+from werkzeug import cached_property
+
+from ua_parser import user_agent_parser
+
 from coaster.sqlalchemy import make_timestamp_columns
-from . import db, BaseMixin
-from .user import User
+from coaster.utils import buid as make_buid
+from coaster.utils import utcnow
+
 from ..signals import session_revoked
+from . import BaseMixin, db
+from .user import User
 
 __all__ = ['UserSession']
 
 
 session_client = db.Table(
-    'session_client', db.Model.metadata,
-    *(make_timestamp_columns() + (
-        db.Column('user_session_id', None, db.ForeignKey('user_session.id'), nullable=False, primary_key=True),
-        db.Column('client_id', None, db.ForeignKey('client.id'), nullable=False, primary_key=True)))
+    'session_client',
+    db.Model.metadata,
+    *(
+        make_timestamp_columns()
+        + (
+            db.Column(
+                'user_session_id',
+                None,
+                db.ForeignKey('user_session.id'),
+                nullable=False,
+                primary_key=True,
+            ),
+            db.Column(
+                'client_id',
+                None,
+                db.ForeignKey('client.id'),
+                nullable=False,
+                primary_key=True,
+            ),
+        )
     )
+)
 
 
 class UserSession(BaseMixin, db.Model):
@@ -28,14 +50,19 @@ class UserSession(BaseMixin, db.Model):
     sessionid = db.synonym('buid')
 
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(User, backref=db.backref('sessions', cascade='all, delete-orphan', lazy='dynamic'))
+    user = db.relationship(
+        User,
+        backref=db.backref('sessions', cascade='all, delete-orphan', lazy='dynamic'),
+    )
 
     ipaddr = db.Column(db.String(45), nullable=False)
     user_agent = db.Column(db.UnicodeText, nullable=False)
 
     accessed_at = db.Column(db.TIMESTAMP(timezone=True), nullable=False)
     revoked_at = db.Column(db.TIMESTAMP(timezone=True), nullable=True)
-    sudo_enabled_at = db.Column(db.TIMESTAMP(timezone=True), nullable=False, default=db.func.utcnow())
+    sudo_enabled_at = db.Column(
+        db.TIMESTAMP(timezone=True), nullable=False, default=db.func.utcnow()
+    )
 
     def __init__(self, **kwargs):
         super(UserSession, self).__init__(**kwargs)
@@ -54,14 +81,18 @@ class UserSession(BaseMixin, db.Model):
         self.accessed_at = db.func.utcnow()
         with db.session.no_autoflush:
             if client:
-                if client not in self.clients:  # self.clients is defined via Client.sessions
+                if (
+                    client not in self.clients
+                ):  # self.clients is defined via Client.sessions
                     self.clients.append(client)
                 else:
                     # If we've seen this client in this session before, only update the timestamp
-                    db.session.execute(session_client.update().where(
-                        session_client.c.user_session_id == self.id).where(
-                        session_client.c.client_id == client.id).values(
-                        updated_at=db.func.utcnow()))
+                    db.session.execute(
+                        session_client.update()
+                        .where(session_client.c.user_session_id == self.id)
+                        .where(session_client.c.client_id == client.id)
+                        .values(updated_at=db.func.utcnow())
+                    )
             else:
                 self.ipaddr = request.remote_addr or u''
                 self.user_agent = unicode(request.user_agent.string[:250]) or u''
@@ -94,14 +125,16 @@ class UserSession(BaseMixin, db.Model):
             # Sessions are valid for one year...
             cls.accessed_at > db.func.utcnow() - timedelta(days=365),
             # ...unless explicitly revoked (or user logged out)
-            cls.revoked_at == None).one_or_none()  # NOQA
+            cls.revoked_at.is_(None),
+        ).one_or_none()
 
 
-User.active_sessions = db.relationship(UserSession,
+User.active_sessions = db.relationship(
+    UserSession,
     lazy='dynamic',
     primaryjoin=db.and_(
         UserSession.user_id == User.id,
         UserSession.accessed_at > db.func.utcnow() - timedelta(days=14),
-        UserSession.revoked_at == None  # NOQA
-        )
-    )
+        UserSession.revoked_at.is_(None),
+    ),
+)
