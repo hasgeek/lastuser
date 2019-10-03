@@ -5,10 +5,10 @@ flake8-assertive
 flake8-blind-except==0.1.1
 flake8-builtins==1.4.1
 flake8-coding==1.3.2
-flake8-comprehensions==2.1.0
+flake8-comprehensions==2.2.0
 flake8-isort==2.7.0
 flake8-logging-format==0.6.0
 flake8-mutable==1.2.0
 flake8-print==3.1.0
 pep8-naming==0.8.2
-pre-commit==1.17.0
+pre-commit==1.18.3
