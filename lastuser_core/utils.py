@@ -46,26 +46,6 @@ def valid_phone(candidate):
     return not PHONE_VALID_RE.search(candidate) is None
 
 
-def get_gravatar_md5sum(url):
-    """
-    Retrieve the MD5 sum from a Gravatar URL. Returns None if the URL is invalid.
-
-    >>> get_gravatar_md5sum(
-    ...     'https://secure.gravatar.com/avatar/31b0e7df40a7e327e7908f61a314fe47?d=https'
-    ...     '://a248.e.akamai.net/assets.github.com%2Fimages%2Fgravatars%2Fgravatar-140.png')
-    '31b0e7df40a7e327e7908f61a314fe47'
-    """
-    parts = urlparse.urlparse(url)
-    if parts.netloc not in ['www.gravatar.com', 'secure.gravatar.com', 'gravatar.com']:
-        return None
-    if not parts.path.startswith('/avatar/'):
-        return None
-    md5sum = parts.path.split('/')[2]
-    if len(md5sum) != 32:
-        return None
-    return md5sum
-
-
 def mask_email(email):
     """
     Masks an email address
