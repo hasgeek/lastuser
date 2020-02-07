@@ -63,12 +63,21 @@ class GitHubProvider(LoginProvider):
             if 'error' in response:
                 raise LoginCallbackError(response['error'])
             ghinfo = requests.get(
-                self.user_info, params={'access_token': response['access_token']}
+                self.user_info,
+                headers={
+                    "Authorization": "token {token}".format(
+                        token=response['access_token']
+                    )
+                },
             ).json()
             ghemails = requests.get(
                 self.user_emails,
-                params={'access_token': response['access_token']},
-                headers={'Accept': 'application/vnd.github.v3+json'},
+                headers={
+                    'Accept': 'application/vnd.github.v3+json',
+                    "Authorization": "token {token}".format(
+                        token=response['access_token']
+                    ),
+                },
             ).json()
         except requests.ConnectionError as e:
             raise LoginCallbackError(
