@@ -1,8 +1,8 @@
 progressbar2==3.47.0
 Flask==1.1.1
-Flask-Assets==0.12
+Flask-Assets==2.0
 Flask-Mail==0.9.1
-sqlalchemy_utils==0.34.2
+sqlalchemy_utils==0.36.1
 SQLAlchemy>=0.9
 Flask-SQLAlchemy==2.4.1
 jsmin==2.2.2
@@ -21,6 +21,6 @@ oauth2client==4.1.3
 ua-parser==0.8.0
 itsdangerous==1.1.0
 psycopg2==2.8.4
-phonenumbers==8.10.22
+phonenumbers==8.11.2
 git+https://github.com/hasgeek/coaster
 git+https://github.com/hasgeek/baseframe
