@@ -7,7 +7,8 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import defer, deferred
 
-from werkzeug import cached_property, check_password_hash
+from werkzeug.security import check_password_hash
+from werkzeug.utils import cached_property
 
 import bcrypt
 import phonenumbers

@@ -3,7 +3,7 @@
 from datetime import timedelta
 
 from flask import request
-from werkzeug import cached_property
+from werkzeug.utils import cached_property
 
 from ua_parser import user_agent_parser
 
