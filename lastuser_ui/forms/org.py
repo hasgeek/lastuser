@@ -24,7 +24,7 @@ class OrganizationForm(forms.Form):
             forms.validators.DataRequired(),
             forms.validators.Length(max=Name.__name_length__),
         ],
-        prefix=u"https://hasgeek.com/",
+        prefix="https://hasgeek.com/",
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'},
     )
 
@@ -52,9 +52,9 @@ class OrganizationForm(forms.Form):
                 raise forms.ValidationError(
                     Markup(
                         _(
-                            u"This is <em>your</em> current username. "
-                            u'You must change it first from <a href="{account}">your account</a> '
-                            u"before you can assign it to an organization"
+                            "This is <em>your</em> current username. "
+                            'You must change it first from <a href="{account}">your account</a> '
+                            "before you can assign it to an organization"
                         ).format(account=url_for('account'))
                     )
                 )

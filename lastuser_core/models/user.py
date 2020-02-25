@@ -213,7 +213,7 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
     # XXX: Deprecated, still here for Baseframe compatibility
     userid = db.synonym('buid')
     #: The user's fullname
-    fullname = db.Column(db.Unicode(__title_length__), default=u'', nullable=False)
+    fullname = db.Column(db.Unicode(__title_length__), default='', nullable=False)
     #: Alias for the user's fullname
     title = db.synonym('fullname')
     #: Bcrypt hash of the user's password
@@ -310,7 +310,9 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         if password is None:
             self.pw_hash = None
         else:
-            self.pw_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            self.pw_hash = bcrypt.hashpw(
+                password.encode('utf-8'), bcrypt.gensalt()
+            ).decode('ascii')
         self.pw_set_at = db.func.utcnow()
         # Expire passwords after one year. TODO: make this configurable
         self.pw_expires_at = self.pw_set_at + timedelta(days=365)
@@ -353,7 +355,7 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
     @property
     def pickername(self):
         if self.username:
-            return u'{fullname} (@{username})'.format(
+            return '{fullname} (@{username})'.format(
                 fullname=self.fullname, username=self.username
             )
         else:
@@ -393,7 +395,7 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         # This user has no email address. Return a blank string instead of None
         # to support the common use case, where the caller will use unicode(user.email)
         # to get the email address as a string.
-        return u''
+        return ''
 
     @cached_property
     def phone(self):
@@ -414,7 +416,7 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         # This user has no phone number. Return a blank string instead of None
         # to support the common use case, where the caller will use unicode(user.phone)
         # to get the phone number as a string.
-        return u''
+        return ''
 
     def organizations(self):
         """
@@ -552,11 +554,11 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         # Escape the '%' and '_' wildcards in SQL LIKE clauses.
         # Some SQL dialects respond to '[' and ']', so remove them.
         query = (
-            query.replace(u'%', ur'\%')
-            .replace(u'_', ur'\_')
-            .replace(u'[', u'')
-            .replace(u']', u'')
-            + u'%'
+            query.replace('%', r'\%')
+            .replace('_', r'\_')
+            .replace('[', '')
+            .replace(']', '')
+            + '%'
         )
         # Use User._username since 'username' is a hybrid property that checks for validity
         # before passing on to _username, the actual column name on the model.
@@ -674,7 +676,7 @@ team_membership = db.Table(
                 primary_key=True,
             ),
         )
-    )
+    ),
 )
 
 
@@ -708,9 +710,9 @@ class Organization(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         cascade='all',
         post_update=True,
     )  # No delete-orphan cascade here
-    title = db.Column(db.Unicode(__title_length__), default=u'', nullable=False)
+    title = db.Column(db.Unicode(__title_length__), default='', nullable=False)
     #: Deprecated, but column preserved for existing data until migration
-    description = deferred(db.Column(db.UnicodeText, default=u'', nullable=False))
+    description = deferred(db.Column(db.UnicodeText, default='', nullable=False))
 
     #: Client id that created this account
     client_id = db.Column(
@@ -750,9 +752,9 @@ class Organization(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
 
     def make_teams(self):
         if self.owners is None:
-            self.owners = Team(title=_(u"Owners"), org=self)
+            self.owners = Team(title=_("Owners"), org=self)
         if self.members is None:
-            self.members = Team(title=_(u"Members"), org=self)
+            self.members = Team(title=_("Members"), org=self)
 
     def __repr__(self):
         return '<Organization {name} "{title}">'.format(
@@ -762,7 +764,7 @@ class Organization(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
     @property
     def pickername(self):
         if self.name:
-            return u'{title} (@{name})'.format(title=self.title, name=self.name)
+            return '{title} (@{name})'.format(title=self.title, name=self.name)
         else:
             return self.title
 
@@ -956,11 +958,8 @@ class UserEmail(BaseMixin, db.Model):
             email=self.email, user=repr(self.user)[1:-1]
         )
 
-    def __unicode__(self):
-        return unicode(self.email)
-
     def __str__(self):
-        return str(self.__unicode__())
+        return self.email
 
     @property
     def primary(self):
@@ -1027,11 +1026,8 @@ class UserEmailClaim(BaseMixin, db.Model):
             email=self.email, user=repr(self.user)[1:-1]
         )
 
-    def __unicode__(self):
-        return unicode(self.email)
-
     def __str__(self):
-        return str(self.__unicode__())
+        return self.email
 
     def permissions(self, user, inherited=None):
         perms = super(UserEmailClaim, self).permissions(user, inherited)
@@ -1096,11 +1092,8 @@ class UserPhone(BaseMixin, db.Model):
             phone=self.phone, user=repr(self.user)[1:-1]
         )
 
-    def __unicode__(self):
-        return unicode(self.phone)
-
     def __str__(self):
-        return str(self.__unicode__())
+        return self.phone
 
     def parsed(self):
         return phonenumbers.parse(self._phone)
@@ -1166,11 +1159,8 @@ class UserPhoneClaim(BaseMixin, db.Model):
             phone=self.phone, user=repr(self.user)[1:-1]
         )
 
-    def __unicode__(self):
-        return unicode(self.phone)
-
     def __str__(self):
-        return str(self.__unicode__())
+        return self.phone
 
     def parsed(self):
         return phonenumbers.parse(self._phone)

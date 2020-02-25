@@ -19,8 +19,8 @@ depends_on = None
 
 def upgrade():
     op.alter_column('useremail', 'user_id', existing_type=sa.INTEGER(), nullable=False)
-    op.drop_constraint(u'useremail_team_id_fkey', 'useremail', type_='foreignkey')
-    op.drop_constraint(u'useremail_org_id_fkey', 'useremail', type_='foreignkey')
+    op.drop_constraint('useremail_team_id_fkey', 'useremail', type_='foreignkey')
+    op.drop_constraint('useremail_org_id_fkey', 'useremail', type_='foreignkey')
     op.drop_column('useremail', 'team_id')
     op.drop_column('useremail', 'org_id')
 
@@ -28,23 +28,23 @@ def upgrade():
         'useremailclaim', 'user_id', existing_type=sa.INTEGER(), nullable=False
     )
     op.drop_constraint(
-        u'useremailclaim_org_id_email_key', 'useremailclaim', type_='unique'
+        'useremailclaim_org_id_email_key', 'useremailclaim', type_='unique'
     )
     op.drop_constraint(
-        u'useremailclaim_team_id_email_key', 'useremailclaim', type_='unique'
+        'useremailclaim_team_id_email_key', 'useremailclaim', type_='unique'
     )
     op.drop_constraint(
-        u'useremailclaim_team_id_fkey', 'useremailclaim', type_='foreignkey'
+        'useremailclaim_team_id_fkey', 'useremailclaim', type_='foreignkey'
     )
     op.drop_constraint(
-        u'useremailclaim_org_id_fkey', 'useremailclaim', type_='foreignkey'
+        'useremailclaim_org_id_fkey', 'useremailclaim', type_='foreignkey'
     )
     op.drop_column('useremailclaim', 'team_id')
     op.drop_column('useremailclaim', 'org_id')
 
     op.alter_column('userphone', 'user_id', existing_type=sa.INTEGER(), nullable=False)
-    op.drop_constraint(u'userphone_org_id_fkey', 'userphone', type_='foreignkey')
-    op.drop_constraint(u'userphone_team_id_fkey', 'userphone', type_='foreignkey')
+    op.drop_constraint('userphone_org_id_fkey', 'userphone', type_='foreignkey')
+    op.drop_constraint('userphone_team_id_fkey', 'userphone', type_='foreignkey')
     op.drop_column('userphone', 'team_id')
     op.drop_column('userphone', 'org_id')
 
@@ -52,16 +52,16 @@ def upgrade():
         'userphoneclaim', 'user_id', existing_type=sa.INTEGER(), nullable=False
     )
     op.drop_constraint(
-        u'userphoneclaim_org_id_phone_key', 'userphoneclaim', type_='unique'
+        'userphoneclaim_org_id_phone_key', 'userphoneclaim', type_='unique'
     )
     op.drop_constraint(
-        u'userphoneclaim_team_id_phone_key', 'userphoneclaim', type_='unique'
+        'userphoneclaim_team_id_phone_key', 'userphoneclaim', type_='unique'
     )
     op.drop_constraint(
-        u'userphoneclaim_team_id_fkey', 'userphoneclaim', type_='foreignkey'
+        'userphoneclaim_team_id_fkey', 'userphoneclaim', type_='foreignkey'
     )
     op.drop_constraint(
-        u'userphoneclaim_org_id_fkey', 'userphoneclaim', type_='foreignkey'
+        'userphoneclaim_org_id_fkey', 'userphoneclaim', type_='foreignkey'
     )
     op.drop_column('userphoneclaim', 'team_id')
     op.drop_column('userphoneclaim', 'org_id')
@@ -77,20 +77,20 @@ def downgrade():
         sa.Column('team_id', sa.INTEGER(), autoincrement=False, nullable=True),
     )
     op.create_foreign_key(
-        u'userphoneclaim_org_id_fkey',
+        'userphoneclaim_org_id_fkey',
         'userphoneclaim',
         'organization',
         ['org_id'],
         ['id'],
     )
     op.create_foreign_key(
-        u'userphoneclaim_team_id_fkey', 'userphoneclaim', 'team', ['team_id'], ['id']
+        'userphoneclaim_team_id_fkey', 'userphoneclaim', 'team', ['team_id'], ['id']
     )
     op.create_unique_constraint(
-        u'userphoneclaim_team_id_phone_key', 'userphoneclaim', ['team_id', 'phone']
+        'userphoneclaim_team_id_phone_key', 'userphoneclaim', ['team_id', 'phone']
     )
     op.create_unique_constraint(
-        u'userphoneclaim_org_id_phone_key', 'userphoneclaim', ['org_id', 'phone']
+        'userphoneclaim_org_id_phone_key', 'userphoneclaim', ['org_id', 'phone']
     )
     op.alter_column(
         'userphoneclaim', 'user_id', existing_type=sa.INTEGER(), nullable=True
@@ -113,10 +113,10 @@ def downgrade():
         sa.Column('team_id', sa.INTEGER(), autoincrement=False, nullable=True),
     )
     op.create_foreign_key(
-        u'userphone_team_id_fkey', 'userphone', 'team', ['team_id'], ['id']
+        'userphone_team_id_fkey', 'userphone', 'team', ['team_id'], ['id']
     )
     op.create_foreign_key(
-        u'userphone_org_id_fkey', 'userphone', 'organization', ['org_id'], ['id']
+        'userphone_org_id_fkey', 'userphone', 'organization', ['org_id'], ['id']
     )
     op.alter_column('userphone', 'user_id', existing_type=sa.INTEGER(), nullable=True)
     op.create_check_constraint(
@@ -137,20 +137,20 @@ def downgrade():
         sa.Column('team_id', sa.INTEGER(), autoincrement=False, nullable=True),
     )
     op.create_foreign_key(
-        u'useremailclaim_org_id_fkey',
+        'useremailclaim_org_id_fkey',
         'useremailclaim',
         'organization',
         ['org_id'],
         ['id'],
     )
     op.create_foreign_key(
-        u'useremailclaim_team_id_fkey', 'useremailclaim', 'team', ['team_id'], ['id']
+        'useremailclaim_team_id_fkey', 'useremailclaim', 'team', ['team_id'], ['id']
     )
     op.create_unique_constraint(
-        u'useremailclaim_team_id_email_key', 'useremailclaim', ['team_id', 'email']
+        'useremailclaim_team_id_email_key', 'useremailclaim', ['team_id', 'email']
     )
     op.create_unique_constraint(
-        u'useremailclaim_org_id_email_key', 'useremailclaim', ['org_id', 'email']
+        'useremailclaim_org_id_email_key', 'useremailclaim', ['org_id', 'email']
     )
     op.alter_column(
         'useremailclaim', 'user_id', existing_type=sa.INTEGER(), nullable=True
@@ -173,10 +173,10 @@ def downgrade():
         sa.Column('team_id', sa.INTEGER(), autoincrement=False, nullable=True),
     )
     op.create_foreign_key(
-        u'useremail_org_id_fkey', 'useremail', 'organization', ['org_id'], ['id']
+        'useremail_org_id_fkey', 'useremail', 'organization', ['org_id'], ['id']
     )
     op.create_foreign_key(
-        u'useremail_team_id_fkey', 'useremail', 'team', ['team_id'], ['id']
+        'useremail_team_id_fkey', 'useremail', 'team', ['team_id'], ['id']
     )
     op.alter_column('useremail', 'user_id', existing_type=sa.INTEGER(), nullable=True)
     op.create_check_constraint(

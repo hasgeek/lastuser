@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from urllib import quote
+from urllib.parse import quote
 
 from flask import redirect, request
 
@@ -41,14 +41,14 @@ class GitHubProvider(LoginProvider):
     def callback(self):
         if request.args.get('error'):
             if request.args['error'] == 'user_denied':
-                raise LoginCallbackError(_(u"You denied the GitHub login request"))
+                raise LoginCallbackError(_("You denied the GitHub login request"))
             elif request.args['error'] == 'redirect_uri_mismatch':
                 # TODO: Log this as an exception for the server admin to look at
                 raise LoginCallbackError(
-                    _(u"This server's callback URL is misconfigured")
+                    _("This server's callback URL is misconfigured")
                 )
             else:
-                raise LoginCallbackError(_(u"Unknown failure"))
+                raise LoginCallbackError(_("Unknown failure"))
         code = request.args.get('code', None)
         try:
             response = requests.post(
@@ -82,7 +82,7 @@ class GitHubProvider(LoginProvider):
         except requests.ConnectionError as e:
             raise LoginCallbackError(
                 _(
-                    u"GitHub appears to be having temporary issues. Please try again. Internal details: {error}"
+                    "GitHub appears to be having temporary issues. Please try again. Internal details: {error}"
                 ).format(error=e)
             )
 

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from urllib import urlencode as make_query_string
+from urllib.parse import urlencode as make_query_string
 import re
-import urlparse
+import urllib.parse
 
 # --- Constants ---------------------------------------------------------------
 
@@ -13,21 +13,21 @@ PHONE_VALID_RE = re.compile(r'^\+[0-9]+$')
 
 
 def make_redirect_url(url, use_fragment=False, **params):
-    urlparts = list(urlparse.urlsplit(url))
+    urlparts = list(urllib.parse.urlsplit(url))
     # URL parts:
     # 0: scheme
     # 1: netloc
     # 2: path
     # 3: query -- appended to
     # 4: fragment
-    queryparts = urlparse.parse_qsl(
+    queryparts = urllib.parse.parse_qsl(
         urlparts[4] if use_fragment else urlparts[3], keep_blank_values=True
     )
     queryparts.extend([(k, v) for k, v in params.items() if v is not None])
     queryparts = [
         (
-            key.encode('utf-8') if isinstance(key, unicode) else key,
-            value.encode('utf-8') if isinstance(value, unicode) else value,
+            key.encode('utf-8') if isinstance(key, str) else key,
+            value.encode('utf-8') if isinstance(value, str) else value,
         )
         for key, value in queryparts
     ]
@@ -35,7 +35,7 @@ def make_redirect_url(url, use_fragment=False, **params):
         urlparts[4] = make_query_string(queryparts)
     else:
         urlparts[3] = make_query_string(queryparts)
-    return urlparse.urlunsplit(urlparts)
+    return urllib.parse.urlunsplit(urlparts)
 
 
 def strip_phone(candidate):
@@ -56,6 +56,6 @@ def mask_email(email):
     u'n****'
     """
     if '@' not in email:
-        return u'{e}****'.format(e=email[0])
+        return '{e}****'.format(e=email[0])
     username, domain = email.split('@')
-    return u'{u}****@{d}****'.format(u=username[0], d=domain[0])
+    return '{u}****@{d}****'.format(u=username[0], d=domain[0])

@@ -30,11 +30,11 @@ def upgrade():
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('name'),
     )
-    op.add_column(u'user', sa.Column('pw_expires_at', sa.DateTime(), nullable=True))
-    op.add_column(u'user', sa.Column('pw_set_at', sa.DateTime(), nullable=True))
+    op.add_column('user', sa.Column('pw_expires_at', sa.DateTime(), nullable=True))
+    op.add_column('user', sa.Column('pw_set_at', sa.DateTime(), nullable=True))
 
 
 def downgrade():
-    op.drop_column(u'user', 'pw_set_at')
-    op.drop_column(u'user', 'pw_expires_at')
+    op.drop_column('user', 'pw_set_at')
+    op.drop_column('user', 'pw_expires_at')
     op.drop_table('client_credential')

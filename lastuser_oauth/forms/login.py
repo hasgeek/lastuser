@@ -67,7 +67,7 @@ class RegisterForm(forms.RecaptchaForm):
             raise forms.ValidationError(
                 Markup(
                     _(
-                        u"This email address is already registered. Do you want to <a href=\"{loginurl}\">login</a> instead?"
+                        "This email address is already registered. Do you want to <a href=\"{loginurl}\">login</a> instead?"
                     ).format(loginurl=escape(url_for('.login')))
                 )
             )

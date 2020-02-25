@@ -126,7 +126,7 @@ def make_email_primary():
                 user_data_changed.send(
                     current_auth.user, changes=['email-update-primary']
                 )
-                flash(_(u"Your primary email address has been updated"), 'success')
+                flash(_("Your primary email address has been updated"), 'success')
         else:
             flash(_("No such email address is linked to this user account"), 'danger')
     else:
@@ -151,7 +151,7 @@ def make_phone_primary():
                 user_data_changed.send(
                     current_auth.user, changes=['phone-update-primary']
                 )
-                flash(_(u"Your primary phone number has been updated"), 'success')
+                flash(_("Your primary phone number has been updated"), 'success')
         else:
             flash(_("No such phone number is linked to this user account"), 'danger')
     else:
@@ -176,15 +176,15 @@ def remove_email(md5sum):
     return render_delete_sqla(
         useremail,
         db,
-        title=_(u"Confirm removal"),
-        message=_(u"Remove email address {email} from your account?").format(
+        title=_("Confirm removal"),
+        message=_("Remove email address {email} from your account?").format(
             email=useremail.email
         ),
-        success=_(u"You have removed your email address {email}").format(
+        success=_("You have removed your email address {email}").format(
             email=useremail.email
         ),
         next=url_for('.account'),
-        delete_text=_(u"Remove"),
+        delete_text=_("Remove"),
     )
 
 
@@ -208,7 +208,7 @@ def verify_email(md5sum):
     verify_form = VerifyEmailForm()
     if verify_form.validate_on_submit():
         send_email_verify_link(emailclaim)
-        flash(_(u"The verification email has been sent to this address"), 'success')
+        flash(_("The verification email has been sent to this address"), 'success')
         return render_redirect(url_for('.account'), code=303)
     return render_form(
         form=verify_form,
@@ -243,7 +243,7 @@ def add_phone():
             )
         except ValueError as e:
             db.session.rollback()
-            form.phone.errors.append(unicode(e))
+            form.phone.errors.append(str(e))
     return render_form(
         form=form,
         title=_("Add a phone number"),
@@ -278,15 +278,13 @@ def remove_phone(number):
     return render_delete_sqla(
         userphone,
         db,
-        title=_(u"Confirm removal"),
-        message=_(u"Remove phone number {phone} from your account?").format(
+        title=_("Confirm removal"),
+        message=_("Remove phone number {phone} from your account?").format(
             phone=userphone.phone
         ),
-        success=_(u"You have removed your number {phone}").format(
-            phone=userphone.phone
-        ),
+        success=_("You have removed your number {phone}").format(phone=userphone.phone),
         next=url_for('.account'),
-        delete_text=_(u"Remove"),
+        delete_text=_("Remove"),
     )
 
 
@@ -362,13 +360,13 @@ def remove_extid(extid):
     return render_delete_sqla(
         extid,
         db,
-        title=_(u"Confirm removal"),
-        message=_(u"Remove {service} account ‘{username}’ from your account?").format(
+        title=_("Confirm removal"),
+        message=_("Remove {service} account ‘{username}’ from your account?").format(
             service=login_registry[extid.service].title, username=extid.username
         ),
-        success=_(u"You have removed the {service} account ‘{username}’").format(
+        success=_("You have removed the {service} account ‘{username}’").format(
             service=login_registry[extid.service].title, username=extid.username
         ),
         next=url_for('.account'),
-        delete_text=_(u"Remove"),
+        delete_text=_("Remove"),
     )

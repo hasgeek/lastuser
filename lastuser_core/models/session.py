@@ -39,7 +39,7 @@ session_client = db.Table(
                 primary_key=True,
             ),
         )
-    )
+    ),
 )
 
 
@@ -94,8 +94,8 @@ class UserSession(BaseMixin, db.Model):
                         .values(updated_at=db.func.utcnow())
                     )
             else:
-                self.ipaddr = request.remote_addr or u''
-                self.user_agent = unicode(request.user_agent.string[:250]) or u''
+                self.ipaddr = request.remote_addr or ''
+                self.user_agent = str(request.user_agent.string[:250]) or ''
 
     @cached_property
     def ua(self):

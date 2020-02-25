@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from urllib import quote
+from urllib.parse import quote
 from uuid import uuid4
 
 from flask import redirect, request, session
@@ -31,7 +31,7 @@ class LinkedInProvider(LoginProvider):
         self.secret = secret
 
     def do(self, callback_url):
-        session['linkedin_state'] = unicode(uuid4())
+        session['linkedin_state'] = str(uuid4())
         session['linkedin_callback'] = callback_url
         return redirect(
             self.auth_url.format(
@@ -51,14 +51,14 @@ class LinkedInProvider(LoginProvider):
             )
         if 'error' in request.args:
             if request.args['error'] == 'access_denied':
-                raise LoginCallbackError(_(u"You denied the LinkedIn login request"))
+                raise LoginCallbackError(_("You denied the LinkedIn login request"))
             elif request.args['error'] == 'redirect_uri_mismatch':
                 # TODO: Log this as an exception for the server admin to look at
                 raise LoginCallbackError(
-                    _(u"This server's callback URL is misconfigured")
+                    _("This server's callback URL is misconfigured")
                 )
             else:
-                raise LoginCallbackError(_(u"Unknown failure"))
+                raise LoginCallbackError(_("Unknown failure"))
         code = request.args.get('code', None)
         try:
             response = requests.post(
@@ -75,7 +75,7 @@ class LinkedInProvider(LoginProvider):
         except requests.exceptions.RequestException as e:
             raise LoginCallbackError(
                 _(
-                    u"Unable to authenticate via LinkedIn. Internal details: {error}"
+                    "Unable to authenticate via LinkedIn. Internal details: {error}"
                 ).format(error=e)
             )
         if 'error' in response:
@@ -89,13 +89,13 @@ class LinkedInProvider(LoginProvider):
         except requests.exceptions.RequestException as e:
             raise LoginCallbackError(
                 _(
-                    u"Unable to authenticate via LinkedIn. Internal details: {error}"
+                    "Unable to authenticate via LinkedIn. Internal details: {error}"
                 ).format(error=e)
             )
 
         if not info.get('id'):
             raise LoginCallbackError(
-                _(u"Unable to retrieve user details from LinkedIn. Please try again")
+                _("Unable to retrieve user details from LinkedIn. Please try again")
             )
 
         return {

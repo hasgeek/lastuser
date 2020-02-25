@@ -2,7 +2,7 @@
 
 from datetime import timedelta
 from hashlib import sha256
-import urlparse
+import urllib.parse
 
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import load_only
@@ -47,16 +47,16 @@ class ScopeMixin(object):
             return tuple(sorted(self._scope.split()))
 
     def _scope_set(self, value):
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             value = [value]
-        self._scope = u' '.join(sorted(t.strip() for t in value if t))
+        self._scope = ' '.join(sorted(t.strip() for t in value if t))
 
     @declared_attr
     def scope(cls):
         return db.synonym('_scope', descriptor=property(cls._scope_get, cls._scope_set))
 
     def add_scope(self, additional):
-        if isinstance(additional, basestring):
+        if isinstance(additional, str):
             additional = [additional]
         self.scope = list(set(self.scope).union(set(additional)))
 
@@ -83,7 +83,7 @@ class Client(ScopeMixin, BaseMixin, db.Model):
     #: Human-readable title
     title = db.Column(db.Unicode(250), nullable=False)
     #: Long description
-    description = db.Column(db.UnicodeText, nullable=False, default=u'')
+    description = db.Column(db.UnicodeText, nullable=False, default='')
     #: Confidential or public client? Public has no secret key
     confidential = db.Column(db.Boolean, nullable=False)
     #: Website
@@ -92,12 +92,12 @@ class Client(ScopeMixin, BaseMixin, db.Model):
     namespace = db.Column(db.UnicodeText, nullable=True, unique=True)
     #: Redirect URIs (one or more)
     _redirect_uris = db.Column(
-        'redirect_uri', db.UnicodeText, nullable=True, default=u''
+        'redirect_uri', db.UnicodeText, nullable=True, default=''
     )
     #: Back-end notification URI
-    notification_uri = db.Column(db.UnicodeText, nullable=True, default=u'')
+    notification_uri = db.Column(db.UnicodeText, nullable=True, default='')
     #: Front-end notification URI
-    iframe_uri = db.Column(db.UnicodeText, nullable=True, default=u'')
+    iframe_uri = db.Column(db.UnicodeText, nullable=True, default='')
     #: Active flag
     active = db.Column(db.Boolean, nullable=False, default=True)
     #: Allow anyone to login to this app?
@@ -131,7 +131,7 @@ class Client(ScopeMixin, BaseMixin, db.Model):
     )
 
     def __repr__(self):
-        return u'<Client "{title}" {key}>'.format(title=self.title, key=self.key)
+        return '<Client "{title}" {key}>'.format(title=self.title, key=self.key)
 
     def secret_is(self, candidate, name):
         """
@@ -146,7 +146,7 @@ class Client(ScopeMixin, BaseMixin, db.Model):
 
     @redirect_uris.setter
     def redirect_uris(self, value):
-        self._redirect_uris = u'\r\n'.join(value)
+        self._redirect_uris = '\r\n'.join(value)
 
     @property
     def redirect_uri(self):
@@ -155,12 +155,12 @@ class Client(ScopeMixin, BaseMixin, db.Model):
             return uris[0]
 
     def host_matches(self, url):
-        netloc = urlparse.urlsplit(url or '').netloc
+        netloc = urllib.parse.urlsplit(url or '').netloc
         if netloc:
-            return netloc in [
-                urlparse.urlsplit(r).netloc
-                for r in list(self.redirect_uris) + [self.website]
-            ]
+            return netloc in (
+                urllib.parse.urlsplit(r).netloc
+                for r in (self.redirect_uris + (self.website,))
+            )
         return False
 
     @property
@@ -249,14 +249,17 @@ class ClientCredential(BaseMixin, db.Model):
     #: OAuth client key
     name = db.Column(db.String(22), nullable=False, unique=True, default=buid)
     #: User description for this credential
-    title = db.Column(db.Unicode(250), nullable=False, default=u'')
+    title = db.Column(db.Unicode(250), nullable=False, default='')
     #: OAuth client secret, hashed (64 chars hash plus 7 chars id prefix = 71 chars)
     secret_hash = db.Column(db.String(71), nullable=False)
     #: When was this credential last used for an API call?
     accessed_at = db.Column(db.TIMESTAMP(timezone=True), nullable=True)
 
     def secret_is(self, candidate):
-        return self.secret_hash == 'sha256$' + sha256(candidate).hexdigest()
+        return (
+            self.secret_hash
+            == 'sha256$' + sha256(candidate.encode('utf-8')).hexdigest()
+        )
 
     @classmethod
     def get(cls, name):
@@ -273,7 +276,7 @@ class ClientCredential(BaseMixin, db.Model):
         cred = cls(client=client, name=buid())
         db.session.add(cred)
         secret = newsecret()
-        cred.secret_hash = 'sha256$' + sha256(secret).hexdigest()
+        cred.secret_hash = 'sha256$' + sha256(secret.encode('utf-8')).hexdigest()
         return cred, secret
 
 
@@ -312,7 +315,7 @@ class Resource(BaseScopedNameMixin, db.Model):
     )
     parent = db.synonym('client')
     title = db.Column(db.Unicode(250), nullable=False)
-    description = db.Column(db.UnicodeText, default=u'', nullable=False)
+    description = db.Column(db.UnicodeText, default='', nullable=False)
     siteresource = db.Column(db.Boolean, default=False, nullable=False)
     restricted = db.Column(db.Boolean, default=False, nullable=False)
     __table_args__ = (
@@ -369,7 +372,7 @@ class ResourceAction(BaseMixin, db.Model):
         backref=db.backref('actions', cascade='all, delete-orphan'),
     )
     title = db.Column(db.Unicode(250), nullable=False)
-    description = db.Column(db.UnicodeText, default=u'', nullable=False)
+    description = db.Column(db.UnicodeText, default='', nullable=False)
 
     # Action names are unique per client app
     __table_args__ = (db.UniqueConstraint('resource_id', 'name'),)
@@ -445,7 +448,7 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
     token = db.Column(db.String(22), default=buid, nullable=False, unique=True)
     #: The token's type
     token_type = db.Column(
-        db.String(250), default=u'bearer', nullable=False
+        db.String(250), default='bearer', nullable=False
     )  # 'bearer', 'mac' or a URL
     #: Token secret for 'mac' type
     secret = db.Column(db.String(44), nullable=True)
@@ -485,7 +488,7 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
         self.secret = newsecret()
 
     def __repr__(self):
-        return u'<AuthToken {token} of {client} {user}>'.format(
+        return '<AuthToken {token} of {client} {user}>'.format(
             token=self.token, client=repr(self.client)[1:-1], user=repr(self.user)[1:-1]
         )
 
@@ -513,7 +516,7 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
         elif value in ['hmac-sha-1', 'hmac-sha-256']:
             self._algorithm = value
         else:
-            raise ValueError(_(u"Unrecognized algorithm ‘{value}’").format(value=value))
+            raise ValueError(_("Unrecognized algorithm ‘{value}’").format(value=value))
 
     algorithm = db.synonym('_algorithm', descriptor=algorithm)
 
@@ -605,7 +608,7 @@ class Permission(BaseMixin, db.Model):
     #: Human-friendly title
     title = db.Column(db.Unicode(250), nullable=False)
     #: Description of what this permission is about
-    description = db.Column(db.UnicodeText, default=u'', nullable=False)
+    description = db.Column(db.UnicodeText, default='', nullable=False)
     #: Is this permission available to all users and client apps?
     allusers = db.Column(db.Boolean, default=False, nullable=False)
 
@@ -677,7 +680,7 @@ class UserClientPermissions(BaseMixin, db.Model):
     )
     #: The permissions as a string of tokens
     access_permissions = db.Column(
-        'permissions', db.UnicodeText, default=u'', nullable=False
+        'permissions', db.UnicodeText, default='', nullable=False
     )
 
     # Only one assignment per user and client
@@ -702,9 +705,9 @@ class UserClientPermissions(BaseMixin, db.Model):
                     # Merge permission strings
                     tokens = set(operm.access_permissions.split(' '))
                     tokens.update(set(nperm.access_permissions.split(' ')))
-                    if u' ' in tokens:
-                        tokens.remove(u' ')
-                    nperm.access_permissions = u' '.join(sorted(tokens))
+                    if ' ' in tokens:
+                        tokens.remove(' ')
+                    nperm.access_permissions = ' '.join(sorted(tokens))
                     db.session.delete(operm)
                     merge_performed = True
             if not merge_performed:
@@ -732,7 +735,7 @@ class TeamClientPermissions(BaseMixin, db.Model):
     )
     #: The permissions as a string of tokens
     access_permissions = db.Column(
-        'permissions', db.UnicodeText, default=u'', nullable=False
+        'permissions', db.UnicodeText, default='', nullable=False
     )
 
     # Only one assignment per team and client
@@ -790,6 +793,6 @@ class NoticeType(BaseMixin, db.Model):
     #: Human-friendly title
     title = db.Column(db.Unicode(250), nullable=False)
     #: Description of what this notice type is about
-    description = db.Column(db.UnicodeText, default=u'', nullable=False)
+    description = db.Column(db.UnicodeText, default='', nullable=False)
     #: Is this notice type available to all users and client apps?
     allusers = db.Column(db.Boolean, default=False, nullable=False)

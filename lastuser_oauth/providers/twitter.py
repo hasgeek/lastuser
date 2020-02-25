@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 
 from functools import wraps
-from httplib import BadStatusLine
+from http.client import BadStatusLine
 from socket import error as socket_error
 from socket import gaierror
 from ssl import SSLError
 
-from flask_oauth import OAuth, OAuthException  # OAuth 1.0a
 from tweepy import API as TwitterAPI  # NOQA: N811
 from tweepy import OAuthHandler as TwitterOAuthHandler
 from tweepy import TweepError
 
 from baseframe import _
 from lastuser_core.registry import LoginCallbackError, LoginInitError, LoginProvider
+
+from .flask_oauth import OAuth, OAuthException  # OAuth 1.0a
 
 __all__ = ['TwitterProvider']
 
@@ -86,7 +87,7 @@ class TwitterProvider(LoginProvider):
     def do(self, callback_url):
         try:
             return self.twitter.authorize(callback=callback_url)
-        except (OAuthException, BadStatusLine, SSLError, socket_error, gaierror), e:
+        except (OAuthException, BadStatusLine, SSLError, socket_error, gaierror) as e:
             raise LoginInitError(e)
         except KeyError:
             # As above, the lack of a Content-Type header in a 404 response breaks Flask-OAuth. Catch it.

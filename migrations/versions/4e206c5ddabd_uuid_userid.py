@@ -97,7 +97,7 @@ def upgrade():
         progress.update(counter)
     progress.finish()
 
-    op.drop_constraint(u'organization_userid_key', 'organization', type_='unique')
+    op.drop_constraint('organization_userid_key', 'organization', type_='unique')
     op.drop_column('organization', 'userid')
 
     # Upgrade Team
@@ -114,7 +114,7 @@ def upgrade():
         progress.update(counter)
     progress.finish()
 
-    op.drop_constraint(u'team_userid_key', 'team', type_='unique')
+    op.drop_constraint('team_userid_key', 'team', type_='unique')
     op.drop_column('team', 'userid')
 
     # Upgrade User
@@ -131,7 +131,7 @@ def upgrade():
         progress.update(counter)
     progress.finish()
 
-    op.drop_constraint(u'user_userid_key', 'user', type_='unique')
+    op.drop_constraint('user_userid_key', 'user', type_='unique')
     op.drop_column('user', 'userid')
 
     # Upgrade UserOldId

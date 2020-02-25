@@ -22,7 +22,7 @@ class TestResourceAction(TestDatabaseFixture):
         expected_permissions = ['edit', 'delete']
         received_permissions = resource_action.permissions(crusoe)
         self.assertIsInstance(received_permissions, set)
-        self.assertItemsEqual(received_permissions, expected_permissions)
+        self.assertCountEqual(received_permissions, expected_permissions)
 
     def test_resourceaction_get(self):
         """

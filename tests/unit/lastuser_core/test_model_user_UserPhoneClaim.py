@@ -11,7 +11,7 @@ class TestUserPhoneClaim(TestDatabaseFixture):
         """
         Test for creation of UserPhoneClaim instance
         """
-        phone = u'9123456780'
+        phone = '9123456780'
         result = models.UserPhoneClaim(phone)
         self.assertIsInstance(result, models.UserPhoneClaim)
         self.assertEqual(result.phone, phone)
@@ -23,22 +23,22 @@ class TestUserPhoneClaim(TestDatabaseFixture):
         """
         crusoe = self.fixtures.crusoe
         oakley = self.fixtures.oakley
-        phone = u'9191919191'
+        phone = '9191919191'
         claim_by_crusoe = models.UserPhoneClaim(phone=phone, user=crusoe)
         claim_by_oakley = models.UserPhoneClaim(phone=phone, user=oakley)
         db.session.add(claim_by_crusoe, claim_by_oakley)
         db.session.commit()
         result = models.UserPhoneClaim.all(phone)
         self.assertIsInstance(result, list)
-        self.assertItemsEqual(result, [claim_by_crusoe, claim_by_oakley])
+        self.assertCountEqual(result, [claim_by_crusoe, claim_by_oakley])
 
     def test_userphoneclaim_get(self):
         """
         Test for retrieving UserPhoneClaim instances given phone
         number and a user
         """
-        snow = models.User(username=u'', fullname=u'President Coriolanus Snow')
-        phone = u'9191919191'
+        snow = models.User(username='', fullname='President Coriolanus Snow')
+        phone = '9191919191'
         phone_claim = models.UserPhoneClaim(phone=phone, user=snow)
         db.session.add(phone_claim)
         db.session.commit()
@@ -52,13 +52,13 @@ class TestUserPhoneClaim(TestDatabaseFixture):
         Test for verifying whether UserPhoneClaim instance
         returns phone in unicode format
         """
-        haymitch = models.User(username=u'haymitch', fullname=u'Haymitch Abernathy')
-        phone = u'9191919191'
+        haymitch = models.User(username='haymitch', fullname='Haymitch Abernathy')
+        phone = '9191919191'
         phone_claim = models.UserPhoneClaim(phone=phone, user=haymitch)
         db.session.add(phone_claim)
         db.session.commit()
-        result = unicode(models.UserPhoneClaim(phone=phone))
-        self.assertIsInstance(result, unicode)
+        result = str(models.UserPhoneClaim(phone=phone))
+        self.assertIsInstance(result, str)
         assert phone in result
 
     def test_userphoneclaim_permissions(self):
@@ -66,8 +66,8 @@ class TestUserPhoneClaim(TestDatabaseFixture):
         Test for verifying whether user has verify permission on a
         UserPhoneClaim instance
         """
-        coin = models.User(username=u'coin', fullname=u'President Alma Coin')
-        phone = u'9191919191'
+        coin = models.User(username='coin', fullname='President Alma Coin')
+        phone = '9191919191'
         phone_claim = models.UserPhoneClaim(phone=phone, user=coin)
         permissions_expected = ['verify']
         result = phone_claim.permissions(coin)
@@ -75,4 +75,4 @@ class TestUserPhoneClaim(TestDatabaseFixture):
         permissions_received = []
         for each in result:
             permissions_received.append(each)
-        self.assertItemsEqual(permissions_expected, permissions_received)
+        self.assertCountEqual(permissions_expected, permissions_received)

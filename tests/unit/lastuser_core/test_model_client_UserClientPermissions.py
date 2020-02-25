@@ -11,9 +11,9 @@ class TestUserClientPermissions(TestDatabaseFixture):
         """
         Test for verifying creation of UserClientPermissions instance
         """
-        gustav = models.User(username=u'gustav')
+        gustav = models.User(username='gustav')
         client = self.fixtures.client
-        access_permissions = u'siteadmin'
+        access_permissions = 'siteadmin'
         result = models.UserClientPermissions(
             user=gustav, client=client, access_permissions=access_permissions
         )
@@ -28,7 +28,7 @@ class TestUserClientPermissions(TestDatabaseFixture):
         """
         # scenario 1: when *only* olduser has UserClientPermissions instance
         old_crusoe = self.fixtures.crusoe
-        new_crusoe = models.User(username=u'chef-crusoe')
+        new_crusoe = models.User(username='chef-crusoe')
         models.UserClientPermissions.migrate_user(old_crusoe, new_crusoe)
         for each in new_crusoe.client_permissions:
             self.assertIsInstance(each, models.UserClientPermissions)
@@ -37,14 +37,14 @@ class TestUserClientPermissions(TestDatabaseFixture):
         # scenario 2: when *both* olduser and newuser have UserClientPermissions instances
         old_oakley = self.fixtures.oakley
         client = self.fixtures.client
-        access_permissions_old_oakley = u'siteadmin'
-        access_permissions_new_oakley = u'siteeditor'
+        access_permissions_old_oakley = 'siteadmin'
+        access_permissions_new_oakley = 'siteeditor'
         old_oakley_userclientperms = models.UserClientPermissions(
             user=old_oakley,
             client=client,
             access_permissions=access_permissions_old_oakley,
         )
-        new_oakley = models.User(username=u'oakley-the-stud')
+        new_oakley = models.User(username='oakley-the-stud')
         new_oakley_userclientperms = models.UserClientPermissions(
             user=new_oakley,
             client=client,
@@ -67,9 +67,9 @@ class TestUserClientPermissions(TestDatabaseFixture):
         """
         Test for UserClientPermissions' pickername
         """
-        finnick = models.User(username=u'finnick', fullname=u"Finnick Odair")
-        district4 = models.Client(title=u"District 4")
-        access_permissions = u'siteadmin'
+        finnick = models.User(username='finnick', fullname="Finnick Odair")
+        district4 = models.Client(title="District 4")
+        access_permissions = 'siteadmin'
         result = models.UserClientPermissions(
             user=finnick, client=district4, access_permissions=access_permissions
         )
@@ -79,9 +79,9 @@ class TestUserClientPermissions(TestDatabaseFixture):
         """
         Test for UserClientPermissions' buid
         """
-        beetee = models.User(username=u'beetee', fullname=u"Beetee")
-        district3 = models.Client(title=u'District 3')
-        access_permissions = u'siteadmin'
+        beetee = models.User(username='beetee', fullname="Beetee")
+        district3 = models.Client(title='District 3')
+        access_permissions = 'siteadmin'
         result = models.UserClientPermissions(
             user=beetee, client=district3, access_permissions=access_permissions
         )

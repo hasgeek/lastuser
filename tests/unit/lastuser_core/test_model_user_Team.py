@@ -13,9 +13,8 @@ class TestTeam(TestDatabaseFixture):
         dachshunds = self.fixtures.dachshunds
         dachshunds_buid = dachshunds.buid
         result_with_buid = models.Team.get(buid=dachshunds_buid)
-        assert u'<Team {team} of {org}>'.format(
-            team=dachshunds.title, org=repr(dachshunds.org)[1:-1]
-        ) in repr(result_with_buid)
+        assert dachshunds.title == result_with_buid.title
+        assert dachshunds.org == result_with_buid.org
         with self.assertRaises(TypeError):
             models.Team.get()
 
@@ -26,7 +25,7 @@ class TestTeam(TestDatabaseFixture):
         dachshunds = self.fixtures.dachshunds
         title = dachshunds.title
         pickername = dachshunds.pickername
-        self.assertIsInstance(pickername, unicode)
+        self.assertIsInstance(pickername, str)
         self.assertEqual(title, pickername)
 
     def test_team_permissions(self):
@@ -41,7 +40,7 @@ class TestTeam(TestDatabaseFixture):
         permissions_received = []
         for each in result:
             permissions_received.append(each)
-        self.assertItemsEqual(permissions_expected, permissions_received)
+        self.assertCountEqual(permissions_expected, permissions_received)
 
     def test_team_migrate_user(self):
         """

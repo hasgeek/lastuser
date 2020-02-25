@@ -28,9 +28,9 @@ class NewEmailAddressForm(forms.RecaptchaForm):
         coerce=nullstr,
         validators=[forms.validators.Optional()],
         choices=[
-            (__(u"Home"), __(u"Home")),
-            (__(u"Work"), __(u"Work")),
-            (__(u"Other"), __(u"Other")),
+            (__("Home"), __("Home")),
+            (__("Work"), __("Work")),
+            (__("Other"), __("Other")),
         ],
     )
 

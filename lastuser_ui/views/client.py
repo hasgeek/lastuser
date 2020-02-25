@@ -143,7 +143,7 @@ def client_edit(client):
                 db.session.delete(perm)
             flash(
                 _(
-                    u"This application’s owner has changed, so all previously assigned permissions "
+                    "This application’s owner has changed, so all previously assigned permissions "
                     "have been revoked"
                 ),
                 'warning',
@@ -174,10 +174,10 @@ def client_delete(client):
     return render_delete_sqla(
         client,
         db,
-        title=_(u"Confirm delete"),
-        message=_(u"Delete application ‘{title}’? ").format(title=client.title),
+        title=_("Confirm delete"),
+        message=_("Delete application ‘{title}’? ").format(title=client.title),
         success=_(
-            u"You have deleted application ‘{title}’ and all its associated resources and permission assignments"
+            "You have deleted application ‘{title}’ and all its associated resources and permission assignments"
         ).format(title=client.title),
         next=url_for('.client_list'),
     )
@@ -220,9 +220,9 @@ def client_cred_delete(client, cred):
     return render_delete_sqla(
         cred,
         db,
-        title=_(u"Confirm delete"),
-        message=_(u"Delete access key ‘{title}’? ").format(title=cred.title),
-        success=_(u"You have deleted access key ‘{title}’").format(title=cred.title),
+        title=_("Confirm delete"),
+        message=_("Delete access key ‘{title}’? ").format(title=cred.title),
+        success=_("You have deleted access key ‘{title}’").format(title=cred.title),
         next=url_for('.client_info', key=client.key),
     )
 
@@ -311,8 +311,8 @@ def permission_delete(perm):
     return render_delete_sqla(
         perm,
         db,
-        title=_(u"Confirm delete"),
-        message=_(u"Delete permission ‘{name}’?").format(name=perm.name),
+        title=_("Confirm delete"),
+        message=_("Delete permission ‘{name}’?").format(name=perm.name),
         success=_("Your permission has been deleted"),
         next=url_for('.permission_list'),
     )
@@ -350,7 +350,7 @@ def permission_user_new(client):
     else:
         abort(403)  # This should never happen. Clients always have an owner.
     form.perms.choices = [
-        (ap.name, _(u"{name} – {title}").format(name=ap.name, title=ap.title))
+        (ap.name, _("{name} – {title}").format(name=ap.name, title=ap.title))
         for ap in available_perms
     ]
     if form.validate_on_submit():
@@ -360,7 +360,7 @@ def permission_user_new(client):
                 user=form.user.data, client=client
             ).first()
             if permassign:
-                perms.update(permassign.access_permissions.split(u' '))
+                perms.update(permassign.access_permissions.split(' '))
             else:
                 permassign = UserClientPermissions(user=form.user.data, client=client)
                 db.session.add(permassign)
@@ -369,23 +369,23 @@ def permission_user_new(client):
                 team=form.team, client=client
             ).first()
             if permassign:
-                perms.update(permassign.access_permissions.split(u' '))
+                perms.update(permassign.access_permissions.split(' '))
             else:
                 permassign = TeamClientPermissions(team=form.team, client=client)
                 db.session.add(permassign)
         perms.update(form.perms.data)
-        permassign.access_permissions = u' '.join(sorted(perms))
+        permassign.access_permissions = ' '.join(sorted(perms))
         db.session.commit()
         if client.user:
             flash(
-                _(u"Permissions have been assigned to user {pname}").format(
+                _("Permissions have been assigned to user {pname}").format(
                     pname=form.user.data.pickername
                 ),
                 'success',
             )
         else:
             flash(
-                _(u"Permissions have been assigned to team ‘{pname}’").format(
+                _("Permissions have been assigned to team ‘{pname}’").format(
                     pname=permassign.team.pickername
                 ),
                 'success',
@@ -437,15 +437,15 @@ def permission_user_edit(client, kwargs):
         ).first_or_404()
     form = PermissionEditForm()
     form.perms.choices = [
-        (ap.name, _(u"{name} – {title}").format(name=ap.name, title=ap.title))
+        (ap.name, _("{name} – {title}").format(name=ap.name, title=ap.title))
         for ap in available_perms
     ]
     if request.method == 'GET':
         if permassign:
-            form.perms.data = permassign.access_permissions.split(u' ')
+            form.perms.data = permassign.access_permissions.split(' ')
     if form.validate_on_submit():
         form.perms.data.sort()
-        perms = u' '.join(form.perms.data)
+        perms = ' '.join(form.perms.data)
         if not perms:
             db.session.delete(permassign)
         else:
@@ -454,14 +454,14 @@ def permission_user_edit(client, kwargs):
         if perms:
             if client.user:
                 flash(
-                    _(u"Permissions have been updated for user {pname}").format(
+                    _("Permissions have been updated for user {pname}").format(
                         pname=user.pickername
                     ),
                     'success',
                 )
             else:
                 flash(
-                    _(u"Permissions have been updated for team {title}").format(
+                    _("Permissions have been updated for team {title}").format(
                         title=team.title
                     ),
                     'success',
@@ -469,14 +469,14 @@ def permission_user_edit(client, kwargs):
         else:
             if client.user:
                 flash(
-                    _(u"All permissions have been revoked for user {pname}").format(
+                    _("All permissions have been revoked for user {pname}").format(
                         pname=user.pickername
                     ),
                     'success',
                 )
             else:
                 flash(
-                    _(u"All permissions have been revoked for team {title}").format(
+                    _("All permissions have been revoked for team {title}").format(
                         title=team.title
                     ),
                     'success',
@@ -507,11 +507,11 @@ def permission_user_delete(client, kwargs):
         return render_delete_sqla(
             permassign,
             db,
-            title=_(u"Confirm delete"),
+            title=_("Confirm delete"),
             message=_(
-                u"Remove all permissions assigned to user {pname} for app ‘{title}’?"
+                "Remove all permissions assigned to user {pname} for app ‘{title}’?"
             ).format(pname=user.pickername, title=client.title),
-            success=_(u"You have revoked permisions for user {pname}").format(
+            success=_("You have revoked permisions for user {pname}").format(
                 pname=user.pickername
             ),
             next=url_for('.client_info', key=client.key),
@@ -526,11 +526,11 @@ def permission_user_delete(client, kwargs):
         return render_delete_sqla(
             permassign,
             db,
-            title=_(u"Confirm delete"),
+            title=_("Confirm delete"),
             message=_(
-                u"Remove all permissions assigned to team ‘{pname}’ for app ‘{title}’?"
+                "Remove all permissions assigned to team ‘{pname}’ for app ‘{title}’?"
             ).format(pname=team.title, title=client.title),
-            success=_(u"You have revoked permisions for team {title}").format(
+            success=_("You have revoked permisions for team {title}").format(
                 title=team.title
             ),
             next=url_for('.client_info', key=client.key),
@@ -598,11 +598,11 @@ def resource_delete(client, resource):
     return render_delete_sqla(
         resource,
         db,
-        title=_(u"Confirm delete"),
-        message=_(u"Delete resource ‘{resource}’ from app ‘{client}’?").format(
+        title=_("Confirm delete"),
+        message=_("Delete resource ‘{resource}’ from app ‘{client}’?").format(
             resource=resource.title, client=client.title
         ),
-        success=_(u"You have deleted resource ‘{resource}’ on app ‘{client}’").format(
+        success=_("You have deleted resource ‘{resource}’ on app ‘{client}’").format(
             resource=resource.title, client=client.title
         ),
         next=url_for('.client_info', key=client.key),
@@ -684,10 +684,10 @@ def resource_action_delete(client, resource, action):
         db,
         title=_("Confirm delete"),
         message=_(
-            u"Delete action ‘{action}’ from resource ‘{resource}’ of app ‘{client}’?"
+            "Delete action ‘{action}’ from resource ‘{resource}’ of app ‘{client}’?"
         ).format(action=action.title, resource=resource.title, client=client.title),
         success=_(
-            u"You have deleted action ‘{action}’ on resource ‘{resource}’ of app ‘{client}’"
+            "You have deleted action ‘{action}’ on resource ‘{resource}’ of app ‘{client}’"
         ).format(action=action.title, resource=resource.title, client=client.title),
         next=url_for('.client_info', key=client.key),
     )

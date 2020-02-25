@@ -14,7 +14,7 @@ class TestPermission(TestDatabaseFixture):
         # scenario 1: when allusers is False
         specialdachs = self.fixtures.specialdachs
         netizens = models.Permission(
-            name=u"netizens", title=u"Netizens", org=specialdachs, allusers=True
+            name="netizens", title="Netizens", org=specialdachs, allusers=True
         )
         db.session.add(netizens)
         db.session.commit()
@@ -59,9 +59,9 @@ class TestPermission(TestDatabaseFixture):
         get_owner_by_user = bdfl.owner
         self.assertEqual(get_owner_by_user, crusoe)
         specialdachs = self.fixtures.specialdachs
-        permission_name = u"netizens"
+        permission_name = "netizens"
         netizens = models.Permission(
-            name=permission_name, title=u"Netizens", allusers=True, org=specialdachs
+            name=permission_name, title="Netizens", allusers=True, org=specialdachs
         )
         db.session.add(netizens)
         db.session.commit()
@@ -81,4 +81,4 @@ class TestPermission(TestDatabaseFixture):
         permissions_received = []
         for each in result:
             permissions_received.append(each)
-        self.assertItemsEqual(permissions_expected_to_be_added, permissions_received)
+        self.assertCountEqual(permissions_expected_to_be_added, permissions_received)

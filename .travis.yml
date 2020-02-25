@@ -1,10 +1,11 @@
 language: python
 python:
-  - "2.7"
+  - "3.7"
 services:
   - redis-server
   - postgresql
 install:
+  - pip install git+https://github.com/hasgeek/flask-babelhg/
   - pip install -r requirements.txt
   - pip install -r test_requirements.txt
 before_script:
@@ -15,6 +16,3 @@ after_success:
   - coveralls
 notifications:
   email: false
-  slack:
-    - hasgeek:HDCoMDj3T4ICB59qFFVorCG8
-    - friendsofhasgeek:3bLViYSzhfaThJovFYCVD3fX

@@ -2,8 +2,7 @@
 
 from datetime import timedelta
 from functools import wraps
-from urllib import unquote
-from urlparse import urlparse
+from urllib.parse import unquote, urlparse
 
 from flask import Response, current_app, flash, redirect, request, session, url_for
 import itsdangerous
@@ -145,7 +144,7 @@ def requires_login(f):
     def decorated_function(*args, **kwargs):
         add_auth_attribute('login_required', True)
         if not current_auth.is_authenticated:
-            flash(_(u"You need to be logged in for that page"), 'info')
+            flash(_("You need to be logged in for that page"), 'info')
             session['next'] = get_current_url()
             return redirect(url_for('login'))
         return f(*args, **kwargs)

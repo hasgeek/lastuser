@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from collections import defaultdict
-from cStringIO import StringIO
 from functools import wraps
+from io import StringIO
 
 from flask import abort, current_app, render_template
 

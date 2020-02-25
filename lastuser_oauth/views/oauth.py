@@ -45,13 +45,13 @@ def verifyscope(scope, client):
             # The '*' resource (full access) is only available to trusted clients
             if not client.trusted:
                 raise ScopeException(
-                    _(u"Full access is only available to trusted clients")
+                    _("Full access is only available to trusted clients")
                 )
         elif item in resource_registry:
             if resource_registry[item]['trusted'] and not client.trusted:
                 raise ScopeException(
                     _(
-                        u"The resource {scope} is only available to trusted clients"
+                        "The resource {scope} is only available to trusted clients"
                     ).format(scope=item)
                 )
             internal_resources.append(item)
@@ -76,13 +76,13 @@ def verifyscope(scope, client):
             if ':' not in item:
                 raise ScopeException(
                     _(
-                        u"No namespace specified for external resource ‘{scope}’ in scope"
+                        "No namespace specified for external resource ‘{scope}’ in scope"
                     ).format(scope=item)
                 )
             itemparts = item.split(':')
             if len(itemparts) != 2:
                 raise ScopeException(
-                    _(u"Too many ‘:’ characters in ‘{scope}’ in scope").format(
+                    _("Too many ‘:’ characters in ‘{scope}’ in scope").format(
                         scope=item
                     )
                 )
@@ -91,7 +91,7 @@ def verifyscope(scope, client):
                 parts = subitem.split('/')
                 if len(parts) != 2:
                     raise ScopeException(
-                        _(u"Too many ‘/’ characters in ‘{scope}’ in scope").format(
+                        _("Too many ‘/’ characters in ‘{scope}’ in scope").format(
                             scope=item
                         )
                     )
@@ -107,12 +107,12 @@ def verifyscope(scope, client):
                     else:
                         raise ScopeException(
                             _(
-                                u"This application does not have access to all resources of app ‘{client}’"
+                                "This application does not have access to all resources of app ‘{client}’"
                             ).format(client=resource_client.title)
                         )
                 else:
                     raise ScopeException(
-                        _(u"Unknown resource namespace ‘{namespace}’ in scope").format(
+                        _("Unknown resource namespace ‘{namespace}’ in scope").format(
                             namespace=namespace
                         )
                     )
@@ -123,13 +123,13 @@ def verifyscope(scope, client):
                 if not resource:
                     raise ScopeException(
                         _(
-                            u"Unknown resource ‘{resource}’ under namespace ‘{namespace}’ in scope"
+                            "Unknown resource ‘{resource}’ under namespace ‘{namespace}’ in scope"
                         ).format(resource=resource_name, namespace=namespace)
                     )
                 if resource.restricted and resource.client.owner != client.owner:
                     raise ScopeException(
                         _(
-                            u"This application does not have access to resource ‘{resource}’ in scope"
+                            "This application does not have access to resource ‘{resource}’ in scope"
                         ).format(resource=resource_name)
                     )
 
@@ -139,7 +139,7 @@ def verifyscope(scope, client):
                     if not action:
                         raise ScopeException(
                             _(
-                                u"Unknown action ‘{action}’ on resource ‘{resource}’ under namespace ‘{namespace}’"
+                                "Unknown action ‘{action}’ on resource ‘{resource}’ under namespace ‘{namespace}’"
                             ).format(
                                 action=action_name,
                                 resource=resource_name,
@@ -272,7 +272,7 @@ def oauth_authorize():
     response_type = request.args.get('response_type')
     client_id = request.args.get('client_id')
     redirect_uri = request.args.get('redirect_uri')
-    scope = request.args.get('scope', u'').split(u' ')
+    scope = request.args.get('scope', '').split(' ')
     state = request.args.get('state')
 
     # Validation 1.1: Client_id present
@@ -301,7 +301,7 @@ def oauth_authorize():
                 client.redirect_uri,
                 state,
                 'invalid_request',
-                _(u"Redirect URI hostname doesn't match"),
+                _("Redirect URI hostname doesn't match"),
             )
 
     # Validation 1.4: Client allows login for this user
@@ -325,7 +325,7 @@ def oauth_authorize():
                 client.redirect_uri,
                 state,
                 'invalid_scope',
-                _(u"You do not have access to this application"),
+                _("You do not have access to this application"),
             )
 
     # Validation 2.1: Is response_type present?
@@ -334,7 +334,7 @@ def oauth_authorize():
             redirect_uri, state, 'invalid_request', _("response_type missing")
         )
     # Validation 2.2: Is response_type acceptable?
-    if response_type not in [u'code', u'token']:
+    if response_type not in ['code', 'token']:
         return oauth_auth_error(redirect_uri, state, 'unsupported_response_type')
 
     # Validation 3.1: Is scope present?
@@ -349,7 +349,7 @@ def oauth_authorize():
             scope, client
         )
     except ScopeException as scopeex:
-        return oauth_auth_error(redirect_uri, state, 'invalid_scope', unicode(scopeex))
+        return oauth_auth_error(redirect_uri, state, 'invalid_scope', str(scopeex))
 
     # Validations complete. Now ask user for permission
     # If the client is trusted (Lastuser feature, not in OAuth2 spec), don't ask user.
@@ -501,7 +501,7 @@ def oauth_make_token(user, client, scope, user_session=None):
 def oauth_token_success(token, **params):
     params['access_token'] = token.token
     params['token_type'] = token.token_type
-    params['scope'] = u' '.join(token.effective_scope)
+    params['scope'] = ' '.join(token.effective_scope)
     if token.client.trusted:
         # Trusted client. Send back waiting user messages.
         for ufm in list(UserFlashMessage.query.filter_by(user=token.user).all()):
@@ -531,7 +531,7 @@ def oauth_token():
     # Always required parameters
     grant_type = request.form.get('grant_type')
     client = current_auth.client  # Provided by @requires_client_login
-    scope = request.form.get('scope', u'').split(u' ')
+    scope = request.form.get('scope', '').split(' ')
     # if grant_type == 'authorization_code' (POST)
     code = request.form.get('code')
     redirect_uri = request.form.get('redirect_uri')
@@ -557,7 +557,7 @@ def oauth_token():
             # Confirm the client has access to the scope it wants
             verifyscope(scope, client)
         except ScopeException as scopeex:
-            return oauth_token_error('invalid_scope', unicode(scopeex))
+            return oauth_token_error('invalid_scope', str(scopeex))
 
         if buid:
             if client.trusted:
@@ -638,7 +638,7 @@ def oauth_token():
         try:
             verifyscope(scope, client)
         except ScopeException as scopeex:
-            return oauth_token_error('invalid_scope', unicode(scopeex))
+            return oauth_token_error('invalid_scope', str(scopeex))
         # All good. Grant access
         token = oauth_make_token(user=user, client=client, scope=scope)
         return oauth_token_success(

@@ -16,7 +16,7 @@ class TestUserPhone(TestDatabaseFixture):
         """
         Test for verifying creationg of UserPhone instance
         """
-        phone = u"+987645321"
+        phone = "+987645321"
         result = models.UserPhone(phone=phone)
         self.assertIsInstance(result, models.UserPhone)
 
@@ -25,7 +25,7 @@ class TestUserPhone(TestDatabaseFixture):
         Test for verifying UserPhone's get given a phone number
         """
         crusoe = self.fixtures.crusoe
-        phone = u'+8080808080'
+        phone = '+8080808080'
         result = models.UserPhone.get(phone)
         self.assertIsInstance(result, models.UserPhone)
         self.assertEqual(result.user, crusoe)
@@ -36,7 +36,7 @@ class TestUserPhone(TestDatabaseFixture):
         Test for verifying whether UserPhone's unicode method returns
         phone number in unicode
         """
-        phone = u'+8080808080'
-        result = unicode(models.UserPhone(phone))
-        self.assertIsInstance(result, unicode)
+        phone = '+8080808080'
+        result = str(models.UserPhone(phone))
+        self.assertIsInstance(result, str)
         self.assertEqual(result, phone)

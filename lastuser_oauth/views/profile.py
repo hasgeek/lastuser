@@ -81,7 +81,7 @@ def account_edit(newprofile=False):
             submit=_("Continue"),
             message=Markup(
                 _(
-                    u"Hello, <strong>{fullname}</strong>. Please spare a minute to fill out your profile"
+                    "Hello, <strong>{fullname}</strong>. Please spare a minute to fill out your profile"
                 ).format(fullname=escape(current_auth.user.fullname))
             ),
             ajax=True,
@@ -118,7 +118,7 @@ def confirm_email(md5sum, secret):
                         title=_("Email address already claimed"),
                         message=Markup(
                             _(
-                                u"The email address <code>{email}</code> has already been verified by another user"
+                                "The email address <code>{email}</code> has already been verified by another user"
                             ).format(email=escape(claimed_email))
                         ),
                     )
@@ -127,8 +127,8 @@ def confirm_email(md5sum, secret):
                         title=_("Email address already verified"),
                         message=Markup(
                             _(
-                                u"Hello <strong>{fullname}</strong>! "
-                                u"Your email address <code>{email}</code> has already been verified"
+                                "Hello <strong>{fullname}</strong>! "
+                                "Your email address <code>{email}</code> has already been verified"
                             ).format(
                                 fullname=escape(claimed_user.fullname),
                                 email=escape(claimed_email),
@@ -153,8 +153,8 @@ def confirm_email(md5sum, secret):
                 title=_("Email address verified"),
                 message=Markup(
                     _(
-                        u"Hello <strong>{fullname}</strong>! "
-                        u"Your email address <code>{email}</code> has now been verified"
+                        "Hello <strong>{fullname}</strong>! "
+                        "Your email address <code>{email}</code> has now been verified"
                     ).format(
                         fullname=escape(emailclaim.user.fullname),
                         email=escape(useremail.email),
@@ -165,9 +165,9 @@ def confirm_email(md5sum, secret):
             return render_message(
                 title=_("This was not for you"),
                 message=_(
-                    u"You’ve opened an email verification link that was meant for another user. "
-                    u"If you are managing multiple accounts, please login with the correct account "
-                    u"and open the link again"
+                    "You’ve opened an email verification link that was meant for another user. "
+                    "If you are managing multiple accounts, please login with the correct account "
+                    "and open the link again"
                 ),
                 code=403,
             )
@@ -175,7 +175,7 @@ def confirm_email(md5sum, secret):
         return render_message(
             title=_("Expired confirmation link"),
             message=_(
-                u"The confirmation link you clicked on is either invalid or has expired"
+                "The confirmation link you clicked on is either invalid or has expired"
             ),
             code=404,
         )

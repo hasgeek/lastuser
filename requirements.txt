@@ -11,7 +11,7 @@ Flask-OAuth==0.12
 pytz==2019.3
 bcrypt>=2.0.0
 ordereddict==1.1
-Flask-WTF==0.14.2
+Flask-WTF==0.14.3
 requests==2.22.0
 blinker==1.4
 Flask-RQ2==18.3

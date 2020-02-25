@@ -11,8 +11,8 @@ class TestScopeMixin(TestDatabaseFixture):
         """
         Test to retrieve scope on an ScopeMixin inherited class instance via _scope method
         """
-        scope = u'id'
-        bellatrix = models.User(username=u'bellatrix', fullname=u'Bellatrix Lestrange')
+        scope = 'id'
+        bellatrix = models.User(username='bellatrix', fullname='Bellatrix Lestrange')
         client = self.fixtures.client
         bellatrix_token = models.AuthToken(
             client=client, user=bellatrix, scope=scope, validity=0
@@ -23,8 +23,8 @@ class TestScopeMixin(TestDatabaseFixture):
 
     def test_scopemixin_scope(self):
         """Test to retrieve scope on an ScopeMixin inherited class instance via scope method"""
-        scope = u'tricks'
-        ginny = models.User(username=u'ginny', fullname=u'Ginny Weasley')
+        scope = 'tricks'
+        ginny = models.User(username='ginny', fullname='Ginny Weasley')
         client = self.fixtures.client
         ginny_token = models.AuthToken(
             client=client, user=ginny, scope=scope, validity=0
@@ -35,8 +35,8 @@ class TestScopeMixin(TestDatabaseFixture):
 
     def test_scopemixin__scope_get(self):
         """Test to retrieve scope with __scope_get on an AuthToken instance """
-        scope = [u'teams', u'email', u'id']
-        khal = models.User(username=u'khal', fullname=u'Khal Drogo')
+        scope = ['teams', 'email', 'id']
+        khal = models.User(username='khal', fullname='Khal Drogo')
         client = self.fixtures.client
         khal_token = models.AuthToken(client=client, user=khal, scope=scope, validity=0)
         db.session.add_all([khal, khal_token])
@@ -46,8 +46,8 @@ class TestScopeMixin(TestDatabaseFixture):
     def test_scopemixin__scope_set(self):
         """Test to set scope with __scope_set on an AuthToken instance"""
         """Test to retrieve scope with __scope_get on an AuthToken instance """
-        scope = [u'teams', u'wars', u'alliances']
-        sansa = models.User(username=u'sansa', fullname=u'Sansa Stark')
+        scope = ['teams', 'wars', 'alliances']
+        sansa = models.User(username='sansa', fullname='Sansa Stark')
         client = self.fixtures.client
         sansa_token = models.AuthToken(client=client, user=sansa, validity=0)
         sansa_token._scope_set(scope)
@@ -59,9 +59,9 @@ class TestScopeMixin(TestDatabaseFixture):
         """
         Test for adding scope to a ScopeMixin inherited class instance
         """
-        scope1 = u'spells'
-        scope2 = u'charms'
-        neville = models.User(username=u'neville', fullname=u'Neville Longbottom')
+        scope1 = 'spells'
+        scope2 = 'charms'
+        neville = models.User(username='neville', fullname='Neville Longbottom')
         client = self.fixtures.client
         neville_token = models.AuthToken(
             client=client, user=neville, validity=0, scope=scope1

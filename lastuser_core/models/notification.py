@@ -14,42 +14,42 @@ __all__ = ['SMSMessage', 'SMS_STATUS']
 
 
 class SMS_STATUS(LabeledEnum):  # NOQA: N801
-    QUEUED = (0, __(u"Queued"))
-    PENDING = (1, __(u"Pending"))
-    DELIVERED = (2, __(u"Delivered"))
-    FAILED = (3, __(u"Failed"))
-    UNKNOWN = (4, __(u"Unknown"))
+    QUEUED = (0, __("Queued"))
+    PENDING = (1, __("Pending"))
+    DELIVERED = (2, __("Delivered"))
+    FAILED = (3, __("Failed"))
+    UNKNOWN = (4, __("Unknown"))
 
 
 class NOTIFICATION_FLAGS(LabeledEnum):  # NOQA: N801
-    DELIVERY = (0, __(u"Delivery"))
-    READ = (1, __(u"Read"))
-    BOUNCE = (2, __(u"Bounce"))
+    DELIVERY = (0, __("Delivery"))
+    READ = (1, __("Read"))
+    BOUNCE = (2, __("Bounce"))
 
 
 class NOTIFICATION_TYPE(LabeledEnum):  # NOQA: N801
     #: Mandatory service announcement
-    MANDATORY = (0, u'mandatory', __(u"Mandatory"))
+    MANDATORY = (0, 'mandatory', __("Mandatory"))
     #: Result of user activity
-    TRANSACTIONAL = (1, u'transactional', __(u"Transactional"))
+    TRANSACTIONAL = (1, 'transactional', __("Transactional"))
     #: Periodic alert based on set criteria
-    ALERT = (2, u'alert', __(u"Alert"))
+    ALERT = (2, 'alert', __("Alert"))
     # "" Mass mail from the service provider
-    MASS = (3, u'mass', __(u"Mass"))
+    MASS = (3, 'mass', __("Mass"))
 
 
 # A note on frequency: scheduling/batching is done by Lastuser, not by the client app
 class NOTIFICATION_FREQUENCY(LabeledEnum):  # NOQA: N801
     #: Alert user immediately
-    IMMEDIATE = (0, u'immed', __(u"Immediately"))
+    IMMEDIATE = (0, 'immed', __("Immediately"))
     #: Send after a timeout, allowing app to cancel (tentative)
-    DELAYED = (1, u'delay', __(u"Delayed"))
+    DELAYED = (1, 'delay', __("Delayed"))
     #: Send a daily digest
-    DAILY = (2, u'daily', __(u"Batched daily"))
+    DAILY = (2, 'daily', __("Batched daily"))
     #: Send a weekly digest
-    WEEKLY = (3, u'weekly', __(u"Batched weekly"))
+    WEEKLY = (3, 'weekly', __("Batched weekly"))
     #: Send a monthly digest
-    MONTHLY = (4, u'monthly', __(u"Batched monthly"))
+    MONTHLY = (4, 'monthly', __("Batched monthly"))
 
 
 # --- Transport Channels ------------------------------------------------------
@@ -58,8 +58,8 @@ class NOTIFICATION_FREQUENCY(LabeledEnum):  # NOQA: N801
 
 
 class Channel(object):
-    name = u''
-    title = u""
+    name = ''
+    title = ""
     flags = []
 
     delivery_flag = False
@@ -68,8 +68,8 @@ class Channel(object):
 
 
 class ChannelBrowser(Channel):
-    name = u'browser'
-    title = __(u"In app")
+    name = 'browser'
+    title = __("In app")
     flags = [NOTIFICATION_FLAGS.DELIVERY, NOTIFICATION_FLAGS.READ]
 
     delivery_flag = True
@@ -78,8 +78,8 @@ class ChannelBrowser(Channel):
 
 
 class ChannelEmail(Channel):
-    name = u'email'
-    title = __(u"Email")
+    name = 'email'
+    title = __("Email")
     flags = [NOTIFICATION_FLAGS.BOUNCE, NOTIFICATION_FLAGS.READ]
 
     delivery_flag = False
@@ -88,8 +88,8 @@ class ChannelEmail(Channel):
 
 
 class ChannelTwitter(Channel):
-    name = u'twitter'
-    title = __(u"Twitter")
+    name = 'twitter'
+    title = __("Twitter")
     flags = [NOTIFICATION_FLAGS.DELIVERY, NOTIFICATION_FLAGS.BOUNCE]
 
     delivery_flag = True
@@ -98,8 +98,8 @@ class ChannelTwitter(Channel):
 
 
 class ChannelSMS(Channel):
-    name = u'sms'
-    title = __(u"SMS")
+    name = 'sms'
+    title = __("SMS")
     flags = [NOTIFICATION_FLAGS.DELIVERY, NOTIFICATION_FLAGS.BOUNCE]
 
     delivery_flag = True

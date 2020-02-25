@@ -94,10 +94,10 @@ class OrgView(UrlForView, ModelView):
         return render_delete_sqla(
             self.obj,
             db,
-            title=_(u"Confirm delete"),
-            message=_(u"Delete organization ‘{title}’? ").format(title=self.obj.title),
+            title=_("Confirm delete"),
+            message=_("Delete organization ‘{title}’? ").format(title=self.obj.title),
             success=_(
-                u"You have deleted organization ‘{title}’ and all its associated teams"
+                "You have deleted organization ‘{title}’ and all its associated teams"
             ).format(title=self.obj.title),
             next=url_for('.OrgView_index'),
         )
@@ -120,10 +120,7 @@ class OrgView(UrlForView, ModelView):
             team_data_changed.send(team, changes=['new'], user=current_auth.user)
             return render_redirect(self.obj.url_for('view'), code=303)
         return render_form(
-            form=form,
-            title=_(u"Create new team"),
-            formid='new_team',
-            submit=_("Create"),
+            form=form, title=_("Create new team"), formid='new_team', submit=_("Create")
         )
 
 
@@ -156,7 +153,7 @@ class TeamView(UrlForView, ModelView):
             return render_redirect(self.obj.org.url_for(), code=303)
         return render_form(
             form=form,
-            title=_(u"Edit team: {title}").format(title=self.obj.title),
+            title=_("Edit team: {title}").format(title=self.obj.title),
             formid='team_edit',
             submit=_("Save"),
             ajax=False,
@@ -172,10 +169,10 @@ class TeamView(UrlForView, ModelView):
         return render_delete_sqla(
             self.obj,
             db,
-            title=_(u"Confirm delete"),
-            message=_(u"Delete team {title}?").format(title=self.obj.title),
+            title=_("Confirm delete"),
+            message=_("Delete team {title}?").format(title=self.obj.title),
             success=_(
-                u"You have deleted team ‘{team}’ from organization ‘{org}’"
+                "You have deleted team ‘{team}’ from organization ‘{org}’"
             ).format(team=self.obj.title, org=self.obj.org.title),
             next=self.obj.org.url_for(),
         )

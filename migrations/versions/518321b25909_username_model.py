@@ -28,7 +28,7 @@ def upgrade():
         sa.Column('reserved', sa.Boolean(), nullable=False),
         sa.Column('id', UUIDType(binary=False), nullable=False),
         sa.CheckConstraint(
-            u'CASE WHEN (user_id IS NOT NULL) THEN 1 ELSE 0 END + CASE WHEN (org_id IS NOT NULL) THEN 1 ELSE 0 END + CASE WHEN (reserved = true) THEN 1 ELSE 0 END = 1',
+            'CASE WHEN (user_id IS NOT NULL) THEN 1 ELSE 0 END + CASE WHEN (org_id IS NOT NULL) THEN 1 ELSE 0 END + CASE WHEN (reserved = true) THEN 1 ELSE 0 END = 1',
             name='username_owner_check',
         ),
         sa.ForeignKeyConstraint(['org_id'], ['organization.id'], ondelete='CASCADE'),
@@ -68,25 +68,25 @@ def upgrade():
         )
     )
 
-    op.drop_constraint(u'organization_name_key', 'organization', type_='unique')
-    op.drop_column(u'organization', 'name')
-    op.drop_constraint(u'user_username_key', 'user', type_='unique')
-    op.drop_column(u'user', 'username')
+    op.drop_constraint('organization_name_key', 'organization', type_='unique')
+    op.drop_column('organization', 'name')
+    op.drop_constraint('user_username_key', 'user', type_='unique')
+    op.drop_column('user', 'username')
 
 
 def downgrade():
     op.add_column(
-        u'user',
+        'user',
         sa.Column(
             'username', sa.VARCHAR(length=80), autoincrement=False, nullable=True
         ),
     )
-    op.create_unique_constraint(u'user_username_key', 'user', ['username'])
+    op.create_unique_constraint('user_username_key', 'user', ['username'])
     op.add_column(
-        u'organization',
+        'organization',
         sa.Column('name', sa.VARCHAR(length=80), autoincrement=False, nullable=True),
     )
-    op.create_unique_constraint(u'organization_name_key', 'organization', ['name'])
+    op.create_unique_constraint('organization_name_key', 'organization', ['name'])
 
     op.drop_index(op.f('ix_name_name_lower'), table_name='name')
     op.execute(

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 from flask import abort, jsonify, render_template, request
 from werkzeug.exceptions import BadRequest
@@ -55,9 +55,9 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
         userinfo['sessionid'] = session.buid
 
     if '*' in scope or 'email' in scope or 'email/*' in scope:
-        userinfo['email'] = unicode(user.email)
+        userinfo['email'] = str(user.email)
     if '*' in scope or 'phone' in scope or 'phone/*' in scope:
-        userinfo['phone'] = unicode(user.phone)
+        userinfo['phone'] = str(user.phone)
     if '*' in scope or 'organizations' in scope or 'organizations/*' in scope:
         userinfo['organizations'] = {
             'owner': [
@@ -129,7 +129,7 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                     }
 
     if teams:
-        userinfo['teams'] = teams.values()
+        userinfo['teams'] = list(teams.values())
 
     if get_permissions:
         if client.user:
@@ -137,7 +137,7 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                 user=user, client=client
             ).first()
             if perms:
-                userinfo['permissions'] = perms.access_permissions.split(u' ')
+                userinfo['permissions'] = perms.access_permissions.split(' ')
         else:
             permsset = set()
             if user.teams:
@@ -151,7 +151,7 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                     .all()
                 )
                 for permob in perms:
-                    permsset.update(permob.access_permissions.split(u' '))
+                    permsset.update(permob.access_permissions.split(' '))
             userinfo['permissions'] = sorted(permsset)
     return userinfo
 
@@ -323,7 +323,7 @@ def sync_resources():
             if len(parts) != 2:
                 results[name] = {
                     'status': 'error',
-                    'error': _(u"Invalid resource name {name}").format(name=name),
+                    'error': _("Invalid resource name {name}").format(name=name),
                 }
                 continue
             resource_name, action_name = parts
@@ -352,7 +352,7 @@ def sync_resources():
                 name=resource_name,
                 title=resources.get(resource_name, {}).get('title')
                 or resource_name.title(),
-                description=resources.get(resource_name, {}).get('description') or u'',
+                description=resources.get(resource_name, {}).get('description') or '',
             )
             db.session.add(resource)
             results[resource.name] = {'status': 'added', 'actions': {}}
@@ -394,7 +394,8 @@ def sync_resources():
             results[resource_name]['actions'][action.name] = {'status': 'deleted'}
         actions.delete(synchronize_session='fetch')
     del_resources = Resource.query.filter(
-        ~Resource.name.in_(actions_list.keys()), Resource.client == current_auth.client
+        ~Resource.name.in_(list(actions_list.keys())),
+        Resource.client == current_auth.client,
     )
     for resource in del_resources.all():
         ResourceAction.query.filter_by(resource=resource).delete(
@@ -666,7 +667,7 @@ def login_beacon_json(client_id):
 
 
 @lastuser_oauth.route('/api/1/id')
-@resource_registry.resource('id', __(u"Read your name and basic profile data"))
+@resource_registry.resource('id', __("Read your name and basic profile data"))
 def resource_id(authtoken, args, files=None):
     """
     Return user's id
@@ -685,7 +686,7 @@ def resource_id(authtoken, args, files=None):
 
 
 @lastuser_oauth.route('/api/1/session/verify', methods=['POST'])
-@resource_registry.resource('session/verify', __(u"Verify user session"), scope='id')
+@resource_registry.resource('session/verify', __("Verify user session"), scope='id')
 def session_verify(authtoken, args, files=None):
     sessionid = args['sessionid']
     session = UserSession.authenticate(buid=sessionid)
@@ -705,7 +706,7 @@ def session_verify(authtoken, args, files=None):
 
 
 @lastuser_oauth.route('/api/1/avatar/edit', methods=['POST'])
-@resource_registry.resource('avatar/edit', __(u"Update your profile picture"))
+@resource_registry.resource('avatar/edit', __("Update your profile picture"))
 def resource_avatar_edit(authtoken, args, files=None):
     """
     Set a user's avatar image
@@ -722,24 +723,22 @@ def resource_avatar_edit(authtoken, args, files=None):
 
 
 @lastuser_oauth.route('/api/1/email')
-@resource_registry.resource('email', __(u"Read your email address"))
+@resource_registry.resource('email', __("Read your email address"))
 def resource_email(authtoken, args, files=None):
     """
     Return user's email addresses.
     """
     if 'all' in args and getbool(args['all']):
         return {
-            'email': unicode(authtoken.user.email),
-            'all': [
-                unicode(email) for email in authtoken.user.emails if not email.private
-            ],
+            'email': str(authtoken.user.email),
+            'all': [str(email) for email in authtoken.user.emails if not email.private],
         }
     else:
-        return {'email': unicode(authtoken.user.email)}
+        return {'email': str(authtoken.user.email)}
 
 
 @lastuser_oauth.route('/api/1/email/add', methods=['POST'])
-@resource_registry.resource('email/add', __(u"Add an email address to your profile"))
+@resource_registry.resource('email/add', __("Add an email address to your profile"))
 def resource_email_add(authtoken, args, files=None):
     """
     TODO: Add an email address to the user's profile.
@@ -749,24 +748,24 @@ def resource_email_add(authtoken, args, files=None):
 
 
 @lastuser_oauth.route('/api/1/phone')
-@resource_registry.resource('phone', __(u"Read your phone number"))
+@resource_registry.resource('phone', __("Read your phone number"))
 def resource_phone(authtoken, args, files=None):
     """
     Return user's phone numbers.
     """
     if 'all' in args and getbool(args['all']):
         return {
-            'phone': unicode(authtoken.user.phone),
-            'all': [unicode(phone) for phone in authtoken.user.phones],
+            'phone': str(authtoken.user.phone),
+            'all': [str(phone) for phone in authtoken.user.phones],
         }
     else:
-        return {'phone': unicode(authtoken.user.phone)}
+        return {'phone': str(authtoken.user.phone)}
 
 
 @lastuser_oauth.route('/api/1/user/externalids')
 @resource_registry.resource(
     'user/externalids',
-    __(u"Access your external account information such as Twitter and Google"),
+    __("Access your external account information such as Twitter and Google"),
     trusted=True,
 )
 def resource_login_providers(authtoken, args, files=None):
@@ -778,17 +777,17 @@ def resource_login_providers(authtoken, args, files=None):
     for extid in authtoken.user.externalids:
         if service is None or extid.service == service:
             response[extid.service] = {
-                'userid': unicode(extid.userid),
-                'username': unicode(extid.username),
-                'oauth_token': unicode(extid.oauth_token),
-                'oauth_token_secret': unicode(extid.oauth_token_secret),
-                'oauth_token_type': unicode(extid.oauth_token_type),
+                'userid': str(extid.userid),
+                'username': str(extid.username),
+                'oauth_token': str(extid.oauth_token),
+                'oauth_token_secret': str(extid.oauth_token_secret),
+                'oauth_token_type': str(extid.oauth_token_type),
             }
     return response
 
 
 @lastuser_oauth.route('/api/1/user/new', methods=['POST'])
-@resource_registry.resource('user/new', __(u"Create a new user account"), trusted=True)
+@resource_registry.resource('user/new', __("Create a new user account"), trusted=True)
 def resource_user_new(authtoken, args, files=None):
     # Set User.client to authtoken.client and User.referrer to authtoken.user
     pass
@@ -796,7 +795,7 @@ def resource_user_new(authtoken, args, files=None):
 
 @lastuser_oauth.route('/api/1/organizations')
 @resource_registry.resource(
-    'organizations', __(u"Read the organizations you are a member of")
+    'organizations', __("Read the organizations you are a member of")
 )
 def resource_organizations(authtoken, args, files=None):
     """
@@ -809,7 +808,7 @@ def resource_organizations(authtoken, args, files=None):
 
 @lastuser_oauth.route('/api/1/organizations/new', methods=['POST'])
 @resource_registry.resource(
-    'organizations/new', __(u"Create a new organization"), trusted=True
+    'organizations/new', __("Create a new organization"), trusted=True
 )
 def resource_organizations_new(authtoken, args, files=None):
     pass
@@ -817,16 +816,14 @@ def resource_organizations_new(authtoken, args, files=None):
 
 @lastuser_oauth.route('/api/1/organizations/edit', methods=['POST'])
 @resource_registry.resource(
-    'organizations/edit', __(u"Edit your organizations"), trusted=True
+    'organizations/edit', __("Edit your organizations"), trusted=True
 )
 def resource_organizations_edit(authtoken, args, files=None):
     pass
 
 
 @lastuser_oauth.route('/api/1/teams')
-@resource_registry.resource(
-    'teams', __(u"Read the list of teams in your organizations")
-)
+@resource_registry.resource('teams', __("Read the list of teams in your organizations"))
 def resource_teams(authtoken, args, files=None):
     """
     Return user's organizations' teams.
@@ -838,7 +835,7 @@ def resource_teams(authtoken, args, files=None):
 
 @lastuser_oauth.route('/api/1/teams/new', methods=['POST'])
 @resource_registry.resource(
-    'teams/new', __(u"Create a new team in your organizations"), trusted=True
+    'teams/new', __("Create a new team in your organizations"), trusted=True
 )
 def resource_teams_new(authtoken, args, files=None):
     pass
@@ -847,13 +844,13 @@ def resource_teams_new(authtoken, args, files=None):
 # GET to read member list, POST to write to it
 @lastuser_oauth.route('/api/1/teams/edit', methods=['GET', 'POST'])
 @resource_registry.resource(
-    'teams/edit', __(u"Edit your organizations' teams"), trusted=True
+    'teams/edit', __("Edit your organizations' teams"), trusted=True
 )
 def resource_teams_edit(authtoken, args, files=None):
     pass
 
 
 @lastuser_oauth.route('/api/1/notice/send')
-@resource_registry.resource('notice/send', __(u"Send you notifications"))
+@resource_registry.resource('notice/send', __("Send you notifications"))
 def resource_notice_send(authtoken, args, files=None):
     pass

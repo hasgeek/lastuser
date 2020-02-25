@@ -94,7 +94,7 @@ class ProfileForm(forms.Form):
             forms.validators.Length(max=Name.__name_length__),
         ],
         filters=[forms.filters.none_if_empty()],
-        prefix=u"https://hasgeek.com/",
+        prefix="https://hasgeek.com/",
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'},
     )
     timezone = forms.SelectField(

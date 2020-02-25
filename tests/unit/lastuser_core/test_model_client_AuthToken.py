@@ -17,14 +17,14 @@ class TestAuthToken(TestDatabaseFixture):
         """
         client = self.fixtures.client
         crusoe = self.fixtures.crusoe
-        result = models.AuthToken(client=client, user=crusoe, scope=u'id', validity=0)
+        result = models.AuthToken(client=client, user=crusoe, scope='id', validity=0)
         self.assertIsInstance(result, models.AuthToken)
         self.assertEqual(result.user, crusoe)
         self.assertEqual(result.client, client)
 
     def test_authtoken_refresh(self):
         """Test to verify creation of new token while retaining the refresh token."""
-        hagrid = models.User(username=u'hagrid', fullname=u'Rubeus Hagrid')
+        hagrid = models.User(username='hagrid', fullname='Rubeus Hagrid')
         auth_token = models.AuthToken(user=hagrid, algorithm='hmac-sha-1')
         existing_token = auth_token.token
         existing_secret = auth_token.secret
@@ -38,28 +38,28 @@ class TestAuthToken(TestDatabaseFixture):
         """
         client = self.fixtures.client
         # scenario 1: when validity is unlimited (0)
-        tomriddle = models.User(username=u'voldemort', fullname=u'Tom Riddle')
-        scope = [u'id', u'email']
+        tomriddle = models.User(username='voldemort', fullname='Tom Riddle')
+        scope = ['id', 'email']
         tomriddle_token = models.AuthToken(
             client=client, user=tomriddle, scope=scope, validity=0
         )
         self.assertTrue(tomriddle_token.is_valid())
 
         # scenario 2: when validity has not been given
-        draco = models.User(username=u'draco', fullname=u'Draco Malfoy')
+        draco = models.User(username='draco', fullname='Draco Malfoy')
         draco_token = models.AuthToken(client=client, user=draco, scope=scope)
         with self.assertRaises(TypeError):
             draco_token.is_valid()
 
         # scenario 3: when validity is limited
-        harry = models.User(username=u'harry', fullname=u'Harry Potter')
+        harry = models.User(username='harry', fullname='Harry Potter')
         harry_token = models.AuthToken(
             client=client, user=harry, scope=scope, validity=3600, created_at=utcnow()
         )
         self.assertTrue(harry_token.is_valid())
 
         # scenario 4: when validity is limited *and* the token has expired
-        cedric = models.User(username=u'cedric', fullname=u'Cedric Diggory')
+        cedric = models.User(username='cedric', fullname='Cedric Diggory')
         cedric_token = models.AuthToken(
             client=client,
             user=cedric,
@@ -75,12 +75,12 @@ class TestAuthToken(TestDatabaseFixture):
         """
         specialdachs = self.fixtures.specialdachs
         oakley = self.fixtures.oakley
-        scope = [u'id']
+        scope = ['id']
         dachsadv = models.Client(
-            title=u"Dachshund Adventures",
+            title="Dachshund Adventures",
             org=specialdachs,
             confidential=True,
-            website=u"http://dachsadv.com",
+            website="http://dachsadv.com",
         )
         auth_token = models.AuthToken(client=dachsadv, user=oakley, scope=scope)
         token = auth_token.token
@@ -96,15 +96,15 @@ class TestAuthToken(TestDatabaseFixture):
         client = self.fixtures.client
 
         # scenario 1: When users passed are an instance of Query class
-        hermione = models.User(username=u'herminone', fullname=u'Hermione Granger')
-        herminone_token = models.AuthToken(client=client, user=hermione, scope=[u'id'])
-        myrtle = models.User(username=u'myrtle', fullname=u'Moaning Myrtle')
-        myrtle_token = models.AuthToken(client=client, user=myrtle, scope=[u'id'])
-        alastor = models.User(username=u'alastor', fullname=u'Alastor Moody')
-        alastor_token = models.AuthToken(client=client, user=alastor, scope=[u'id'])
-        greyback = models.User(username=u'greyback', fullname=u'Fenrir Greyback')
-        greyback_token = models.AuthToken(client=client, user=greyback, scope=[u'id'])
-        pottermania = models.Organization(name=u'pottermania', title=u'Pottermania')
+        hermione = models.User(username='herminone', fullname='Hermione Granger')
+        herminone_token = models.AuthToken(client=client, user=hermione, scope=['id'])
+        myrtle = models.User(username='myrtle', fullname='Moaning Myrtle')
+        myrtle_token = models.AuthToken(client=client, user=myrtle, scope=['id'])
+        alastor = models.User(username='alastor', fullname='Alastor Moody')
+        alastor_token = models.AuthToken(client=client, user=alastor, scope=['id'])
+        greyback = models.User(username='greyback', fullname='Fenrir Greyback')
+        greyback_token = models.AuthToken(client=client, user=greyback, scope=['id'])
+        pottermania = models.Organization(name='pottermania', title='Pottermania')
         pottermania.owners.users.append(hermione)
         pottermania_members = [hermione, alastor, greyback, myrtle]
         for member in pottermania_members:
@@ -128,22 +128,22 @@ class TestAuthToken(TestDatabaseFixture):
         result1 = models.AuthToken.all(pottermania.owners.users)
         self.assertIsInstance(result1, list)
         self.assertIsInstance(result1[0], models.AuthToken)
-        self.assertItemsEqual(result1, [herminone_token])
+        self.assertCountEqual(result1, [herminone_token])
 
         # scenario 1 and count > 1
         result2 = models.AuthToken.all(pottermania.members.users)
         self.assertIsInstance(result2, list)
         for each in result2:
             self.assertIsInstance(each, models.AuthToken)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             result2, [herminone_token, alastor_token, greyback_token, myrtle_token]
         )
 
         # Scenario 2: When users passed are not an instance of Query class
-        lily = models.User(username=u'lily', fullname=u'Lily Evans Potter')
-        cho = models.User(username=u'cho', fullname=u'Cho Chang')
-        lily_token = models.AuthToken(client=client, user=lily, scope=[u'memories'])
-        cho_token = models.AuthToken(client=client, user=cho, scope=[u'charms'])
+        lily = models.User(username='lily', fullname='Lily Evans Potter')
+        cho = models.User(username='cho', fullname='Cho Chang')
+        lily_token = models.AuthToken(client=client, user=lily, scope=['memories'])
+        cho_token = models.AuthToken(client=client, user=cho, scope=['charms'])
         db.session.add_all([lily, lily_token, cho, cho_token])
         db.session.commit()
 
@@ -151,14 +151,14 @@ class TestAuthToken(TestDatabaseFixture):
         result3 = models.AuthToken.all([lily])
         self.assertIsInstance(result3, list)
         self.assertIsInstance(result3[0], models.AuthToken)
-        self.assertItemsEqual(result3, [lily_token])
+        self.assertCountEqual(result3, [lily_token])
 
         # scenario 2 and count > 1
         result4 = models.AuthToken.all([lily, cho])
         self.assertIsInstance(result4, list)
         for each in result4:
             self.assertIsInstance(each, models.AuthToken)
-        self.assertItemsEqual(result4, [lily_token, cho_token])
+        self.assertCountEqual(result4, [lily_token, cho_token])
 
         # scenario 5: When user instances passed don't have any AuthToken against them
         oakley = self.fixtures.oakley
@@ -209,7 +209,7 @@ class TestAuthToken(TestDatabaseFixture):
     #     # Scenario: When only one user has authtokens associated with them
     #     models.AuthToken.migrate_user(piglet, naughtymonkey)
     #     scope_received_piglet = models.AuthToken.get(token).scope
-    #     self.assertItemsEqual(scope_received_piglet, tuple(scope_piglet))
+    #     self.assertCountEqual(scope_received_piglet, tuple(scope_piglet))
     #
     #     # Scenario: There's a existing token for newuser with the same client,
     #     # then we expect to: newtoken to have extended scope
@@ -220,13 +220,13 @@ class TestAuthToken(TestDatabaseFixture):
     #     models.AuthToken.migrate_user(piglet, piggles)
     #     scope_received = models.AuthToken.get(another_auth_token.token).scope
     #     scope_expected = tuple(set(scope_piglet + scope_piggles))
-    #     self.assertItemsEqual(scope_received, scope_expected)
+    #     self.assertCountEqual(scope_received, scope_expected)
 
     def test_authtoken_algorithm(self):
         """
         Test for checking AuthToken's algorithm property
         """
-        snape = models.User(username=u'snape', fullname=u'Professor Severus Snape')
+        snape = models.User(username='snape', fullname='Professor Severus Snape')
         valid_algorithm = 'hmac-sha-1'
         auth_token = models.AuthToken(user=snape)
         auth_token.algorithm = None

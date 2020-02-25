@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
 
 from flask import redirect, request, session
 
@@ -39,13 +38,13 @@ class GoogleProvider(LoginProvider):
             callback_url = session.pop('google_callback')
         else:
             raise LoginCallbackError(
-                _(u"Duplicate callback. Did you go back in your browser history?")
+                _("Duplicate callback. Did you go back in your browser history?")
             )
         if request.args.get('error'):
             if request.args['error'] == 'access_denied':
-                raise LoginCallbackError(_(u"You denied the Google login request"))
+                raise LoginCallbackError(_("You denied the Google login request"))
             else:
-                raise LoginCallbackError(_(u"Unknown failure"))
+                raise LoginCallbackError(_("Unknown failure"))
         code = request.args.get('code', None)
         try:
             credentials = self.flow(callback_url).step2_exchange(code)
@@ -62,13 +61,13 @@ class GoogleProvider(LoginProvider):
         except Exception as e:
             raise LoginCallbackError(
                 _(
-                    u"Unable to authenticate via Google. Internal details: {error}"
+                    "Unable to authenticate via Google. Internal details: {error}"
                 ).format(error=e)
             )
         if response.get('error'):
             raise LoginCallbackError(
-                _(u"Unable to login via Google: {error}").format(
-                    error=response['error'].get('message', u'')
+                _("Unable to login via Google: {error}").format(
+                    error=response['error'].get('message', '')
                 )
             )
         return {

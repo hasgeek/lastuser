@@ -14,8 +14,8 @@ class TestAuthCode(TestDatabaseFixture):
         auth_code = models.AuthCode(
             user=crusoe,
             client=client,
-            redirect_uri=u'http://batdogadventures.com/fun',
-            scope=u'id',
+            redirect_uri='http://batdogadventures.com/fun',
+            scope='id',
         )
         # code redirect_uri, used
         db.session.add(auth_code)
@@ -33,8 +33,8 @@ class TestAuthCode(TestDatabaseFixture):
             user=oakley,
             client=client,
             used=True,
-            redirect_uri=u'http://batdogadventures.com/fun',
-            scope=u'email',
+            redirect_uri='http://batdogadventures.com/fun',
+            scope='email',
         )
         db.session.add(auth_code)
         db.session.commit()

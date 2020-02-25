@@ -12,9 +12,9 @@ class TestUserEmail(TestDatabaseFixture):
         Test for verifying creation of UserEmail object
         """
         oakley = self.fixtures.oakley
-        email_domain = u'batdog.ca'
+        email_domain = 'batdog.ca'
         oakley_new_email = models.user.UserEmail(
-            email=u'oakley@' + email_domain, user=oakley
+            email='oakley@' + email_domain, user=oakley
         )
         self.assertIsInstance(oakley_new_email, models.user.UserEmail)
         self.assertTrue(hasattr(oakley_new_email, '_email'))
@@ -49,8 +49,8 @@ class TestUserEmail(TestDatabaseFixture):
         """
         crusoe = self.fixtures.crusoe
         email = crusoe.email.email
-        result = unicode(models.UserEmail(email=email))
-        self.assertIsInstance(result, unicode)
+        result = str(models.UserEmail(email=email))
+        self.assertIsInstance(result, str)
         assert email in result
 
     def test_useremail_email(self):
@@ -58,8 +58,8 @@ class TestUserEmail(TestDatabaseFixture):
         Test for verifying UserEmail instance's email property
         """
         oakley = self.fixtures.oakley
-        email = u'oakley@batdogs.ca'
+        email = 'oakley@batdogs.ca'
         oakley_new_email = models.UserEmail(email=email, user=oakley)
         result = oakley_new_email.email
-        self.assertIsInstance(result, unicode)
+        self.assertIsInstance(result, str)
         self.assertEqual(email, result)

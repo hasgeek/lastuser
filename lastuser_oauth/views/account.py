@@ -45,8 +45,8 @@ def login_service(service):
     try:
         return provider.do(callback_url=callback_url)
     except (LoginInitError, LoginCallbackError) as e:
-        msg = _(u"{service} login failed: {error}").format(
-            service=provider.title, error=unicode(e)
+        msg = _("{service} login failed: {error}").format(
+            service=provider.title, error=str(e)
         )
         exception_catchall.send(e, message=msg)
         flash(msg, category='danger')
@@ -64,8 +64,8 @@ def login_service_callback(service):
     try:
         userdata = provider.callback()
     except (LoginInitError, LoginCallbackError) as e:
-        msg = _(u"{service} login failed: {error}").format(
-            service=provider.title, error=unicode(e)
+        msg = _("{service} login failed: {error}").format(
+            service=provider.title, error=str(e)
         )
         exception_catchall.send(e, message=msg)
         flash(msg, category='danger')
@@ -201,7 +201,7 @@ def login_service_postcallback(service, userdata):
     if not current_auth:  # If a user isn't already logged in, login now.
         login_internal(user)
         flash(
-            _(u"You have logged in via {service}").format(
+            _("You have logged in via {service}").format(
                 service=login_registry[service].title
             ),
             'success',

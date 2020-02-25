@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
-
 from datetime import timedelta
-import urlparse
+import urllib.parse
 
 from flask import (
     Markup,
@@ -56,10 +54,9 @@ oid = OpenID()
 
 
 def openid_log(message, level=0):
+    # FIXME: deprecate this along with Flask-OAuth
     if current_app.debug:
-        import sys
-
-        print(message, file=sys.stderr)  # NOQA: T001
+        print(message)  # noqa: T001
 
 
 oidutil.log = openid_log
@@ -96,7 +93,7 @@ def login():
         except LoginPasswordResetException:
             flash(
                 _(
-                    u"Your account does not have a password set. Please enter your username "
+                    "Your account does not have a password set. Please enter your username "
                     "or email address to request a reset code and set a new password"
                 ),
                 category='danger',
@@ -143,8 +140,8 @@ def logout_user():
     User-initiated logout
     """
     if not request.referrer or (
-        urlparse.urlsplit(request.referrer).netloc
-        != urlparse.urlsplit(request.url).netloc
+        urllib.parse.urlsplit(request.referrer).netloc
+        != urllib.parse.urlsplit(request.url).netloc
     ):
         # TODO: present a logout form
         flash(
@@ -212,8 +209,8 @@ def logout_session(session):
     if (
         not request.referrer
         or (
-            urlparse.urlsplit(request.referrer).netloc
-            != urlparse.urlsplit(request.url).netloc
+            urllib.parse.urlsplit(request.referrer).netloc
+            != urllib.parse.urlsplit(request.url).netloc
         )
         or (session.user != current_auth.user)
     ):
@@ -260,7 +257,7 @@ def reset():
     form = PasswordResetRequestForm()
     if getbool(request.args.get('expired')):
         message = _(
-            u"Your password has expired. Please enter your username "
+            "Your password has expired. Please enter your username "
             "or email address to request a reset code and set a new password"
         )
     else:
@@ -278,7 +275,7 @@ def reset():
         else:
             # Send to their existing address
             # User.email is a UserEmail object
-            email = unicode(user.email)
+            email = str(user.email)
         if not email and user.emailclaims:
             email = user.emailclaims[0].email
         if not email:
@@ -290,7 +287,7 @@ def reset():
                     title=_("Cannot reset password"),
                     message=Markup(
                         _(
-                            u"""
+                            """
                     We do not have an email address for your account. However, your account
                     is linked to <strong>{service}</strong> with the id <strong>{username}</strong>.
                     You can use that to login.
@@ -306,7 +303,7 @@ def reset():
                     title=_("Cannot reset password"),
                     message=Markup(
                         _(
-                            u"""
+                            """
                     We do not have an email address for your account and therefore cannot
                     email you a reset link. Please contact
                     <a href="mailto:{email}">{email}</a> for assistance.
@@ -321,7 +318,7 @@ def reset():
         return render_message(
             title=_("Reset password"),
             message=_(
-                u"""
+                """
             We sent a link to reset your password to your email address: {masked_email}.
             Please check your email. If it doesn’t arrive in a few minutes,
             it may have landed in your spam or junk folder.
@@ -349,7 +346,7 @@ def reset_email(user, kwargs):
     if not resetreq:
         return render_message(
             title=_("Invalid reset link"),
-            message=_(u"The reset link you clicked on is invalid"),
+            message=_("The reset link you clicked on is invalid"),
         )
     if resetreq.created_at < utcnow() - timedelta(days=1):
         # Reset code has expired (> 24 hours). Delete it
@@ -357,7 +354,7 @@ def reset_email(user, kwargs):
         db.session.commit()
         return render_message(
             title=_("Expired reset link"),
-            message=_(u"The reset link you clicked on has expired"),
+            message=_("The reset link you clicked on has expired"),
         )
 
     # Logout *after* validating the reset request to prevent DoS attacks on the user
@@ -374,7 +371,7 @@ def reset_email(user, kwargs):
             title=_("Password reset complete"),
             message=Markup(
                 _(
-                    u"Your password has been reset. You may now <a href=\"{loginurl}\">login</a> with your new password."
+                    "Your password has been reset. You may now <a href=\"{loginurl}\">login</a> with your new password."
                 ).format(loginurl=escape(url_for('.login')))
             ),
         )
@@ -385,7 +382,7 @@ def reset_email(user, kwargs):
         submit=_("Reset password"),
         message=Markup(
             _(
-                u"Hello, <strong>{fullname}</strong>. You may now choose a new password."
+                "Hello, <strong>{fullname}</strong>. You may now choose a new password."
             ).format(fullname=escape(user.fullname))
         ),
         ajax=False,

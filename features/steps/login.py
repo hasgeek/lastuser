@@ -15,7 +15,7 @@ def given_existing_user(context):
 
     context.browser.visit('/register')
     assert context.browser.find_element_by_name('csrf_token').is_enabled()
-    for k, v in context.test_user.iteritems():
+    for k, v in context.test_user.items():
         context.browser.find_element_by_name(k).send_keys(v)
 
     register_form = context.browser.find_element_by_id('form-register')
@@ -34,7 +34,7 @@ def when_login_form_submit(context):
     assert context.browser.find_element_by_name('csrf_token').is_enabled()
 
     context.browser.find_element_by_id('showmore').click()
-    for k, v in context.login_data.iteritems():
+    for k, v in context.login_data.items():
         context.browser.find_element_by_name(k).send_keys(v)
 
     context.browser.find_element_by_name('username').submit()

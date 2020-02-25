@@ -135,14 +135,16 @@ MESSAGE_FOOTER = Markup(
 USERNAME_REASON = ''
 EMAIL_REASON = 'Please provide an email address to complete your profile'
 TIMEZONE_REASON = 'Dates and times will be shown in your preferred timezone'
-ORG_NAME_REASON = u"Your company’s name as it will appear in the URL. Letters, numbers and dashes only"
-ORG_TITLE_REASON = u"Your organization’s given name, preferably without legal suffixes"
+ORG_NAME_REASON = (
+    "Your company’s name as it will appear in the URL. Letters, numbers and dashes only"
+)
+ORG_TITLE_REASON = "Your organization’s given name, preferably without legal suffixes"
 LOGIN_MESSAGE_1 = ""
 LOGIN_MESSAGE_2 = ""
 SMS_VERIFICATION_TEMPLATE = (
     'Your verification code is {code}. If you did not request this, please ignore.'
 )
 CREATE_ACCOUNT_MESSAGE = (
-    u"This account is for you as an individual. We’ll make one for your company later"
+    "This account is for you as an individual. We’ll make one for your company later"
 )
 LOGOUT_UNAUTHORIZED_MESSAGE = "We detected a possibly unauthorized attempt to log you out. If you really did intend to logout, please click on the logout link again"

@@ -11,7 +11,7 @@ class TestResource(TestDatabaseFixture):
         Test for retrieving a Resource given a name
         """
         # scenario 3: if namespace given
-        name = u'test_resource'
+        name = 'test_resource'
         client = self.fixtures.client
         namespace = client.namespace
         # scenario 1: if both client and namespace not given

@@ -29,7 +29,7 @@ class TestName(TestDatabaseFixture):
         assert models.Name.validate_name_candidate('0123456789' * 7) == 'long'
         assert models.Name.validate_name_candidate('0123456789' * 6) is None
         assert models.Name.validate_name_candidate('test-reserved') is None
-        db.session.add(models.Name(name=u'test-reserved', reserved=True))
+        db.session.add(models.Name(name='test-reserved', reserved=True))
         db.session.commit()
         assert models.Name.validate_name_candidate('test-reserved') == 'reserved'
         assert models.Name.validate_name_candidate('piglet') == 'user'
@@ -39,10 +39,10 @@ class TestName(TestDatabaseFixture):
         """
         Names can be reserved, with no user or organization
         """
-        reserved_name = models.Name(name=u'reserved-name', reserved=True)
+        reserved_name = models.Name(name='reserved-name', reserved=True)
         db.session.add(reserved_name)
         db.session.commit()
-        retrieved_name = models.Name.get(u'reserved-name')
+        retrieved_name = models.Name.get('reserved-name')
         assert retrieved_name is reserved_name
         assert reserved_name.user is None
         assert reserved_name.user_id is None
@@ -53,7 +53,7 @@ class TestName(TestDatabaseFixture):
         """
         Names must be assigned to a user or organization if not reserved
         """
-        unassigned_name = models.Name(name=u'unassigned')
+        unassigned_name = models.Name(name='unassigned')
         db.session.add(unassigned_name)
         with self.assertRaises(IntegrityError):
             db.session.commit()
@@ -62,9 +62,9 @@ class TestName(TestDatabaseFixture):
         """
         Names cannot be assigned to both a user and an organization simultaneously
         """
-        user = models.User(fullname=u"User")
-        org = models.Organization(title=u"Organization")
-        name = models.Name(name=u'double-assigned', user=user, org=org)
+        user = models.User(fullname="User")
+        org = models.Organization(title="Organization")
+        name = models.Name(name='double-assigned', user=user, org=org)
         db.session.add_all([user, org, name])
         with self.assertRaises(IntegrityError):
             db.session.commit()
@@ -73,8 +73,8 @@ class TestName(TestDatabaseFixture):
         """
         A user cannot have two names
         """
-        assert self.fixtures.piglet.username == u'piglet'
-        peppa = models.Name(name=u'peppa', user=self.fixtures.piglet)
+        assert self.fixtures.piglet.username == 'piglet'
+        peppa = models.Name(name='peppa', user=self.fixtures.piglet)
         db.session.add(peppa)
         with self.assertRaises(IntegrityError):
             db.session.commit()
@@ -83,8 +83,8 @@ class TestName(TestDatabaseFixture):
         """
         An organization cannot have two names
         """
-        assert self.fixtures.batdog.name == u'batdog'
-        bathound = models.Name(name=u'bathound', org=self.fixtures.batdog)
+        assert self.fixtures.batdog.name == 'batdog'
+        bathound = models.Name(name='bathound', org=self.fixtures.batdog)
         db.session.add(bathound)
         with self.assertRaises(IntegrityError):
             db.session.commit()
@@ -93,30 +93,30 @@ class TestName(TestDatabaseFixture):
         """
         Removing a name from a user or org also removes it from the Name table
         """
-        assert self.fixtures.oakley.username == u'oakley'
-        assert models.Name.get(u'oakley') is not None
+        assert self.fixtures.oakley.username == 'oakley'
+        assert models.Name.get('oakley') is not None
         self.fixtures.oakley.username = None
         db.session.commit()
-        assert models.Name.get(u'oakley') is None
+        assert models.Name.get('oakley') is None
 
-        assert self.fixtures.specialdachs.name == u'specialdachs'
-        assert models.Name.get(u'specialdachs') is not None
+        assert self.fixtures.specialdachs.name == 'specialdachs'
+        assert models.Name.get('specialdachs') is not None
         self.fixtures.specialdachs.name = None
         db.session.commit()
-        assert models.Name.get(u'specialdachs') is None
+        assert models.Name.get('specialdachs') is None
 
     def test_name_transfer(self):
         assert self.fixtures.nameless.username is None
-        assert models.Name.get(u'newname') is None
-        newname = models.User(username=u'newname', fullname="New Name")
+        assert models.Name.get('newname') is None
+        newname = models.User(username='newname', fullname="New Name")
         db.session.add(newname)
         db.session.commit()
-        assert models.Name.get(u'newname') is not None
-        assert newname.username == u'newname'
+        assert models.Name.get('newname') is not None
+        assert newname.username == 'newname'
 
         merged = models.merge_users(self.fixtures.nameless, newname)
         assert merged is not newname
         assert merged is self.fixtures.nameless
         assert newname.username is None
-        assert merged.username == u'newname'
-        assert self.fixtures.nameless.username == u'newname'
+        assert merged.username == 'newname'
+        assert self.fixtures.nameless.username == 'newname'

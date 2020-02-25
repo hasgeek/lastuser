@@ -66,24 +66,24 @@ class ResourceRegistry(OrderedDict):
                     else:
                         # Unrecognized Authorization header
                         return resource_auth_error(
-                            _(u"A Bearer token is required in the Authorization header")
+                            _("A Bearer token is required in the Authorization header")
                         )
                     if 'access_token' in args:
                         return resource_auth_error(
-                            _(u"Access token specified in both header and body")
+                            _("Access token specified in both header and body")
                         )
                 else:
                     token = args.get('access_token')
                     if not token:
                         # No token provided in Authorization header or in request parameters
                         return resource_auth_error(
-                            _(u"An access token is required to access this resource")
+                            _("An access token is required to access this resource")
                         )
                 authtoken = AuthToken.get(token=token)
                 if not authtoken:
-                    return resource_auth_error(_(u"Unknown access token"))
+                    return resource_auth_error(_("Unknown access token"))
                 if not authtoken.is_valid():
-                    return resource_auth_error(_(u"Access token has expired"))
+                    return resource_auth_error(_("Access token has expired"))
 
                 tokenscope = set(
                     authtoken.effective_scope
@@ -96,11 +96,11 @@ class ResourceRegistry(OrderedDict):
                     ):
                         # Client doesn't have access to this scope either directly or via a wildcard
                         return resource_auth_error(
-                            _(u"Token does not provide access to this resource")
+                            _("Token does not provide access to this resource")
                         )
                 if trusted and not authtoken.client.trusted:
                     return resource_auth_error(
-                        _(u"This resource can only be accessed by trusted clients")
+                        _("This resource can only be accessed by trusted clients")
                     )
                 # All good. Return the result value
                 try:
@@ -112,7 +112,7 @@ class ResourceRegistry(OrderedDict):
                         {
                             'status': 'error',
                             'error': exception.__class__.__name__,
-                            'error_description': unicode(exception),
+                            'error_description': str(exception),
                         }
                     )
                     response.status_code = 500

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 from flask import Markup, url_for
 
@@ -86,9 +86,9 @@ class RegisterClientForm(forms.Form):
         filters=[forms.filters.none_if_empty()],
         description=Markup(
             __(
-                u"A dot-based namespace that uniquely identifies your client application. "
-                u"For example, if your client website is <code>https://auth.hasgeek.com</code>, "
-                u"use <code>com.hasgeek.auth</code>. Only required if your client app provides resources"
+                "A dot-based namespace that uniquely identifies your client application. "
+                "For example, if your client website is <code>https://auth.hasgeek.com</code>, "
+                "use <code>com.hasgeek.auth</code>. Only required if your client app provides resources"
             )
         ),
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'},
@@ -101,8 +101,8 @@ class RegisterClientForm(forms.Form):
         ],
         filters=[forms.strip_each()],
         description=__(
-            u"OAuth2 Redirect URL. If your app is available on multiple hostnames, "
-            u"list each redirect URL on a separate line"
+            "OAuth2 Redirect URL. If your app is available on multiple hostnames, "
+            "list each redirect URL on a separate line"
         ),
     )
     notification_uri = forms.URLField(
@@ -188,7 +188,7 @@ class RegisterClientForm(forms.Form):
             if not domain_namespace_match(self.website.data, field.data):
                 raise forms.ValidationError(
                     _(
-                        u"The namespace should be derived from your application’s website domain"
+                        "The namespace should be derived from your application’s website domain"
                     )
                 )
             client = self.edit_model.get(namespace=field.data)
@@ -206,7 +206,7 @@ class ClientCredentialForm(forms.Form):
     """
 
     title = forms.StringField(
-        __(u"What’s this for?"),
+        __("What’s this for?"),
         validators=[forms.validators.DataRequired(), forms.validators.Length(max=250)],
         description=__(
             "Add a description to help yourself remember why this was generated"
