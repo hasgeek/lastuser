@@ -38,6 +38,7 @@ baseframe.init_app(
     requires=['lastuser-oauth'],
     ext_requires=['baseframe-mui', 'jquery.cookie', 'timezone'],
     theme='mui',
+    asset_modules=('baseframe_private_assets',),
 )
 
 lastuser_oauth.lastuser_oauth.init_app(app)
