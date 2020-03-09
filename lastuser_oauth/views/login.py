@@ -18,7 +18,7 @@ from flask import (
 from flask_openid import OpenID
 from openid import oidutil
 
-from baseframe import _, __
+from baseframe import _, __, request_is_xhr
 from baseframe.forms import render_form, render_message, render_redirect
 from coaster.auth import current_auth
 from coaster.utils import getbool, utcnow
@@ -106,7 +106,7 @@ def login():
     elif request.method == 'POST':
         abort(500)
     iframe_block = {'X-Frame-Options': 'SAMEORIGIN'}
-    if request.is_xhr and formid == 'passwordlogin':
+    if request_is_xhr() and formid == 'passwordlogin':
         return (
             render_template(
                 'loginform.html.jinja2', loginform=loginform, Markup=Markup
