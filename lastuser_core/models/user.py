@@ -229,26 +229,6 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
     #: User avatar (URL to browser-ready image)
     avatar = db.Column(db.UnicodeText, nullable=True)
 
-    #: Client id that created this user account
-    client_id = db.Column(
-        None,
-        db.ForeignKey('client.id', use_alter=True, name='user_client_id_fkey'),
-        nullable=True,
-    )
-    #: If this user was created by a client app via the API, record it here
-    client = db.relationship(
-        'Client', foreign_keys=[client_id]
-    )  # No backref or cascade
-
-    #: Id of user who invited this user
-    referrer_id = db.Column(
-        None,
-        db.ForeignKey('user.id', use_alter=True, name='user_referrer_id_fkey'),
-        nullable=True,
-    )
-    #: User who invited this user
-    referrer = db.relationship('User', foreign_keys=[referrer_id])
-
     #: Other user accounts that were merged into this user account
     oldusers = association_proxy('oldids', 'olduser')
 
@@ -267,8 +247,6 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         defer('pw_set_at'),
         defer('pw_expires_at'),
         defer('timezone'),
-        defer('client_id'),
-        defer('referrer_id'),
     ]
 
     def __init__(self, password=None, **kwargs):
@@ -714,17 +692,6 @@ class Organization(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
     #: Deprecated, but column preserved for existing data until migration
     description = deferred(db.Column(db.UnicodeText, default='', nullable=False))
 
-    #: Client id that created this account
-    client_id = db.Column(
-        None,
-        db.ForeignKey('client.id', use_alter=True, name='organization_client_id_fkey'),
-        nullable=True,
-    )
-    #: If this org was created by a client app via the API, record it here
-    client = db.relationship(
-        'Client', foreign_keys=[client_id]
-    )  # No backref or cascade
-
     _defercols = [defer('created_at'), defer('updated_at')]
 
     def __init__(self, *args, **kwargs):
@@ -862,17 +829,6 @@ class Team(UuidMixin, BaseMixin, db.Model):
     users = db.relationship(
         User, secondary='team_membership', lazy='dynamic', backref='teams'
     )  # No cascades here! Cascades will delete users
-
-    #: Client id that created this team
-    client_id = db.Column(
-        None,
-        db.ForeignKey('client.id', use_alter=True, name='team_client_id_fkey'),
-        nullable=True,
-    )
-    #: If this team was created by a client app via the API, record it here
-    client = db.relationship(
-        'Client', foreign_keys=[client_id]
-    )  # No backref or cascade
 
     def __repr__(self):
         return '<Team {team} of {org}>'.format(
