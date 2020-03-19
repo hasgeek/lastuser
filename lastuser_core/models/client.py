@@ -94,8 +94,6 @@ class Client(ScopeMixin, BaseMixin, db.Model):
     )
     #: Back-end notification URI
     notification_uri = db.Column(db.UnicodeText, nullable=True, default='')
-    #: Front-end notification URI
-    iframe_uri = db.Column(db.UnicodeText, nullable=True, default='')
     #: Active flag
     active = db.Column(db.Boolean, nullable=False, default=True)
     #: Allow anyone to login to this app?

@@ -91,7 +91,7 @@ class RegisterClientForm(forms.Form):
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'},
     )
     redirect_uris = forms.TextListField(
-        __("Redirect URL"),
+        __("Redirect URLs"),
         validators=[
             forms.validators.OptionalIf('confidential'),
             forms.ForEach([forms.URL()]),
@@ -108,14 +108,6 @@ class RegisterClientForm(forms.Form):
         description=__(
             "When the user's data changes, Lastuser will POST a notice to this URL. "
             "Other notices may be posted too"
-        ),
-    )
-    iframe_uri = forms.URLField(
-        __("IFrame URL"),
-        validators=[forms.validators.Optional(), forms.validators.URL()],
-        description=__(
-            "Front-end notifications URL. This is loaded in a hidden iframe to notify the app that the "
-            "user updated their profile in some way (not yet implemented)"
         ),
     )
     allow_any_login = forms.BooleanField(
