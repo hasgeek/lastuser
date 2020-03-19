@@ -114,16 +114,6 @@ class TestClient(TestDatabaseFixture):
         self.assertIsInstance(result, models.AuthToken)
         assert "Lord Varys" == result.user.fullname
 
-    def test_client_orgs_with_team_access(self):
-        """
-        Test for retrieving a list of organizations that this client has access to the teams of
-        """
-        batdog = self.fixtures.batdog
-        client = self.fixtures.client
-        result = client.orgs_with_team_access()
-        self.assertIsInstance(result, list)
-        self.assertCountEqual(result, [batdog])
-
     def test_client_get(self):
         """
         Test for verifying Client's get method

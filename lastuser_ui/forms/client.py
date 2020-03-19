@@ -11,7 +11,6 @@ import baseframe.forms as forms
 
 __all__ = [
     'ClientCredentialForm',
-    'ClientTeamAccessForm',
     'ConfirmDeleteForm',
     'PermissionEditForm',
     'PermissionForm',
@@ -116,14 +115,6 @@ class RegisterClientForm(forms.Form):
         description=__(
             "If your application requires access to be restricted to specific users, uncheck this, "
             "and only users who have been assigned a permission to the app will be able to login"
-        ),
-    )
-    team_access = forms.BooleanField(
-        __("Requires access to teams"),
-        default=False,
-        description=__(
-            "If your application is capable of assigning access permissions to teams, check this. "
-            "Organization owners will then able to grant access to teams in their organizations"
         ),
     )
 
@@ -328,11 +319,3 @@ class PermissionEditForm(forms.Form):
     perms = forms.SelectMultipleField(
         __("Permissions"), validators=[forms.validators.DataRequired()]
     )
-
-
-class ClientTeamAccessForm(forms.Form):
-    """
-    Select organizations that the client has access to the teams of
-    """
-
-    organizations = forms.SelectMultipleField(__("Organizations"))

@@ -100,12 +100,6 @@ def notify_org_data_changed(org, user, changes, team=None):
     all other owners of this org to find apps that need to be notified.
     """
     client_users = {}
-    if team is not None:
-        team_access = set(org.clients_with_team_access()) | (
-            set(user.clients_with_team_access()) if user else set()
-        )
-    else:
-        team_access = []
     for token in AuthToken.all(users=org.owners.users):
         if (
             {'*', 'organizations', 'organizations/*'}.intersection(
@@ -114,9 +108,6 @@ def notify_org_data_changed(org, user, changes, team=None):
             and token.client.notification_uri
             and token.is_valid()
         ):
-            if team is not None:
-                if token.client not in team_access:
-                    continue
             client_users.setdefault(token.client, []).append(token.user)
     # Now we have a list of clients to notify and a list of users to notify them with
     for client, users in client_users.items():

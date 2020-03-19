@@ -184,11 +184,3 @@ class TestOrganization(TestDatabaseFixture):
             insurgent.name = 'Insurgent'
         insurgent.name = 'insurgent'
         self.assertEqual(insurgent.name, 'insurgent')
-
-    def test_organization_clients_with_team_access(self):
-        """
-        Test for retrieving a list of clients with access to the organization's teams.
-        """
-        client = self.fixtures.client
-        batdog = self.fixtures.batdog
-        self.assertCountEqual(batdog.clients_with_team_access(), [client])

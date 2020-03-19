@@ -472,45 +472,6 @@ def user_autocomplete():
     return api_result('ok', users=result, _jsonp=True)
 
 
-# This is org/* instead of organizations/* because it's a client resource. TODO: Reconsider
-# DEPRECATED, to be removed soon
-@lastuser_oauth.route('/api/1/org/get_teams', methods=['GET', 'POST'])
-@requires_client_login
-def org_team_get():
-    """
-    Returns a list of teams in the given organization.
-    """
-    if not current_auth.client.team_access:
-        return api_result('error', error='no_team_access')
-    org_buids = request.values.getlist('org')
-    if not org_buids:
-        return api_result('error', error='no_org_provided')
-    organizations = Organization.all(buids=org_buids)
-    if not organizations:
-        return api_result('error', error='no_such_organization')
-    orgteams = {}
-    for org in organizations:
-        # If client has access to team information, make a list of teams.
-        # XXX: Should trusted clients have access anyway? Will this be an abuse
-        # of the trusted flag? It was originally meant to only bypass user authorization
-        # on login to HasGeek websites as that would have been very confusing to users.
-        # XXX: Return user list here?
-        if current_auth.client in org.clients_with_team_access():
-            orgteams[org.buid] = [
-                {
-                    'userid': team.buid,
-                    'buid': team.buid,
-                    'uuid': team.uuid,
-                    'org': org.buid,
-                    'org_uuid': org.uuid,
-                    'title': team.title,
-                    'owners': team == org.owners,
-                }
-                for team in org.teams
-            ]
-    return api_result('ok', org_teams=orgteams)
-
-
 # --- Public endpoints --------------------------------------------------------
 
 

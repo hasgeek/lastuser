@@ -19,10 +19,8 @@ from .user import Organization, Team, User
 __all__ = [
     'AuthCode',
     'AuthToken',
-    'CLIENT_TEAM_ACCESS',
     'Client',
     'ClientCredential',
-    'ClientTeamAccess',
     'NoticeType',
     'Permission',
     'TeamClientPermissions',
@@ -98,8 +96,6 @@ class Client(ScopeMixin, BaseMixin, db.Model):
     active = db.Column(db.Boolean, nullable=False, default=True)
     #: Allow anyone to login to this app?
     allow_any_login = db.Column(db.Boolean, nullable=False, default=True)
-    #: Team access flag
-    team_access = db.Column(db.Boolean, nullable=False, default=False)
     #: OAuth client key/id
     key = db.Column(db.String(22), nullable=False, unique=True, default=buid)
     #: Trusted flag: trusted clients are authorized to access user data
@@ -169,16 +165,6 @@ class Client(ScopeMixin, BaseMixin, db.Model):
         return self.user == user or (
             self.org and self.org in user.organizations_owned()
         )
-
-    def orgs_with_team_access(self):
-        """
-        Return a list of organizations that this client has access to the teams of.
-        """
-        return [
-            cta.org
-            for cta in self.org_team_access
-            if cta.access_level == CLIENT_TEAM_ACCESS.ALL
-        ]
 
     def permissions(self, user, inherited=None):
         perms = super(Client, self).permissions(user, inherited)
@@ -648,33 +634,6 @@ class TeamClientPermissions(BaseMixin, db.Model):
     @property
     def buid(self):
         return self.team.buid
-
-
-class CLIENT_TEAM_ACCESS:  # NOQA: N801
-    NONE = 0  # The default if there's no connecting object
-    ALL = 1  # All teams can be seen
-    PARTIAL = 2  # TODO: Not supported yet
-
-
-class ClientTeamAccess(BaseMixin, db.Model):
-    __tablename__ = 'clientteamaccess'
-    #: Organization whose teams are exposed to the client app
-    org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
-    org = db.relationship(
-        Organization,
-        primaryjoin=org_id == Organization.id,
-        backref=db.backref('client_team_access', cascade='all, delete-orphan'),
-    )
-    #: Client app they are exposed to
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    client = db.relationship(
-        Client,
-        primaryjoin=client_id == Client.id,
-        backref=db.backref('org_team_access', cascade='all, delete-orphan'),
-    )
-    access_level = db.Column(
-        db.Integer, default=CLIENT_TEAM_ACCESS.NONE, nullable=False
-    )
 
 
 class NoticeType(BaseMixin, db.Model):

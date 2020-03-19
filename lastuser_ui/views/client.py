@@ -7,11 +7,8 @@ from baseframe.forms import render_delete_sqla, render_form, render_redirect
 from coaster.auth import current_auth
 from coaster.views import load_model, load_models
 from lastuser_core.models import (
-    CLIENT_TEAM_ACCESS,
     Client,
     ClientCredential,
-    ClientTeamAccess,
-    Organization,
     Permission,
     Team,
     TeamClientPermissions,
@@ -24,7 +21,6 @@ from lastuser_oauth.views.helpers import requires_login
 from .. import lastuser_ui
 from ..forms import (
     ClientCredentialForm,
-    ClientTeamAccessForm,
     PermissionEditForm,
     PermissionForm,
     RegisterClientForm,
@@ -143,10 +139,6 @@ def client_edit(client):
         form.populate_obj(client)
         client.user = form.user
         client.org = form.org
-        if not client.team_access:
-            # This client does not have access to teams in organizations. Remove all existing assignments
-            for cta in ClientTeamAccess.query.filter_by(client=client).all():
-                db.session.delete(cta)
         db.session.commit()
         return render_redirect(url_for('.client_info', key=client.key), code=303)
 
@@ -527,48 +519,3 @@ def permission_user_delete(client, kwargs):
             ),
             next=url_for('.client_info', key=client.key),
         )
-
-
-# --- Routes: client team access ----------------------------------------------
-
-
-@lastuser_ui.route('/apps/<key>/teams', methods=['GET', 'POST'])
-@requires_login
-@load_model(Client, {'key': 'key'}, 'client')
-def client_team_access(client):
-    form = ClientTeamAccessForm()
-    user_orgs = current_auth.user.organizations_owned()
-    form.organizations.choices = [(org.buid, org.title) for org in user_orgs]
-    org_selected = [
-        org.buid for org in user_orgs if client in org.clients_with_team_access()
-    ]
-    if request.method == 'GET':
-        form.organizations.data = org_selected
-    if form.validate_on_submit():
-        org_del = Organization.query.filter(
-            Organization.buid.in_(set(org_selected) - set(form.organizations.data))
-        ).all()
-        org_add = Organization.query.filter(
-            Organization.buid.in_(set(form.organizations.data) - set(org_selected))
-        ).all()
-        cta_del = (
-            ClientTeamAccess.query.filter_by(client=client)
-            .filter(ClientTeamAccess.org_id.in_([org.id for org in org_del]))
-            .all()
-        )
-        for cta in cta_del:
-            db.session.delete(cta)
-        for org in org_add:
-            cta = ClientTeamAccess(
-                org=org, client=client, access_level=CLIENT_TEAM_ACCESS.ALL
-            )
-            db.session.add(cta)
-        db.session.commit()
-        flash(
-            _("You have assigned access to teams in your organizations for this app"),
-            'success',
-        )
-        return render_redirect(url_for('.client_info', key=client.key), code=303)
-    return render_form(
-        form=form, title=_("Select organizations"), submit=_("Save"), ajax=True
-    )

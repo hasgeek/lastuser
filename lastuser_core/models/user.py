@@ -735,18 +735,6 @@ class Organization(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         else:
             return self.title
 
-    def clients_with_team_access(self):
-        """
-        Return a list of clients with access to the organization's teams.
-        """
-        from lastuser_core.models.client import CLIENT_TEAM_ACCESS
-
-        return [
-            cta.client
-            for cta in self.client_team_access
-            if cta.access_level == CLIENT_TEAM_ACCESS.ALL
-        ]
-
     def permissions(self, user, inherited=None):
         perms = super(Organization, self).permissions(user, inherited)
         if user and user in self.owners.users:

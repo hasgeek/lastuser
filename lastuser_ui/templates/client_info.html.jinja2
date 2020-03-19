@@ -16,9 +16,6 @@
               <li><a href="{{ url_for('.client_cred_new', key=client.key) }}" title="New access key">New access key</a></li>
               <li><a href="{{ url_for('.permission_new') }}">Define a new permission</a></li>
               <li><a href="{{ url_for('.permission_user_new', key=client.key) }}">Assign permissions to another {% if client.user %}user{% else %}team{% endif %}</a></li>
-              {% if current_auth.is_authenticated and client.team_access and current_auth.user.organizations_owned() %}
-                <li><a href="{{ url_for('.client_team_access', key=client.key) }}" title="Change access permissions">Change access permissions</a></li>
-              {% endif %}
             </ol>
           </div>
         </div>
@@ -128,26 +125,6 @@
       </div>
     {%- endif %}
 
-    {% if current_auth.is_authenticated and client.team_access and current_auth.user.organizations_owned() %}
-      <div class="grid__col--bleed-y">
-        <h2>Team Access</h2>
-        <p>This application can manage access permissions per team. Select the organizations whose teams it has access to.</p>
-      </div>
-       <div class="grid grid--align-baseline">
-        {% for org in current_auth.user.organizations_owned() %}
-          <div class="grid__col-auto">
-            <div class="card card--limited">
-              <div class="card__header">
-                <h3 class="mui--text-title">{{ org.title }}</h3>
-              </div>
-              <div class="card__body card--text mui--text-subhead">
-                <p><b>Access</b>: {% if client in org.clients_with_team_access() %}Yes{% else %}No{% endif %}</p>
-              </div>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-    {%- endif %}
   </div>
 <div>
 {% endblock %}

@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from lastuser_core.models import (
-    CLIENT_TEAM_ACCESS,
     Client,
-    ClientTeamAccess,
     Organization,
     Permission,
     SMSMessage,
@@ -74,11 +72,6 @@ class Fixtures(object):
         )
         self.team_client_permission = team_client_permission
         db.session.add(team_client_permission)
-
-        client_team_access = ClientTeamAccess(
-            org=batdog, client=client, access_level=CLIENT_TEAM_ACCESS.ALL
-        )
-        db.session.add(client_team_access)
 
         bdfl = Permission(name="bdfl", title="BDFL", user=crusoe)
         db.session.add(bdfl)
