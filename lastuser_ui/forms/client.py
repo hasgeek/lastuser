@@ -6,8 +6,7 @@ from flask import Markup, url_for
 
 from baseframe import _, __
 from coaster.utils import domain_namespace_match, getbool, valid_username
-from lastuser_core import resource_registry
-from lastuser_core.models import Organization, Permission, Resource, User
+from lastuser_core.models import Organization, Permission, User
 import baseframe.forms as forms
 
 __all__ = [
@@ -17,8 +16,6 @@ __all__ = [
     'PermissionEditForm',
     'PermissionForm',
     'RegisterClientForm',
-    'ResourceActionForm',
-    'ResourceForm',
     'TeamPermissionAssignForm',
     'UserPermissionAssignForm',
 ]
@@ -339,97 +336,6 @@ class PermissionEditForm(forms.Form):
     perms = forms.SelectMultipleField(
         __("Permissions"), validators=[forms.validators.DataRequired()]
     )
-
-
-class ResourceForm(forms.Form):
-    """
-    Edit a resource provided by an application
-    """
-
-    name = forms.StringField(
-        __("Resource name"),
-        validators=[forms.validators.DataRequired()],
-        description=__(
-            "Name of the resource as a single word in lower case. "
-            "This is provided by applications as part of the scope "
-            "when requesting access to a user's resources"
-        ),
-        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'},
-    )
-    title = forms.StringField(
-        __("Title"),
-        validators=[forms.validators.DataRequired()],
-        description=__("Resource title that is displayed to users"),
-    )
-    description = forms.TextAreaField(
-        __("Description"),
-        description=__("An optional description of what the resource is"),
-    )
-    siteresource = forms.BooleanField(
-        __("Site resource"),
-        description=__(
-            "Enable if this resource is generic to the site and not owned by specific users"
-        ),
-    )
-    restricted = forms.BooleanField(
-        __("Restrict access to your apps"),
-        description=__(
-            "Enable if access to the resource should be restricted to client apps "
-            "that share the same owner. You may want to do this for sensitive resources "
-            "that should only be available to your own apps"
-        ),
-    )
-
-    def validate_name(self, field):
-        field.data = field.data.lower()
-        if not valid_username(field.data):
-            raise forms.ValidationError(_("Name contains invalid characters"))
-
-        if field.data in resource_registry:
-            raise forms.ValidationError(_("This name is reserved for internal use"))
-
-        existing = Resource.get(name=field.data, client=self.client)
-        if existing and existing.id != self.edit_id:
-            raise forms.ValidationError(_("A resource with that name already exists"))
-
-
-class ResourceActionForm(forms.Form):
-    """
-    Edit an action associated with a resource
-    """
-
-    name = forms.StringField(
-        __("Action name"),
-        validators=[forms.validators.DataRequired()],
-        description=__(
-            "Name of the action as a single word in lower case. "
-            "This is provided by applications as part of the scope in the form "
-            "'resource/action' when requesting access to a user's resources. "
-            "Read actions are implicit when applications request just 'resource' "
-            "in the scope and do not need to be specified as an explicit action"
-        ),
-        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'},
-    )
-    title = forms.StringField(
-        __("Title"),
-        validators=[forms.validators.DataRequired()],
-        description=__("Action title that is displayed to users"),
-    )
-    description = forms.TextAreaField(
-        __("Description"),
-        description=__("An optional description of what the action is"),
-    )
-
-    def validate_name(self, field):
-        field.data = field.data.lower()
-        if not valid_username(field.data):
-            raise forms.ValidationError(_("Name contains invalid characters"))
-
-        existing = self.edit_resource.get_action(field.data)
-        if existing and existing.id != self.edit_id:
-            raise forms.ValidationError(
-                _("An action with that name already exists for this resource")
-            )
 
 
 class ClientTeamAccessForm(forms.Form):

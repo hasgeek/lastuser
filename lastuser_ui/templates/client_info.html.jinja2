@@ -100,61 +100,6 @@
       </div>
     {%- endif %}
 
-    <div class="grid__col--bleed-y">
-      <h2>Resources</h2>
-      <p class="mui--text-subhead">
-        This app provides the following resources and actions on resources.
-      </p>
-    </div>
-    <div class="grid grid--align-baseline">
-      {% for resource in resources %}
-        <div class="grid__col-auto">
-          <div class="card card--limited">
-            <div class="card__header">
-              <h3 class="mui--text-title"><strong>{{ resource.name }}</strong>{% if resource.siteresource %} <em>(site)</em>{% endif %}</h3>
-            </div>
-            <div class="card__body">
-              <p><b>Title</b>: {{ resource.title }}</p>
-              <p><b>Description</b>: {{ resource.description }}</p>
-            </div>
-            {% if client.owner_is(current_auth.user) %}
-              <div class="mui-divider"></div>
-              <div class="card__footer">
-                <a href="{{ url_for('.resource_edit', key=client.key, idr=resource.id) }}" title="{% trans %}Edit{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Edit</a>
-                <a href="{{ url_for('.resource_delete', key=client.key, idr=resource.id) }}" title="{% trans %}Delete{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Delete</a>
-              </div>
-            {% endif %}
-          </div>
-        </div>
-
-        <div class="grid__col-auto">
-          {% for action in resource.actions %}
-            <div class="card card--limited">
-              <div class="card__header">
-                <h3 class="mui--text-title">{{ action.name }}</h3>
-              </div>
-              <div class="card__body card--text mui--text-subhead">
-                <p><b>Title</b>: {{ action.title }}</p>
-                <p><b>Description</b>: {{ action.description }}</p>
-              </div>
-              {% if client.owner_is(current_auth.user) %}
-                <div class="mui-divider"></div>
-                <div class="card__footer">
-                  <a href="{{ url_for('.resource_edit', key=client.key, idr=resource.id) }}" title="{% trans %}Edit{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Edit</a>
-                  <a href="{{ url_for('.resource_delete', key=client.key, idr=resource.id) }}" title="{% trans %}Delete{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Delete</a>
-                  <a href="{{ url_for('.resource_action_new', key=client.key, idr=resource.id) }}" title="{% trans %}Add action{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Add action</a>
-                </div>
-              {% endif %}
-            </div>
-          {% endfor %}
-        </div>
-      {%- else %}
-        <div class="grid__col-auto">
-          <p class="mui--text-subhead"><em>This application does not provide any resources</em></p>
-        </div>
-      {% endfor %}
-    </div>
-
     {% if client.owner_is(current_auth.user) %}
       <div class="grid__col--bleed-y">
         <h2>Permissions</h2>

@@ -12,7 +12,6 @@ from lastuser_core.models import (
     AuthToken,
     Client,
     ClientCredential,
-    Resource,
     TeamClientPermissions,
     User,
     UserClientPermissions,
@@ -37,7 +36,6 @@ def verifyscope(scope, client):
     Verify if requested scope is valid for this client. Scope must be a list.
     """
     internal_resources = []  # Names of internal resources
-    external_resources = {}  # resource_object: [action_object, ...]
     full_client_access = []  # Clients linked to namespace:* scope
 
     for item in scope:
@@ -116,42 +114,9 @@ def verifyscope(scope, client):
                             namespace=namespace
                         )
                     )
-            else:
-                resource = Resource.get(name=resource_name, namespace=namespace)
-
-                # Validation 2: Resource exists and client has access to it
-                if not resource:
-                    raise ScopeException(
-                        _(
-                            "Unknown resource ‘{resource}’ under namespace ‘{namespace}’ in scope"
-                        ).format(resource=resource_name, namespace=namespace)
-                    )
-                if resource.restricted and resource.client.owner != client.owner:
-                    raise ScopeException(
-                        _(
-                            "This application does not have access to resource ‘{resource}’ in scope"
-                        ).format(resource=resource_name)
-                    )
-
-                # Validation 3: Action is valid
-                if action_name:
-                    action = resource.get_action(action_name)
-                    if not action:
-                        raise ScopeException(
-                            _(
-                                "Unknown action ‘{action}’ on resource ‘{resource}’ under namespace ‘{namespace}’"
-                            ).format(
-                                action=action_name,
-                                resource=resource_name,
-                                namespace=namespace,
-                            )
-                        )
-                    external_resources.setdefault(resource, []).append(action)
-                else:
-                    external_resources.setdefault(resource, [])
 
     internal_resources.sort()
-    return internal_resources, external_resources, full_client_access
+    return internal_resources, full_client_access
 
 
 def oauth_auth_403(reason):
@@ -345,9 +310,7 @@ def oauth_authorize():
 
     # Validation 3.2: Is scope valid?
     try:
-        internal_resources, external_resources, full_client_access = verifyscope(
-            scope, client
-        )
+        internal_resources, full_client_access = verifyscope(scope, client)
     except ScopeException as scopeex:
         return oauth_auth_error(redirect_uri, state, 'invalid_scope', str(scopeex))
 
@@ -440,7 +403,6 @@ def oauth_authorize():
             client=client,
             redirect_uri=redirect_uri,
             internal_resources=internal_resources,
-            external_resources=external_resources,
             full_client_access=full_client_access,
             resource_registry=resource_registry,
         ),
@@ -493,8 +455,6 @@ def oauth_make_token(user, client, scope, user_session=None):
             token = failsafe_add(
                 db.session, token, user_session=user_session, client=client
             )
-    # TODO: Look up Resources for items in scope; look up their providing clients apps,
-    # and notify each client app of this token
     return token
 
 

@@ -14,8 +14,6 @@ from lastuser_core.models import (
     AuthToken,
     ClientCredential,
     Organization,
-    Resource,
-    ResourceAction,
     TeamClientPermissions,
     User,
     UserClientPermissions,
@@ -192,7 +190,11 @@ def api_result(status, _jsonp=False, **params):
 
 # --- Client access endpoints -------------------------------------------------
 
-
+# Client A has obtained a token from user U for access to the user's resources held
+# in client B. It then presents this token to B and asks for the resource. B has not
+# seen this token before, so it calls token/verify to validate it. Lastuser confirms
+# the token is indeed valid for the resource being requested. However, with the
+# removal of client resources, the only valid resource now is the '*' wildcard.
 @lastuser_oauth.route('/api/1/token/verify', methods=['POST'])
 @requires_client_login
 def token_verify():
@@ -201,6 +203,9 @@ def token_verify():
     if not client_resource:
         # No resource specified by caller
         return resource_error('no_resource')
+    if client_resource != '*':
+        # Client resources are no longer supported; only the '*' resource is
+        return resource_error('unknown_resource')
     if not token:
         # No token specified by caller
         return resource_error('no_token')
@@ -219,25 +224,6 @@ def token_verify():
     ) and (current_auth.client.namespace + ':*' not in authtoken.effective_scope):
         # Token does not grant access to this resource
         return api_result('error', error='access_denied')
-    if '/' in client_resource:
-        parts = client_resource.split('/')
-        if len(parts) != 2:
-            return api_result('error', error='invalid_scope')
-        resource_name, action_name = parts
-    else:
-        resource_name = client_resource
-        action_name = None
-    if resource_name != '*':
-        resource = Resource.get(resource_name, client=current_auth.client)
-        if not resource:
-            # Resource does not exist or does not belong to this client
-            return api_result('error', error='access_denied')
-        if action_name and action_name != '*':
-            action = ResourceAction.query.filter_by(
-                name=action_name, resource=resource
-            ).first()
-            if not action:
-                return api_result('error', error='access_denied')
 
     # All validations passed. Token is valid for this client and scope. Return with information on the token
     # TODO: Don't return validity. Set the HTTP cache headers instead.
@@ -308,105 +294,6 @@ def token_get_scope():
         'scope': client_resources,
     }
     return api_result('ok', **params)
-
-
-@lastuser_oauth.route('/api/1/resource/sync', methods=['POST'])
-@requires_client_login
-def sync_resources():
-    resources = request.get_json().get('resources', [])
-    actions_list = {}
-    results = {}
-
-    for name in resources:
-        if '/' in name:
-            parts = name.split('/')
-            if len(parts) != 2:
-                results[name] = {
-                    'status': 'error',
-                    'error': _("Invalid resource name {name}").format(name=name),
-                }
-                continue
-            resource_name, action_name = parts
-        else:
-            resource_name = name
-            action_name = None
-        description = resources[name].get('description')
-        siteresource = getbool(resources[name].get('siteresource'))
-        restricted = getbool(resources[name].get('restricted'))
-        actions_list.setdefault(resource_name, [])
-        resource = Resource.get(name=resource_name, client=current_auth.client)
-        if resource:
-            results[resource.name] = {'status': 'exists', 'actions': {}}
-            if not action_name and resource.description != description:
-                resource.description = description
-                results[resource.name]['status'] = 'updated'
-            if not action_name and resource.siteresource != siteresource:
-                resource.siteresource = siteresource
-                results[resource.name]['status'] = 'updated'
-            if not action_name and resource.restricted != restricted:
-                resource.restricted = restricted
-                results[resource.name]['status'] = 'updated'
-        else:
-            resource = Resource(
-                client=current_auth.client,
-                name=resource_name,
-                title=resources.get(resource_name, {}).get('title')
-                or resource_name.title(),
-                description=resources.get(resource_name, {}).get('description') or '',
-            )
-            db.session.add(resource)
-            results[resource.name] = {'status': 'added', 'actions': {}}
-
-        if action_name:
-            if action_name not in actions_list[resource_name]:
-                actions_list[resource_name].append(action_name)
-            action = resource.get_action(name=action_name)
-            if action:
-                if description != action.description:
-                    action.description = description
-                    results[resource.name]['actions'][action.name] = {
-                        'status': 'updated'
-                    }
-                else:
-                    results[resource.name]['actions'][action.name] = {
-                        'status': 'exists'
-                    }
-            else:
-                # FIXME: What is "title" here? This assignment doesn't seem right
-                action = ResourceAction(
-                    resource=resource,
-                    name=action_name,
-                    title=resources[name].get('title')
-                    or action_name.title() + " " + resource.title,
-                    description=description,
-                )
-                db.session.add(action)
-                results[resource.name]['actions'][action.name] = {'status': 'added'}
-
-    # Deleting resources & actions not defined in client application.
-    for resource_name in actions_list:
-        resource = Resource.get(name=resource_name, client=current_auth.client)
-        actions = ResourceAction.query.filter(
-            ~ResourceAction.name.in_(actions_list[resource_name]),
-            ResourceAction.resource == resource,
-        )
-        for action in actions.all():
-            results[resource_name]['actions'][action.name] = {'status': 'deleted'}
-        actions.delete(synchronize_session='fetch')
-    del_resources = Resource.query.filter(
-        ~Resource.name.in_(list(actions_list.keys())),
-        Resource.client == current_auth.client,
-    )
-    for resource in del_resources.all():
-        ResourceAction.query.filter_by(resource=resource).delete(
-            synchronize_session='fetch'
-        )
-        results[resource.name] = {'status': 'deleted'}
-    del_resources.delete(synchronize_session='fetch')
-
-    db.session.commit()
-
-    return api_result('ok', results=results)
 
 
 @lastuser_oauth.route('/api/1/user/get_by_userid', methods=['GET', 'POST'])

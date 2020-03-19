@@ -13,8 +13,6 @@ from lastuser_core.models import (
     ClientTeamAccess,
     Organization,
     Permission,
-    Resource,
-    ResourceAction,
     Team,
     TeamClientPermissions,
     User,
@@ -30,8 +28,6 @@ from ..forms import (
     PermissionEditForm,
     PermissionForm,
     RegisterClientForm,
-    ResourceActionForm,
-    ResourceForm,
     TeamPermissionAssignForm,
     UserPermissionAssignForm,
 )
@@ -112,12 +108,8 @@ def client_info(client):
         permassignments = UserClientPermissions.query.filter_by(client=client).all()
     else:
         permassignments = TeamClientPermissions.query.filter_by(client=client).all()
-    resources = Resource.query.filter_by(client=client).order_by(Resource.name).all()
     return render_template(
-        'client_info.html.jinja2',
-        client=client,
-        permassignments=permassignments,
-        resources=resources,
+        'client_info.html.jinja2', client=client, permassignments=permassignments
     )
 
 
@@ -535,162 +527,6 @@ def permission_user_delete(client, kwargs):
             ),
             next=url_for('.client_info', key=client.key),
         )
-
-
-# --- Routes: client app resources --------------------------------------------
-
-
-@lastuser_ui.route('/apps/<key>/resources/new', methods=['GET', 'POST'])
-@requires_login
-@load_model(Client, {'key': 'key'}, 'client', permission='new-resource')
-def resource_new(client):
-    form = ResourceForm()
-    form.client = client
-    form.edit_id = None
-    if form.validate_on_submit():
-        resource = Resource(client=client)
-        form.populate_obj(resource)
-        db.session.add(resource)
-        db.session.commit()
-        flash(_("Your new resource has been saved"), 'success')
-        return render_redirect(url_for('.client_info', key=client.key), code=303)
-    return render_form(
-        form=form,
-        title=_("Define a resource"),
-        formid='resource_new',
-        submit=_("Define resource"),
-        ajax=True,
-    )
-
-
-@lastuser_ui.route('/apps/<key>/resources/<int:idr>/edit', methods=['GET', 'POST'])
-@requires_login
-@load_models(
-    (Client, {'key': 'key'}, 'client'),
-    (Resource, {'id': 'idr', 'client': 'client'}, 'resource'),
-    permission='edit',
-)
-def resource_edit(client, resource):
-    form = ResourceForm(obj=resource)
-    form.client = client
-    if form.validate_on_submit():
-        form.populate_obj(resource)
-        db.session.commit()
-        flash(_("Your resource has been edited"), 'success')
-        return render_redirect(url_for('.client_info', key=client.key), code=303)
-    return render_form(
-        form=form,
-        title=_("Edit resource"),
-        formid='resource_edit',
-        submit=_("Save changes"),
-        ajax=True,
-    )
-
-
-@lastuser_ui.route('/apps/<key>/resources/<int:idr>/delete', methods=['GET', 'POST'])
-@requires_login
-@load_models(
-    (Client, {'key': 'key'}, 'client'),
-    (Resource, {'id': 'idr', 'client': 'client'}, 'resource'),
-    permission='delete',
-)
-def resource_delete(client, resource):
-    return render_delete_sqla(
-        resource,
-        db,
-        title=_("Confirm delete"),
-        message=_("Delete resource ‘{resource}’ from app ‘{client}’?").format(
-            resource=resource.title, client=client.title
-        ),
-        success=_("You have deleted resource ‘{resource}’ on app ‘{client}’").format(
-            resource=resource.title, client=client.title
-        ),
-        next=url_for('.client_info', key=client.key),
-    )
-
-
-# --- Routes: resource actions ------------------------------------------------
-
-
-@lastuser_ui.route(
-    '/apps/<key>/resources/<int:idr>/actions/new', methods=['GET', 'POST']
-)
-@requires_login
-@load_models(
-    (Client, {'key': 'key'}, 'client'),
-    (Resource, {'id': 'idr', 'client': 'client'}, 'resource'),
-    permission='new-action',
-)
-def resource_action_new(client, resource):
-    form = ResourceActionForm()
-    form.edit_id = None
-    form.edit_resource = resource
-    if form.validate_on_submit():
-        action = ResourceAction(resource=resource)
-        form.populate_obj(action)
-        db.session.add(action)
-        db.session.commit()
-        flash(_("Your new action has been saved"), 'success')
-        return render_redirect(url_for('.client_info', key=client.key), code=303)
-    return render_form(
-        form=form,
-        title=_("Define an action"),
-        formid='action_new',
-        submit=_("Define action"),
-        ajax=True,
-    )
-
-
-@lastuser_ui.route(
-    '/apps/<key>/resources/<int:idr>/actions/<int:ida>/edit', methods=['GET', 'POST']
-)
-@requires_login
-@load_models(
-    (Client, {'key': 'key'}, 'client'),
-    (Resource, {'id': 'idr', 'client': 'client'}, 'resource'),
-    (ResourceAction, {'id': 'ida', 'resource': 'resource'}, 'action'),
-    permission='edit',
-)
-def resource_action_edit(client, resource, action):
-    form = ResourceActionForm(obj=action)
-    form.edit_resource = resource
-    if form.validate_on_submit():
-        form.populate_obj(action)
-        db.session.commit()
-        flash(_("Your action has been edited"), 'success')
-        return render_redirect(url_for('.client_info', key=client.key), code=303)
-    return render_form(
-        form=form,
-        title=_("Edit action"),
-        formid='action_edit',
-        submit=_("Save changes"),
-        ajax=True,
-    )
-
-
-@lastuser_ui.route(
-    '/apps/<key>/resources/<int:idr>/actions/<int:ida>/delete', methods=['GET', 'POST']
-)
-@requires_login
-@load_models(
-    (Client, {'key': 'key'}, 'client'),
-    (Resource, {'id': 'idr', 'client': 'client'}, 'resource'),
-    (ResourceAction, {'id': 'ida', 'resource': 'resource'}, 'action'),
-    permission='delete',
-)
-def resource_action_delete(client, resource, action):
-    return render_delete_sqla(
-        action,
-        db,
-        title=_("Confirm delete"),
-        message=_(
-            "Delete action ‘{action}’ from resource ‘{resource}’ of app ‘{client}’?"
-        ).format(action=action.title, resource=resource.title, client=client.title),
-        success=_(
-            "You have deleted action ‘{action}’ on resource ‘{resource}’ of app ‘{client}’"
-        ).format(action=action.title, resource=resource.title, client=client.title),
-        next=url_for('.client_info', key=client.key),
-    )
 
 
 # --- Routes: client team access ----------------------------------------------

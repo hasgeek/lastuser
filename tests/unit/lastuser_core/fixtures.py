@@ -6,8 +6,6 @@ from lastuser_core.models import (
     ClientTeamAccess,
     Organization,
     Permission,
-    Resource,
-    ResourceAction,
     SMSMessage,
     Team,
     TeamClientPermissions,
@@ -89,18 +87,6 @@ class Fixtures(object):
         user_client_permissions = UserClientPermissions(user=crusoe, client=client)
         db.session.add(user_client_permissions)
         self.user_client_permissions = user_client_permissions
-
-        resource = Resource(name="test_resource", title="Test Resource", client=client)
-        db.session.add(resource)
-        self.resource = resource
-
-        resource_action = ResourceAction(name='Fun', resource=resource, title='fun')
-        db.session.add(resource_action)
-        self.resource_action = resource_action
-
-        action = ResourceAction(name="read", title="Read", resource=resource)
-        db.session.add(action)
-        self.action = action
 
         message = SMSMessage(
             phone_number=crusoe_phone.phone,

@@ -31,17 +31,6 @@
           {% for key in internal_resources -%}
             <li>{{ resource_registry[key]['description'] }}</li>
           {%- endfor %}
-          {% for resource in external_resources -%}
-            <li>{{ resource.title }}
-              {% if external_resources[resource] -%}
-                <ul>
-                  {%- for action in external_resources[resource] %}
-                    <li>{{ action.title }}</li>
-                  {%- endfor %}
-                </ul>
-              {%- endif %}
-            </li>
-          {%- endfor %}
           {% for client in full_client_access -%}
             <li>Full access to all your data in {{ client.title }}</li>
           {%- endfor %}

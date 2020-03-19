@@ -12,7 +12,7 @@ from sqlalchemy.orm.query import Query as QueryBaseClass
 from baseframe import _
 from coaster.utils import buid, newsecret, require_one_of, utcnow
 
-from . import BaseMixin, BaseScopedNameMixin, db
+from . import BaseMixin, db
 from .session import UserSession
 from .user import Organization, Team, User
 
@@ -25,8 +25,6 @@ __all__ = [
     'ClientTeamAccess',
     'NoticeType',
     'Permission',
-    'Resource',
-    'ResourceAction',
     'TeamClientPermissions',
     'UserClientPermissions',
     'UserFlashMessage',
@@ -295,104 +293,6 @@ class UserFlashMessage(BaseMixin, db.Model):
     seq = db.Column(db.Integer, default=0, nullable=False)
     category = db.Column(db.UnicodeText, nullable=False)
     message = db.Column(db.UnicodeText, nullable=False)
-
-
-class Resource(BaseScopedNameMixin, db.Model):
-    """
-    Resources are provided by client applications. Other client applications
-    can request access to user data at resource servers by providing the
-    `name` as part of the requested `scope`.
-    """
-
-    __tablename__ = 'resource'
-    # Resource names are unique within client apps
-    name = db.Column(db.Unicode(20), nullable=False)
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    client = db.relationship(
-        Client,
-        primaryjoin=client_id == Client.id,
-        backref=db.backref('resources', cascade='all, delete-orphan'),
-    )
-    parent = db.synonym('client')
-    title = db.Column(db.Unicode(250), nullable=False)
-    description = db.Column(db.UnicodeText, default='', nullable=False)
-    siteresource = db.Column(db.Boolean, default=False, nullable=False)
-    restricted = db.Column(db.Boolean, default=False, nullable=False)
-    __table_args__ = (
-        db.UniqueConstraint('client_id', 'name', name='resource_client_id_name_key'),
-    )
-
-    def permissions(self, user, inherited=None):
-        perms = super(Resource, self).permissions(user, inherited)
-        if user and self.client.owner_is(user):
-            perms.add('edit')
-            perms.add('delete')
-            perms.add('new-action')
-        return perms
-
-    @classmethod
-    def get(cls, name, client=None, namespace=None):
-        """
-        Return a Resource with the given name.
-
-        :param str name: Name of the resource.
-        """
-        require_one_of(client=client, namespace=namespace)
-
-        if client:
-            return cls.query.filter_by(name=name, client=client).one_or_none()
-        else:
-            return (
-                cls.query.filter_by(name=name)
-                .join(Client)
-                .filter(Client.namespace == namespace)
-                .one_or_none()
-            )
-
-    def get_action(self, name):
-        """
-        Return a ResourceAction on this Resource with the given name.
-
-        :param str name: Name of the action
-        """
-        return ResourceAction.get(name=name, resource=self)
-
-
-class ResourceAction(BaseMixin, db.Model):
-    """
-    Actions that can be performed on resources.
-    """
-
-    __tablename__ = 'resourceaction'
-    name = db.Column(db.Unicode(20), nullable=False)
-    resource_id = db.Column(db.Integer, db.ForeignKey('resource.id'), nullable=False)
-    resource = db.relationship(
-        Resource,
-        primaryjoin=resource_id == Resource.id,
-        backref=db.backref('actions', cascade='all, delete-orphan'),
-    )
-    title = db.Column(db.Unicode(250), nullable=False)
-    description = db.Column(db.UnicodeText, default='', nullable=False)
-
-    # Action names are unique per client app
-    __table_args__ = (db.UniqueConstraint('resource_id', 'name'),)
-
-    def permissions(self, user, inherited=None):
-        perms = super(ResourceAction, self).permissions(user, inherited)
-        if user and self.resource.client.owner_is(user):
-            perms.add('edit')
-            perms.add('delete')
-        return perms
-
-    @classmethod
-    def get(cls, name, resource):
-        """
-        Return a ResourceAction on the specified resource with the specified name.
-
-        :param str name: Name of the action
-        :param Resource resource: Resource on which this action exists
-        """
-        return cls.query.filter_by(name=name, resource=resource).one_or_none()
 
 
 class AuthCode(ScopeMixin, BaseMixin, db.Model):
