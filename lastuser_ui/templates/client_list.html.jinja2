@@ -19,7 +19,7 @@
     </thead>
     <tbody class="mui--text-subhead">
       {% for client in clients %}
-        {%- set link = url_for('.client_info', key=client.key)|e %}
+        {%- set link = url_for('.client_info', key=client.buid)|e %}
         <tr>
           <td data-th="#"><a href="{{ link }}" title="{{ client.title }}">{{ loop.index }}</a></td>
           <td data-th="Title"><a href="{{ link }}" title="{{ client.title }}">{{ client.title }}</a></td>

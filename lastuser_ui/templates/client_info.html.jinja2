@@ -11,11 +11,11 @@
           </div>
           <div class="card__body card--text mui--text-subhead">
             <ol class="mui-list--aligned">
-              <li><a href="{{ url_for('.client_edit', key=client.key) }}" title="Edit">Edit this application</a></li>
-              <li><a href="{{ url_for('.client_delete', key=client.key) }}" title="Delete">Delete</a></li>
-              <li><a href="{{ url_for('.client_cred_new', key=client.key) }}" title="New access key">New access key</a></li>
+              <li><a href="{{ url_for('.client_edit', key=client.buid) }}" title="Edit">Edit this application</a></li>
+              <li><a href="{{ url_for('.client_delete', key=client.buid) }}" title="Delete">Delete</a></li>
+              <li><a href="{{ url_for('.client_cred_new', key=client.buid) }}" title="New access key">New access key</a></li>
               <li><a href="{{ url_for('.permission_new') }}">Define a new permission</a></li>
-              <li><a href="{{ url_for('.permission_user_new', key=client.key) }}">Assign permissions to another {% if client.user %}user{% else %}team{% endif %}</a></li>
+              <li><a href="{{ url_for('.permission_user_new', key=client.buid) }}">Assign permissions to another {% if client.user %}user{% else %}team{% endif %}</a></li>
             </ol>
           </div>
         </div>
@@ -83,7 +83,7 @@
             </div>
             <div class="mui-divider"></div>
             <div class="card__footer">
-              <a href="{{ url_for('.client_cred_delete', key=client.key, name=cred.name) }}" title="{% trans %}Revoke{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Revoke</a>
+              <a href="{{ url_for('.client_cred_delete', key=client.buid, name=cred.name) }}" title="{% trans %}Revoke{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Revoke</a>
             </div>
           </div>
         </div>
@@ -112,8 +112,8 @@
               </div>
               <div class="mui-divider"></div>
               <div class="card__footer">
-                <a href="{{ url_for('.permission_user_edit', key=client.key, buid=pa.buid) }}" title="{% trans %}Edit{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Edit</a>
-                <a href="{{ url_for('.permission_user_delete', key=client.key, buid=pa.buid) }}" title="{% trans %}Delete{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Delete</a>
+                <a href="{{ url_for('.permission_user_edit', key=client.buid, buid=pa.buid) }}" title="{% trans %}Edit{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Edit</a>
+                <a href="{{ url_for('.permission_user_delete', key=client.buid, buid=pa.buid) }}" title="{% trans %}Delete{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Delete</a>
               </div>
             </div>
           </div>

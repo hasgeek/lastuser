@@ -241,7 +241,7 @@ def token_verify():
         'uuid': authtoken.client.owner.uuid,
         'owner_title': authtoken.client.owner.pickername,
         'website': authtoken.client.website,
-        'key': authtoken.client.key,
+        'key': authtoken.client.buid,
         'trusted': authtoken.client.trusted,
     }
     return api_result('ok', **params)
@@ -289,7 +289,7 @@ def token_get_scope():
         'uuid': authtoken.client.owner.uuid,
         'owner_title': authtoken.client.owner.pickername,
         'website': authtoken.client.website,
-        'key': authtoken.client.key,
+        'key': authtoken.client.buid,
         'trusted': authtoken.client.trusted,
         'scope': client_resources,
     }

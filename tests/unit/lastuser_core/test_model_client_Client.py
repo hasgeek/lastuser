@@ -120,14 +120,14 @@ class TestClient(TestDatabaseFixture):
         """
         client = self.fixtures.client
         batdog = self.fixtures.batdog
-        key = client.key
+        key = client.buid
         # scenario 1: when no key or namespace
         with self.assertRaises(TypeError):
             models.Client.get()
         # scenario 2: when given key
         result1 = models.Client.get(key)
         self.assertIsInstance(result1, models.Client)
-        self.assertEqual(result1.key, key)
+        self.assertEqual(result1.buid, key)
         self.assertEqual(result1.owner, batdog)
         # scenario 3: when given namespace
         namespace = 'fun.batdogadventures.com'

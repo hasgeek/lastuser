@@ -35,7 +35,7 @@
           xhr.send();
         };
 
-        getJSON({{ url_for('.login_beacon_json', client_id=client.key)|tojson }}, function(data) {
+        getJSON({{ url_for('.login_beacon_json', client_id=client.buid)|tojson }}, function(data) {
           if (data.hastoken) {
             window.top.location.href = {{ login_url|tojson }} + '?next=' + encodeURIComponent(document.referrer);
           } // Else: no user, don't do anything

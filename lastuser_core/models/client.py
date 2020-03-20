@@ -12,7 +12,7 @@ from sqlalchemy.orm.query import Query as QueryBaseClass
 from baseframe import _
 from coaster.utils import buid, newsecret, require_one_of, utcnow
 
-from . import BaseMixin, db
+from . import BaseMixin, UuidMixin, db
 from .session import UserSession
 from .user import Organization, Team, User
 
@@ -57,7 +57,7 @@ class ScopeMixin(object):
         self.scope = list(set(self.scope).union(set(additional)))
 
 
-class Client(ScopeMixin, BaseMixin, db.Model):
+class Client(ScopeMixin, UuidMixin, BaseMixin, db.Model):
     """OAuth client applications"""
 
     __tablename__ = 'client'
@@ -96,8 +96,6 @@ class Client(ScopeMixin, BaseMixin, db.Model):
     active = db.Column(db.Boolean, nullable=False, default=True)
     #: Allow anyone to login to this app?
     allow_any_login = db.Column(db.Boolean, nullable=False, default=True)
-    #: OAuth client key/id
-    key = db.Column(db.String(22), nullable=False, unique=True, default=buid)
     #: Trusted flag: trusted clients are authorized to access user data
     #: without user consent, but the user must still login and identify themself.
     #: When a single provider provides multiple services, each can be declared
@@ -123,7 +121,7 @@ class Client(ScopeMixin, BaseMixin, db.Model):
     )
 
     def __repr__(self):
-        return '<Client "{title}" {key}>'.format(title=self.title, key=self.key)
+        return '<Client "{title}" {buid}>'.format(title=self.title, buid=self.buid)
 
     def secret_is(self, candidate, name):
         """
@@ -186,14 +184,14 @@ class Client(ScopeMixin, BaseMixin, db.Model):
             ).one_or_none()
 
     @classmethod
-    def get(cls, key=None, namespace=None):
+    def get(cls, buid=None, namespace=None):
         """
-        Return a Client identified by its client key or namespace. Only returns active clients.
+        Return a Client identified by its client buid or namespace. Only returns active clients.
 
-        :param str key: Client key to lookup
+        :param str buid: Client buid to lookup
         :param str namespace: Client namespace to lookup
         """
-        param, value = require_one_of(True, key=key, namespace=namespace)
+        param, value = require_one_of(True, buid=buid, namespace=namespace)
         return cls.query.filter_by(**{param: value, 'active': True}).one_or_none()
 
 
