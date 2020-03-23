@@ -422,17 +422,14 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         """
         Return the organizations this user is a member of.
         """
-        return sorted(
-            {team.org for team in self.teams if team.org.members == team},
-            key=lambda o: o.title,
-        )
+        return sorted({team.org for team in self.teams}, key=lambda o: o.title)
 
     def organizations_memberof_ids(self):
         """
         Return the database ids of the organizations this user is a member of. This is used
         for database queries.
         """
-        return list({team.org.id for team in self.teams if team.org.members == team})
+        return list({team.org.id for team in self.teams})
 
     def is_profile_complete(self):
         """
@@ -676,18 +673,6 @@ class Organization(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         cascade='all',
         post_update=True,
     )  # No delete-orphan cascade here
-    members_id = db.Column(
-        None,
-        db.ForeignKey('team.id', use_alter=True, name='organization_members_id_fkey'),
-        nullable=True,
-    )
-    members = db.relationship(
-        'Team',
-        primaryjoin='Organization.members_id == Team.id',
-        uselist=False,
-        cascade='all',
-        post_update=True,
-    )  # No delete-orphan cascade here
     title = db.Column(db.Unicode(__title_length__), default='', nullable=False)
     #: Deprecated, but column preserved for existing data until migration
     description = deferred(db.Column(db.UnicodeText, default='', nullable=False))
@@ -720,8 +705,6 @@ class Organization(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
     def make_teams(self):
         if self.owners is None:
             self.owners = Team(title=_("Owners"), org=self)
-        if self.members is None:
-            self.members = Team(title=_("Members"), org=self)
 
     def __repr__(self):
         return '<Organization {name} "{title}">'.format(

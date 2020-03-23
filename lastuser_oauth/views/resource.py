@@ -106,7 +106,6 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                 'org': team.org.buid,
                 'org_uuid': team.org.uuid,
                 'owners': team == team.org.owners,
-                'members': team == team.org.members,
                 'member': True,
             }
 
@@ -122,7 +121,6 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                         'org': team.org.buid,
                         'org_uuid': team.org.uuid,
                         'owners': team == team.org.owners,
-                        'members': team == team.org.members,
                         'member': False,
                     }
 

@@ -47,8 +47,6 @@ class OrgView(UrlForView, ModelView):
             form.populate_obj(org)
             if current_auth.user not in org.owners.users:
                 org.owners.users.append(current_auth.user)
-            if current_auth.user not in org.members.users:
-                org.members.users.append(current_auth.user)
             db.session.add(org)
             db.session.commit()
             org_data_changed.send(org, changes=['new'], user=current_auth.user)
@@ -162,7 +160,7 @@ class TeamView(UrlForView, ModelView):
     @route('delete', methods=['GET', 'POST'])
     @requires_permission('delete')
     def delete(self):
-        if self.obj == self.obj.org.owners or self.obj == self.obj.org.members:
+        if self.obj == self.obj.org.owners:
             abort(403)
         if request.method == 'POST':
             team_data_changed.send(self.obj, changes=['delete'], user=current_auth.user)

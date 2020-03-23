@@ -43,13 +43,11 @@ class Fixtures(object):
 
         batdog = Organization(name='batdog', title='Batdog')
         batdog.owners.users.append(crusoe)
-        batdog.members.users.append(oakley)
         db.session.add(batdog)
         self.batdog = batdog
 
         specialdachs = Organization(name="specialdachs", title="Special Dachshunds")
         specialdachs.owners.users.append(oakley)
-        specialdachs.members.users.append(piglet)
         db.session.add(specialdachs)
         self.specialdachs = specialdachs
 

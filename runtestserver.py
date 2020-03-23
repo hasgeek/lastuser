@@ -20,7 +20,6 @@ gustav = User(
 oakley = User(username="oakley", fullname="Oakley 'huh' Dachshund")
 dachsunited = Organization(name="dachsunited", title="Dachs United")
 dachsunited.owners.users.append(gustav)
-dachsunited.members.users.append(oakley)
 dachshundworld = Client(
     title="Dachshund World",
     org=dachsunited,

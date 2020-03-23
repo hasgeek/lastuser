@@ -106,9 +106,6 @@ class TestAuthToken(TestDatabaseFixture):
         greyback_token = models.AuthToken(client=client, user=greyback, scope=['id'])
         pottermania = models.Organization(name='pottermania', title='Pottermania')
         pottermania.owners.users.append(hermione)
-        pottermania_members = [hermione, alastor, greyback, myrtle]
-        for member in pottermania_members:
-            pottermania.members.users.append(member)
         db.session.add_all(
             [
                 myrtle,
@@ -124,20 +121,11 @@ class TestAuthToken(TestDatabaseFixture):
         )
         db.session.commit()
 
-        # scenario 1 and count == 1
+        # scenario 1
         result1 = models.AuthToken.all(pottermania.owners.users)
         self.assertIsInstance(result1, list)
         self.assertIsInstance(result1[0], models.AuthToken)
         self.assertCountEqual(result1, [herminone_token])
-
-        # scenario 1 and count > 1
-        result2 = models.AuthToken.all(pottermania.members.users)
-        self.assertIsInstance(result2, list)
-        for each in result2:
-            self.assertIsInstance(each, models.AuthToken)
-        self.assertCountEqual(
-            result2, [herminone_token, alastor_token, greyback_token, myrtle_token]
-        )
 
         # Scenario 2: When users passed are not an instance of Query class
         lily = models.User(username='lily', fullname='Lily Evans Potter')
