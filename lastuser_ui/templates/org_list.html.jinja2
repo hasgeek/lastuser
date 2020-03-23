@@ -17,7 +17,7 @@
   </thead>
   <tbody class="mui--text-subhead">
     {% for org in organizations %}
-      {%- set link = org.url_for()|e %}
+      {%- set link = org.url_for() %}
       <tr>
         <td data-th="#"><a href="{{ link }}" title="org.title">{{ loop.index }}</a></td>
         <td data-th="Title"><a href="{{ link }}" title="org.title">{{ org.title }}</a></td>
