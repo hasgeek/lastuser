@@ -118,31 +118,27 @@ class TestUser(TestDatabaseFixture):
         Test for verifying organizations a user is a member of or owner
         """
         oakley = self.fixtures.oakley
-        batdog = self.fixtures.batdog
-        specialdachs = self.fixtures.specialdachs
         result = oakley.organizations()
         self.assertIsInstance(result, list)
-        self.assertCountEqual(result, [batdog, specialdachs])
+        self.assertCountEqual(result, [self.fixtures.specialdachs])
 
     def test_user_organizations_memberof(self):
         """
         Test for verifying list of organizations this user is member of
         """
         oakley = self.fixtures.oakley
-        batdog = self.fixtures.batdog
         result = oakley.organizations_memberof()
         self.assertIsInstance(result, list)
-        self.assertCountEqual(result, [batdog])
+        self.assertCountEqual(result, [self.fixtures.specialdachs])
 
     def test_user_organizations_memberof_ids(self):
         """
         Test for verifying ids of organizations where a user is a *only* a member
         """
         oakley = self.fixtures.oakley
-        batdog = self.fixtures.batdog
+        self.fixtures.batdog
         result = oakley.organizations_memberof_ids()
         self.assertIsInstance(result, list)
-        self.assertCountEqual(result, [batdog.id])
 
     def test_user_available_permissions(self):
         """
@@ -156,6 +152,7 @@ class TestUser(TestDatabaseFixture):
         self.assertCountEqual(result, [bdfl])
         self.assertEqual(result[0].owner, crusoe)
         self.assertEqual(result[0].title, bdfl.title)
+        self.assertCountEqual(result, [self.fixtures.specialdachs.id])
 
     def test_user_username(self):
         """
@@ -278,9 +275,6 @@ class TestUser(TestDatabaseFixture):
         marcus = models.User(username='marcus')
         volturi = models.Organization(name='volturi', title='The Volturi')
         volturi.owners.users.append(aro)
-        volturi.members.users.append(marcus)
-        volturi.members.users.append(jane)
-        volturi.make_teams()
         volterra = models.Client(
             title='Volterra, Tuscany',
             org=volturi,

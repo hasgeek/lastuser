@@ -23,24 +23,16 @@ class TestOrganization(TestDatabaseFixture):
         Test for verifying the creation of default Teams: owners and members
         """
         crusoe = self.fixtures.crusoe
-        oakley = self.fixtures.oakley
-        piglet = self.fixtures.piglet
         name = 'dachshunited'
         title = 'Dachshunds United'
         dachsunited = models.Organization(name=name, title=title)
         # Scenario: before any users were added to the organization
         self.assertIsInstance(dachsunited.owners, models.Team)
-        self.assertIsInstance(dachsunited.members, models.Team)
         self.assertEqual(dachsunited.owners.users.all(), [])
-        self.assertEqual(dachsunited.members.users.all(), [])
-        with self.assertRaises(TypeError):
-            dachsunited.members.get()
         # After adding users to the organization
         dachsunited.owners.users.append(crusoe)
-        dachsunited.members.users.append(oakley)
-        dachsunited.members.users.append(piglet)
+        self.assertEqual(dachsunited.owners.users.all(), [crusoe])
         assert title == dachsunited.owners.org.title
-        assert title == dachsunited.members.org.title
 
     def test_organization_get(self):
         """
