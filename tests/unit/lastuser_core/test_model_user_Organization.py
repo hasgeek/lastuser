@@ -121,49 +121,6 @@ class TestOrganization(TestDatabaseFixture):
             in olympic_coven.pickername
         )
 
-    def test_organization_permissions(self):
-        """
-        Test for adding and retrieving an organization's permissions
-        """
-        permissions_expected = ['view', 'edit', 'delete', 'view-teams', 'new-team']
-        crusoe = self.fixtures.crusoe
-        oakley = self.fixtures.oakley
-        batdog = self.fixtures.batdog
-        # scenario 1: if user is owner of organization
-        crusoe_query = batdog.permissions(crusoe)
-        self.assertIsInstance(crusoe_query, set)
-        valid_permissions_received = []
-        for each in crusoe_query:
-            valid_permissions_received.append(each)
-        self.assertCountEqual(permissions_expected, valid_permissions_received)
-        # scenario 2: if user is not owner
-        oakley_permission = models.Permission(name="huh", title="Huh!?", user=oakley)
-        perms = oakley_permission.permissions(user=oakley)
-        perms.add('view')
-        oakley_query = batdog.permissions(oakley)
-        self.assertIsInstance(oakley_query, set)
-        self.assertEqual(oakley_query, set())
-
-    def test_organization_available_permissions(self):
-        """
-        Test for retrieving all permission instances available to an organization.
-        (either owned by this organization or available to all users).
-        """
-        batdog = self.fixtures.batdog
-        org_with_no_permissions = batdog.available_permissions()
-        self.assertIsInstance(org_with_no_permissions, list)
-        self.assertEqual(org_with_no_permissions, [])
-        specialdachs = self.fixtures.specialdachs
-        permission_name = "netizens"
-        netizens = models.client.Permission(
-            name=permission_name, title=permission_name, allusers=True, org=specialdachs
-        )
-        db.session.add(netizens)
-        db.session.commit()
-        org_with_permissions = specialdachs.available_permissions()
-        self.assertIsInstance(org_with_permissions, list)
-        self.assertCountEqual(org_with_permissions, [netizens])
-
     def test_organization_name(self):
         """
         Test for retrieving Organization's name

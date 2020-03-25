@@ -6,14 +6,13 @@ from flask import Markup, url_for
 
 from baseframe import _, __
 from coaster.utils import domain_namespace_match, getbool, valid_username
-from lastuser_core.models import Organization, Permission, User
+from lastuser_core.models import User
 import baseframe.forms as forms
 
 __all__ = [
     'ClientCredentialForm',
     'ConfirmDeleteForm',
     'PermissionEditForm',
-    'PermissionForm',
     'RegisterClientForm',
     'TeamPermissionAssignForm',
     'UserPermissionAssignForm',
@@ -194,81 +193,15 @@ class ClientCredentialForm(forms.Form):
     )
 
 
-class PermissionForm(forms.Form):
-    """
-    Create or edit a permission
-    """
-
-    name = forms.StringField(
-        __("Permission name"),
-        validators=[forms.validators.DataRequired()],
-        description=__(
-            "Name of the permission as a single word in lower case. "
-            "This is passed to the application when a user logs in. "
-            "Changing the name will not automatically update it everywhere. "
-            "You must reassign the permission to users who had it with the old name"
-        ),
-        widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'},
-    )
-    title = forms.StringField(
-        __("Title"),
-        validators=[forms.validators.DataRequired()],
-        description=__("Permission title that is displayed to users"),
-    )
-    description = forms.TextAreaField(
-        __("Description"),
-        description=__("An optional description of what the permission is for"),
-    )
-    context = forms.RadioField(
-        __("Context"),
-        validators=[forms.validators.DataRequired()],
-        description=__("Context where this permission is available"),
-    )
-
-    def validate(self):
-        rv = super(PermissionForm, self).validate()
-        if not rv:
-            return False
-
-        if not valid_username(self.name.data):
-            self.name.errors.append(_("Name contains invalid characters"))
-            return False
-
-        existing = Permission.get(name=self.name.data, allusers=True)
-        if existing and existing.id != self.edit_id:
-            self.name.errors.append(
-                _("A global permission with that name already exists")
+def permission_validator(form, field):
+    permlist = field.data.split()
+    for perm in permlist:
+        if not valid_username(perm):
+            raise forms.ValidationError(
+                _("Permission ‘{perm}’ is malformed").format(perm=perm)
             )
-            return False
-
-        if self.context.data == self.edit_user.buid:
-            existing = Permission.get(name=self.name.data, user=self.edit_user)
-        else:
-            org = Organization.get(buid=self.context.data)
-            if org:
-                existing = Permission.get(name=self.name.data, org=org)
-            else:
-                existing = None
-        if existing and existing.id != self.edit_id:
-            self.name.errors.append(_("You have another permission with the same name"))
-            return False
-
-        return True
-
-    def validate_context(self, field):
-        if field.data == self.edit_user.buid:
-            self.user = self.edit_user
-            self.org = None
-        else:
-            orgs = [
-                org
-                for org in self.edit_user.organizations_owned()
-                if org.buid == field.data
-            ]
-            if len(orgs) != 1:
-                raise forms.ValidationError(_("Invalid context"))
-            self.user = None
-            self.org = orgs[0]
+    permlist.sort()
+    field.data = ' '.join(permlist)
 
 
 class UserPermissionAssignForm(forms.Form):
@@ -285,8 +218,9 @@ class UserPermissionAssignForm(forms.Form):
         autocomplete_endpoint=lambda: url_for('lastuser_oauth.user_autocomplete'),
         getuser_endpoint=lambda: url_for('lastuser_oauth.user_get_by_userids'),
     )
-    perms = forms.SelectMultipleField(
-        __("Permissions"), validators=[forms.validators.DataRequired()]
+    perms = forms.StringField(
+        __("Permissions"),
+        validators=[forms.validators.DataRequired(), permission_validator],
     )
 
 
@@ -300,8 +234,9 @@ class TeamPermissionAssignForm(forms.Form):
         validators=[forms.validators.DataRequired()],
         description=__("Select a team to assign permissions to"),
     )
-    perms = forms.SelectMultipleField(
-        __("Permissions"), validators=[forms.validators.DataRequired()]
+    perms = forms.StringField(
+        __("Permissions"),
+        validators=[forms.validators.DataRequired(), permission_validator],
     )
 
     def validate_team_id(self, field):
@@ -316,6 +251,4 @@ class PermissionEditForm(forms.Form):
     Edit a user or team's permissions
     """
 
-    perms = forms.SelectMultipleField(
-        __("Permissions"), validators=[forms.validators.DataRequired()]
-    )
+    perms = forms.StringField(__("Permissions"), validators=[permission_validator])

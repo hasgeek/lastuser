@@ -3,7 +3,6 @@
 from lastuser_core.models import (
     Client,
     Organization,
-    Permission,
     SMSMessage,
     Team,
     TeamClientPermissions,
@@ -70,10 +69,6 @@ class Fixtures(object):
         )
         self.team_client_permission = team_client_permission
         db.session.add(team_client_permission)
-
-        bdfl = Permission(name="bdfl", title="BDFL", user=crusoe)
-        db.session.add(bdfl)
-        self.bdfl = bdfl
 
         user_client_permissions = UserClientPermissions(user=crusoe, client=client)
         db.session.add(user_client_permissions)

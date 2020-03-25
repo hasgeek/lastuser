@@ -14,8 +14,13 @@
               <li><a href="{{ url_for('.client_edit', key=client.buid) }}" title="Edit">Edit this application</a></li>
               <li><a href="{{ url_for('.client_delete', key=client.buid) }}" title="Delete">Delete</a></li>
               <li><a href="{{ url_for('.client_cred_new', key=client.buid) }}" title="New access key">New access key</a></li>
-              <li><a href="{{ url_for('.permission_new') }}">Define a new permission</a></li>
-              <li><a href="{{ url_for('.permission_user_new', key=client.buid) }}">Assign permissions to another {% if client.user %}user{% else %}team{% endif %}</a></li>
+              <li><a href="{{ url_for('.permission_user_new', key=client.buid) }}">
+                {%- if client.user -%}
+                  Assign permissions to a user
+                {%- else -%}
+                  Assign permissions to a team
+                {%- endif -%}
+              </a></li>
             </ol>
           </div>
         </div>

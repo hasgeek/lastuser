@@ -9,7 +9,6 @@ from coaster.views import load_model, load_models
 from lastuser_core.models import (
     Client,
     ClientCredential,
-    Permission,
     Team,
     TeamClientPermissions,
     User,
@@ -22,7 +21,6 @@ from .. import lastuser_ui
 from ..forms import (
     ClientCredentialForm,
     PermissionEditForm,
-    PermissionForm,
     RegisterClientForm,
     TeamPermissionAssignForm,
     UserPermissionAssignForm,
@@ -211,97 +209,6 @@ def client_cred_delete(client, cred):
     )
 
 
-# --- Routes: user permissions ------------------------------------------------
-
-
-@lastuser_ui.route('/perms')
-@requires_login
-def permission_list():
-    allperms = Permission.query.filter_by(allusers=True).order_by(Permission.name).all()
-    userperms = (
-        Permission.query.filter(
-            db.or_(
-                Permission.user_id == current_auth.user.id,
-                Permission.org_id.in_(current_auth.user.organizations_owned_ids()),
-            )
-        )
-        .order_by(Permission.name)
-        .all()
-    )
-    return render_template(
-        'permission_list.html.jinja2', allperms=allperms, userperms=userperms
-    )
-
-
-@lastuser_ui.route('/perms/new', methods=['GET', 'POST'])
-@requires_login
-def permission_new():
-    form = PermissionForm()
-    form.edit_user = current_auth.user
-    form.context.choices = available_client_owners()
-    if request.method == 'GET':
-        form.context.data = current_auth.user.buid
-    if form.validate_on_submit():
-        perm = Permission()
-        form.populate_obj(perm)
-        perm.user = form.user
-        perm.org = form.org
-        perm.allusers = False
-        db.session.add(perm)
-        db.session.commit()
-        flash(_("Your new permission has been defined"), 'success')
-        return render_redirect(url_for('.permission_list'), code=303)
-    return render_form(
-        form=form,
-        title=_("Define a new permission"),
-        formid='perm_new',
-        submit=_("Define new permission"),
-        ajax=True,
-    )
-
-
-@lastuser_ui.route('/perms/<int:id>/edit', methods=['GET', 'POST'])
-@requires_login
-@load_model(Permission, {'id': 'id'}, 'perm', permission='edit')
-def permission_edit(perm):
-    form = PermissionForm(obj=perm)
-    form.edit_user = current_auth.user
-    form.context.choices = available_client_owners()
-    if request.method == 'GET':
-        if perm.user:
-            form.context.data = perm.user.buid
-        else:
-            form.context.data = perm.org.buid
-    if form.validate_on_submit():
-        form.populate_obj(perm)
-        perm.user = form.user
-        perm.org = form.org
-        db.session.commit()
-        flash(_("Your permission has been saved"), 'success')
-        return render_redirect(url_for('.permission_list'), code=303)
-    return render_form(
-        form=form,
-        title=_("Edit permission"),
-        formid='perm_edit',
-        submit=_("Save changes"),
-        ajax=True,
-    )
-
-
-@lastuser_ui.route('/perms/<int:id>/delete', methods=['GET', 'POST'])
-@requires_login
-@load_model(Permission, {'id': 'id'}, 'perm', permission='delete')
-def permission_delete(perm):
-    return render_delete_sqla(
-        perm,
-        db,
-        title=_("Confirm delete"),
-        message=_("Delete permission ‘{name}’?").format(name=perm.name),
-        success=_("Your permission has been deleted"),
-        next=url_for('.permission_list'),
-    )
-
-
 # --- Routes: client app permissions ------------------------------------------
 
 
@@ -310,33 +217,13 @@ def permission_delete(perm):
 @load_model(Client, {'buid': 'key'}, 'client', permission='assign-permissions')
 def permission_user_new(client):
     if client.user:
-        available_perms = (
-            Permission.query.filter(
-                db.or_(
-                    Permission.allusers.is_(True), Permission.user == current_auth.user
-                )
-            )
-            .order_by(Permission.name)
-            .all()
-        )
         form = UserPermissionAssignForm()
     elif client.org:
-        available_perms = (
-            Permission.query.filter(
-                db.or_(Permission.allusers.is_(True), Permission.org == client.org)
-            )
-            .order_by(Permission.name)
-            .all()
-        )
         form = TeamPermissionAssignForm()
         form.org = client.org
         form.team_id.choices = [(team.buid, team.title) for team in client.org.teams]
     else:
         abort(403)  # This should never happen. Clients always have an owner.
-    form.perms.choices = [
-        (ap.name, _("{name} – {title}").format(name=ap.name, title=ap.title))
-        for ap in available_perms
-    ]
     if form.validate_on_submit():
         perms = set()
         if client.user:
@@ -344,7 +231,7 @@ def permission_user_new(client):
                 user=form.user.data, client=client
             ).first()
             if permassign:
-                perms.update(permassign.access_permissions.split(' '))
+                perms.update(permassign.access_permissions.split())
             else:
                 permassign = UserClientPermissions(user=form.user.data, client=client)
                 db.session.add(permassign)
@@ -353,11 +240,11 @@ def permission_user_new(client):
                 team=form.team, client=client
             ).first()
             if permassign:
-                perms.update(permassign.access_permissions.split(' '))
+                perms.update(permassign.access_permissions.split())
             else:
                 permassign = TeamClientPermissions(team=form.team, client=client)
                 db.session.add(permassign)
-        perms.update(form.perms.data)
+        perms.update(form.perms.data.split())
         permassign.access_permissions = ' '.join(sorted(perms))
         db.session.commit()
         if client.user:
@@ -393,15 +280,6 @@ def permission_user_edit(client, kwargs):
         user = User.get(buid=kwargs['buid'])
         if not user:
             abort(404)
-        available_perms = (
-            Permission.query.filter(
-                db.or_(
-                    Permission.allusers.is_(True), Permission.user == current_auth.user
-                )
-            )
-            .order_by(Permission.name)
-            .all()
-        )
         permassign = UserClientPermissions.query.filter_by(
             user=user, client=client
         ).first_or_404()
@@ -409,27 +287,15 @@ def permission_user_edit(client, kwargs):
         team = Team.get(buid=kwargs['buid'])
         if not team:
             abort(404)
-        available_perms = (
-            Permission.query.filter(
-                db.or_(Permission.allusers.is_(True), Permission.org == client.org)
-            )
-            .order_by(Permission.name)
-            .all()
-        )
         permassign = TeamClientPermissions.query.filter_by(
             team=team, client=client
         ).first_or_404()
     form = PermissionEditForm()
-    form.perms.choices = [
-        (ap.name, _("{name} – {title}").format(name=ap.name, title=ap.title))
-        for ap in available_perms
-    ]
     if request.method == 'GET':
         if permassign:
-            form.perms.data = permassign.access_permissions.split(' ')
+            form.perms.data = permassign.access_permissions
     if form.validate_on_submit():
-        form.perms.data.sort()
-        perms = ' '.join(form.perms.data)
+        perms = ' '.join(sorted(form.perms.data.split()))
         if not perms:
             db.session.delete(permassign)
         else:

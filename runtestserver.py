@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from lastuser_core.models import Client, Organization, Permission, User  # isort:skip
+from lastuser_core.models import Client, Organization, User  # isort:skip
 from lastuserapp import app, db
 
 # incase data exists from previously run tests
@@ -26,13 +26,11 @@ dachshundworld = Client(
     confidential=True,
     website="http://gustavsdachshundworld.com",
 )
-partyanimal = Permission(name="partyanimal", title="Party Animal", org=dachsunited)
 
 db.session.add(gustav)
 db.session.add(oakley)
 db.session.add(dachsunited)
 db.session.add(dachshundworld)
-db.session.add(partyanimal)
 db.session.commit()
 
 app.run('0.0.0.0')

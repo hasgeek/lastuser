@@ -22,7 +22,6 @@ __all__ = [
     'Client',
     'ClientCredential',
     'NoticeType',
-    'Permission',
     'TeamClientPermissions',
     'UserClientPermissions',
     'UserFlashMessage',
@@ -467,78 +466,6 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
                 return query.filter(AuthToken.user_id.in_([u.id for u in users])).all()
 
         return []
-
-
-class Permission(BaseMixin, db.Model):
-    __tablename__ = 'permission'
-    #: User who created this permission
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    user = db.relationship(
-        User,
-        primaryjoin=user_id == User.id,
-        backref=db.backref('permissions_created', cascade='all, delete-orphan'),
-    )
-    #: Organization which created this permission
-    org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
-    org = db.relationship(
-        Organization,
-        primaryjoin=org_id == Organization.id,
-        backref=db.backref('permissions_created', cascade='all, delete-orphan'),
-    )
-    #: Name token
-    name = db.Column(db.Unicode(80), nullable=False)
-    #: Human-friendly title
-    title = db.Column(db.Unicode(250), nullable=False)
-    #: Description of what this permission is about
-    description = db.Column(db.UnicodeText, default='', nullable=False)
-    #: Is this permission available to all users and client apps?
-    allusers = db.Column(db.Boolean, default=False, nullable=False)
-
-    __table_args__ = (
-        db.CheckConstraint(
-            db.case([(user_id.isnot(None), 1)], else_=0)
-            + db.case([(org_id.isnot(None), 1)], else_=0)
-            == 1,
-            name='permission_user_id_or_org_id',
-        ),
-    )
-
-    def owner_is(self, user):
-        return (
-            user is not None
-            and self.user == user
-            or (self.org and self.org in user.organizations_owned())
-        )
-
-    @property
-    def owner(self):
-        return self.user or self.org
-
-    def permissions(self, user, inherited=None):
-        perms = super(Permission, self).permissions(user, inherited)
-        if user and self.owner_is(user):
-            perms.add('edit')
-            perms.add('delete')
-        return perms
-
-    @classmethod
-    def get(cls, name, user=None, org=None, allusers=False):
-        """
-        Get a permission with the given name and owned by the given user or org,
-        or a permission available to all users.
-
-        :param str name: Name of the permission
-        :param User user: User who owns this permission
-        :param Organization org: Organization which owns this permission
-        :param bool allusers: Whether resources that belong to all users should be returned
-
-        One of ``user`` and ``org`` must be specified, unless ``allusers`` is ``True``.
-        """
-        if allusers:
-            return cls.query.filter_by(name=name, allusers=True).one_or_none()
-        else:
-            param, value = require_one_of(True, user=user, org=org)
-            return cls.query.filter_by(**{param: value, 'name': name}).one_or_none()
 
 
 # This model's name is in plural because it defines multiple permissions within each instance

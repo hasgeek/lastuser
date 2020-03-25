@@ -438,21 +438,6 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         """
         return bool(self.fullname and self.username and self.email)
 
-    def available_permissions(self):
-        """
-        Return all permission objects available to this user
-        (either owned by user or available to all users).
-        """
-        from .client import Permission
-
-        return (
-            Permission.query.filter(
-                db.or_(Permission.allusers.is_(True), Permission.user == self)
-            )
-            .order_by(Permission.name)
-            .all()
-        )
-
     def clients_with_team_access(self):
         """
         Return a list of clients with access to the user's organizations' teams.
@@ -734,21 +719,6 @@ class Organization(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
             if 'delete' in perms:
                 perms.remove('delete')
         return perms
-
-    def available_permissions(self):
-        """
-        Return all permission objects available to this organization
-        (either owned by this organization or available to all users).
-        """
-        from .client import Permission
-
-        return (
-            Permission.query.filter(
-                db.or_(Permission.allusers.is_(True), Permission.org == self)
-            )
-            .order_by(Permission.name)
-            .all()
-        )
 
     @classmethod
     def get(cls, name=None, buid=None, defercols=False):

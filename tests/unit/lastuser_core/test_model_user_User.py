@@ -139,19 +139,6 @@ class TestUser(TestDatabaseFixture):
         self.fixtures.batdog
         result = oakley.organizations_memberof_ids()
         self.assertIsInstance(result, list)
-
-    def test_user_available_permissions(self):
-        """
-        Test for verifying all permission objects available to a user
-        (either owned by the user or available to all users)
-        """
-        crusoe = self.fixtures.crusoe
-        bdfl = self.fixtures.bdfl
-        result = crusoe.available_permissions()
-        self.assertIsInstance(result, list)
-        self.assertCountEqual(result, [bdfl])
-        self.assertEqual(result[0].owner, crusoe)
-        self.assertEqual(result[0].title, bdfl.title)
         self.assertCountEqual(result, [self.fixtures.specialdachs.id])
 
     def test_user_username(self):
