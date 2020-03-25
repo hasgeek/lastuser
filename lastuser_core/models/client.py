@@ -21,7 +21,6 @@ __all__ = [
     'AuthToken',
     'Client',
     'ClientCredential',
-    'NoticeType',
     'TeamClientPermissions',
     'UserClientPermissions',
     'UserFlashMessage',
@@ -559,22 +558,3 @@ class TeamClientPermissions(BaseMixin, db.Model):
     @property
     def buid(self):
         return self.team.buid
-
-
-class NoticeType(BaseMixin, db.Model):
-    __tablename__ = 'noticetype'
-    #: User who created this notice type
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(
-        User,
-        primaryjoin=user_id == User.id,
-        backref=db.backref('noticetypes_created', cascade='all, delete-orphan'),
-    )
-    #: Name token
-    name = db.Column(db.Unicode(80), nullable=False)
-    #: Human-friendly title
-    title = db.Column(db.Unicode(250), nullable=False)
-    #: Description of what this notice type is about
-    description = db.Column(db.UnicodeText, default='', nullable=False)
-    #: Is this notice type available to all users and client apps?
-    allusers = db.Column(db.Boolean, default=False, nullable=False)
