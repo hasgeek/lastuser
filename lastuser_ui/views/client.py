@@ -86,7 +86,7 @@ def client_new():
         client.trusted = False
         db.session.add(client)
         db.session.commit()
-        return render_redirect(url_for('.client_info', buid=client.buid), code=303)
+        return render_redirect(url_for('.client_info', key=client.buid), code=303)
 
     return render_form(
         form=form,
