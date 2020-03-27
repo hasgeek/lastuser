@@ -4,6 +4,7 @@ test.db
 *.wpr
 .project
 .pydevproject
+.ropeproject
 .settings
 .sass-cache
 error.log
