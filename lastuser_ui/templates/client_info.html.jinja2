@@ -49,7 +49,7 @@
           <dd class="mui--text-subhead">{{ client.namespace }}</dd>
         {%- endif %}
         {%- if client.owner_is(current_auth.user) %}
-          <dt class="mui--text-subhead">{% trans %}Redirect URL{% endtrans %}</dt>
+          <dt class="mui--text-subhead">{% trans %}Redirect URLs{% endtrans %}</dt>
           <dd class="mui--text-subhead">
             {%- for r in client.redirect_uris -%}
               {{ r }}{% if not loop.last %}<br>{% endif %}
