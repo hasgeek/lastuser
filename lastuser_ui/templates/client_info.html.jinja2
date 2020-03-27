@@ -1,5 +1,7 @@
 {% extends "layout.html.jinja2" %}
-{% block title %}Client application information{% endblock %}
+
+{% block title %}{% trans %}Client application information{% endtrans %}{% endblock %}
+
 {% block contentwrapper %}
 <div class="grid">
   {%- if client.owner_is(current_auth.user) %}
@@ -7,18 +9,18 @@
       <div class="sticky-admin-panel">
         <div class="card">
           <div class="card__header">
-            <h3 class="mui--text-title"><strong>ADMIN PANEL</strong></h3>
+            <h3 class="mui--text-title"><strong>{% trans %}Admin panel{% endtrans %}</strong></h3>
           </div>
           <div class="card__body card--text mui--text-subhead">
             <ol class="mui-list--aligned">
-              <li><a href="{{ url_for('.client_edit', key=client.buid) }}" title="Edit">Edit this application</a></li>
-              <li><a href="{{ url_for('.client_delete', key=client.buid) }}" title="Delete">Delete</a></li>
-              <li><a href="{{ url_for('.client_cred_new', key=client.buid) }}" title="New access key">New access key</a></li>
+              <li><a href="{{ url_for('.client_edit', key=client.buid) }}" title="Edit">{% trans %}Edit this application{% endtrans %}</a></li>
+              <li><a href="{{ url_for('.client_delete', key=client.buid) }}" title="Delete">{% trans %}Delete{% endtrans %}</a></li>
+              <li><a href="{{ url_for('.client_cred_new', key=client.buid) }}" title="New access key">{% trans %}New access key{% endtrans %}</a></li>
               <li><a href="{{ url_for('.permission_user_new', key=client.buid) }}">
                 {%- if client.user -%}
-                  Assign permissions to a user
+                  {% trans %}Assign permissions to a user{% endtrans %}
                 {%- else -%}
-                  Assign permissions to a team
+                  {% trans %}Assign permissions to a team{% endtrans %}
                 {%- endif -%}
               </a></li>
             </ol>
@@ -32,46 +34,46 @@
     <div class="grid__col--bleed-y">
     <div class="mui-panel">
       <dl class="infobox">
-        <dt class="mui--text-subhead">Application title</dt class="mui--text-subhead">
-        <dd class="mui--text-subhead"><strong>{{ client.title }}</strong></dd class="mui--text-subhead">
-        <dt class="mui--text-subhead">Description</dt class="mui--text-subhead">
-        <dd class="mui--text-subhead">{{ client.description }}</dd class="mui--text-subhead">
-        <dt class="mui--text-subhead">Owner</dt class="mui--text-subhead">
-        <dd class="mui--text-subhead">{{ client.owner.pickername }}</dd class="mui--text-subhead">
-        <dt class="mui--text-subhead">Type</dt class="mui--text-subhead">
-        <dd class="mui--text-subhead">{% if client.confidential %}Confidential{% else %}Public{% endif %}
-        <dt class="mui--text-subhead">Website</dt class="mui--text-subhead">
-        <dd class="mui--text-subhead"><a rel="nofollow" href="{{ client.website }}">{{ client.website }}</a></dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">{% trans %}Application title{% endtrans %}</dt>
+        <dd class="mui--text-subhead"><strong>{{ client.title }}</strong></dd>
+        <dt class="mui--text-subhead">{% trans %}Description{% endtrans %}</dt>
+        <dd class="mui--text-subhead">{{ client.description }}</dd>
+        <dt class="mui--text-subhead">{% trans %}Owner{% endtrans %}</dt>
+        <dd class="mui--text-subhead">{{ client.owner.pickername }}</dd>
+        <dt class="mui--text-subhead">{% trans %}Type{% endtrans %}</dt">
+        <dd class="mui--text-subhead">{% if client.confidential %}{% trans %}Confidential{% endtrans %}{% else %}{% trans %}Public{% endtrans %}{% endif %}
+        <dt class="mui--text-subhead">{% trans %}Website{% endtrans %}</dt>
+        <dd class="mui--text-subhead"><a rel="nofollow" href="{{ client.website }}">{{ client.website }}</a></d>
         {%- if client.namespace %}
-          <dt class="mui--text-subhead">Namespace</dt class="mui--text-subhead">
-          <dd class="mui--text-subhead">{{ client.namespace }}</dd class="mui--text-subhead">
+          <dt class="mui--text-subhead">{% trans %}Namespace{% endtrans %}</dt>
+          <dd class="mui--text-subhead">{{ client.namespace }}</dd>
         {%- endif %}
         {%- if client.owner_is(current_auth.user) %}
-          <dt class="mui--text-subhead">Redirect URL</dt class="mui--text-subhead">
+          <dt class="mui--text-subhead">{% trans %}Redirect URL{% endtrans %}</dt>
           <dd class="mui--text-subhead">
             {%- for r in client.redirect_uris -%}
               {{ r }}{% if not loop.last %}<br>{% endif %}
             {%- endfor -%}
           </dd class="mui--text-subhead">
-          <dt class="mui--text-subhead">Notification URL</dt class="mui--text-subhead">
-          <dd class="mui--text-subhead">{{ client.notification_uri }}</dd class="mui--text-subhead">
+          <dt class="mui--text-subhead">{% trans %}Notification URL{% endtrans %}</dt>
+          <dd class="mui--text-subhead">{{ client.notification_uri }}</dd>
         {%- endif %}
-        <dt class="mui--text-subhead">Active?</dt class="mui--text-subhead">
-        <dd class="mui--text-subhead">{{ client.active }}</dd class="mui--text-subhead">
-        <dt class="mui--text-subhead">Allow anyone to login?</dt class="mui--text-subhead">
-        <dd class="mui--text-subhead">{{ client.allow_any_login }}</dd class="mui--text-subhead">
-        <dt class="mui--text-subhead">Registered date</dt class="mui--text-subhead">
-        <dd class="mui--text-subhead">{{ client.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</dd class="mui--text-subhead">
+        <dt class="mui--text-subhead">{% trans %}Active?{% endtrans %}</dt>
+        <dd class="mui--text-subhead">{{ client.active }}</dd>
+        <dt class="mui--text-subhead">{% trans %}Allow anyone to login?{% endtrans %}</dt>
+        <dd class="mui--text-subhead">{{ client.allow_any_login }}</dd>
+        <dt class="mui--text-subhead">{% trans %}Registered date{% endtrans %}</dt>
+        <dd class="mui--text-subhead">{{ client.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</dd>
         {%- if client.owner_is(current_auth.user) %}
-          <dt class="mui--text-subhead">Users</dt class="mui--text-subhead">
-          <dd class="mui--text-subhead">{{ client.authtokens.count() }}</dd class="mui--text-subhead">
+          <dt class="mui--text-subhead">{% trans %}Users{% endtrans %}</dt>
+          <dd class="mui--text-subhead">{{ client.authtokens.count() }}</dd>
         {%- endif %}
       </dl>
     </div>
     </div>
     {%- if client.owner_is(current_auth.user) %}
       <div class="grid__col--bleed-y">
-        <h2>Access Keys</h2>
+        <h2>{% trans %}Access Keys{% endtrans %}</h2>
       </div>
       <div class="grid grid--align-baseline">
       {% for cred in client.credentials.values() %}
@@ -81,20 +83,24 @@
               <h3 class="mui--text-title">{{ cred.title }}</h3>
             </div>
             <div class="card__body">
-              <p><b>Purpose</b>: {{ cred.title }}</p>
-              <p><b>Key</b>: {{ cred.name }}</p>
-              <p><b>Created</b>: {{ cred.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</p>
-              <p><b>Last used</b>: {% if cred.accessed_at %}{{ cred.accessed_at|age }}{% else %}never{% endif %}</p>
+              <p>{% trans title=cred.title%}Purpose: {{title}}{% endtrans %}</p>
+              <p>{% trans name=cred.name%}Key: {{name}}{% endtrans %}</p>
+              <p>{% trans time=cred.created_at.strftime('%Y-%m-%d %H:%M' %}Created: {{ time }} UTC</p>
+              {% if cred.accessed_at %}
+                <p>{% trans time=cred.accessed_at|age %}Last used: {{ time }}{% endtrans %}</p>
+              {% else %}
+                <p>{% trans %}Last used: never{% endtrans %}</p>
+              {% endif %}
             </div>
             <div class="mui-divider"></div>
             <div class="card__footer">
-              <a href="{{ url_for('.client_cred_delete', key=client.buid, name=cred.name) }}" title="{% trans %}Revoke{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Revoke</a>
+              <a href="{{ url_for('.client_cred_delete', key=client.buid, name=cred.name) }}" title="{% trans %}Revoke{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">{% trans %}Revoke{% endtrans %}</a>
             </div>
           </div>
         </div>
       {%- else %}
         <div class="grid__col-auto">
-          <p class="mui--text-subhead"><em>This application does not have any access keys</em></p>
+          <p class="mui--text-subhead"><em>{% trans %}This application does not have any access keys{% endtrans %}</em></p>
         </div>
       {% endfor %}
       </div>
@@ -102,8 +108,12 @@
 
     {% if client.owner_is(current_auth.user) %}
       <div class="grid__col--bleed-y">
-        <h2>Permissions</h2>
-        <p>The following {% if client.user %}users{% else %}teams{% endif %} have permissions to this app.</p>
+        <h2>{% trans %}Permissions{% endtrans %}</h2>
+        {% if client.user %}
+          <p>{% trans %}The following users have permissions to this app.{% endtrans %}</p>
+        {% else %}
+          <p>{% trans %}The following teams have permissions to this app.{% endtrans %}</p>
+        {% endif %}
       </div>
       <div class="grid grid--align-baseline">
         {%- for pa in permassignments %}
@@ -113,18 +123,18 @@
                 <h3 class="mui--text-title">{{ pa.pickername }}</h3>
               </div>
               <div class="card__body card--text mui--text-subhead">
-                <p><b>Permissions</b>: {{ pa.access_permissions }}</p>
+                <p>{% trans access=pa.access_permissions %}Permissions: {{ access }}{% endtrans %}</p>
               </div>
               <div class="mui-divider"></div>
               <div class="card__footer">
-                <a href="{{ url_for('.permission_user_edit', key=client.buid, buid=pa.buid) }}" title="{% trans %}Edit{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Edit</a>
-                <a href="{{ url_for('.permission_user_delete', key=client.buid, buid=pa.buid) }}" title="{% trans %}Delete{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Delete</a>
+                <a href="{{ url_for('.permission_user_edit', key=client.buid, buid=pa.buid) }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">{% trans %}Edit{% endtrans %}</a>
+                <a href="{{ url_for('.permission_user_delete', key=client.buid, buid=pa.buid) }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">{% trans %}Delete{% endtrans %}</a>
               </div>
             </div>
           </div>
         {% else %}
           <div class="grid__col-auto">
-            <p class="mui--text-subhead"><em>No permissions assigned</em></p>
+            <p class="mui--text-subhead"><em>{% trans %}No permissions assigned{% endtrans %}</em></p>
           </div>
         {% endfor %}
       </div>

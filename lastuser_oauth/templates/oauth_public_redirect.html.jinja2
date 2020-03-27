@@ -1,14 +1,14 @@
 {% extends "layout.html.jinja2" %}
-{% block title %}Redirecting you back to {{ client.title }}…{% endblock %}
+{% block title %}{% trans client=client.title %}Redirecting you back to {{ client }}…{% endtrans %}{% endblock %}
+
 {% block pageheaders %}
   <meta http-equiv="refresh" content="0; {{ redirect_to }}"/>
 {% endblock %}
 
 {% block content %}
-<p>
-  <a id="continue" class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ redirect_to }}">Continue</a>
-</p>
+  <p><a id="continue" class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ redirect_to }}">Continue</a></p>
 {% endblock %}
+
 {% block footerscripts %}
   <script type="text/javascript">
     $(function() {

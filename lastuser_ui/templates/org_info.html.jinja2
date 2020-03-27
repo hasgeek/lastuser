@@ -1,15 +1,16 @@
 {% extends "layout.html.jinja2" %}
-{% block title %}Organization: {{ org.title }}{% endblock %}
+
+{% block title %}{% trans title=org.title %}Organization: {{ title }}{% endtrans %}{% endblock %}
 
 {% block top_title %}
   <h1 class="mui--text-display1">Organization: {{ org.title }}</h1>
-  <p><a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ org.url_for('new_team') }}">New team</a></p>
+  <p><a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ org.url_for('new_team') }}">{% trans %}New team{% endtrans %}</a></p>
 {% endblock %}
 
 {% block contentwrapper %}
 <div class="grid">
   <div class="grid__col-xs-12">
-    <h2><strong>Teams</strong></h2>
+    <h2><strong>{% trans %}Teams{% endtrans %}</strong></h2>
   </div>
   {% for team in org.teams -%}
     <div class="grid__col-xs-12 grid__col-sm-6">
@@ -26,9 +27,9 @@
         </div>
         <div class="mui-divider"></div>
         <div class="card__footer">
-          <a href="{{ team.url_for('edit') }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">Edit</a>
+          <a href="{{ team.url_for('edit') }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">{% trans %}Edit{% endtrans %}</a>
           {%- if team != org.owners %}
-            <a href="{{  team.url_for('delete') }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--danger">delete</a>
+            <a href="{{  team.url_for('delete') }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--danger">{% trans %}delete{% endtrans %}</a>
           {%- endif %}
         </div>
       </div>

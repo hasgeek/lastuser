@@ -1,9 +1,10 @@
 {% extends "layout.html.jinja2" %}
-{% block title %}Organizations{% endblock %}
+
+{% block title %}{% trans %}Organizations{% endtrans %}{% endblock %}
 
 {% block top_title %}
   <h1 class="mui--text-display1">Organizations</h1>
-  <p><a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ url_for('.OrgView_new') }}">New organization</a></p>
+  <p><a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ url_for('.OrgView_new') }}">{% trans %}New organization{% endtrans %}</a></p>
 {% endblock %}
 
 {% block content %}
@@ -11,8 +12,8 @@
   <thead>
     <tr>
       <th>#</th>
-      <th>Title</th>
-      <th>Owners</th>
+      <th>{% trans %}Title{% endtrans %}</th>
+      <th>{% trans %}Owners{% endtrans %}</th>
     </tr>
   </thead>
   <tbody class="mui--text-subhead">
@@ -30,7 +31,7 @@
       </tr>
     {% else %}
       <tr>
-        <td colspan="3">No organizations have been created</td>
+        <td colspan="3">{% trans %}No organizations have been created{% endtrans %}</td>
       </tr>
     {% endfor %}
   </tbody>

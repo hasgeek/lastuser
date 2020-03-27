@@ -1,60 +1,54 @@
 {% extends "layout.html.jinja2" %}
 {% from "baseframe/mui/forms.html.jinja2" import ajaxform %}
-{% block title %}Authorization Required{% endblock %}
+
+{% block title %}{% trans %}Authorization Required{% endtrans %}{% endblock %}
 
 {% block content %}
-<p class="mui--text-subhead">
-  An application is requesting access to your data.
-</p>
+<p class="mui--text-subhead">{% endtrans %}An application is requesting access to your data.{% endtrans %}</p>
 <table class="mui-table mui-table--bordered grid__col--bleed-y">
   <tbody class="mui--text-subhead mui-panel">
     <tr>
-      <td>Application name</td>
+      <td>{% trans %}Application name{% endtrans %}</td>
       <td>{{ client.title }}</td>
     </tr>
     <tr>
-      <td>Description</td>
+      <td>{% trans %}Description{% endtrans %}</td>
       <td>{{ client.description }}</td>
     </tr>
     <tr>
-      <td>Owner</td>
+      <td>{% trans %}Owner{% endtrans %}</td>
       <td>{{ client.owner.pickername }}</td>
     </tr>
     <tr>
-      <td>Website</td>
+      <td>{% trans %}Website{% endtrans %}</td>
       <td><a rel="nofollow" href="{{ client.website }}" target="_blank">{{ client.website }}</a></td>
     </tr>
     <tr>
-      <td>Access scope</td>
+      <td>{% trans %}Access scope{% endtrans %}</td>
       <td>
         <ol>
           {% for key in internal_resources -%}
             <li>{{ resource_registry[key]['description'] }}</li>
           {%- endfor %}
           {% for client in full_client_access -%}
-            <li>Full access to all your data in {{ client.title }}</li>
+            <li>{% trans title=client.title %}Full access to all your data in {{ title }}{% endtrans %}</li>
           {%- endfor %}
         </ol>
       </td>
     </tr>
   </tbody>
 </table>
-<p class="mui--text-subhead">
-  You should authorize this only if you initiated the request
-  and trust the application with your data.
-</p>
+<p class="mui--text-subhead">{% trans %}You should authorize this only if you initiated the request and trust the application with your data.{% endtrans %}</p>
 <form id="authorize" method="POST" class="mui-form mui-form--margins" accept-charset="UTF-8">
   <input type="hidden" name="form.id" value="authorize"/>
   {{ form.hidden_tag() }}
   <p>
     <input class="mui-btn mui-btn--small mui-btn--primary" type="submit" name="accept" value="Authorize"/>
     <input class="mui-btn mui-btn--small mui-btn--danger" type="submit" name="deny" value="Deny"/>
-    <span class="loading mui--hide"><i class="material-icons mui--align-middle mui--text-dark-secondary">refresh</i></span>
+    <span class="loading mui--hide"></span>
   </p>
   {%- if form.csrf_token.errors %}
-    <div><p class="mui-form--error">{% trans -%}
-      This form has timed out. Please submit again to confirm
-    {%- endtrans %}</p></div>
+    <p class="mui-form--error">{% trans -%}This form has timed out. Please submit again to confirm{%- endtrans %}</p>
   {%- endif %}
 </form>
 {% endblock %}
