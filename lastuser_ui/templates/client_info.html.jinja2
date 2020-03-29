@@ -83,14 +83,19 @@
               <h3 class="mui--text-title">{{ cred.title }}</h3>
             </div>
             <div class="card__body">
-              <p>{% trans title=cred.title%}Purpose: {{title}}{% endtrans %}</p>
-              <p>{% trans name=cred.name%}Key: {{name}}{% endtrans %}</p>
-              <p>{% trans time=cred.created_at.strftime('%Y-%m-%d %H:%M' %}Created: {{ time }} UTC</p>
-              {% if cred.accessed_at %}
-                <p>{% trans time=cred.accessed_at|age %}Last used: {{ time }}{% endtrans %}</p>
-              {% else %}
-                <p>{% trans %}Last used: never{% endtrans %}</p>
-              {% endif %}
+              <dl class="infobox">
+                <dt class="mui--text-subhead">{% trans %}Purpose{% endtrans %}</dt>
+                <dd class="mui--text-subhead">{{cred.title}}</dd>
+                <dt class="mui--text-subhead">{% trans %}Key{% endtrans %}</dt>
+                <dd class="mui--text-subhead">{{cred.name}}</dd>
+                <dt class="mui--text-subhead">{% trans  %}Created{% endtrans %}</dt>
+                <dd class="mui--text-subhead">{{ cred.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</dd>
+                <dt class="mui--text-subhead">{% trans %}Last used{% endtrans %}</dt>
+                {% if cred.accessed_at %}
+                  <dd class="mui--text-subhead">{{ cred.accessed_at|age }}</dd>
+                {% else %}
+                  <dd class="mui--text-subhead">{% trans %}never{% endtrans %}</dd>
+                {% endif %}
             </div>
             <div class="mui-divider"></div>
             <div class="card__footer">
