@@ -11,11 +11,11 @@
 <div class="grid">
   <div class="mui--text-subhead grid__col-xs-12 {% if current_auth.is_authenticated %}grid__col-sm-7 grid__col-md-8 grid__col-lg-8 {% endif %}">
     <p>
-      {% trans %}Hello there! This site is powered by <a href="https://github.com/hasgeek/lastuser">Lastuser</a>,
+      {% trans login_url=url_for('lastuser_oauth.login'), register_url=url_for('lastuser_oauth.register') %}Hello there! This site is powered by <a href="https://github.com/hasgeek/lastuser">Lastuser</a>,
       <a href="http://hasgeek.in">HasGeek</a>’s experimental, open source user management app.
       This site is a work-in-progress. The most useful thing you can do with it at the moment
-      is to <a href="{{ url_for('lastuser_oauth.login') }}">login with Twitter or Google</a>. Or, if you prefer
-      to have a separate password for this site, you can <a href="{{ url_for('lastuser_oauth.register') }}">register
+      is to <a href="{{ login_url }}">login with Twitter or Google</a>. Or, if you prefer
+      to have a separate password for this site, you can <a href="{{ register_url }}">register
       an account</a>.{% endtrans %}
     </p>
     <p>
