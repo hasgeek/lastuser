@@ -18,7 +18,7 @@ Flask-RQ2==18.3
 tweepy==3.8.0
 unicodecsv==0.14.1
 oauth2client==4.1.3
-ua-parser==0.8.0
+ua-parser==0.10.0
 itsdangerous==1.1.0
 psycopg2==2.8.4
 phonenumbers==8.11.2
