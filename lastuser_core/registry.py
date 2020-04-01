@@ -68,17 +68,11 @@ class ResourceRegistry(OrderedDict):
                         return resource_auth_error(
                             _("A Bearer token is required in the Authorization header")
                         )
-                    if 'access_token' in args:
-                        return resource_auth_error(
-                            _("Access token specified in both header and body")
-                        )
                 else:
-                    token = args.get('access_token')
-                    if not token:
-                        # No token provided in Authorization header or in request parameters
-                        return resource_auth_error(
-                            _("An access token is required to access this resource")
-                        )
+                    # No token provided in Authorization header
+                    return resource_auth_error(
+                        _("An access token is required to access this resource")
+                    )
                 authtoken = AuthToken.get(token=token)
                 if not authtoken:
                     return resource_auth_error(_("Unknown access token"))
