@@ -39,7 +39,13 @@ def dashboard():
         db.session.query('mau')
         .from_statement(
             db.text(
-                '''SELECT COUNT(DISTINCT(user_session.user_id)) AS mau FROM user_session, "user" WHERE user_session.user_id = "user".id AND "user".status = :status AND user_session.accessed_at >= (NOW() AT TIME ZONE 'UTC') - INTERVAL '30 days' '''
+                '''
+                SELECT COUNT(DISTINCT(user_session.user_id)) AS mau
+                FROM user_session, "user"
+                WHERE user_session.user_id = "user".id
+                    AND "user".status = :status
+                    AND user_session.accessed_at >= NOW() - INTERVAL '30 days'
+                '''
             )
         )
         .params(status=USER_STATUS.ACTIVE)
@@ -56,7 +62,14 @@ def dashboard_data_users_by_month():
         db.session.query('month', 'count')
         .from_statement(
             db.text(
-                '''SELECT date_trunc('month', "user".created_at) AS month, count(*) AS count FROM "user" WHERE status=:status GROUP BY month ORDER BY month'''
+                '''
+                SELECT date_trunc('month', "user".created_at) AS month,
+                    count(*) AS count
+                FROM "user"
+                WHERE status=:status
+                GROUP BY month
+                ORDER BY month
+                '''
             )
         )
         .params(status=USER_STATUS.ACTIVE)
