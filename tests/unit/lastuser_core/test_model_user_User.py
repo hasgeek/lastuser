@@ -262,24 +262,24 @@ class TestUser(TestDatabaseFixture):
         marcus = models.User(username='marcus')
         volturi = models.Organization(name='volturi', title='The Volturi')
         volturi.owners.users.append(aro)
-        volterra = models.Client(
+        volterra = models.AuthClient(
             title='Volterra, Tuscany',
-            org=volturi,
+            organization=volturi,
             confidential=True,
             website='volterra.co.it',
         )
-        enforcers = models.Client(
+        enforcers = models.AuthClient(
             title='Volturi\'s thugs',
-            org=volturi,
+            organization=volturi,
             confidential=True,
             website='volturi.co.it',
         )
         volterra_auth_token = models.AuthToken(
-            client=volterra, user=aro, scope='teams', validity=0
+            auth_client=volterra, user=aro, scope='teams', validity=0
         )
         volterra_auth_token
         enforcers_auth_token = models.AuthToken(
-            client=enforcers, user=marcus, scope='teams', validity=0
+            auth_client=enforcers, user=marcus, scope='teams', validity=0
         )
         enforcers_auth_token
         self.assertCountEqual(aro.clients_with_team_access(), [volterra])
@@ -381,7 +381,7 @@ class TestUser(TestDatabaseFixture):
         piglet = self.fixtures.piglet
         # scenario 2: if buid is passed
         lookup_by_buid = models.User.get(buid=crusoe.buid)
-        self.assertIsInstance(lookup_by_buid, models.client.User)
+        self.assertIsInstance(lookup_by_buid, models.User)
         self.assertEqual(lookup_by_buid.buid, crusoe.buid)
         # scenario 3: if username is passed
         lookup_by_username = models.User.get(username="crusoe")

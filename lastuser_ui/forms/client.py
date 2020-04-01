@@ -120,7 +120,7 @@ class RegisterClientForm(forms.Form):
     def validate_client_owner(self, field):
         if field.data == self.edit_user.buid:
             self.user = self.edit_user
-            self.org = None
+            self.organization = None
         else:
             orgs = [
                 org
@@ -130,7 +130,7 @@ class RegisterClientForm(forms.Form):
             if len(orgs) != 1:
                 raise forms.ValidationError(_("Invalid owner"))
             self.user = None
-            self.org = orgs[0]
+            self.organization = orgs[0]
 
     def _urls_match(self, url1, url2):
         p1 = urlparse(url1)
@@ -240,7 +240,7 @@ class TeamPermissionAssignForm(forms.Form):
     )
 
     def validate_team_id(self, field):
-        teams = [team for team in self.org.teams if team.buid == field.data]
+        teams = [team for team in self.organization.teams if team.buid == field.data]
         if len(teams) != 1:
             raise forms.ValidationError(_("Unknown team"))
         self.team = teams[0]

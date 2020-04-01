@@ -16,11 +16,11 @@ class TestClientCredential(TestDatabaseFixture):
         """
         Test for ClientCredential model's new()
         """
-        client = self.fixtures.client
-        credentials = models.ClientCredential.new(client)
+        auth_client = self.fixtures.auth_client
+        credentials = models.AuthClientCredential.new(auth_client)
         self.assertIsInstance(credentials, tuple)
-        # self.assertEqual(credentials[0].client_id, client.id)
-        self.assertIsInstance(credentials[0], models.ClientCredential)
+        # self.assertEqual(credentials[0].auth_client_id, client.id)
+        self.assertIsInstance(credentials[0], models.AuthClientCredential)
         client_secret = credentials[0].secret_hash
         self.assertTrue(client_secret.startswith('sha256$'))
 
@@ -28,20 +28,20 @@ class TestClientCredential(TestDatabaseFixture):
         """
         Test for ClientCredential model's get()
         """
-        client = self.fixtures.client
-        credentials = models.ClientCredential.new(client)
+        auth_client = self.fixtures.auth_client
+        credentials = models.AuthClientCredential.new(auth_client)
         name = credentials[0].name
-        get_credentials = models.ClientCredential.get(name)
-        self.assertIsInstance(get_credentials, models.ClientCredential)
+        get_credentials = models.AuthClientCredential.get(name)
+        self.assertIsInstance(get_credentials, models.AuthClientCredential)
         self.assertEqual(credentials[0], get_credentials)
 
     def test_clientcredential_secret_is(self):
         """
         Test for checking if clientcredential's secret is a SHA256 string (64 characters) prepended with 'sha256$'
         """
-        client = self.fixtures.client
-        credentials = models.ClientCredential.new(client)
+        auth_client = self.fixtures.auth_client
+        credentials = models.AuthClientCredential.new(auth_client)
         self.assertTrue(
-            models.ClientCredential.secret_is(credentials[0], credentials[1])
+            models.AuthClientCredential.secret_is(credentials[0], credentials[1])
         )
         self.assertEqual(len(credentials[1]), 44)

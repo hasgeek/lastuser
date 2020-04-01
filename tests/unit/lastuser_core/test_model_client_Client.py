@@ -12,25 +12,25 @@ class TestClient(TestDatabaseFixture):
         """
         Test for checking if Client's secret is a ClientCredential
         """
-        client = self.fixtures.client
-        credentials = models.ClientCredential.new(client)
-        self.assertTrue(client.secret_is(credentials[1], credentials[0].name))
+        auth_client = self.fixtures.auth_client
+        credentials = models.AuthClientCredential.new(auth_client)
+        self.assertTrue(auth_client.secret_is(credentials[1], credentials[0].name))
 
     def test_client_host_matches(self):
         """
         Test for verifying client's host_matches method is able to
         split the referrer URL correctly
         """
-        client = self.fixtures.client
-        client.redirect_uris = ["http://hasjob.dev:5000"]
+        auth_client = self.fixtures.auth_client
+        auth_client.redirect_uris = ["http://hasjob.dev:5000"]
         referrer = "http://hasjob.dev:5000/logout"
-        self.assertTrue(client.host_matches(referrer))
+        self.assertTrue(auth_client.host_matches(referrer))
 
     def test_client_owner(self):
         """
         Test if client's owner is said Organization
         """
-        owner = self.fixtures.client.owner
+        owner = self.fixtures.auth_client.owner
         batdog = self.fixtures.batdog
         self.assertIsInstance(owner, models.Organization)
         self.assertEqual(owner, batdog)
@@ -39,12 +39,12 @@ class TestClient(TestDatabaseFixture):
         """
         Test if client's owner is a user
         """
-        client = self.fixtures.client
+        auth_client = self.fixtures.auth_client
         crusoe = self.fixtures.crusoe
         with self.assertRaises(AttributeError):
-            self.assertFalse(client.owner_is(self.fixtures.batdog))
-        self.assertTrue(client.owner_is(crusoe))
-        self.assertFalse(client.owner_is(None))
+            self.assertFalse(auth_client.owner_is(self.fixtures.batdog))
+        self.assertTrue(auth_client.owner_is(crusoe))
+        self.assertFalse(auth_client.owner_is(None))
 
     def test_client_permissions(self):
         """
@@ -54,7 +54,7 @@ class TestClient(TestDatabaseFixture):
         permissions.
         """
         crusoe = self.fixtures.crusoe
-        client = self.fixtures.client
+        auth_client = self.fixtures.auth_client
         permissions_expected_to_be_added = [
             'view',
             'edit',
@@ -63,7 +63,7 @@ class TestClient(TestDatabaseFixture):
             'new-resource',
         ]
         permissions_received = []
-        result = client.permissions(crusoe)
+        result = auth_client.permissions(crusoe)
         self.assertIsInstance(result, set)
         for each in result:
             permissions_received.append(each)
@@ -74,20 +74,20 @@ class TestClient(TestDatabaseFixture):
         Test for retrieving authtoken for this user and client (only confidential clients)
         """
         # scenario 1: for a client that has confidential=True
-        client = self.fixtures.client
+        auth_client = self.fixtures.auth_client
         crusoe = self.fixtures.crusoe
-        result = client.authtoken_for(crusoe)
+        result = auth_client.authtoken_for(crusoe)
         client_token = models.AuthToken(
-            client=client, user=crusoe, scope='id', validity=0
+            auth_client=auth_client, user=crusoe, scope='id', validity=0
         )
-        result = client.authtoken_for(user=crusoe)
+        result = auth_client.authtoken_for(user=crusoe)
         self.assertEqual(client_token, result)
         self.assertIsInstance(result, models.AuthToken)
         assert result.user == crusoe
 
         # scenario 2: for a client that has confidential=False
         varys = models.User(username='varys', fullname='Lord Varys')
-        house_lannisters = models.Client(
+        house_lannisters = models.AuthClient(
             title='House of Lannisters',
             confidential=False,
             user=varys,
@@ -100,7 +100,7 @@ class TestClient(TestDatabaseFixture):
             accessed_at=utcnow(),
         )
         lannisters_auth_token = models.AuthToken(
-            client=house_lannisters,
+            auth_client=house_lannisters,
             user=varys,
             scope='throne',
             validity=0,
@@ -118,20 +118,20 @@ class TestClient(TestDatabaseFixture):
         """
         Test for verifying Client's get method
         """
-        client = self.fixtures.client
+        auth_client = self.fixtures.auth_client
         batdog = self.fixtures.batdog
-        key = client.buid
+        key = auth_client.buid
         # scenario 1: when no key or namespace
         with self.assertRaises(TypeError):
-            models.Client.get()
+            models.AuthClient.get()
         # scenario 2: when given key
-        result1 = models.Client.get(key)
-        self.assertIsInstance(result1, models.Client)
+        result1 = models.AuthClient.get(key)
+        self.assertIsInstance(result1, models.AuthClient)
         self.assertEqual(result1.buid, key)
         self.assertEqual(result1.owner, batdog)
         # scenario 3: when given namespace
         namespace = 'fun.batdogadventures.com'
-        result2 = models.Client.get(namespace=namespace)
-        self.assertIsInstance(result2, models.Client)
+        result2 = models.AuthClient.get(namespace=namespace)
+        self.assertIsInstance(result2, models.AuthClient)
         self.assertEqual(result2.namespace, namespace)
         self.assertEqual(result2.owner, batdog)

@@ -1,5 +1,5 @@
 {% extends "layout.html.jinja2" %}
-{% block title %}{% trans client=client.title %}Redirecting you back to {{ client }}…{% endtrans %}{% endblock %}
+{% block title %}{% trans client=auth_client.title %}Redirecting you back to {{ client }}…{% endtrans %}{% endblock %}
 
 {% block pageheaders %}
   <meta http-equiv="refresh" content="0; {{ redirect_to }}"/>

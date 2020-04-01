@@ -18,8 +18,8 @@ from .user import User
 __all__ = ['UserSession']
 
 
-session_client = db.Table(
-    'session_client',
+auth_client_user_session = db.Table(
+    'auth_client_user_session',
     db.Model.metadata,
     *(
         make_timestamp_columns()
@@ -32,9 +32,9 @@ session_client = db.Table(
                 primary_key=True,
             ),
             db.Column(
-                'client_id',
+                'auth_client_id',
                 None,
-                db.ForeignKey('client.id'),
+                db.ForeignKey('auth_client.id'),
                 nullable=False,
                 primary_key=True,
             ),
@@ -69,28 +69,30 @@ class UserSession(BaseMixin, db.Model):
         if not self.buid:
             self.buid = make_buid()
 
-    def access(self, client=None):
+    def access(self, auth_client=None):
         """
         Mark a session as currently active.
 
-        :param client: For API calls from clients, save the client instead of IP address and User-Agent
+        :param auth_client: For API calls from clients, save the client instead of IP address and User-Agent
         """
         # `accessed_at` will be different from the automatic `updated_at` in one
         # crucial context: when the session was revoked remotely. `accessed_at` won't
         # be updated at that time.
         self.accessed_at = db.func.utcnow()
         with db.session.no_autoflush:
-            if client:
+            if auth_client:
                 if (
-                    client not in self.clients
+                    auth_client not in self.auth_clients
                 ):  # self.clients is defined via Client.sessions
-                    self.clients.append(client)
+                    self.auth_clients.append(auth_client)
                 else:
                     # If we've seen this client in this session before, only update the timestamp
                     db.session.execute(
-                        session_client.update()
-                        .where(session_client.c.user_session_id == self.id)
-                        .where(session_client.c.client_id == client.id)
+                        auth_client_user_session.update()
+                        .where(auth_client_user_session.c.user_session_id == self.id)
+                        .where(
+                            auth_client_user_session.c.auth_client_id == auth_client.id
+                        )
                         .values(updated_at=db.func.utcnow())
                     )
             else:

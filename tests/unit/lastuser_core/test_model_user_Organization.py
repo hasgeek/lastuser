@@ -32,7 +32,7 @@ class TestOrganization(TestDatabaseFixture):
         # After adding users to the organization
         dachsunited.owners.users.append(crusoe)
         self.assertEqual(dachsunited.owners.users.all(), [crusoe])
-        assert title == dachsunited.owners.org.title
+        assert title == dachsunited.owners.organization.title
 
     def test_organization_get(self):
         """

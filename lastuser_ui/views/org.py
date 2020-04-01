@@ -111,7 +111,7 @@ class OrgView(UrlForView, ModelView):
     def new_team(self):
         form = TeamForm()
         if form.validate_on_submit():
-            team = Team(org=self.obj)
+            team = Team(organization=self.obj)
             db.session.add(team)
             form.populate_obj(team)
             db.session.commit()
@@ -130,13 +130,13 @@ class TeamView(UrlForView, ModelView):
     __decorators__ = [requires_login]
     model = Team
     route_model_map = {  # Map <name> and <buid> in URLs to model attributes, for `url_for` automation
-        'name': 'org.name',
+        'name': 'organization.name',
         'buid': 'buid',
     }
 
     def loader(self, name, buid):
         obj = Team.get(buid=buid, with_parent=True)
-        if not obj or obj.org.name != name:
+        if not obj or obj.organization.name != name:
             abort(404)
         return obj
 
@@ -148,7 +148,7 @@ class TeamView(UrlForView, ModelView):
             form.populate_obj(self.obj)
             db.session.commit()
             team_data_changed.send(self.obj, changes=['edit'], user=current_auth.user)
-            return render_redirect(self.obj.org.url_for(), code=303)
+            return render_redirect(self.obj.organization.url_for(), code=303)
         return render_form(
             form=form,
             title=_("Edit team: {title}").format(title=self.obj.title),
@@ -160,7 +160,7 @@ class TeamView(UrlForView, ModelView):
     @route('delete', methods=['GET', 'POST'])
     @requires_permission('delete')
     def delete(self):
-        if self.obj == self.obj.org.owners:
+        if self.obj == self.obj.organization.owners:
             abort(403)
         if request.method == 'POST':
             team_data_changed.send(self.obj, changes=['delete'], user=current_auth.user)
@@ -171,8 +171,8 @@ class TeamView(UrlForView, ModelView):
             message=_("Delete team {title}?").format(title=self.obj.title),
             success=_(
                 "You have deleted team ‘{team}’ from organization ‘{org}’"
-            ).format(team=self.obj.title, org=self.obj.org.title),
-            next=self.obj.org.url_for(),
+            ).format(team=self.obj.title, org=self.obj.organization.title),
+            next=self.obj.organization.url_for(),
         )
 
 

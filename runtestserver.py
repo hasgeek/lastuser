@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from lastuser_core.models import Client, Organization, User  # isort:skip
+from lastuser_core.models import AuthClient, Organization, User  # isort:skip
 from lastuserapp import app, db
 
 # incase data exists from previously run tests
@@ -20,7 +20,7 @@ gustav = User(
 oakley = User(username="oakley", fullname="Oakley 'huh' Dachshund")
 dachsunited = Organization(name="dachsunited", title="Dachs United")
 dachsunited.owners.users.append(gustav)
-dachshundworld = Client(
+dachshundworld = AuthClient(
     title="Dachshund World",
     org=dachsunited,
     confidential=True,

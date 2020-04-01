@@ -14,7 +14,7 @@ class TestTeam(TestDatabaseFixture):
         dachshunds_buid = dachshunds.buid
         result_with_buid = models.Team.get(buid=dachshunds_buid)
         assert dachshunds.title == result_with_buid.title
-        assert dachshunds.org == result_with_buid.org
+        assert dachshunds.organization == result_with_buid.organization
         with self.assertRaises(TypeError):
             models.Team.get()
 

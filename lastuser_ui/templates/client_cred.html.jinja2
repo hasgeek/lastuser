@@ -8,7 +8,7 @@
   <div class="mui-panel">
     <dl class="infobox">
       <dt>{% trans %}Application title{% endtrans %}</dt>
-      <dd>{{ cred.client.title }}</dd>
+      <dd>{{ cred.auth_client.title }}</dd>
       <dt>{% trans %}Access key for{% endtrans %}</dt>
       <dd>{{ cred.title }}</dd>
       <dt>{% trans %}Client access key{% endtrans %}</dt>
@@ -18,6 +18,6 @@
     </dl>
   </div>
   <p>
-    <a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ url_for('.client_info', key=cred.client.buid) }}">{{ faicon(icon='arrow-left') }} {% trans %}Return to client info{% endtrans %}</a>
+    <a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ url_for('.client_info', key=cred.auth_client.buid) }}">{{ faicon(icon='arrow-left') }} {% trans %}Return to client info{% endtrans %}</a>
   </p>
 {% endblock %}

@@ -23,10 +23,10 @@ class SMS_STATUS(LabeledEnum):  # NOQA: N801
 
 
 class SMSMessage(BaseMixin, db.Model):
-    __tablename__ = 'smsmessage'
+    __tablename__ = 'sms_message'
     # Phone number that the message was sent to
     phone_number = db.Column(db.String(15), nullable=False)
-    transaction_id = db.Column(db.UnicodeText, unique=True, nullable=True)
+    transactionid = db.Column(db.UnicodeText, unique=True, nullable=True)
     # The message itself
     message = db.Column(db.UnicodeText, nullable=False)
     # Flags

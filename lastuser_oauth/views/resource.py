@@ -11,12 +11,12 @@ from coaster.utils import getbool
 from coaster.views import jsonp, requestargs
 from lastuser_core import resource_registry
 from lastuser_core.models import (
+    AuthClientCredential,
+    AuthClientTeamPermissions,
+    AuthClientUserPermissions,
     AuthToken,
-    ClientCredential,
     Organization,
-    TeamClientPermissions,
     User,
-    UserClientPermissions,
     UserSession,
     db,
     getuser,
@@ -30,7 +30,7 @@ from .helpers import (
 )
 
 
-def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
+def get_userinfo(user, auth_client, scope=[], user_session=None, get_permissions=True):
 
     teams = {}
 
@@ -49,8 +49,8 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
     else:
         userinfo = {}
 
-    if session:
-        userinfo['sessionid'] = session.buid
+    if user_session:
+        userinfo['sessionid'] = user_session.buid
 
     if '*' in scope or 'email' in scope or 'email/*' in scope:
         userinfo['email'] = str(user.email)
@@ -103,9 +103,9 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                 'buid': team.buid,
                 'uuid': team.uuid,
                 'title': team.title,
-                'org': team.org.buid,
-                'org_uuid': team.org.uuid,
-                'owners': team == team.org.owners,
+                'org': team.organization.buid,
+                'org_uuid': team.organization.uuid,
+                'owners': team == team.organization.owners,
                 'member': True,
             }
 
@@ -118,9 +118,9 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                         'buid': team.buid,
                         'uuid': team.uuid,
                         'title': team.title,
-                        'org': team.org.buid,
-                        'org_uuid': team.org.uuid,
-                        'owners': team == team.org.owners,
+                        'org': team.organization.buid,
+                        'org_uuid': team.organization.uuid,
+                        'owners': team == team.organization.owners,
                         'member': False,
                     }
 
@@ -128,9 +128,9 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
         userinfo['teams'] = list(teams.values())
 
     if get_permissions:
-        if client.user:
-            perms = UserClientPermissions.query.filter_by(
-                user=user, client=client
+        if auth_client.user:
+            perms = AuthClientUserPermissions.query.filter_by(
+                user=user, auth_client=auth_client
             ).first()
             if perms:
                 userinfo['permissions'] = perms.access_permissions.split(' ')
@@ -138,9 +138,9 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
             permsset = set()
             if user.teams:
                 perms = (
-                    TeamClientPermissions.query.filter_by(client=client)
+                    AuthClientTeamPermissions.query.filter_by(auth_client=auth_client)
                     .filter(
-                        TeamClientPermissions.team_id.in_(
+                        AuthClientTeamPermissions.team_id.in_(
                             [team.id for team in user.teams]
                         )
                     )
@@ -233,14 +233,14 @@ def token_verify():
             authtoken.user, current_auth.client, scope=authtoken.effective_scope
         )
     params['clientinfo'] = {
-        'title': authtoken.client.title,
-        'userid': authtoken.client.owner.buid,
-        'buid': authtoken.client.owner.buid,
-        'uuid': authtoken.client.owner.uuid,
-        'owner_title': authtoken.client.owner.pickername,
-        'website': authtoken.client.website,
-        'key': authtoken.client.buid,
-        'trusted': authtoken.client.trusted,
+        'title': authtoken.auth_client.title,
+        'userid': authtoken.auth_client.owner.buid,
+        'buid': authtoken.auth_client.owner.buid,
+        'uuid': authtoken.auth_client.owner.uuid,
+        'owner_title': authtoken.auth_client.owner.pickername,
+        'website': authtoken.auth_client.website,
+        'key': authtoken.auth_client.buid,
+        'trusted': authtoken.auth_client.trusted,
     }
     return api_result('ok', **params)
 
@@ -281,14 +281,14 @@ def token_get_scope():
             authtoken.user, current_auth.client, scope=authtoken.effective_scope
         )
     params['clientinfo'] = {
-        'title': authtoken.client.title,
-        'userid': authtoken.client.owner.buid,
-        'buid': authtoken.client.owner.buid,
-        'uuid': authtoken.client.owner.uuid,
-        'owner_title': authtoken.client.owner.pickername,
-        'website': authtoken.client.website,
-        'key': authtoken.client.buid,
-        'trusted': authtoken.client.trusted,
+        'title': authtoken.auth_client.title,
+        'userid': authtoken.auth_client.owner.buid,
+        'buid': authtoken.auth_client.owner.buid,
+        'uuid': authtoken.auth_client.owner.uuid,
+        'owner_title': authtoken.auth_client.owner.pickername,
+        'website': authtoken.auth_client.website,
+        'key': authtoken.auth_client.buid,
+        'trusted': authtoken.auth_client.trusted,
         'scope': client_resources,
     }
     return api_result('ok', **params)
@@ -476,8 +476,8 @@ def user_autocomplete():
 @lastuser_oauth.route('/api/1/login/beacon.html')
 @requestargs('client_id', 'login_url')
 def login_beacon_iframe(client_id, login_url):
-    cred = ClientCredential.get(client_id)
-    client = cred.client if cred else None
+    cred = AuthClientCredential.get(client_id)
+    client = cred.auth_client if cred else None
     if client is None:
         abort(404)
     if not client.host_matches(login_url):
@@ -495,8 +495,8 @@ def login_beacon_iframe(client_id, login_url):
 @lastuser_oauth.route('/api/1/login/beacon.json')
 @requestargs('client_id')
 def login_beacon_json(client_id):
-    cred = ClientCredential.get(client_id)
-    client = cred.client if cred else None
+    cred = AuthClientCredential.get(client_id)
+    client = cred.auth_client if cred else None
     if client is None:
         abort(404)
     if current_auth.is_authenticated:
@@ -521,13 +521,13 @@ def resource_id(authtoken, args, files=None):
     if 'all' in args and getbool(args['all']):
         return get_userinfo(
             authtoken.user,
-            authtoken.client,
+            authtoken.auth_client,
             scope=authtoken.effective_scope,
             get_permissions=True,
         )
     else:
         return get_userinfo(
-            authtoken.user, authtoken.client, scope=['id'], get_permissions=False
+            authtoken.user, authtoken.auth_client, scope=['id'], get_permissions=False
         )
 
 
@@ -537,7 +537,7 @@ def session_verify(authtoken, args, files=None):
     sessionid = args['sessionid']
     session = UserSession.authenticate(buid=sessionid)
     if session and session.user == authtoken.user:
-        session.access(client=authtoken.client)
+        session.access(auth_client=authtoken.auth_client)
         db.session.commit()
         return {
             'active': True,
@@ -630,13 +630,6 @@ def resource_login_providers(authtoken, args, files=None):
                 'oauth_token_type': str(extid.oauth_token_type),
             }
     return response
-
-
-@lastuser_oauth.route('/api/1/user/new', methods=['POST'])
-@resource_registry.resource('user/new', __("Create a new user account"), trusted=True)
-def resource_user_new(authtoken, args, files=None):
-    # Set User.client to authtoken.client and User.referrer to authtoken.user
-    pass
 
 
 @lastuser_oauth.route('/api/1/organizations')
