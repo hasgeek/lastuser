@@ -15,7 +15,6 @@ from lastuser_core.models import (
     AuthCode,
     AuthToken,
     User,
-    UserFlashMessage,
     db,
     getuser,
 )
@@ -156,28 +155,11 @@ def clear_flashed_messages():
     list(get_flashed_messages())
 
 
-def save_flashed_messages():
-    """
-    Save flashed messages so they can be relayed back to trusted clients.
-    """
-    for index, (category, message) in enumerate(
-        get_flashed_messages(with_categories=True)
-    ):
-        db.session.add(
-            UserFlashMessage(
-                user=current_auth.user, seq=index, category=category, message=message
-            )
-        )
-
-
 def oauth_auth_success(auth_client, redirect_uri, state, code, token=None):
     """
     Commit session and redirect to OAuth redirect URI
     """
-    if auth_client.trusted:
-        save_flashed_messages()
-    else:
-        clear_flashed_messages()
+    clear_flashed_messages()
     db.session.commit()
     if auth_client.confidential:
         use_fragment = False
@@ -468,13 +450,6 @@ def oauth_token_success(token, **params):
     params['access_token'] = token.token
     params['token_type'] = token.token_type
     params['scope'] = ' '.join(token.effective_scope)
-    if token.auth_client.trusted:
-        # Trusted client. Send back waiting user messages.
-        for ufm in list(UserFlashMessage.query.filter_by(user=token.user).all()):
-            params.setdefault('messages', []).append(
-                {'category': ufm.category, 'message': ufm.message}
-            )
-            db.session.delete(ufm)
     # TODO: Understand how refresh_token works.
     if token.validity:
         params['expires_in'] = token.validity

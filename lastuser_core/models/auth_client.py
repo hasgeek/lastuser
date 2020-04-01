@@ -23,7 +23,6 @@ __all__ = [
     'AuthClientCredential',
     'AuthClientTeamPermissions',
     'AuthClientUserPermissions',
-    'UserFlashMessage',
 ]
 
 
@@ -256,23 +255,6 @@ class AuthClientCredential(BaseMixin, db.Model):
         secret = newsecret()
         cred.secret_hash = 'sha256$' + sha256(secret.encode('utf-8')).hexdigest()
         return cred, secret
-
-
-class UserFlashMessage(BaseMixin, db.Model):
-    """
-    Saved messages for a user, to be relayed to trusted clients.
-    """
-
-    __tablename__ = 'user_flash_message'
-    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(
-        User,
-        primaryjoin=user_id == User.id,
-        backref=db.backref('flashmessages', cascade='delete, delete-orphan'),
-    )
-    seq = db.Column(db.Integer, default=0, nullable=False)
-    category = db.Column(db.UnicodeText, nullable=False)
-    message = db.Column(db.UnicodeText, nullable=False)
 
 
 class AuthCode(ScopeMixin, BaseMixin, db.Model):
