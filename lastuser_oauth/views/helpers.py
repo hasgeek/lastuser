@@ -192,7 +192,7 @@ def _client_login_inner():
     if credential:
         credential.accessed_at = db.func.utcnow()
         db.session.commit()
-    add_auth_attribute('client', credential.auth_client, actor=True)
+    add_auth_attribute('auth_client', credential.auth_client, actor=True)
 
 
 def requires_client_login(f):

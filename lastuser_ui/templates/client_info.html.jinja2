@@ -4,7 +4,7 @@
 
 {% block contentwrapper %}
 <div class="grid">
-  {%- if client.owner_is(current_auth.user) %}
+  {%- if auth_client.owner_is(current_auth.user) %}
     <div class="grid__col-xs-12 grid__col-md-5 grid__col-lg-4">
       <div class="sticky-admin-panel">
         <div class="card">
@@ -13,11 +13,11 @@
           </div>
           <div class="card__body card--text mui--text-subhead">
             <ol class="mui-list--aligned">
-              <li><a href="{{ url_for('.client_edit', key=client.buid) }}" title="Edit">{% trans %}Edit this application{% endtrans %}</a></li>
-              <li><a href="{{ url_for('.client_delete', key=client.buid) }}" title="Delete">{% trans %}Delete{% endtrans %}</a></li>
-              <li><a href="{{ url_for('.client_cred_new', key=client.buid) }}" title="New access key">{% trans %}New access key{% endtrans %}</a></li>
-              <li><a href="{{ url_for('.permission_user_new', key=client.buid) }}">
-                {%- if client.user -%}
+              <li><a href="{{ url_for('.client_edit', key=auth_client.buid) }}" title="Edit">{% trans %}Edit this application{% endtrans %}</a></li>
+              <li><a href="{{ url_for('.client_delete', key=auth_client.buid) }}" title="Delete">{% trans %}Delete{% endtrans %}</a></li>
+              <li><a href="{{ url_for('.client_cred_new', key=auth_client.buid) }}" title="New access key">{% trans %}New access key{% endtrans %}</a></li>
+              <li><a href="{{ url_for('.permission_user_new', key=auth_client.buid) }}">
+                {%- if auth_client.user -%}
                   {% trans %}Assign permissions to a user{% endtrans %}
                 {%- else -%}
                   {% trans %}Assign permissions to a team{% endtrans %}
@@ -30,53 +30,53 @@
     </div>
   {% endif %}
 
-  <div class="grid__col-xs-12 grid__col--bleed {%- if client.owner_is(current_auth.user) or client.owner_is(current_auth.user) %} grid__col-md-7 grid__col-lg-8{% endif %}">
+  <div class="grid__col-xs-12 grid__col--bleed {%- if auth_client.owner_is(current_auth.user) or auth_client.owner_is(current_auth.user) %} grid__col-md-7 grid__col-lg-8{% endif %}">
     <div class="grid__col--bleed-y">
     <div class="mui-panel">
       <dl class="infobox">
         <dt class="mui--text-subhead">{% trans %}Application title{% endtrans %}</dt>
-        <dd class="mui--text-subhead"><strong>{{ client.title }}</strong></dd>
+        <dd class="mui--text-subhead"><strong>{{ auth_client.title }}</strong></dd>
         <dt class="mui--text-subhead">{% trans %}Description{% endtrans %}</dt>
-        <dd class="mui--text-subhead">{{ client.description }}</dd>
+        <dd class="mui--text-subhead">{{ auth_client.description }}</dd>
         <dt class="mui--text-subhead">{% trans %}Owner{% endtrans %}</dt>
-        <dd class="mui--text-subhead">{{ client.owner.pickername }}</dd>
+        <dd class="mui--text-subhead">{{ auth_client.owner.pickername }}</dd>
         <dt class="mui--text-subhead">{% trans %}Type{% endtrans %}</dt">
-        <dd class="mui--text-subhead">{% if client.confidential %}{% trans %}Confidential{% endtrans %}{% else %}{% trans %}Public{% endtrans %}{% endif %}
+        <dd class="mui--text-subhead">{% if auth_client.confidential %}{% trans %}Confidential{% endtrans %}{% else %}{% trans %}Public{% endtrans %}{% endif %}
         <dt class="mui--text-subhead">{% trans %}Website{% endtrans %}</dt>
-        <dd class="mui--text-subhead"><a rel="nofollow" href="{{ client.website }}">{{ client.website }}</a></d>
-        {%- if client.namespace %}
+        <dd class="mui--text-subhead"><a rel="nofollow" href="{{ auth_client.website }}">{{ auth_client.website }}</a></d>
+        {%- if auth_client.namespace %}
           <dt class="mui--text-subhead">{% trans %}Namespace{% endtrans %}</dt>
-          <dd class="mui--text-subhead">{{ client.namespace }}</dd>
+          <dd class="mui--text-subhead">{{ auth_client.namespace }}</dd>
         {%- endif %}
-        {%- if client.owner_is(current_auth.user) %}
+        {%- if auth_client.owner_is(current_auth.user) %}
           <dt class="mui--text-subhead">{% trans %}Redirect URLs{% endtrans %}</dt>
           <dd class="mui--text-subhead">
-            {%- for r in client.redirect_uris -%}
+            {%- for r in auth_client.redirect_uris -%}
               {{ r }}{% if not loop.last %}<br>{% endif %}
             {%- endfor -%}
           </dd class="mui--text-subhead">
           <dt class="mui--text-subhead">{% trans %}Notification URL{% endtrans %}</dt>
-          <dd class="mui--text-subhead">{{ client.notification_uri }}</dd>
+          <dd class="mui--text-subhead">{{ auth_client.notification_uri }}</dd>
         {%- endif %}
         <dt class="mui--text-subhead">{% trans %}Active?{% endtrans %}</dt>
-        <dd class="mui--text-subhead">{{ client.active }}</dd>
+        <dd class="mui--text-subhead">{{ auth_client.active }}</dd>
         <dt class="mui--text-subhead">{% trans %}Allow anyone to login?{% endtrans %}</dt>
-        <dd class="mui--text-subhead">{{ client.allow_any_login }}</dd>
+        <dd class="mui--text-subhead">{{ auth_client.allow_any_login }}</dd>
         <dt class="mui--text-subhead">{% trans %}Registered date{% endtrans %}</dt>
-        <dd class="mui--text-subhead">{{ client.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</dd>
-        {%- if client.owner_is(current_auth.user) %}
+        <dd class="mui--text-subhead">{{ auth_client.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</dd>
+        {%- if auth_client.owner_is(current_auth.user) %}
           <dt class="mui--text-subhead">{% trans %}Users{% endtrans %}</dt>
-          <dd class="mui--text-subhead">{{ client.authtokens.count() }}</dd>
+          <dd class="mui--text-subhead">{{ auth_client.authtokens.count() }}</dd>
         {%- endif %}
       </dl>
     </div>
     </div>
-    {%- if client.owner_is(current_auth.user) %}
+    {%- if auth_client.owner_is(current_auth.user) %}
       <div class="grid__col--bleed-y">
         <h2>{% trans %}Access Keys{% endtrans %}</h2>
       </div>
       <div class="grid grid--align-baseline">
-      {% for cred in client.credentials.values() %}
+      {% for cred in auth_client.credentials.values() %}
         <div class="grid__col-auto">
           <div class="card card--limited">
             <div class="card__header">
@@ -99,7 +99,7 @@
             </div>
             <div class="mui-divider"></div>
             <div class="card__footer">
-              <a href="{{ url_for('.client_cred_delete', key=client.buid, name=cred.name) }}" title="{% trans %}Revoke{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">{% trans %}Revoke{% endtrans %}</a>
+              <a href="{{ url_for('.client_cred_delete', key=auth_client.buid, name=cred.name) }}" title="{% trans %}Revoke{% endtrans %}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">{% trans %}Revoke{% endtrans %}</a>
             </div>
           </div>
         </div>
@@ -111,10 +111,10 @@
       </div>
     {%- endif %}
 
-    {% if client.owner_is(current_auth.user) %}
+    {% if auth_client.owner_is(current_auth.user) %}
       <div class="grid__col--bleed-y">
         <h2>{% trans %}Permissions{% endtrans %}</h2>
-        {% if client.user %}
+        {% if auth_client.user %}
           <p>{% trans %}The following users have permissions to this app.{% endtrans %}</p>
         {% else %}
           <p>{% trans %}The following teams have permissions to this app.{% endtrans %}</p>
@@ -132,8 +132,8 @@
               </div>
               <div class="mui-divider"></div>
               <div class="card__footer">
-                <a href="{{ url_for('.permission_user_edit', key=client.buid, buid=pa.buid) }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">{% trans %}Edit{% endtrans %}</a>
-                <a href="{{ url_for('.permission_user_delete', key=client.buid, buid=pa.buid) }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">{% trans %}Delete{% endtrans %}</a>
+                <a href="{{ url_for('.permission_user_edit', key=auth_client.buid, buid=pa.buid) }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">{% trans %}Edit{% endtrans %}</a>
+                <a href="{{ url_for('.permission_user_delete', key=auth_client.buid, buid=pa.buid) }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary">{% trans %}Delete{% endtrans %}</a>
               </div>
             </div>
           </div>

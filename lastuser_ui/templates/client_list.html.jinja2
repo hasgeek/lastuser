@@ -18,13 +18,13 @@
       </tr>
     </thead>
     <tbody class="mui--text-subhead">
-      {% for client in clients %}
-        {%- set link = url_for('.client_info', key=client.buid) %}
+      {% for auth_client in auth_clients %}
+        {%- set link = url_for('.client_info', key=auth_client.buid) %}
         <tr>
-          <td data-th="#"><a href="{{ link }}" title="{{ client.title }}">{{ loop.index }}</a></td>
-          <td data-th="Title"><a href="{{ link }}" title="{{ client.title }}">{{ client.title }}</a></td>
-          <td data-th="Owner"><a href="{{ link }}" title="{{ client.title }}">{{ client.owner.pickername }}</a></td>
-          <td data-th="Website"><a href="{{ link }}" title="{{ client.title }}">{{ client.website }}</a></td>
+          <td data-th="#"><a href="{{ link }}" title="{{ auth_client.title }}">{{ loop.index }}</a></td>
+          <td data-th="Title"><a href="{{ link }}" title="{{ auth_client.title }}">{{ auth_client.title }}</a></td>
+          <td data-th="Owner"><a href="{{ link }}" title="{{ auth_client.title }}">{{ auth_client.owner.pickername }}</a></td>
+          <td data-th="Website"><a href="{{ link }}" title="{{ auth_client.title }}">{{ auth_client.website }}</a></td>
         </tr>
       {% else %}
         <tr>

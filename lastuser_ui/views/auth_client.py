@@ -35,7 +35,7 @@ def client_list():
     if current_auth.is_authenticated:
         return render_template(
             'client_list.html.jinja2',
-            clients=AuthClient.query.filter(
+            auth_clients=AuthClient.query.filter(
                 db.or_(
                     AuthClient.user == current_auth.user,
                     AuthClient.organization_id.in_(
@@ -55,7 +55,7 @@ def client_list():
 def client_list_all():
     return render_template(
         'client_list.html.jinja2',
-        clients=AuthClient.query.order_by(AuthClient.title).all(),
+        auth_clients=AuthClient.query.order_by(AuthClient.title).all(),
     )
 
 
@@ -80,14 +80,14 @@ def client_new():
         form.client_owner.data = current_auth.user.buid
 
     if form.validate_on_submit():
-        client = AuthClient()
-        form.populate_obj(client)
-        client.user = form.user
-        client.organization = form.organization
-        client.trusted = False
-        db.session.add(client)
+        auth_client = AuthClient()
+        form.populate_obj(auth_client)
+        auth_client.user = form.user
+        auth_client.organization = form.organization
+        auth_client.trusted = False
+        db.session.add(auth_client)
         db.session.commit()
-        return render_redirect(url_for('.client_info', key=client.buid), code=303)
+        return render_redirect(url_for('.client_info', key=auth_client.buid), code=303)
 
     return render_form(
         form=form,
@@ -99,43 +99,48 @@ def client_new():
 
 
 @lastuser_ui.route('/apps/<key>')
-@load_model(AuthClient, {'buid': 'key'}, 'client', permission='view')
-def client_info(client):
-    if client.user:
+@load_model(AuthClient, {'buid': 'key'}, 'auth_client', permission='view')
+def client_info(auth_client):
+    if auth_client.user:
         permassignments = AuthClientUserPermissions.query.filter_by(
-            auth_client=client
+            auth_client=auth_client
         ).all()
     else:
         permassignments = AuthClientTeamPermissions.query.filter_by(
-            auth_client=client
+            auth_client=auth_client
         ).all()
     return render_template(
-        'client_info.html.jinja2', client=client, permassignments=permassignments
+        'client_info.html.jinja2',
+        auth_client=auth_client,
+        permassignments=permassignments,
     )
 
 
 @lastuser_ui.route('/apps/<key>/edit', methods=['GET', 'POST'])
 @requires_login
-@load_model(AuthClient, {'buid': 'key'}, 'client', permission='edit')
-def client_edit(client):
-    form = RegisterClientForm(obj=client, model=AuthClient)
+@load_model(AuthClient, {'buid': 'key'}, 'auth_client', permission='edit')
+def client_edit(auth_client):
+    form = RegisterClientForm(obj=auth_client, model=AuthClient)
     form.edit_user = current_auth.user
     form.client_owner.choices = available_client_owners()
     if request.method == 'GET':
-        if client.user:
-            form.client_owner.data = client.user.buid
+        if auth_client.user:
+            form.client_owner.data = auth_client.user.buid
         else:
-            form.client_owner.data = client.organization.buid
+            form.client_owner.data = auth_client.organization.buid
 
     if form.validate_on_submit():
-        if client.user != form.user or client.organization != form.organization:
+        if (
+            auth_client.user != form.user
+            or auth_client.organization != form.organization
+        ):
             # Ownership has changed. Remove existing permission assignments
             for perm in AuthClientUserPermissions.query.filter_by(
-                auth_client=client
+                auth_client=auth_client
             ).all():
                 db.session.delete(perm)
             for perm in AuthClientTeamPermissions.query.filter_by(
-                auth_client=client
+                auth_client=auth_client
             ).all():
                 db.session.delete(perm)
             flash(
@@ -145,11 +150,11 @@ def client_edit(client):
                 ),
                 'warning',
             )
-        form.populate_obj(client)
-        client.user = form.user
-        client.organization = form.organization
+        form.populate_obj(auth_client)
+        auth_client.user = form.user
+        auth_client.organization = form.organization
         db.session.commit()
-        return render_redirect(url_for('.client_info', key=client.buid), code=303)
+        return render_redirect(url_for('.client_info', key=auth_client.buid), code=303)
 
     return render_form(
         form=form,
@@ -162,16 +167,16 @@ def client_edit(client):
 
 @lastuser_ui.route('/apps/<key>/delete', methods=['GET', 'POST'])
 @requires_login
-@load_model(AuthClient, {'buid': 'key'}, 'client', permission='delete')
-def client_delete(client):
+@load_model(AuthClient, {'buid': 'key'}, 'auth_client', permission='delete')
+def client_delete(auth_client):
     return render_delete_sqla(
-        client,
+        auth_client,
         db,
         title=_("Confirm delete"),
-        message=_("Delete application ‘{title}’? ").format(title=client.title),
+        message=_("Delete application ‘{title}’? ").format(title=auth_client.title),
         success=_(
             "You have deleted application ‘{title}’ and all its associated resources and permission assignments"
-        ).format(title=client.title),
+        ).format(title=auth_client.title),
         next=url_for('.client_list'),
     )
 
@@ -181,13 +186,13 @@ def client_delete(client):
 
 @lastuser_ui.route('/apps/<key>/cred', methods=['GET', 'POST'])
 @requires_login
-@load_model(AuthClient, {'buid': 'key'}, 'client', permission='edit')
-def client_cred_new(client):
+@load_model(AuthClient, {'buid': 'key'}, 'auth_client', permission='edit')
+def client_cred_new(auth_client):
     form = ClientCredentialForm()
-    if request.method == 'GET' and not client.credentials:
+    if request.method == 'GET' and not auth_client.credentials:
         form.title.data = _("Default")
     if form.validate_on_submit():
-        cred, secret = AuthClientCredential.new(client)
+        cred, secret = AuthClientCredential.new(auth_client)
         cred.title = form.title.data
         db.session.commit()
         return render_template(
@@ -205,18 +210,18 @@ def client_cred_new(client):
 @lastuser_ui.route('/apps/<key>/cred/<name>/delete', methods=['GET', 'POST'])
 @requires_login
 @load_models(
-    (AuthClient, {'buid': 'key'}, 'client'),
-    (AuthClientCredential, {'name': 'name', 'auth_client': 'client'}, 'cred'),
+    (AuthClient, {'buid': 'key'}, 'auth_client'),
+    (AuthClientCredential, {'name': 'name', 'auth_client': 'auth_client'}, 'cred'),
     permission='delete',
 )
-def client_cred_delete(client, cred):
+def client_cred_delete(auth_client, cred):
     return render_delete_sqla(
         cred,
         db,
         title=_("Confirm delete"),
         message=_("Delete access key ‘{title}’? ").format(title=cred.title),
         success=_("You have deleted access key ‘{title}’").format(title=cred.title),
-        next=url_for('.client_info', key=client.buid),
+        next=url_for('.client_info', key=auth_client.buid),
     )
 
 
@@ -225,46 +230,46 @@ def client_cred_delete(client, cred):
 
 @lastuser_ui.route('/apps/<key>/perms/new', methods=['GET', 'POST'])
 @requires_login
-@load_model(AuthClient, {'buid': 'key'}, 'client', permission='assign-permissions')
-def permission_user_new(client):
-    if client.user:
+@load_model(AuthClient, {'buid': 'key'}, 'auth_client', permission='assign-permissions')
+def permission_user_new(auth_client):
+    if auth_client.user:
         form = UserPermissionAssignForm()
-    elif client.organization:
+    elif auth_client.organization:
         form = TeamPermissionAssignForm()
-        form.organization = client.organization
+        form.organization = auth_client.organization
         form.team_id.choices = [
-            (team.buid, team.title) for team in client.organization.teams
+            (team.buid, team.title) for team in auth_client.organization.teams
         ]
     else:
         abort(403)  # This should never happen. Clients always have an owner.
     if form.validate_on_submit():
         perms = set()
-        if client.user:
+        if auth_client.user:
             permassign = AuthClientUserPermissions.query.filter_by(
-                user=form.user.data, auth_client=client
+                user=form.user.data, auth_client=auth_client
             ).first()
             if permassign:
                 perms.update(permassign.access_permissions.split())
             else:
                 permassign = AuthClientUserPermissions(
-                    user=form.user.data, auth_client=client
+                    user=form.user.data, auth_client=auth_client
                 )
                 db.session.add(permassign)
         else:
             permassign = AuthClientTeamPermissions.query.filter_by(
-                team=form.team, auth_client=client
+                team=form.team, auth_client=auth_client
             ).first()
             if permassign:
                 perms.update(permassign.access_permissions.split())
             else:
                 permassign = AuthClientTeamPermissions(
-                    team=form.team, auth_client=client
+                    team=form.team, auth_client=auth_client
                 )
                 db.session.add(permassign)
         perms.update(form.perms.data.split())
         permassign.access_permissions = ' '.join(sorted(perms))
         db.session.commit()
-        if client.user:
+        if auth_client.user:
             flash(
                 _("Permissions have been assigned to user {pname}").format(
                     pname=form.user.data.pickername
@@ -278,7 +283,7 @@ def permission_user_new(client):
                 ),
                 'success',
             )
-        return render_redirect(url_for('.client_info', key=client.buid), code=303)
+        return render_redirect(url_for('.client_info', key=auth_client.buid), code=303)
     return render_form(
         form=form,
         title=_("Assign permissions"),
@@ -290,22 +295,26 @@ def permission_user_new(client):
 @lastuser_ui.route('/apps/<key>/perms/<buid>/edit', methods=['GET', 'POST'])
 @requires_login
 @load_model(
-    AuthClient, {'buid': 'key'}, 'client', permission='assign-permissions', kwargs=True
+    AuthClient,
+    {'buid': 'key'},
+    'auth_client',
+    permission='assign-permissions',
+    kwargs=True,
 )
-def permission_user_edit(client, kwargs):
-    if client.user:
+def permission_user_edit(auth_client, kwargs):
+    if auth_client.user:
         user = User.get(buid=kwargs['buid'])
         if not user:
             abort(404)
         permassign = AuthClientUserPermissions.query.filter_by(
-            user=user, auth_client=client
+            user=user, auth_client=auth_client
         ).first_or_404()
-    elif client.organization:
+    elif auth_client.organization:
         team = Team.get(buid=kwargs['buid'])
         if not team:
             abort(404)
         permassign = AuthClientTeamPermissions.query.filter_by(
-            team=team, auth_client=client
+            team=team, auth_client=auth_client
         ).first_or_404()
     form = PermissionEditForm()
     if request.method == 'GET':
@@ -319,7 +328,7 @@ def permission_user_edit(client, kwargs):
             permassign.access_permissions = perms
         db.session.commit()
         if perms:
-            if client.user:
+            if auth_client.user:
                 flash(
                     _("Permissions have been updated for user {pname}").format(
                         pname=user.pickername
@@ -334,7 +343,7 @@ def permission_user_edit(client, kwargs):
                     'success',
                 )
         else:
-            if client.user:
+            if auth_client.user:
                 flash(
                     _("All permissions have been revoked for user {pname}").format(
                         pname=user.pickername
@@ -348,7 +357,7 @@ def permission_user_edit(client, kwargs):
                     ),
                     'success',
                 )
-        return render_redirect(url_for('.client_info', key=client.buid), code=303)
+        return render_redirect(url_for('.client_info', key=auth_client.buid), code=303)
     return render_form(
         form=form,
         title=_("Edit permissions"),
@@ -361,15 +370,19 @@ def permission_user_edit(client, kwargs):
 @lastuser_ui.route('/apps/<key>/perms/<buid>/delete', methods=['GET', 'POST'])
 @requires_login
 @load_model(
-    AuthClient, {'buid': 'key'}, 'client', permission='assign-permissions', kwargs=True
+    AuthClient,
+    {'buid': 'key'},
+    'auth_client',
+    permission='assign-permissions',
+    kwargs=True,
 )
-def permission_user_delete(client, kwargs):
-    if client.user:
+def permission_user_delete(auth_client, kwargs):
+    if auth_client.user:
         user = User.get(buid=kwargs['buid'])
         if not user:
             abort(404)
         permassign = AuthClientUserPermissions.query.filter_by(
-            user=user, auth_client=client
+            user=user, auth_client=auth_client
         ).first_or_404()
         return render_delete_sqla(
             permassign,
@@ -377,18 +390,18 @@ def permission_user_delete(client, kwargs):
             title=_("Confirm delete"),
             message=_(
                 "Remove all permissions assigned to user {pname} for app ‘{title}’?"
-            ).format(pname=user.pickername, title=client.title),
+            ).format(pname=user.pickername, title=auth_client.title),
             success=_("You have revoked permisions for user {pname}").format(
                 pname=user.pickername
             ),
-            next=url_for('.client_info', key=client.buid),
+            next=url_for('.client_info', key=auth_client.buid),
         )
     else:
         team = Team.get(buid=kwargs['buid'])
         if not team:
             abort(404)
         permassign = AuthClientTeamPermissions.query.filter_by(
-            team=team, auth_client=client
+            team=team, auth_client=auth_client
         ).first_or_404()
         return render_delete_sqla(
             permassign,
@@ -396,9 +409,9 @@ def permission_user_delete(client, kwargs):
             title=_("Confirm delete"),
             message=_(
                 "Remove all permissions assigned to team ‘{pname}’ for app ‘{title}’?"
-            ).format(pname=team.title, title=client.title),
+            ).format(pname=team.title, title=auth_client.title),
             success=_("You have revoked permisions for team {title}").format(
                 title=team.title
             ),
-            next=url_for('.client_info', key=client.buid),
+            next=url_for('.client_info', key=auth_client.buid),
         )

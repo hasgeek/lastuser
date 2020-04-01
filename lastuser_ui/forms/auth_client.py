@@ -170,9 +170,9 @@ class RegisterClientForm(forms.Form):
                         "The namespace should be derived from your application’s website domain"
                     )
                 )
-            client = self.edit_model.get(namespace=field.data)
-            if client:
-                if client == self.edit_obj:
+            auth_client = self.edit_model.get(namespace=field.data)
+            if auth_client:
+                if auth_client == self.edit_obj:
                     return
                 raise forms.ValidationError(
                     _("This namespace has been claimed by another client app")

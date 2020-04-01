@@ -9,19 +9,19 @@
   <tbody class="mui--text-subhead mui-panel">
     <tr>
       <td>{% trans %}Application name{% endtrans %}</td>
-      <td>{{ client.title }}</td>
+      <td>{{ auth_client.title }}</td>
     </tr>
     <tr>
       <td>{% trans %}Description{% endtrans %}</td>
-      <td>{{ client.description }}</td>
+      <td>{{ auth_client.description }}</td>
     </tr>
     <tr>
       <td>{% trans %}Owner{% endtrans %}</td>
-      <td>{{ client.owner.pickername }}</td>
+      <td>{{ auth_client.owner.pickername }}</td>
     </tr>
     <tr>
       <td>{% trans %}Website{% endtrans %}</td>
-      <td><a rel="nofollow" href="{{ client.website }}" target="_blank">{{ client.website }}</a></td>
+      <td><a rel="nofollow" href="{{ auth_client.website }}" target="_blank">{{ auth_client.website }}</a></td>
     </tr>
     <tr>
       <td>{% trans %}Access scope{% endtrans %}</td>
@@ -30,8 +30,8 @@
           {% for key in internal_resources -%}
             <li>{{ resource_registry[key]['description'] }}</li>
           {%- endfor %}
-          {% for client in full_client_access -%}
-            <li>{% trans title=client.title %}Full access to all your data in {{ title }}{% endtrans %}</li>
+          {% for auth_client in full_client_access -%}
+            <li>{% trans title=auth_client.title, website=auth_client.website %}Full access to all your data in {{ title }} ({{ website }}){% endtrans %}</li>
           {%- endfor %}
         </ol>
       </td>

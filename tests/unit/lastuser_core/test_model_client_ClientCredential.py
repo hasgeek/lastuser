@@ -19,7 +19,7 @@ class TestClientCredential(TestDatabaseFixture):
         auth_client = self.fixtures.auth_client
         credentials = models.AuthClientCredential.new(auth_client)
         self.assertIsInstance(credentials, tuple)
-        # self.assertEqual(credentials[0].auth_client_id, client.id)
+        # self.assertEqual(credentials[0].auth_client_id, auth_client.id)
         self.assertIsInstance(credentials[0], models.AuthClientCredential)
         client_secret = credentials[0].secret_hash
         self.assertTrue(client_secret.startswith('sha256$'))

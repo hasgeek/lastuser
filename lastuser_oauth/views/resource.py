@@ -208,7 +208,7 @@ def token_verify():
         # No token specified by caller
         return resource_error('no_token')
 
-    if not current_auth.client.namespace:
+    if not current_auth.auth_client.namespace:
         # This client has not defined any resources
         return api_result('error', error='client_no_resources')
 
@@ -217,9 +217,9 @@ def token_verify():
         # No such auth token
         return api_result('error', error='no_token')
     if (
-        current_auth.client.namespace + ':' + client_resource
+        current_auth.auth_client.namespace + ':' + client_resource
         not in authtoken.effective_scope
-    ) and (current_auth.client.namespace + ':*' not in authtoken.effective_scope):
+    ) and (current_auth.auth_client.namespace + ':*' not in authtoken.effective_scope):
         # Token does not grant access to this resource
         return api_result('error', error='access_denied')
 
@@ -230,7 +230,7 @@ def token_verify():
     }  # Period (in seconds) for which this assertion may be cached.
     if authtoken.user:
         params['userinfo'] = get_userinfo(
-            authtoken.user, current_auth.client, scope=authtoken.effective_scope
+            authtoken.user, current_auth.auth_client, scope=authtoken.effective_scope
         )
     params['clientinfo'] = {
         'title': authtoken.auth_client.title,
@@ -253,7 +253,7 @@ def token_get_scope():
         # No token specified by caller
         return resource_error('no_token')
 
-    if not current_auth.client.namespace:
+    if not current_auth.auth_client.namespace:
         # This client has not defined any resources
         return api_result('error', error='client_no_resources')
 
@@ -263,7 +263,7 @@ def token_get_scope():
         return api_result('error', error='no_token')
 
     client_resources = []
-    nsprefix = current_auth.client.namespace + ':'
+    nsprefix = current_auth.auth_client.namespace + ':'
     for item in authtoken.effective_scope:
         if item.startswith(nsprefix):
             client_resources.append(item[len(nsprefix) :])
@@ -278,7 +278,7 @@ def token_get_scope():
     }  # Period (in seconds) for which this assertion may be cached.
     if authtoken.user:
         params['userinfo'] = get_userinfo(
-            authtoken.user, current_auth.client, scope=authtoken.effective_scope
+            authtoken.user, current_auth.auth_client, scope=authtoken.effective_scope
         )
     params['clientinfo'] = {
         'title': authtoken.auth_client.title,
@@ -477,13 +477,15 @@ def user_autocomplete():
 @requestargs('client_id', 'login_url')
 def login_beacon_iframe(client_id, login_url):
     cred = AuthClientCredential.get(client_id)
-    client = cred.auth_client if cred else None
-    if client is None:
+    auth_client = cred.auth_client if cred else None
+    if auth_client is None:
         abort(404)
-    if not client.host_matches(login_url):
+    if not auth_client.host_matches(login_url):
         abort(400)
     return (
-        render_template('login_beacon.html.jinja2', client=client, login_url=login_url),
+        render_template(
+            'login_beacon.html.jinja2', auth_client=auth_client, login_url=login_url
+        ),
         200,
         {
             'Expires': 'Fri, 01 Jan 1990 00:00:00 GMT',
@@ -496,11 +498,11 @@ def login_beacon_iframe(client_id, login_url):
 @requestargs('client_id')
 def login_beacon_json(client_id):
     cred = AuthClientCredential.get(client_id)
-    client = cred.auth_client if cred else None
-    if client is None:
+    auth_client = cred.auth_client if cred else None
+    if auth_client is None:
         abort(404)
     if current_auth.is_authenticated:
-        token = client.authtoken_for(current_auth.user)
+        token = auth_client.authtoken_for(current_auth.user)
     else:
         token = None
     response = jsonify({'hastoken': True if token else False})
@@ -631,7 +633,10 @@ def resource_organizations(authtoken, args, files=None):
     Return user's organizations and teams that they are a member of.
     """
     return get_userinfo(
-        authtoken.user, authtoken.client, scope=['organizations'], get_permissions=False
+        authtoken.user,
+        authtoken.auth_client,
+        scope=['organizations'],
+        get_permissions=False,
     )
 
 
@@ -658,7 +663,7 @@ def resource_teams(authtoken, args, files=None):
     Return user's organizations' teams.
     """
     return get_userinfo(
-        authtoken.user, authtoken.client, scope=['teams'], get_permissions=False
+        authtoken.user, authtoken.auth_client, scope=['teams'], get_permissions=False
     )
 
 

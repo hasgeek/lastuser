@@ -27,10 +27,10 @@ user_changes_to_notify = {
 
 @session_revoked.connect
 def notify_session_revoked(session):
-    for client in session.auth_clients:
-        if client.notification_uri:
+    for auth_client in session.auth_clients:
+        if auth_client.notification_uri:
             send_notice.queue(
-                client.notification_uri,
+                auth_client.notification_uri,
                 data={
                     'userid': session.user.buid,  # XXX: Deprecated parameter
                     'buid': session.user.buid,
@@ -110,13 +110,13 @@ def notify_org_data_changed(org, user, changes, team=None):
         ):
             client_users.setdefault(token.auth_client, []).append(token.user)
     # Now we have a list of clients to notify and a list of users to notify them with
-    for client, users in client_users.items():
+    for auth_client, users in client_users.items():
         if user is not None and user in users:
             notify_user = user
         else:
             notify_user = users[0]  # First user available
         send_notice.queue(
-            client.notification_uri,
+            auth_client.notification_uri,
             data={
                 'userid': notify_user.buid,  # XXX: Deprecated parameter
                 'buid': notify_user.buid,

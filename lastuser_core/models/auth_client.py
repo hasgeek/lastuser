@@ -249,7 +249,7 @@ class AuthClientCredential(BaseMixin, db.Model):
         Create a new client credential and return (cred, secret). The secret is not
         saved in plaintext, so this is the last time it will be available.
 
-        :param client: The client for which a name/secret pair is being generated
+        :param auth_client: The client for which a name/secret pair is being generated
         """
         cred = cls(auth_client=auth_client, name=buid())
         db.session.add(cred)

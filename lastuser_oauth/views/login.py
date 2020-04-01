@@ -161,12 +161,12 @@ def logout_client():
     Client-initiated logout
     """
     cred = AuthClientCredential.get(request.args['client_id'])
-    client = cred.auth_client if cred else None
+    auth_client = cred.auth_client if cred else None
 
     if (
-        client is None
+        auth_client is None
         or not request.referrer
-        or not client.host_matches(request.referrer)
+        or not auth_client.host_matches(request.referrer)
     ):
         # No referrer or such client, or request didn't come from the client website.
         # Possible CSRF. Don't logout and don't send them back
@@ -178,7 +178,7 @@ def logout_client():
 
     # If there is a next destination, is it in the same domain as the client?
     if 'next' in request.args:
-        if not client.host_matches(request.args['next']):
+        if not auth_client.host_matches(request.args['next']):
             # Host doesn't match. Assume CSRF and redirect to index without logout
             flash(
                 current_app.config.get('LOGOUT_UNAUTHORIZED_MESSAGE')
