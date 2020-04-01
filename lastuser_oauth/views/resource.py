@@ -583,16 +583,6 @@ def resource_email(authtoken, args, files=None):
         return {'email': str(authtoken.user.email)}
 
 
-@lastuser_oauth.route('/api/1/email/add', methods=['POST'])
-@resource_registry.resource('email/add', __("Add an email address to your profile"))
-def resource_email_add(authtoken, args, files=None):
-    """
-    TODO: Add an email address to the user's profile.
-    """
-    email = args['email']
-    return {'email': email}  # TODO
-
-
 @lastuser_oauth.route('/api/1/phone')
 @resource_registry.resource('phone', __("Read your phone number"))
 def resource_phone(authtoken, args, files=None):
