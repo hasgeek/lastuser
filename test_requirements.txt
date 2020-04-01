@@ -1,6 +1,6 @@
 pytest>=4.6.3
 coverage==5.0.4
 behave==1.2.6
-mock==3.0.5
+mock==4.0.2
 selenium==3.141.0
 coveralls==1.10.0
