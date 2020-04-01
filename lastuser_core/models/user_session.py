@@ -7,7 +7,6 @@ from werkzeug.utils import cached_property
 
 from ua_parser import user_agent_parser
 
-from coaster.sqlalchemy import make_timestamp_columns
 from coaster.utils import buid as make_buid
 from coaster.utils import utcnow
 
@@ -21,24 +20,31 @@ __all__ = ['UserSession']
 auth_client_user_session = db.Table(
     'auth_client_user_session',
     db.Model.metadata,
-    *(
-        make_timestamp_columns()
-        + (
-            db.Column(
-                'user_session_id',
-                None,
-                db.ForeignKey('user_session.id'),
-                nullable=False,
-                primary_key=True,
-            ),
-            db.Column(
-                'auth_client_id',
-                None,
-                db.ForeignKey('auth_client.id'),
-                nullable=False,
-                primary_key=True,
-            ),
-        )
+    db.Column(
+        'auth_client_id',
+        None,
+        db.ForeignKey('auth_client.id'),
+        nullable=False,
+        primary_key=True,
+    ),
+    db.Column(
+        'user_session_id',
+        None,
+        db.ForeignKey('user_session.id'),
+        nullable=False,
+        primary_key=True,
+    ),
+    db.Column(
+        'created_at',
+        db.TIMESTAMP(timezone=True),
+        nullable=False,
+        default=db.func.utcnow(),
+    ),
+    db.Column(
+        'accessed_at',
+        db.TIMESTAMP(timezone=True),
+        nullable=False,
+        default=db.func.utcnow(),
     ),
 )
 
@@ -52,7 +58,9 @@ class UserSession(BaseMixin, db.Model):
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(
         User,
-        backref=db.backref('sessions', cascade='all, delete-orphan', lazy='dynamic'),
+        backref=db.backref(
+            'all_sessions', cascade='all, delete-orphan', lazy='dynamic'
+        ),
     )
 
     ipaddr = db.Column(db.String(45), nullable=False)
@@ -83,7 +91,7 @@ class UserSession(BaseMixin, db.Model):
             if auth_client:
                 if (
                     auth_client not in self.auth_clients
-                ):  # self.clients is defined via Client.sessions
+                ):  # self.auth_clients is defined via Client.user_sessions
                     self.auth_clients.append(auth_client)
                 else:
                     # If we've seen this client in this session before, only update the timestamp
@@ -93,7 +101,7 @@ class UserSession(BaseMixin, db.Model):
                         .where(
                             auth_client_user_session.c.auth_client_id == auth_client.id
                         )
-                        .values(updated_at=db.func.utcnow())
+                        .values(accessed_at=db.func.utcnow())
                     )
             else:
                 self.ipaddr = request.remote_addr or ''
@@ -136,7 +144,8 @@ User.active_sessions = db.relationship(
     lazy='dynamic',
     primaryjoin=db.and_(
         UserSession.user_id == User.id,
-        UserSession.accessed_at > db.func.utcnow() - timedelta(days=14),
+        UserSession.accessed_at > db.func.utcnow() - timedelta(days=365),  # See ^
         UserSession.revoked_at.is_(None),
     ),
+    order_by=UserSession.accessed_at.desc(),
 )

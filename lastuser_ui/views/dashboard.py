@@ -124,7 +124,7 @@ def dashboard_data_users_by_client():
                         WHERE user_session.user_id = "user".id
                         AND auth_client_user_session.user_session_id = user_session.id
                         AND "user".status = :status
-                        AND auth_client_user_session.updated_at >=
+                        AND auth_client_user_session.accessed_at >=
                         (NOW() AT TIME ZONE 'UTC') - INTERVAL :interval
                         GROUP BY auth_client_user_session.auth_client_id,
                         user_session.user_id

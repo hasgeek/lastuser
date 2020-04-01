@@ -102,7 +102,7 @@ class AuthClient(ScopeMixin, UuidMixin, BaseMixin, db.Model):
     #: any arbitrary user without explicit user authorization.
     trusted = db.Column(db.Boolean, nullable=False, default=False)
 
-    sessions = db.relationship(
+    user_sessions = db.relationship(
         UserSession,
         lazy='dynamic',
         secondary='auth_client_user_session',
