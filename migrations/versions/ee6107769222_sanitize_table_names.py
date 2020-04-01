@@ -273,7 +273,10 @@ renamed_indexes = [
     ('ix_authtoken_client_id', 'ix_auth_token_auth_client_id'),
     ('ix_name_name_lower', 'ix_account_name_name_lower'),
     ('ix_name_reserved', 'ix_account_name_reserved'),
-    ('ix_teamclientpermissions_client_id', 'ix_auth_client_team_permissions_client_id'),
+    (
+        'ix_teamclientpermissions_client_id',
+        'ix_auth_client_team_permissions_auth_client_id',
+    ),
     (
         'ix_userclientpermissions_client_id',
         'ix_auth_client_user_permissions_auth_client_id',
