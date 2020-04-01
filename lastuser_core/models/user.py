@@ -1117,8 +1117,8 @@ class UserPhoneClaim(BaseMixin, db.Model):
 
 class AuthPasswordResetRequest(BaseMixin, db.Model):
     __tablename__ = 'auth_password_reset_request'
-    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(User, primaryjoin=user_id == User.id)
+    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False, index=True)
+    user = db.relationship(User)
     reset_code = db.Column(db.String(44), nullable=False, default=newsecret)
 
     def __init__(self, **kwargs):
