@@ -14,11 +14,7 @@ import bcrypt
 import phonenumbers
 
 from baseframe import _, __
-from coaster.sqlalchemy import (
-    add_primary_relationship,
-    failsafe_add,
-    make_timestamp_columns,
-)
+from coaster.sqlalchemy import add_primary_relationship, failsafe_add
 from coaster.utils import (
     LabeledEnum,
     md5sum,
@@ -632,24 +628,17 @@ class UserOldId(UuidMixin, BaseMixin, db.Model):
 team_membership = db.Table(
     'team_membership',
     db.Model.metadata,
-    *(
-        make_timestamp_columns()
-        + (
-            db.Column(
-                'user_id',
-                None,
-                db.ForeignKey('user.id'),
-                nullable=False,
-                primary_key=True,
-            ),
-            db.Column(
-                'team_id',
-                None,
-                db.ForeignKey('team.id'),
-                nullable=False,
-                primary_key=True,
-            ),
-        )
+    db.Column(
+        'user_id', None, db.ForeignKey('user.id'), nullable=False, primary_key=True
+    ),
+    db.Column(
+        'team_id', None, db.ForeignKey('team.id'), nullable=False, primary_key=True
+    ),
+    db.Column(
+        'created_at',
+        db.TIMESTAMP(timezone=True),
+        nullable=False,
+        default=db.func.utcnow(),
     ),
 )
 
