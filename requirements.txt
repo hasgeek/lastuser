@@ -1,4 +1,4 @@
-progressbar2==3.47.0
+progressbar2==3.50.1
 Flask==1.1.1
 Flask-Assets==2.0
 Flask-Mail==0.9.1
