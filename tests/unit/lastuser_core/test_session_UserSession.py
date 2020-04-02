@@ -43,9 +43,7 @@ class TestUser(TestDatabaseFixture):
             accessed_at=utcnow(),
         )
         yet_another_usersession.revoke()
-        result = models.UserSession.query.filter_by(
-            buid=yet_another_usersession.buid
-        ).one_or_none()
+        result = models.UserSession.get(yet_another_usersession.buid)
         self.assertIsNotNone(result.revoked_at)
 
     def test_usersession_get(self):

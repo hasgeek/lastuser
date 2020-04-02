@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import flash, redirect, render_template, request, url_for
+from flask import abort, flash, redirect, render_template, request, url_for
 
 from baseframe import _
 from baseframe.forms import render_delete_sqla, render_form, render_redirect
@@ -89,7 +89,9 @@ def change_password():
 def add_email():
     form = NewEmailAddressForm()
     if form.validate_on_submit():
-        useremail = UserEmailClaim.get(user=current_auth.user, email=form.email.data)
+        useremail = UserEmailClaim.get_for(
+            user=current_auth.user, email=form.email.data
+        )
         if useremail is None:
             useremail = UserEmailClaim(
                 user=current_auth.user, email=form.email.data, type=form.type.data
@@ -114,10 +116,8 @@ def add_email():
 def make_email_primary():
     form = EmailPrimaryForm()
     if form.validate_on_submit():
-        useremail = UserEmail.query.filter_by(
-            email=form.email.data, user=current_auth.user
-        ).first()
-        if useremail is not None and isinstance(useremail, UserEmail):
+        useremail = UserEmail.get_for(user=current_auth.user, email=form.email.data)
+        if useremail is not None:
             if useremail.primary:
                 flash(_("This is already your primary email address"), 'info')
             else:
@@ -139,10 +139,8 @@ def make_email_primary():
 def make_phone_primary():
     form = PhonePrimaryForm()
     if form.validate_on_submit():
-        userphone = UserPhone.query.filter_by(
-            phone=form.phone.data, user=current_auth.user
-        ).first()
-        if userphone is not None and isinstance(userphone, UserPhone):
+        userphone = UserPhone.get_for(user=current_auth.user, phone=form.phone.data)
+        if userphone is not None:
             if userphone.primary:
                 flash(_("This is already your primary phone number"), 'info')
             else:
@@ -162,11 +160,11 @@ def make_phone_primary():
 @lastuser_ui.route('/account/email/<md5sum>/remove', methods=['GET', 'POST'])
 @requires_login
 def remove_email(md5sum):
-    useremail = UserEmail.query.filter_by(md5sum=md5sum, user=current_auth.user).first()
+    useremail = UserEmail.get_for(user=current_auth.user, md5sum=md5sum)
     if not useremail:
-        useremail = UserEmailClaim.query.filter_by(
-            md5sum=md5sum, user=current_auth.user
-        ).first_or_404()
+        useremail = UserEmailClaim.get_for(user=current_auth.user, md5sum=md5sum)
+        if not useremail:
+            abort(404)
     if isinstance(useremail, UserEmail) and useremail.primary:
         flash(_("You cannot remove your primary email address"), 'danger')
         return render_redirect(url_for('.account'), code=303)
@@ -197,14 +195,24 @@ def verify_email_old(md5sum):
 @lastuser_ui.route('/account/email/<md5sum>/verify', methods=['GET', 'POST'])
 @requires_login
 def verify_email(md5sum):
-    useremail = UserEmail.query.filter_by(md5sum=md5sum, user=current_auth.user).first()
-    if useremail:
+    """
+    If the user has a pending email verification but has lost the email, allow them to
+    send themselves another verification email. This endpoint is only linked to from
+    the account page under the list of email addresses pending verification.
+    """
+    useremail = UserEmail.get(md5sum=md5sum)
+    if useremail and useremail.user == current_auth.user:
+        # If an email address is already verified (this should not happen unless the
+        # user followed a stale link), tell them it's done -- but only if the email
+        # address belongs to this user, to prevent this endpoint from being used as a
+        # probe for email addresses in the database.
         flash(_("This email address is already verified"), 'danger')
         return render_redirect(url_for('.account'), code=303)
 
-    emailclaim = UserEmailClaim.query.filter_by(
-        md5sum=md5sum, user=current_auth.user
-    ).first_or_404()
+    # Get the existing email claim that we're resending a verification link for
+    emailclaim = UserEmailClaim.get_for(user=current_auth.user, md5sum=md5sum)
+    if not emailclaim:
+        abort(404)
     verify_form = VerifyEmailForm()
     if verify_form.validate_on_submit():
         send_email_verify_link(emailclaim)
@@ -229,7 +237,9 @@ def verify_email(md5sum):
 def add_phone():
     form = NewPhoneForm()
     if form.validate_on_submit():
-        userphone = UserPhoneClaim.get(user=current_auth.user, phone=form.phone.data)
+        userphone = UserPhoneClaim.get_for(
+            user=current_auth.user, phone=form.phone.data
+        )
         if userphone is None:
             userphone = UserPhoneClaim(user=current_auth.user, phone=form.phone.data)
             db.session.add(userphone)
@@ -256,11 +266,11 @@ def add_phone():
 @lastuser_ui.route('/account/phone/<number>/remove', methods=['GET', 'POST'])
 @requires_login
 def remove_phone(number):
-    userphone = UserPhone.query.filter_by(phone=number, user=current_auth.user).first()
-    if userphone is None:
-        userphone = UserPhoneClaim.query.filter_by(
-            phone=number, user=current_auth.user
-        ).first_or_404()
+    userphone = UserPhone.get(phone=number)
+    if userphone is None or userphone.user != current_auth.user:
+        userphone = UserPhoneClaim.get_for(user=current_auth.user, phone=number)
+        if not userphone:
+            abort(404)
         if userphone.verification_expired:
             flash(
                 _(

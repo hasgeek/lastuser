@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from datetime import timedelta
-
 from coaster.manage import Manager, init_manager
-from coaster.utils import utcnow
 from lastuser_core.models import db
 from lastuserapp import app
 import lastuser_core
@@ -19,10 +16,7 @@ periodic = Manager(usage="Periodic tasks from cron (with recommended intervals)"
 @periodic.command
 def phoneclaims():
     """Sweep phone claims to close all unclaimed beyond expiry period (10m)"""
-    pc = models.UserPhoneClaim
-    pc.query.filter(
-        pc.updated_at < (utcnow() - timedelta(hours=1)), pc.verification_expired
-    ).delete()
+    models.UserPhoneClaim.delete_expired()
     db.session.commit()
 
 

@@ -45,7 +45,7 @@ def account_edit(newprofile=False):
         current_auth.user.timezone = form.timezone.data
 
         if newprofile and not current_auth.user.email:
-            useremail = UserEmailClaim.get(
+            useremail = UserEmailClaim.get_for(
                 user=current_auth.user, email=form.email.data
             )
             if useremail is None:
@@ -100,14 +100,10 @@ def account_edit(newprofile=False):
 @lastuser_oauth.route('/confirm/<md5sum>/<secret>')
 @requires_login
 def confirm_email(md5sum, secret):
-    emailclaim = UserEmailClaim.query.filter_by(
-        md5sum=md5sum, verification_code=secret
-    ).first()
+    emailclaim = UserEmailClaim.get_by(md5sum=md5sum, verification_code=secret)
     if emailclaim is not None:
         if 'verify' in emailclaim.permissions(current_auth.user):
-            existing = UserEmail.query.filter(
-                UserEmail.email.in_([emailclaim.email, emailclaim.email.lower()])
-            ).first()
+            existing = UserEmail.get(email=emailclaim.email)
             if existing is not None:
                 claimed_email = emailclaim.email
                 claimed_user = emailclaim.user
@@ -143,10 +139,7 @@ def confirm_email(md5sum, secret):
                 private=emailclaim.private,
             )
             db.session.delete(emailclaim)
-            for claim in UserEmailClaim.query.filter(
-                UserEmailClaim.email.in_([useremail.email, useremail.email.lower()])
-            ).all():
-                db.session.delete(claim)
+            UserEmailClaim.all(useremail.email).delete(synchronize_session=False)
             db.session.commit()
             user_data_changed.send(current_auth.user, changes=['email'])
             return render_message(

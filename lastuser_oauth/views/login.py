@@ -340,9 +340,7 @@ def reset():
 @lastuser_oauth.route('/reset/<buid>/<secret>', methods=['GET', 'POST'])
 @load_model(User, {'buid': 'buid'}, 'user', kwargs=True)
 def reset_email(user, kwargs):
-    resetreq = AuthPasswordResetRequest.query.filter_by(
-        user=user, reset_code=kwargs['secret']
-    ).first()
+    resetreq = AuthPasswordResetRequest.get(user, kwargs['secret'])
     if not resetreq:
         return render_message(
             title=_("Invalid reset link"),

@@ -10,8 +10,6 @@ from lastuser_core import resource_registry
 from lastuser_core.models import (
     AuthClient,
     AuthClientCredential,
-    AuthClientTeamPermissions,
-    AuthClientUserPermissions,
     AuthCode,
     AuthToken,
     User,
@@ -258,28 +256,13 @@ def oauth_authorize():
             )
 
     # Validation 1.4: AuthClient allows login for this user
-    if not auth_client.allow_any_login:
-        if auth_client.user:
-            perms = AuthClientUserPermissions.query.filter_by(
-                user=current_auth.user, auth_client=auth_client
-            ).first()
-        else:
-            perms = (
-                AuthClientTeamPermissions.query.filter_by(auth_client=auth_client)
-                .filter(
-                    AuthClientTeamPermissions.team_id.in_(
-                        [team.id for team in current_auth.user.teams]
-                    )
-                )
-                .first()
-            )
-        if not perms:
-            return oauth_auth_error(
-                auth_client.redirect_uri,
-                state,
-                'invalid_scope',
-                _("You do not have access to this application"),
-            )
+    if not auth_client.allow_login_for(current_auth.user):
+        return oauth_auth_error(
+            auth_client.redirect_uri,
+            state,
+            'invalid_scope',
+            _("You do not have access to this application"),
+        )
 
     # Validation 2.1: Is response_type present?
     if not response_type:
@@ -326,14 +309,7 @@ def oauth_authorize():
             )
 
     # If there is an existing auth token with the same or greater scope, don't ask user again; authorise silently
-    if auth_client.confidential:
-        existing_token = AuthToken.query.filter_by(
-            user=current_auth.user, auth_client=auth_client
-        ).first()
-    else:
-        existing_token = AuthToken.query.filter_by(
-            user_session=current_auth.session, auth_client=auth_client
-        ).first()
+    existing_token = auth_client.authtoken_for(current_auth.user, current_auth.session)
     if existing_token and (
         '*' in existing_token.effective_scope
         or set(scope).issubset(set(existing_token.effective_scope))
@@ -414,14 +390,7 @@ def oauth_token_error(error, error_description=None, error_uri=None):
 
 def oauth_make_token(user, auth_client, scope, user_session=None):
     # Look for an existing token
-    if auth_client.confidential:
-        token = AuthToken.query.filter_by(user=user, auth_client=auth_client).first()
-    elif user_session:
-        token = AuthToken.query.filter_by(
-            user_session=user_session, auth_client=auth_client
-        ).first()
-    else:
-        raise ValueError("user_session not provided")
+    token = auth_client.authtoken_for(user, user_session)
 
     # If token exists, add to the existing scope
     if token:
@@ -443,6 +412,8 @@ def oauth_make_token(user, auth_client, scope, user_session=None):
             token = failsafe_add(
                 db.session, token, user_session=user_session, auth_client=auth_client
             )
+        else:
+            raise ValueError("user_session not provided")
     return token
 
 
@@ -529,7 +500,7 @@ def oauth_token():
 
     # Validations 3: auth code
     elif grant_type == 'authorization_code':
-        authcode = AuthCode.query.filter_by(code=code, auth_client=auth_client).first()
+        authcode = AuthCode.get_for_client(auth_client=auth_client, code=code)
         if not authcode:
             return oauth_token_error('invalid_grant', _("Unknown auth code"))
         if not authcode.is_valid():

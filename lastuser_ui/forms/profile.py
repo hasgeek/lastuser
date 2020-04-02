@@ -47,7 +47,7 @@ class NewEmailAddressForm(forms.RecaptchaForm):
                 raise forms.ValidationError(
                     _("This email address has already been claimed")
                 )
-        existing = UserEmailClaim.get(email=field.data, user=current_auth.user)
+        existing = UserEmailClaim.get_for(user=current_auth.user, email=field.data)
         if existing is not None:
             raise forms.ValidationError(_("This email address is pending verification"))
 
@@ -116,7 +116,7 @@ class NewPhoneForm(forms.RecaptchaForm):
                 raise forms.ValidationError(
                     _("This phone number has already been claimed")
                 )
-        existing = UserPhoneClaim.get(phone=number, user=current_auth.user)
+        existing = UserPhoneClaim.get_for(user=current_auth.user, phone=number)
         if existing is not None:
             raise forms.ValidationError(_("This phone number is pending verification"))
         field.data = number  # Save stripped number

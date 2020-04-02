@@ -49,7 +49,7 @@ class TestUserEmailClaim(TestDatabaseFixture):
         email_claim = models.UserEmailClaim(email=email, user=katnis)
         db.session.add(email_claim)
         db.session.commit()
-        result = models.UserEmailClaim.get(email, katnis)
+        result = models.UserEmailClaim.get_for(user=katnis, email=email)
         self.assertIsInstance(result, models.UserEmailClaim)
         self.assertEqual(result.email, email)
         self.assertEqual(result.user, katnis)
@@ -67,8 +67,7 @@ class TestUserEmailClaim(TestDatabaseFixture):
         db.session.add(claim_by_peeta)
         db.session.commit()
         result = models.UserEmailClaim.all(email)
-        self.assertIsInstance(result, list)
-        self.assertCountEqual(result, [claim_by_gail, claim_by_peeta])
+        self.assertCountEqual(set(result), {claim_by_gail, claim_by_peeta})
 
     def test_useremailclaim_email(self):
         """

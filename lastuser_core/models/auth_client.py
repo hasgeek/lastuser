@@ -174,11 +174,20 @@ class AuthClient(ScopeMixin, UuidMixin, BaseMixin, db.Model):
     def authtoken_for(self, user, user_session=None):
         """Return the authtoken for this user and client. Only works for confidential clients."""
         if self.confidential:
-            return AuthToken.query.filter_by(auth_client=self, user=user).one_or_none()
+            return AuthToken.get_for(auth_client=self, user=user)
         elif user_session and user_session.user == user:
-            return AuthToken.query.filter_by(
-                auth_client=self, user_session=user_session
-            ).one_or_none()
+            return AuthToken.get_for(auth_client=self, user_session=user_session)
+
+    def allow_login_for(self, actor):
+        if self.allow_any_login:
+            return True
+        if self.user:
+            if AuthClientUserPermissions.get(self, actor):
+                return True
+        else:
+            if AuthClientTeamPermissions.all_for(self, actor.teams).first():
+                return True
+        return False
 
     @classmethod
     def get(cls, buid=None, namespace=None):
@@ -190,6 +199,18 @@ class AuthClient(ScopeMixin, UuidMixin, BaseMixin, db.Model):
         """
         param, value = require_one_of(True, buid=buid, namespace=namespace)
         return cls.query.filter_by(**{param: value, 'active': True}).one_or_none()
+
+    @classmethod
+    def all_for(cls, user):
+        if user is None:
+            return cls.query.order_by(cls.title)
+        else:
+            return cls.query.filter(
+                db.or_(
+                    cls.user == user,
+                    cls.organization_id.in_(user.organizations_owned_ids()),
+                )
+            ).order_by(cls.title)
 
 
 class AuthClientCredential(BaseMixin, db.Model):
@@ -279,6 +300,14 @@ class AuthCode(ScopeMixin, BaseMixin, db.Model):
         # Time limit: 3 minutes. Should be reasonable enough to load a page
         # on a slow mobile connection, without keeping the code valid too long
         return not self.used and self.created_at >= utcnow() - timedelta(minutes=3)
+
+    @classmethod
+    def all_for(cls, user):
+        return cls.query.filter_by(user=user)
+
+    @classmethod
+    def get_for_client(cls, auth_client, code):
+        return cls.query.filter_by(auth_client=auth_client, code=code).one_or_none()
 
 
 class AuthToken(ScopeMixin, BaseMixin, db.Model):
@@ -427,6 +456,16 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
         )
         return query.one_or_none()
 
+    @classmethod
+    def get_for(cls, auth_client, user=None, user_session=None):
+        require_one_of(user=user, user_session=user_session)
+        if user:
+            return cls.query.filter_by(auth_client=auth_client, user=user).one_or_none()
+        else:
+            return cls.query.filter_by(
+                auth_client=auth_client, user_session=user_session
+            ).one_or_none()
+
     @classmethod  # NOQA: A003
     def all(cls, users):
         """
@@ -453,7 +492,8 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
         return []
 
 
-# This model's name is in plural because it defines multiple permissions within each instance
+# This model's name is in plural because it defines multiple permissions within each
+# instance
 class AuthClientUserPermissions(BaseMixin, db.Model):
     __tablename__ = 'auth_client_user_permissions'
     #: User who has these permissions
@@ -507,8 +547,17 @@ class AuthClientUserPermissions(BaseMixin, db.Model):
             if not merge_performed:
                 operm.user = newuser
 
+    @classmethod
+    def get(cls, auth_client, user):
+        return cls.query.filter_by(auth_client=auth_client, user=user).one_or_none()
 
-# This model's name is in plural because it defines multiple permissions within each instance
+    @classmethod
+    def all_forclient(cls, auth_client):
+        return cls.query.filter_by(auth_client=auth_client)
+
+
+# This model's name is in plural because it defines multiple permissions within each
+# instance
 class AuthClientTeamPermissions(BaseMixin, db.Model):
     __tablename__ = 'auth_client_team_permissions'
     #: Team which has these permissions
@@ -544,3 +593,17 @@ class AuthClientTeamPermissions(BaseMixin, db.Model):
     @property
     def buid(self):
         return self.team.buid
+
+    @classmethod
+    def get(cls, auth_client, team):
+        return cls.query.filter_by(auth_client=auth_client, team=team).one_or_none()
+
+    @classmethod
+    def all_for(cls, auth_client, user):
+        return cls.query.filter_by(auth_client=auth_client).filter(
+            cls.team_id.in_([team.id for team in user.teams])
+        )
+
+    @classmethod
+    def all_forclient(cls, auth_client):
+        return cls.query.filter_by(auth_client=auth_client)

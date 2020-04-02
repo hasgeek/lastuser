@@ -34,7 +34,7 @@ def requires_dashboard(f):
 @lastuser_ui.route('/dashboard')
 @requires_dashboard
 def dashboard():
-    user_count = User.query.filter_by(status=USER_STATUS.ACTIVE).count()
+    user_count = User.active_user_count()
     mau = (
         db.session.query('mau')
         .from_statement(

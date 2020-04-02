@@ -330,7 +330,7 @@ class TestUser(TestDatabaseFixture):
         crusoe = self.fixtures.crusoe
         oakley = self.fixtures.oakley
         piglet = self.fixtures.piglet
-        # lena = models.User.query.filter_by(username=u'lena').one_or_none()
+        # lena = models.User.get(username=u'lena')
         # FIXME # scenario 1: when empty query passed
         # result1 = models.User.autocomplete(u'*')
         # self.assertEqual(result1 or lena)

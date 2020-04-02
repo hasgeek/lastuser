@@ -593,6 +593,10 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
             )
         return users
 
+    @classmethod
+    def active_user_count(cls):
+        return cls.query.filter_by(status=USER_STATUS.ACTIVE).count()
+
 
 class UserOldId(UuidMixin, BaseMixin, db.Model):
     __tablename__ = 'user_oldid'
@@ -892,6 +896,22 @@ class UserEmail(BaseMixin, db.Model):
         else:
             return cls.query.filter_by(md5sum=md5sum).one_or_none()
 
+    @classmethod
+    def get_for(cls, user, email=None, md5sum=None):
+        """
+        Return a UserEmail with matching md5sum if it belongs to the given user
+
+        :param User user: User to lookup for
+        :param str md5sum: md5sum of email address
+        """
+        require_one_of(email=email, md5sum=md5sum)
+        if email:
+            return cls.query.filter(
+                cls.user == user, cls.email.in_([email, email.lower()])
+            ).one_or_none()
+        else:
+            return cls.query.filter_by(user=user, md5sum=md5sum).one_or_none()
+
 
 class UserEmailClaim(BaseMixin, db.Model):
     __tablename__ = 'user_email_claim'
@@ -940,18 +960,29 @@ class UserEmailClaim(BaseMixin, db.Model):
         return perms
 
     @classmethod
-    def get(cls, email, user):
+    def get_for(cls, user, email=None, md5sum=None):
         """
         Return a UserEmailClaim with matching email address for the given user.
 
-        :param str email: Email address to lookup
         :param User user: User who claimed this email address
+        :param str email: Email address to lookup
+        :param str md5sum: md5sum of email address to lookup
         """
-        return (
-            cls.query.filter(UserEmailClaim.email.in_([email, email.lower()]))
-            .filter_by(user=user)
-            .one_or_none()
-        )
+        require_one_of(email=email, md5sum=md5sum)
+        if email:
+            return (
+                cls.query.filter(UserEmailClaim.email.in_([email, email.lower()]))
+                .filter_by(user=user)
+                .one_or_none()
+            )
+        else:
+            return cls.query.filter_by(md5sum=md5sum, user=user).one_or_none()
+
+    @classmethod
+    def get_by(cls, md5sum, verification_code):
+        return cls.query.filter_by(
+            md5sum=md5sum, verification_code=verification_code
+        ).one_or_none()
 
     @classmethod  # NOQA: A003
     def all(cls, email):
@@ -960,11 +991,7 @@ class UserEmailClaim(BaseMixin, db.Model):
 
         :param str email: Email address to lookup
         """
-        return (
-            cls.query.filter(UserEmailClaim.email.in_([email, email.lower()]))
-            .order_by(cls.user_id)
-            .all()
-        )
+        return cls.query.filter(UserEmailClaim.email.in_([email, email.lower()]))
 
 
 class UserPhone(BaseMixin, db.Model):
@@ -1028,6 +1055,16 @@ class UserPhone(BaseMixin, db.Model):
         """
         return cls.query.filter_by(phone=phone).one_or_none()
 
+    @classmethod
+    def get_for(cls, user, phone):
+        """
+        Return a UserPhone with matching phone number if it belongs to the given user
+
+        :param User user: User to check against
+        :param str phone: Phone number to lookup (must be an exact match)
+        """
+        return cls.query.filter_by(user=user, phone=phone).one_or_none()
+
 
 class UserPhoneClaim(BaseMixin, db.Model):
     __tablename__ = 'user_phone_claim'
@@ -1085,7 +1122,7 @@ class UserPhoneClaim(BaseMixin, db.Model):
         return perms
 
     @classmethod
-    def get(cls, phone, user):
+    def get_for(cls, user, phone):
         """
         Return a UserPhoneClaim with matching phone number for the given user.
 
@@ -1103,6 +1140,19 @@ class UserPhoneClaim(BaseMixin, db.Model):
         """
         return cls.query.filter_by(phone=phone).all()
 
+    @classmethod
+    def delete_expired(cls):
+        """Delete expired phone claims"""
+        # Delete if:
+        # 1. The claim is > 1 hour old
+        # 2. Too many unsuccessful verification attempts
+        cls.query.filter(
+            db.or_(
+                cls.updated_at < (utcnow() - timedelta(hours=1)),
+                cls.verification_expired,
+            )
+        ).delete(synchronize_session=False)
+
 
 class AuthPasswordResetRequest(BaseMixin, db.Model):
     __tablename__ = 'auth_password_reset_request'
@@ -1113,6 +1163,10 @@ class AuthPasswordResetRequest(BaseMixin, db.Model):
     def __init__(self, **kwargs):
         super(AuthPasswordResetRequest, self).__init__(**kwargs)
         self.reset_code = newsecret()
+
+    @classmethod
+    def get(cls, user, reset_code):
+        return cls.query.filter_by(user=user, reset_code=reset_code).first()
 
 
 class UserExternalId(BaseMixin, db.Model):

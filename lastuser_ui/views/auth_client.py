@@ -35,16 +35,7 @@ def client_list():
     if current_auth.is_authenticated:
         return render_template(
             'client_list.html.jinja2',
-            auth_clients=AuthClient.query.filter(
-                db.or_(
-                    AuthClient.user == current_auth.user,
-                    AuthClient.organization_id.in_(
-                        current_auth.user.organizations_owned_ids()
-                    ),
-                )
-            )
-            .order_by(AuthClient.title)
-            .all(),
+            auth_clients=AuthClient.all_for(current_auth.user),
         )
     else:
         # TODO: Show better UI for non-logged in users
@@ -54,8 +45,7 @@ def client_list():
 @lastuser_ui.route('/apps/all')
 def client_list_all():
     return render_template(
-        'client_list.html.jinja2',
-        auth_clients=AuthClient.query.order_by(AuthClient.title).all(),
+        'client_list.html.jinja2', auth_clients=AuthClient.all_for(None)
     )
 
 
@@ -102,13 +92,9 @@ def client_new():
 @load_model(AuthClient, {'buid': 'key'}, 'auth_client', permission='view')
 def client_info(auth_client):
     if auth_client.user:
-        permassignments = AuthClientUserPermissions.query.filter_by(
-            auth_client=auth_client
-        ).all()
+        permassignments = AuthClientUserPermissions.all_forclient(auth_client).all()
     else:
-        permassignments = AuthClientTeamPermissions.query.filter_by(
-            auth_client=auth_client
-        ).all()
+        permassignments = AuthClientTeamPermissions.all_forclient(auth_client).all()
     return render_template(
         'client_info.html.jinja2',
         auth_client=auth_client,
@@ -135,14 +121,12 @@ def client_edit(auth_client):
             or auth_client.organization != form.organization
         ):
             # Ownership has changed. Remove existing permission assignments
-            for perm in AuthClientUserPermissions.query.filter_by(
-                auth_client=auth_client
-            ).all():
-                db.session.delete(perm)
-            for perm in AuthClientTeamPermissions.query.filter_by(
-                auth_client=auth_client
-            ).all():
-                db.session.delete(perm)
+            AuthClientUserPermissions.all_forclient(auth_client).delete(
+                synchronize_session=False
+            )
+            AuthClientTeamPermissions.all_forclient(auth_client).delete(
+                synchronize_session=False
+            )
             flash(
                 _(
                     "This application’s owner has changed, so all previously assigned permissions "
@@ -245,9 +229,9 @@ def permission_user_new(auth_client):
     if form.validate_on_submit():
         perms = set()
         if auth_client.user:
-            permassign = AuthClientUserPermissions.query.filter_by(
-                user=form.user.data, auth_client=auth_client
-            ).first()
+            permassign = AuthClientUserPermissions.get(
+                auth_client=auth_client, user=form.user.data
+            )
             if permassign:
                 perms.update(permassign.access_permissions.split())
             else:
@@ -256,9 +240,9 @@ def permission_user_new(auth_client):
                 )
                 db.session.add(permassign)
         else:
-            permassign = AuthClientTeamPermissions.query.filter_by(
-                team=form.team, auth_client=auth_client
-            ).first()
+            permassign = AuthClientTeamPermissions.get(
+                auth_client=auth_client, team=form.team
+            )
             if permassign:
                 perms.update(permassign.access_permissions.split())
             else:
@@ -306,16 +290,16 @@ def permission_user_edit(auth_client, kwargs):
         user = User.get(buid=kwargs['buid'])
         if not user:
             abort(404)
-        permassign = AuthClientUserPermissions.query.filter_by(
-            user=user, auth_client=auth_client
-        ).first_or_404()
+        permassign = AuthClientUserPermissions.get(auth_client=auth_client, user=user)
+        if not permassign:
+            abort(404)
     elif auth_client.organization:
         team = Team.get(buid=kwargs['buid'])
         if not team:
             abort(404)
-        permassign = AuthClientTeamPermissions.query.filter_by(
-            team=team, auth_client=auth_client
-        ).first_or_404()
+        permassign = AuthClientTeamPermissions.get(auth_client=auth_client, team=team)
+        if not permassign:
+            abort(404)
     form = PermissionEditForm()
     if request.method == 'GET':
         if permassign:
@@ -381,9 +365,9 @@ def permission_user_delete(auth_client, kwargs):
         user = User.get(buid=kwargs['buid'])
         if not user:
             abort(404)
-        permassign = AuthClientUserPermissions.query.filter_by(
-            user=user, auth_client=auth_client
-        ).first_or_404()
+        permassign = AuthClientUserPermissions.get(auth_client=auth_client, user=user)
+        if not permassign:
+            abort(404)
         return render_delete_sqla(
             permassign,
             db,
@@ -400,9 +384,9 @@ def permission_user_delete(auth_client, kwargs):
         team = Team.get(buid=kwargs['buid'])
         if not team:
             abort(404)
-        permassign = AuthClientTeamPermissions.query.filter_by(
-            team=team, auth_client=auth_client
-        ).first_or_404()
+        permassign = AuthClientTeamPermissions.get(auth_client=auth_client, team=team)
+        if not permassign:
+            abort(404)
         return render_delete_sqla(
             permassign,
             db,

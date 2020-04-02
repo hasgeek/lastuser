@@ -129,23 +129,15 @@ def get_userinfo(user, auth_client, scope=[], user_session=None, get_permissions
 
     if get_permissions:
         if auth_client.user:
-            perms = AuthClientUserPermissions.query.filter_by(
-                user=user, auth_client=auth_client
-            ).first()
+            perms = AuthClientUserPermissions.get(auth_client=auth_client, user=user)
             if perms:
                 userinfo['permissions'] = perms.access_permissions.split(' ')
         else:
             permsset = set()
             if user.teams:
-                perms = (
-                    AuthClientTeamPermissions.query.filter_by(auth_client=auth_client)
-                    .filter(
-                        AuthClientTeamPermissions.team_id.in_(
-                            [team.id for team in user.teams]
-                        )
-                    )
-                    .all()
-                )
+                perms = AuthClientTeamPermissions.all_for(
+                    auth_client=auth_client, user=user
+                ).all()
                 for permob in perms:
                     permsset.update(permob.access_permissions.split(' '))
             userinfo['permissions'] = sorted(permsset)
