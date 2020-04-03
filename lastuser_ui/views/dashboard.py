@@ -49,7 +49,7 @@ def dashboard():
             )
         )
         .params(status=USER_STATUS.ACTIVE)
-        .first()[0]
+        .scalar()
     )
 
     return render_template('dashboard.html.jinja2', user_count=user_count, mau=mau)
