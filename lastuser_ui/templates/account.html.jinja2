@@ -142,7 +142,7 @@
         <ul class="mui-list--aligned mui-list--unstyled mui--text-subhead mui-list--border">
           {%- for user_session in current_auth.user.active_sessions %}
             <li>From {{ user_session.ipaddr }} since {{ user_session.created_at|age }} with {{ user_session.ua['user_agent']['family']}} {{ user_session.ua['user_agent']['major'] }} on {{ user_session.ua['os']['family'] }} {{ user_session.ua['os']['major'] }}.{{ user_session.ua['os']['minor'] }}, last active {{ user_session.accessed_at|age }}
-            {% if user_session == current_auth.usersession -%}
+            {% if user_session == current_auth.session -%}
               {% trans %}(current){% endtrans %}
             {%- else -%}
               <a href="{{ url_for('lastuser_oauth.logout_session', user_session=user_session.buid) }}" title="logout">{% trans %}(logout){% endtrans %}</a>

@@ -11,7 +11,7 @@ from coaster.utils import buid as make_buid
 from coaster.utils import utcnow
 
 from ..signals import session_revoked
-from . import BaseMixin, db
+from . import BaseMixin, UuidMixin, db
 from .user import User
 
 __all__ = ['UserSession']
@@ -49,11 +49,8 @@ auth_client_user_session = db.Table(
 )
 
 
-class UserSession(BaseMixin, db.Model):
+class UserSession(UuidMixin, BaseMixin, db.Model):
     __tablename__ = 'user_session'
-
-    buid = db.Column(db.Unicode(22), nullable=False, unique=True, default=make_buid)
-    sessionid = db.synonym('buid')
 
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(
