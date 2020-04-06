@@ -4,7 +4,7 @@ from flask import current_app
 
 from baseframe import _, __
 from coaster.utils import sorted_timezones
-from lastuser_core.models import Name, User, UserEmail, getuser
+from lastuser_core.models import AccountName, User, UserEmail, getuser
 import baseframe.forms as forms
 
 timezones = sorted_timezones()
@@ -91,7 +91,7 @@ class ProfileForm(forms.Form):
         __("Username"),
         validators=[
             forms.validators.Optional(),
-            forms.validators.Length(max=Name.__name_length__),
+            forms.validators.Length(max=AccountName.__name_length__),
         ],
         filters=[forms.filters.none_if_empty()],
         prefix="https://hasgeek.com/",

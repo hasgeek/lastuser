@@ -12,24 +12,17 @@ from sqlalchemy.orm.query import Query as QueryBaseClass
 from baseframe import _
 from coaster.utils import buid, newsecret, require_one_of, utcnow
 
-from . import BaseMixin, BaseScopedNameMixin, db
-from .session import UserSession
+from . import BaseMixin, UuidMixin, db
 from .user import Organization, Team, User
+from .user_session import UserSession
 
 __all__ = [
     'AuthCode',
     'AuthToken',
-    'CLIENT_TEAM_ACCESS',
-    'Client',
-    'ClientCredential',
-    'ClientTeamAccess',
-    'NoticeType',
-    'Permission',
-    'Resource',
-    'ResourceAction',
-    'TeamClientPermissions',
-    'UserClientPermissions',
-    'UserFlashMessage',
+    'AuthClient',
+    'AuthClientCredential',
+    'AuthClientTeamPermissions',
+    'AuthClientUserPermissions',
 ]
 
 
@@ -61,23 +54,23 @@ class ScopeMixin(object):
         self.scope = list(set(self.scope).union(set(additional)))
 
 
-class Client(ScopeMixin, BaseMixin, db.Model):
+class AuthClient(ScopeMixin, UuidMixin, BaseMixin, db.Model):
     """OAuth client applications"""
 
-    __tablename__ = 'client'
+    __tablename__ = 'auth_client'
     __scope_null_allowed__ = True
     #: User who owns this client
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship(
         User,
         primaryjoin=user_id == User.id,
         backref=db.backref('clients', cascade='all'),
     )
     #: Organization that owns this client. Only one of this or user must be set
-    org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
-    org = db.relationship(
+    organization_id = db.Column(None, db.ForeignKey('organization.id'), nullable=True)
+    organization = db.relationship(
         Organization,
-        primaryjoin=org_id == Organization.id,
+        primaryjoin=organization_id == Organization.id,
         backref=db.backref('clients', cascade='all'),
     )
     #: Human-readable title
@@ -96,16 +89,10 @@ class Client(ScopeMixin, BaseMixin, db.Model):
     )
     #: Back-end notification URI
     notification_uri = db.Column(db.UnicodeText, nullable=True, default='')
-    #: Front-end notification URI
-    iframe_uri = db.Column(db.UnicodeText, nullable=True, default='')
     #: Active flag
     active = db.Column(db.Boolean, nullable=False, default=True)
     #: Allow anyone to login to this app?
     allow_any_login = db.Column(db.Boolean, nullable=False, default=True)
-    #: Team access flag
-    team_access = db.Column(db.Boolean, nullable=False, default=False)
-    #: OAuth client key/id
-    key = db.Column(db.String(22), nullable=False, unique=True, default=buid)
     #: Trusted flag: trusted clients are authorized to access user data
     #: without user consent, but the user must still login and identify themself.
     #: When a single provider provides multiple services, each can be declared
@@ -114,24 +101,24 @@ class Client(ScopeMixin, BaseMixin, db.Model):
     #: any arbitrary user without explicit user authorization.
     trusted = db.Column(db.Boolean, nullable=False, default=False)
 
-    sessions = db.relationship(
+    user_sessions = db.relationship(
         UserSession,
         lazy='dynamic',
-        secondary='session_client',
-        backref=db.backref('clients', lazy='dynamic'),
+        secondary='auth_client_user_session',
+        backref=db.backref('auth_clients', lazy='dynamic'),
     )
 
     __table_args__ = (
         db.CheckConstraint(
             db.case([(user_id.isnot(None), 1)], else_=0)
-            + db.case([(org_id.isnot(None), 1)], else_=0)
+            + db.case([(organization_id.isnot(None), 1)], else_=0)
             == 1,
-            name='client_user_id_or_org_id',
+            name='auth_client_owner_check',
         ),
     )
 
     def __repr__(self):
-        return '<Client "{title}" {key}>'.format(title=self.title, key=self.key)
+        return '<AuthClient "{title}" {buid}>'.format(title=self.title, buid=self.buid)
 
     def secret_is(self, candidate, name):
         """
@@ -165,27 +152,17 @@ class Client(ScopeMixin, BaseMixin, db.Model):
 
     @property
     def owner(self):
-        return self.user or self.org
+        return self.user or self.organization
 
     def owner_is(self, user):
         if not user:
             return False
         return self.user == user or (
-            self.org and self.org in user.organizations_owned()
+            self.organization and self.organization in user.organizations_owned()
         )
 
-    def orgs_with_team_access(self):
-        """
-        Return a list of organizations that this client has access to the teams of.
-        """
-        return [
-            cta.org
-            for cta in self.org_team_access
-            if cta.access_level == CLIENT_TEAM_ACCESS.ALL
-        ]
-
     def permissions(self, user, inherited=None):
-        perms = super(Client, self).permissions(user, inherited)
+        perms = super(AuthClient, self).permissions(user, inherited)
         perms.add('view')
         if user and self.owner_is(user):
             perms.add('edit')
@@ -197,27 +174,48 @@ class Client(ScopeMixin, BaseMixin, db.Model):
     def authtoken_for(self, user, user_session=None):
         """Return the authtoken for this user and client. Only works for confidential clients."""
         if self.confidential:
-            return AuthToken.query.filter_by(client=self, user=user).one_or_none()
+            return AuthToken.get_for(auth_client=self, user=user)
         elif user_session and user_session.user == user:
-            return AuthToken.query.filter_by(
-                client=self, user_session=user_session
-            ).one_or_none()
+            return AuthToken.get_for(auth_client=self, user_session=user_session)
+
+    def allow_login_for(self, actor):
+        if self.allow_any_login:
+            return True
+        if self.user:
+            if AuthClientUserPermissions.get(self, actor):
+                return True
+        else:
+            if AuthClientTeamPermissions.all_for(self, actor.teams).first():
+                return True
+        return False
 
     @classmethod
-    def get(cls, key=None, namespace=None):
+    def get(cls, buid=None, namespace=None):
         """
-        Return a Client identified by its client key or namespace. Only returns active clients.
+        Return a AuthClient identified by its client buid or namespace. Only returns active clients.
 
-        :param str key: Client key to lookup
-        :param str namespace: Client namespace to lookup
+        :param str buid: AuthClient buid to lookup
+        :param str namespace: AuthClient namespace to lookup
         """
-        param, value = require_one_of(True, key=key, namespace=namespace)
+        param, value = require_one_of(True, buid=buid, namespace=namespace)
         return cls.query.filter_by(**{param: value, 'active': True}).one_or_none()
 
+    @classmethod
+    def all_for(cls, user):
+        if user is None:
+            return cls.query.order_by(cls.title)
+        else:
+            return cls.query.filter(
+                db.or_(
+                    cls.user == user,
+                    cls.organization_id.in_(user.organizations_owned_ids()),
+                )
+            ).order_by(cls.title)
 
-class ClientCredential(BaseMixin, db.Model):
+
+class AuthClientCredential(BaseMixin, db.Model):
     """
-    Client key and secret hash.
+    AuthClient key and secret hash.
 
     We use unsalted SHA256 instead of a salted hash or a more secure hash
     like bcrypt because:
@@ -234,11 +232,11 @@ class ClientCredential(BaseMixin, db.Model):
        prefixed with 'sha256$'.
     """
 
-    __tablename__ = 'client_credential'
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    client = db.relationship(
-        Client,
-        primaryjoin=client_id == Client.id,
+    __tablename__ = 'auth_client_credential'
+    auth_client_id = db.Column(None, db.ForeignKey('auth_client.id'), nullable=False)
+    auth_client = db.relationship(
+        AuthClient,
+        primaryjoin=auth_client_id == AuthClient.id,
         backref=db.backref(
             'credentials',
             cascade='all, delete-orphan',
@@ -266,149 +264,34 @@ class ClientCredential(BaseMixin, db.Model):
         return cls.query.filter_by(name=name).one_or_none()
 
     @classmethod
-    def new(cls, client):
+    def new(cls, auth_client):
         """
         Create a new client credential and return (cred, secret). The secret is not
         saved in plaintext, so this is the last time it will be available.
 
-        :param client: The client for which a name/secret pair is being generated
+        :param auth_client: The client for which a name/secret pair is being generated
         """
-        cred = cls(client=client, name=buid())
+        cred = cls(auth_client=auth_client, name=buid())
         db.session.add(cred)
         secret = newsecret()
         cred.secret_hash = 'sha256$' + sha256(secret.encode('utf-8')).hexdigest()
         return cred, secret
 
 
-class UserFlashMessage(BaseMixin, db.Model):
-    """
-    Saved messages for a user, to be relayed to trusted clients.
-    """
-
-    __tablename__ = 'userflashmessage'
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(
-        User,
-        primaryjoin=user_id == User.id,
-        backref=db.backref('flashmessages', cascade='delete, delete-orphan'),
-    )
-    seq = db.Column(db.Integer, default=0, nullable=False)
-    category = db.Column(db.UnicodeText, nullable=False)
-    message = db.Column(db.UnicodeText, nullable=False)
-
-
-class Resource(BaseScopedNameMixin, db.Model):
-    """
-    Resources are provided by client applications. Other client applications
-    can request access to user data at resource servers by providing the
-    `name` as part of the requested `scope`.
-    """
-
-    __tablename__ = 'resource'
-    # Resource names are unique within client apps
-    name = db.Column(db.Unicode(20), nullable=False)
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    client = db.relationship(
-        Client,
-        primaryjoin=client_id == Client.id,
-        backref=db.backref('resources', cascade='all, delete-orphan'),
-    )
-    parent = db.synonym('client')
-    title = db.Column(db.Unicode(250), nullable=False)
-    description = db.Column(db.UnicodeText, default='', nullable=False)
-    siteresource = db.Column(db.Boolean, default=False, nullable=False)
-    restricted = db.Column(db.Boolean, default=False, nullable=False)
-    __table_args__ = (
-        db.UniqueConstraint('client_id', 'name', name='resource_client_id_name_key'),
-    )
-
-    def permissions(self, user, inherited=None):
-        perms = super(Resource, self).permissions(user, inherited)
-        if user and self.client.owner_is(user):
-            perms.add('edit')
-            perms.add('delete')
-            perms.add('new-action')
-        return perms
-
-    @classmethod
-    def get(cls, name, client=None, namespace=None):
-        """
-        Return a Resource with the given name.
-
-        :param str name: Name of the resource.
-        """
-        require_one_of(client=client, namespace=namespace)
-
-        if client:
-            return cls.query.filter_by(name=name, client=client).one_or_none()
-        else:
-            return (
-                cls.query.filter_by(name=name)
-                .join(Client)
-                .filter(Client.namespace == namespace)
-                .one_or_none()
-            )
-
-    def get_action(self, name):
-        """
-        Return a ResourceAction on this Resource with the given name.
-
-        :param str name: Name of the action
-        """
-        return ResourceAction.get(name=name, resource=self)
-
-
-class ResourceAction(BaseMixin, db.Model):
-    """
-    Actions that can be performed on resources.
-    """
-
-    __tablename__ = 'resourceaction'
-    name = db.Column(db.Unicode(20), nullable=False)
-    resource_id = db.Column(db.Integer, db.ForeignKey('resource.id'), nullable=False)
-    resource = db.relationship(
-        Resource,
-        primaryjoin=resource_id == Resource.id,
-        backref=db.backref('actions', cascade='all, delete-orphan'),
-    )
-    title = db.Column(db.Unicode(250), nullable=False)
-    description = db.Column(db.UnicodeText, default='', nullable=False)
-
-    # Action names are unique per client app
-    __table_args__ = (db.UniqueConstraint('resource_id', 'name'),)
-
-    def permissions(self, user, inherited=None):
-        perms = super(ResourceAction, self).permissions(user, inherited)
-        if user and self.resource.client.owner_is(user):
-            perms.add('edit')
-            perms.add('delete')
-        return perms
-
-    @classmethod
-    def get(cls, name, resource):
-        """
-        Return a ResourceAction on the specified resource with the specified name.
-
-        :param str name: Name of the action
-        :param Resource resource: Resource on which this action exists
-        """
-        return cls.query.filter_by(name=name, resource=resource).one_or_none()
-
-
 class AuthCode(ScopeMixin, BaseMixin, db.Model):
     """Short-lived authorization tokens"""
 
-    __tablename__ = 'authcode'
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    __tablename__ = 'auth_code'
+    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(User, primaryjoin=user_id == User.id)
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    client = db.relationship(
-        Client,
-        primaryjoin=client_id == Client.id,
+    auth_client_id = db.Column(None, db.ForeignKey('auth_client.id'), nullable=False)
+    auth_client = db.relationship(
+        AuthClient,
+        primaryjoin=auth_client_id == AuthClient.id,
         backref=db.backref('authcodes', cascade='all, delete-orphan'),
     )
-    session_id = db.Column(None, db.ForeignKey('user_session.id'), nullable=True)
-    session = db.relationship(UserSession)
+    user_session_id = db.Column(None, db.ForeignKey('user_session.id'), nullable=True)
+    user_session = db.relationship(UserSession)
     code = db.Column(db.String(44), default=newsecret, nullable=False)
     redirect_uri = db.Column(db.UnicodeText, nullable=False)
     used = db.Column(db.Boolean, default=False, nullable=False)
@@ -418,13 +301,21 @@ class AuthCode(ScopeMixin, BaseMixin, db.Model):
         # on a slow mobile connection, without keeping the code valid too long
         return not self.used and self.created_at >= utcnow() - timedelta(minutes=3)
 
+    @classmethod
+    def all_for(cls, user):
+        return cls.query.filter_by(user=user)
+
+    @classmethod
+    def get_for_client(cls, auth_client, code):
+        return cls.query.filter_by(auth_client=auth_client, code=code).one_or_none()
+
 
 class AuthToken(ScopeMixin, BaseMixin, db.Model):
     """Access tokens for access to data"""
 
-    __tablename__ = 'authtoken'
+    __tablename__ = 'auth_token'
     # Null for client-only tokens and public clients (user is identified via user_session.user there)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=True)
     _user = db.relationship(
         User,
         primaryjoin=user_id == User.id,
@@ -436,12 +327,12 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
         UserSession, backref=db.backref('authtokens', lazy='dynamic')
     )
     #: The client this authtoken is for
-    client_id = db.Column(
-        db.Integer, db.ForeignKey('client.id'), nullable=False, index=True
+    auth_client_id = db.Column(
+        None, db.ForeignKey('auth_client.id'), nullable=False, index=True
     )
-    client = db.relationship(
-        Client,
-        primaryjoin=client_id == Client.id,
+    auth_client = db.relationship(
+        AuthClient,
+        primaryjoin=auth_client_id == AuthClient.id,
         backref=db.backref('authtokens', lazy='dynamic', cascade='all, delete-orphan'),
     )
     #: The token
@@ -463,8 +354,8 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
 
     # Only one authtoken per user and client. Add to scope as needed
     __table_args__ = (
-        db.UniqueConstraint('user_id', 'client_id'),
-        db.UniqueConstraint('user_session_id', 'client_id'),
+        db.UniqueConstraint('user_id', 'auth_client_id'),
+        db.UniqueConstraint('user_session_id', 'auth_client_id'),
     )
 
     @property
@@ -488,13 +379,15 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
         self.secret = newsecret()
 
     def __repr__(self):
-        return '<AuthToken {token} of {client} {user}>'.format(
-            token=self.token, client=repr(self.client)[1:-1], user=repr(self.user)[1:-1]
+        return '<AuthToken {token} of {auth_client} {user}>'.format(
+            token=self.token,
+            auth_client=repr(self.auth_client)[1:-1],
+            user=repr(self.user)[1:-1],
         )
 
     @property
     def effective_scope(self):
-        return sorted(set(self.scope) | set(self.client.scope))
+        return sorted(set(self.scope) | set(self.auth_client.scope))
 
     def refresh(self):
         """
@@ -533,14 +426,14 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
         if not olduser or not newuser:
             return  # Don't mess with client-only tokens
         oldtokens = cls.query.filter_by(user=olduser).all()
-        newtokens = {}  # Client: token mapping
+        newtokens = {}  # AuthClient: token mapping
         for token in cls.query.filter_by(user=newuser).all():
-            newtokens.setdefault(token.client_id, []).append(token)
+            newtokens.setdefault(token.auth_client_id, []).append(token)
 
         for token in oldtokens:
             merge_performed = False
-            if token.client_id in newtokens:
-                for newtoken in newtokens[token.client_id]:
+            if token.auth_client_id in newtokens:
+                for newtoken in newtokens[token.auth_client_id]:
                     if newtoken.user == newuser:
                         # There's another token for newuser with the same client.
                         # Just extend the scope there
@@ -559,16 +452,28 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
         :param str token: Token to lookup
         """
         query = cls.query.filter_by(token=token).options(
-            db.joinedload(cls.client).load_only('id', '_scope')
+            db.joinedload(cls.auth_client).load_only('id', '_scope')
         )
         return query.one_or_none()
+
+    @classmethod
+    def get_for(cls, auth_client, user=None, user_session=None):
+        require_one_of(user=user, user_session=user_session)
+        if user:
+            return cls.query.filter_by(auth_client=auth_client, user=user).one_or_none()
+        else:
+            return cls.query.filter_by(
+                auth_client=auth_client, user_session=user_session
+            ).one_or_none()
 
     @classmethod  # NOQA: A003
     def all(cls, users):
         """
         Return all AuthToken for the specified users.
         """
-        query = cls.query.options(db.joinedload(cls.client).load_only('id', '_scope'))
+        query = cls.query.options(
+            db.joinedload(cls.auth_client).load_only('id', '_scope')
+        )
         if isinstance(users, QueryBaseClass):
             count = users.count()
             if count == 1:
@@ -587,95 +492,24 @@ class AuthToken(ScopeMixin, BaseMixin, db.Model):
         return []
 
 
-class Permission(BaseMixin, db.Model):
-    __tablename__ = 'permission'
-    #: User who created this permission
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    user = db.relationship(
-        User,
-        primaryjoin=user_id == User.id,
-        backref=db.backref('permissions_created', cascade='all, delete-orphan'),
-    )
-    #: Organization which created this permission
-    org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
-    org = db.relationship(
-        Organization,
-        primaryjoin=org_id == Organization.id,
-        backref=db.backref('permissions_created', cascade='all, delete-orphan'),
-    )
-    #: Name token
-    name = db.Column(db.Unicode(80), nullable=False)
-    #: Human-friendly title
-    title = db.Column(db.Unicode(250), nullable=False)
-    #: Description of what this permission is about
-    description = db.Column(db.UnicodeText, default='', nullable=False)
-    #: Is this permission available to all users and client apps?
-    allusers = db.Column(db.Boolean, default=False, nullable=False)
-
-    __table_args__ = (
-        db.CheckConstraint(
-            db.case([(user_id.isnot(None), 1)], else_=0)
-            + db.case([(org_id.isnot(None), 1)], else_=0)
-            == 1,
-            name='permission_user_id_or_org_id',
-        ),
-    )
-
-    def owner_is(self, user):
-        return (
-            user is not None
-            and self.user == user
-            or (self.org and self.org in user.organizations_owned())
-        )
-
-    @property
-    def owner(self):
-        return self.user or self.org
-
-    def permissions(self, user, inherited=None):
-        perms = super(Permission, self).permissions(user, inherited)
-        if user and self.owner_is(user):
-            perms.add('edit')
-            perms.add('delete')
-        return perms
-
-    @classmethod
-    def get(cls, name, user=None, org=None, allusers=False):
-        """
-        Get a permission with the given name and owned by the given user or org,
-        or a permission available to all users.
-
-        :param str name: Name of the permission
-        :param User user: User who owns this permission
-        :param Organization org: Organization which owns this permission
-        :param bool allusers: Whether resources that belong to all users should be returned
-
-        One of ``user`` and ``org`` must be specified, unless ``allusers`` is ``True``.
-        """
-        if allusers:
-            return cls.query.filter_by(name=name, allusers=True).one_or_none()
-        else:
-            param, value = require_one_of(True, user=user, org=org)
-            return cls.query.filter_by(**{param: value, 'name': name}).one_or_none()
-
-
-# This model's name is in plural because it defines multiple permissions within each instance
-class UserClientPermissions(BaseMixin, db.Model):
-    __tablename__ = 'userclientpermissions'
+# This model's name is in plural because it defines multiple permissions within each
+# instance
+class AuthClientUserPermissions(BaseMixin, db.Model):
+    __tablename__ = 'auth_client_user_permissions'
     #: User who has these permissions
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(
         User,
         primaryjoin=user_id == User.id,
         backref=db.backref('client_permissions', cascade='all, delete-orphan'),
     )
-    #: Client app they are assigned on
-    client_id = db.Column(
-        db.Integer, db.ForeignKey('client.id'), nullable=False, index=True
+    #: AuthClient app they are assigned on
+    auth_client_id = db.Column(
+        None, db.ForeignKey('auth_client.id'), nullable=False, index=True
     )
-    client = db.relationship(
-        Client,
-        primaryjoin=client_id == Client.id,
+    auth_client = db.relationship(
+        AuthClient,
+        primaryjoin=auth_client_id == AuthClient.id,
         backref=db.backref('user_permissions', cascade='all, delete-orphan'),
     )
     #: The permissions as a string of tokens
@@ -684,7 +518,7 @@ class UserClientPermissions(BaseMixin, db.Model):
     )
 
     # Only one assignment per user and client
-    __table_args__ = (db.UniqueConstraint('user_id', 'client_id'), {})
+    __table_args__ = (db.UniqueConstraint('user_id', 'auth_client_id'), {})
 
     # Used by lastuser_ui/client_info.html
     @property
@@ -701,7 +535,7 @@ class UserClientPermissions(BaseMixin, db.Model):
         for operm in olduser.client_permissions:
             merge_performed = False
             for nperm in newuser.client_permissions:
-                if nperm.client == operm.client:
+                if nperm.auth_client == operm.auth_client:
                     # Merge permission strings
                     tokens = set(operm.access_permissions.split(' '))
                     tokens.update(set(nperm.access_permissions.split(' ')))
@@ -713,24 +547,33 @@ class UserClientPermissions(BaseMixin, db.Model):
             if not merge_performed:
                 operm.user = newuser
 
+    @classmethod
+    def get(cls, auth_client, user):
+        return cls.query.filter_by(auth_client=auth_client, user=user).one_or_none()
 
-# This model's name is in plural because it defines multiple permissions within each instance
-class TeamClientPermissions(BaseMixin, db.Model):
-    __tablename__ = 'teamclientpermissions'
+    @classmethod
+    def all_forclient(cls, auth_client):
+        return cls.query.filter_by(auth_client=auth_client)
+
+
+# This model's name is in plural because it defines multiple permissions within each
+# instance
+class AuthClientTeamPermissions(BaseMixin, db.Model):
+    __tablename__ = 'auth_client_team_permissions'
     #: Team which has these permissions
-    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
+    team_id = db.Column(None, db.ForeignKey('team.id'), nullable=False)
     team = db.relationship(
         Team,
         primaryjoin=team_id == Team.id,
         backref=db.backref('client_permissions', cascade='all, delete-orphan'),
     )
-    #: Client app they are assigned on
-    client_id = db.Column(
-        db.Integer, db.ForeignKey('client.id'), nullable=False, index=True
+    #: AuthClient app they are assigned on
+    auth_client_id = db.Column(
+        None, db.ForeignKey('auth_client.id'), nullable=False, index=True
     )
-    client = db.relationship(
-        Client,
-        primaryjoin=client_id == Client.id,
+    auth_client = db.relationship(
+        AuthClient,
+        primaryjoin=auth_client_id == AuthClient.id,
         backref=db.backref('team_permissions', cascade='all, delete-orphan'),
     )
     #: The permissions as a string of tokens
@@ -739,7 +582,7 @@ class TeamClientPermissions(BaseMixin, db.Model):
     )
 
     # Only one assignment per team and client
-    __table_args__ = (db.UniqueConstraint('team_id', 'client_id'), {})
+    __table_args__ = (db.UniqueConstraint('team_id', 'auth_client_id'), {})
 
     # Used by lastuser_ui/client_info.html
     @property
@@ -751,48 +594,16 @@ class TeamClientPermissions(BaseMixin, db.Model):
     def buid(self):
         return self.team.buid
 
+    @classmethod
+    def get(cls, auth_client, team):
+        return cls.query.filter_by(auth_client=auth_client, team=team).one_or_none()
 
-class CLIENT_TEAM_ACCESS:  # NOQA: N801
-    NONE = 0  # The default if there's no connecting object
-    ALL = 1  # All teams can be seen
-    PARTIAL = 2  # TODO: Not supported yet
+    @classmethod
+    def all_for(cls, auth_client, user):
+        return cls.query.filter_by(auth_client=auth_client).filter(
+            cls.team_id.in_([team.id for team in user.teams])
+        )
 
-
-class ClientTeamAccess(BaseMixin, db.Model):
-    __tablename__ = 'clientteamaccess'
-    #: Organization whose teams are exposed to the client app
-    org_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
-    org = db.relationship(
-        Organization,
-        primaryjoin=org_id == Organization.id,
-        backref=db.backref('client_team_access', cascade='all, delete-orphan'),
-    )
-    #: Client app they are exposed to
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    client = db.relationship(
-        Client,
-        primaryjoin=client_id == Client.id,
-        backref=db.backref('org_team_access', cascade='all, delete-orphan'),
-    )
-    access_level = db.Column(
-        db.Integer, default=CLIENT_TEAM_ACCESS.NONE, nullable=False
-    )
-
-
-class NoticeType(BaseMixin, db.Model):
-    __tablename__ = 'noticetype'
-    #: User who created this notice type
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(
-        User,
-        primaryjoin=user_id == User.id,
-        backref=db.backref('noticetypes_created', cascade='all, delete-orphan'),
-    )
-    #: Name token
-    name = db.Column(db.Unicode(80), nullable=False)
-    #: Human-friendly title
-    title = db.Column(db.Unicode(250), nullable=False)
-    #: Description of what this notice type is about
-    description = db.Column(db.UnicodeText, default='', nullable=False)
-    #: Is this notice type available to all users and client apps?
-    allusers = db.Column(db.Boolean, default=False, nullable=False)
+    @classmethod
+    def all_forclient(cls, auth_client):
+        return cls.query.filter_by(auth_client=auth_client)

@@ -42,7 +42,7 @@ class TestUserPhoneClaim(TestDatabaseFixture):
         phone_claim = models.UserPhoneClaim(phone=phone, user=snow)
         db.session.add(phone_claim)
         db.session.commit()
-        result = models.UserPhoneClaim.get(phone, snow)
+        result = models.UserPhoneClaim.get_for(user=snow, phone=phone)
         self.assertIsInstance(result, models.UserPhoneClaim)
         self.assertEqual(result.phone, phone)
         self.assertEqual(result.user, snow)

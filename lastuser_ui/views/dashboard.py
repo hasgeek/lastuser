@@ -3,10 +3,9 @@
 from collections import defaultdict
 from functools import wraps
 from io import StringIO
+import csv
 
 from flask import abort, current_app, render_template
-
-import unicodecsv
 
 from coaster.auth import current_auth
 from lastuser_core.models import USER_STATUS, User, db
@@ -35,16 +34,22 @@ def requires_dashboard(f):
 @lastuser_ui.route('/dashboard')
 @requires_dashboard
 def dashboard():
-    user_count = User.query.filter_by(status=USER_STATUS.ACTIVE).count()
+    user_count = User.active_user_count()
     mau = (
         db.session.query('mau')
         .from_statement(
             db.text(
-                '''SELECT COUNT(DISTINCT(user_session.user_id)) AS mau FROM user_session, "user" WHERE user_session.user_id = "user".id AND "user".status = :status AND user_session.accessed_at >= (NOW() AT TIME ZONE 'UTC') - INTERVAL '30 days' '''
+                '''
+                SELECT COUNT(DISTINCT(user_session.user_id)) AS mau
+                FROM user_session, "user"
+                WHERE user_session.user_id = "user".id
+                    AND "user".status = :status
+                    AND user_session.accessed_at >= NOW() - INTERVAL '30 days'
+                '''
             )
         )
         .params(status=USER_STATUS.ACTIVE)
-        .first()[0]
+        .scalar()
     )
 
     return render_template('dashboard.html.jinja2', user_count=user_count, mau=mau)
@@ -57,14 +62,21 @@ def dashboard_data_users_by_month():
         db.session.query('month', 'count')
         .from_statement(
             db.text(
-                '''SELECT date_trunc('month', "user".created_at) AS month, count(*) AS count FROM "user" WHERE status=:status GROUP BY month ORDER BY month'''
+                '''
+                SELECT date_trunc('month', "user".created_at) AS month,
+                    count(*) AS count
+                FROM "user"
+                WHERE status=:status
+                GROUP BY month
+                ORDER BY month
+                '''
             )
         )
         .params(status=USER_STATUS.ACTIVE)
     )
 
     outfile = StringIO()
-    out = unicodecsv.writer(outfile, 'excel')
+    out = csv.writer(outfile, 'excel')
     out.writerow(['month', 'count'])
     for month, count in users_by_month:
         out.writerow([month.strftime('%Y-%m-%d'), count])
@@ -98,21 +110,41 @@ def dashboard_data_users_by_client():
         ('year', '1 year'),
     ):
         clients = (
-            db.session.query('client_id', 'count', 'title', 'website')
+            db.session.query('auth_client_id', 'count', 'title', 'website')
             .from_statement(
                 db.text(
-                    '''SELECT client_users.client_id, count(*) AS count, client.title AS title, client.website AS website FROM (SELECT user_session.user_id, session_client.client_id FROM user_session, session_client, "user" WHERE user_session.user_id = "user".id AND session_client.user_session_id = user_session.id AND "user".status = :status AND session_client.updated_at >= (NOW() AT TIME ZONE 'UTC') - INTERVAL :interval GROUP BY session_client.client_id, user_session.user_id) AS client_users, client WHERE client.id = client_users.client_id GROUP by client_users.client_id, client.title, client.website ORDER BY count DESC'''
+                    '''
+                    SELECT client_users.auth_client_id AS auth_client_id,
+                    count(*) AS count, auth_client.title AS title,
+                    auth_client.website AS website
+                    FROM (
+                        SELECT user_session.user_id,
+                        auth_client_user_session.auth_client_id FROM user_session,
+                        auth_client_user_session, "user"
+                        WHERE user_session.user_id = "user".id
+                        AND auth_client_user_session.user_session_id = user_session.id
+                        AND "user".status = :status
+                        AND auth_client_user_session.accessed_at >=
+                        (NOW() AT TIME ZONE 'UTC') - INTERVAL :interval
+                        GROUP BY auth_client_user_session.auth_client_id,
+                        user_session.user_id
+                    ) AS client_users, auth_client
+                    WHERE auth_client.id = client_users.auth_client_id
+                    GROUP BY client_users.auth_client_id, auth_client.title,
+                    auth_client.website
+                    ORDER BY count DESC
+                    '''
                 )
             )
             .params(status=USER_STATUS.ACTIVE, interval=interval)
             .all()
         )
         for row in clients:
-            client_users[row.client_id]['title'] = row.title
-            client_users[row.client_id]['website'] = row.website
-            client_users[row.client_id]['id'] = row.client_id
-            client_users[row.client_id]['counts'][label] = row.count - sum(
-                client_users[row.client_id]['counts'].values()
+            client_users[row.auth_client_id]['title'] = row.title
+            client_users[row.auth_client_id]['website'] = row.website
+            client_users[row.auth_client_id]['id'] = row.auth_client_id
+            client_users[row.auth_client_id]['counts'][label] = row.count - sum(
+                client_users[row.auth_client_id]['counts'].values()
             )
 
     users_by_client = sorted(
@@ -120,7 +152,7 @@ def dashboard_data_users_by_client():
     )
 
     outfile = StringIO()
-    out = unicodecsv.writer(outfile, 'excel')
+    out = csv.writer(outfile, 'excel')
     out.writerow(
         ['title', 'hour', 'day', 'week', 'month', 'quarter', 'halfyear', 'year']
     )

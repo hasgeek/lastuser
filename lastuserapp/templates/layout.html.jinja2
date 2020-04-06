@@ -1,11 +1,6 @@
 {% extends "baseframe.html.jinja2" -%}
 {% from "baseframe/components.html.jinja2" import hgtopnav %}
 
-{%- block font_icons %}
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
-    rel="stylesheet">
-{%- endblock %}
-
 {% block sidedrawer -%}
 {%- endblock %}
 
@@ -28,7 +23,7 @@
           <div class="grid__col-xs-12">
             {% block top_title %}
             <h1 class="mui--text-display1">
-              {{ self.title()|e }}
+              {{ self.title() }}
             </h1>
             {% endblock %}
           </div>

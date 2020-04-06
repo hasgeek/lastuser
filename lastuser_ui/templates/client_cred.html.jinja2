@@ -1,25 +1,23 @@
 {% extends "layout.html.jinja2" %}
+{% from "baseframe/components.html.jinja2" import faicon %}
 
-{% block title %}Client access key{% endblock %}
+{% block title %}{% trans %}Client access key{% endtrans %}{% endblock %}
 
 {% block content %}
-  <p class="mui--text-title">
-    Here is your new application access key. Save this somewhere safe. You will not be able
-    to view this secret again.
-  </p>
+  <p class="mui--text-title">{% trans %}Here is your new application access key. Save this somewhere safe. You will not be able to view this secret again.{% endtrans %}</p>
   <div class="mui-panel">
     <dl class="infobox">
-      <dt>Application title</dt>
-      <dd>{{ cred.client.title }}</dd>
-      <dt>Access key for</dt>
+      <dt>{% trans %}Application title{% endtrans %}</dt>
+      <dd>{{ cred.auth_client.title }}</dd>
+      <dt>{% trans %}Access key for{% endtrans %}</dt>
       <dd>{{ cred.title }}</dd>
-      <dt>Client access key</dt>
+      <dt>{% trans %}Client access key{% endtrans %}</dt>
       <dd><strong>{{ cred.name }}</strong></dd>
-      <dt>Client secret</dt>
+      <dt>{% trans %}Client secret{% endtrans %}</dt>
       <dd><strong>{{ secret }}</strong></dd>
     </dl>
   </div>
   <p>
-    <a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ url_for('.client_info', key=cred.client.key) }}"><i class="fa fa-angle-left"></i> Return to client info</a>
+    <a class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ url_for('.client_info', key=cred.auth_client.buid) }}">{{ faicon(icon='arrow-left') }} {% trans %}Return to client app info{% endtrans %}</a>
   </p>
 {% endblock %}

@@ -25,8 +25,8 @@ from coaster.utils import getbool, utcnow
 from coaster.views import get_next_url, load_model
 from lastuser_core import login_registry
 from lastuser_core.models import (
-    ClientCredential,
-    PasswordResetRequest,
+    AuthClientCredential,
+    AuthPasswordResetRequest,
     User,
     UserEmailClaim,
     UserSession,
@@ -160,13 +160,13 @@ def logout_client():
     """
     Client-initiated logout
     """
-    cred = ClientCredential.get(request.args['client_id'])
-    client = cred.client if cred else None
+    cred = AuthClientCredential.get(request.args['client_id'])
+    auth_client = cred.auth_client if cred else None
 
     if (
-        client is None
+        auth_client is None
         or not request.referrer
-        or not client.host_matches(request.referrer)
+        or not auth_client.host_matches(request.referrer)
     ):
         # No referrer or such client, or request didn't come from the client website.
         # Possible CSRF. Don't logout and don't send them back
@@ -178,7 +178,7 @@ def logout_client():
 
     # If there is a next destination, is it in the same domain as the client?
     if 'next' in request.args:
-        if not client.host_matches(request.args['next']):
+        if not auth_client.host_matches(request.args['next']):
             # Host doesn't match. Assume CSRF and redirect to index without logout
             flash(
                 current_app.config.get('LOGOUT_UNAUTHORIZED_MESSAGE')
@@ -203,16 +203,16 @@ def logout():
         return logout_user()
 
 
-@lastuser_oauth.route('/logout/<session>')
-@load_model(UserSession, {'buid': 'session'}, 'session')
-def logout_session(session):
+@lastuser_oauth.route('/logout/<user_session>')
+@load_model(UserSession, {'buid': 'user_session'}, 'user_session')
+def logout_session(user_session):
     if (
         not request.referrer
         or (
             urllib.parse.urlsplit(request.referrer).netloc
             != urllib.parse.urlsplit(request.url).netloc
         )
-        or (session.user != current_auth.user)
+        or (user_session.user != current_auth.user)
     ):
         flash(
             current_app.config.get('LOGOUT_UNAUTHORIZED_MESSAGE') or logout_errormsg,
@@ -220,7 +220,7 @@ def logout_session(session):
         )
         return redirect(url_for('index'))
 
-    session.revoke()
+    user_session.revoke()
     db.session.commit()
     return redirect(get_next_url(referrer=True), code=303)
 
@@ -311,7 +311,7 @@ def reset():
                         ).format(email=escape(current_app.config['SITE_SUPPORT_EMAIL']))
                     ),
                 )
-        resetreq = PasswordResetRequest(user=user)
+        resetreq = AuthPasswordResetRequest(user=user)
         db.session.add(resetreq)
         send_password_reset_link(email=email, user=user, secret=resetreq.reset_code)
         db.session.commit()
@@ -340,9 +340,7 @@ def reset():
 @lastuser_oauth.route('/reset/<buid>/<secret>', methods=['GET', 'POST'])
 @load_model(User, {'buid': 'buid'}, 'user', kwargs=True)
 def reset_email(user, kwargs):
-    resetreq = PasswordResetRequest.query.filter_by(
-        user=user, reset_code=kwargs['secret']
-    ).first()
+    resetreq = AuthPasswordResetRequest.get(user, kwargs['secret'])
     if not resetreq:
         return render_message(
             title=_("Invalid reset link"),

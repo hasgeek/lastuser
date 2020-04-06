@@ -14,7 +14,7 @@ from coaster.auth import add_auth_attribute, current_auth, request_has_auth
 from coaster.sqlalchemy import failsafe_add
 from coaster.utils import utcnow
 from coaster.views import get_current_url
-from lastuser_core.models import ClientCredential, User, UserSession, db
+from lastuser_core.models import AuthClientCredential, User, UserSession, db
 from lastuser_core.signals import user_login, user_registered
 
 from .. import lastuser_oauth
@@ -96,16 +96,17 @@ def lastuser_cookie(response):
             value=lastuser_oauth.serializer.dumps(
                 current_auth.cookie, header_fields={'v': 1}
             ),
-            max_age=31557600,  # Keep this cookie for a year.
-            expires=expires,  # Expire one year from now.
-            domain=current_app.config.get(
-                'LASTUSER_COOKIE_DOMAIN'
-            ),  # Place cookie in master domain.
-            secure=current_app.config[
-                'SESSION_COOKIE_SECURE'
-            ],  # HTTPS cookie if session is too.
+            # Keep this cookie for a year.
+            max_age=31557600,
+            # Expire one year from now.
+            expires=expires,
+            # Place cookie in master domain.
+            domain=current_app.config.get('LASTUSER_COOKIE_DOMAIN'),
+            # HTTPS cookie if session is too.
+            secure=current_app.config['SESSION_COOKIE_SECURE'],
+            # Don't allow reading this from JS.
             httponly=True,
-        )  # Don't allow reading this from JS.
+        )
 
         response.set_cookie(
             'hasuser',
@@ -181,7 +182,7 @@ def _client_login_inner():
             401,
             {'WWW-Authenticate': 'Basic realm="Client credentials"'},
         )
-    credential = ClientCredential.get(name=request.authorization.username)
+    credential = AuthClientCredential.get(name=request.authorization.username)
     if credential is None or not credential.secret_is(request.authorization.password):
         return Response(
             'Invalid client credentials',
@@ -191,7 +192,7 @@ def _client_login_inner():
     if credential:
         credential.accessed_at = db.func.utcnow()
         db.session.commit()
-    add_auth_attribute('client', credential.client, actor=True)
+    add_auth_attribute('auth_client', credential.auth_client, actor=True)
 
 
 def requires_client_login(f):
@@ -252,9 +253,9 @@ def requires_client_id_or_user_or_client_login(f):
             and 'session' in request.values
             and request.referrer
         ):
-            client_cred = ClientCredential.get(request.values['client_id'])
+            client_cred = AuthClientCredential.get(request.values['client_id'])
             if client_cred is not None and get_scheme_netloc(
-                client_cred.client.website
+                client_cred.auth_client.website
             ) == get_scheme_netloc(request.referrer):
                 if UserSession.authenticate(buid=request.values['session']) is not None:
                     return f(*args, **kwargs)

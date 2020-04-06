@@ -14,11 +14,7 @@ import bcrypt
 import phonenumbers
 
 from baseframe import _, __
-from coaster.sqlalchemy import (
-    add_primary_relationship,
-    failsafe_add,
-    make_timestamp_columns,
-)
+from coaster.sqlalchemy import add_primary_relationship, failsafe_add
 from coaster.utils import (
     LabeledEnum,
     md5sum,
@@ -32,9 +28,9 @@ from coaster.utils import (
 from . import BaseMixin, UuidMixin, db
 
 __all__ = [
-    'Name',
+    'AccountName',
     'Organization',
-    'PasswordResetRequest',
+    'AuthPasswordResetRequest',
     'Team',
     'USER_STATUS',
     'User',
@@ -47,12 +43,12 @@ __all__ = [
 ]
 
 
-class Name(UuidMixin, BaseMixin, db.Model):
+class AccountName(UuidMixin, BaseMixin, db.Model):
     """
     Manage common namespace between the User and Organization models.
     """
 
-    __tablename__ = 'name'
+    __tablename__ = 'account_name'
     __uuid_primary_key__ = True
     __name_length__ = 63
 
@@ -70,13 +66,13 @@ class Name(UuidMixin, BaseMixin, db.Model):
         ),
     )
     #: Organization that owns this name (limit one per organization)
-    org_id = db.Column(
+    organization_id = db.Column(
         None,
         db.ForeignKey('organization.id', ondelete='CASCADE'),
         unique=True,
         nullable=True,
     )
-    org = db.relationship(
+    organization = db.relationship(
         'Organization',
         backref=db.backref(
             '_name', lazy='joined', uselist=False, cascade='all, delete-orphan'
@@ -88,13 +84,13 @@ class Name(UuidMixin, BaseMixin, db.Model):
     __table_args__ = (
         db.CheckConstraint(
             db.case([(user_id.isnot(None), 1)], else_=0)
-            + db.case([(org_id.isnot(None), 1)], else_=0)
+            + db.case([(organization_id.isnot(None), 1)], else_=0)
             + db.case([(reserved.is_(True), 1)], else_=0)
             == 1,
-            name='username_owner_check',
+            name='account_name_owner_check',
         ),
         db.Index(
-            'ix_name_name_lower',
+            'ix_account_name_name_lower',
             db.func.lower(name).label('name_lower'),
             unique=True,
             postgresql_ops={'name_lower': 'varchar_pattern_ops'},
@@ -103,16 +99,16 @@ class Name(UuidMixin, BaseMixin, db.Model):
 
     @property
     def owner(self):
-        return self.user or self.org
+        return self.user or self.organization
 
     @owner.setter
     def owner(self, value):
         if isinstance(value, User):
             self.user = value
-            self.org = None
+            self.organization = None
         elif isinstance(value, Organization):
             self.user = None
-            self.org = value
+            self.organization = value
         else:
             raise ValueError(value)
         self.reserved = False
@@ -120,7 +116,7 @@ class Name(UuidMixin, BaseMixin, db.Model):
     @classmethod
     def get(cls, name):
         return cls.query.filter(
-            db.func.lower(Name.name) == db.func.lower(name)
+            db.func.lower(AccountName.name) == db.func.lower(name)
         ).one_or_none()
 
     @classmethod
@@ -130,10 +126,10 @@ class Name(UuidMixin, BaseMixin, db.Model):
 
         * ``blank``: No name supplied
         * ``invalid``: Invalid characters in name
-        * ``long``: Name is longer than allowed size
-        * ``reserved``: Name is reserved
-        * ``user``: Name is assigned to a user
-        * ``org``: Name is assigned to an organization
+        * ``long``: AccountName is longer than allowed size
+        * ``reserved``: AccountName is reserved
+        * ``user``: AccountName is assigned to a user
+        * ``org``: AccountName is assigned to an organization
         """
         if not name:
             return 'blank'
@@ -147,7 +143,7 @@ class Name(UuidMixin, BaseMixin, db.Model):
                 return 'reserved'
             elif existing.user_id:
                 return 'user'
-            elif existing.org_id:
+            elif existing.organization_id:
                 return 'org'
 
     @classmethod
@@ -172,7 +168,7 @@ class Name(UuidMixin, BaseMixin, db.Model):
 
 class SharedNameMixin(object):
     """
-    Common methods between User and Organization to link to Name
+    Common methods between User and Organization to link to AccountName
     """
 
     # The `name` property in User and Organization is not over here because
@@ -185,7 +181,7 @@ class SharedNameMixin(object):
     def is_valid_name(self, value):
         if not valid_username(value):
             return False
-        existing = Name.get(value)
+        existing = AccountName.get(value)
         if existing and existing.owner != self:
             return False
         return True
@@ -193,7 +189,7 @@ class SharedNameMixin(object):
     def validate_name_candidate(self, name):
         if name and name == self.name:
             return
-        return Name.validate_name_candidate(name)
+        return AccountName.validate_name_candidate(name)
 
 
 class USER_STATUS(LabeledEnum):  # NOQA: N801
@@ -229,26 +225,6 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
     #: User avatar (URL to browser-ready image)
     avatar = db.Column(db.UnicodeText, nullable=True)
 
-    #: Client id that created this user account
-    client_id = db.Column(
-        None,
-        db.ForeignKey('client.id', use_alter=True, name='user_client_id_fkey'),
-        nullable=True,
-    )
-    #: If this user was created by a client app via the API, record it here
-    client = db.relationship(
-        'Client', foreign_keys=[client_id]
-    )  # No backref or cascade
-
-    #: Id of user who invited this user
-    referrer_id = db.Column(
-        None,
-        db.ForeignKey('user.id', use_alter=True, name='user_referrer_id_fkey'),
-        nullable=True,
-    )
-    #: User who invited this user
-    referrer = db.relationship('User', foreign_keys=[referrer_id])
-
     #: Other user accounts that were merged into this user account
     oldusers = association_proxy('oldids', 'olduser')
 
@@ -267,8 +243,6 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         defer('pw_set_at'),
         defer('pw_expires_at'),
         defer('timezone'),
-        defer('client_id'),
-        defer('referrer_id'),
     ]
 
     def __init__(self, password=None, **kwargs):
@@ -288,11 +262,15 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
             if self._name is not None:
                 self._name.name = value
             else:
-                self._name = Name(name=value, owner=self, id=self.uuid)
+                self._name = AccountName(name=value, owner=self, id=self.uuid)
 
     @name.expression
     def name(cls):  # NOQA: N805
-        return db.select([Name.name]).where(Name.user_id == cls.id).label('name')
+        return (
+            db.select([AccountName.name])
+            .where(AccountName.user_id == cls.id)
+            .label('name')
+        )
 
     username = db.synonym('name')
 
@@ -422,14 +400,18 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         """
         Return the organizations this user is a member of.
         """
-        return sorted({team.org for team in self.teams}, key=lambda o: o.title)
+        return sorted({team.organization for team in self.teams}, key=lambda o: o.title)
 
     def organizations_owned(self):
         """
         Return the organizations this user is an owner of.
         """
         return sorted(
-            {team.org for team in self.teams if team.org.owners == team},
+            {
+                team.organization
+                for team in self.teams
+                if team.organization.owners == team
+            },
             key=lambda o: o.title,
         )
 
@@ -438,23 +420,26 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         Return the database ids of the organizations this user is an owner of. This is used
         for database queries.
         """
-        return list({team.org.id for team in self.teams if team.org.owners == team})
+        return list(
+            {
+                team.organization.id
+                for team in self.teams
+                if team.organization.owners == team
+            }
+        )
 
     def organizations_memberof(self):
         """
         Return the organizations this user is a member of.
         """
-        return sorted(
-            {team.org for team in self.teams if team.org.members == team},
-            key=lambda o: o.title,
-        )
+        return sorted({team.organization for team in self.teams}, key=lambda o: o.title)
 
     def organizations_memberof_ids(self):
         """
         Return the database ids of the organizations this user is a member of. This is used
         for database queries.
         """
-        return list({team.org.id for team in self.teams if team.org.members == team})
+        return list({team.organization.id for team in self.teams})
 
     def is_profile_complete(self):
         """
@@ -463,27 +448,12 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         """
         return bool(self.fullname and self.username and self.email)
 
-    def available_permissions(self):
-        """
-        Return all permission objects available to this user
-        (either owned by user or available to all users).
-        """
-        from .client import Permission
-
-        return (
-            Permission.query.filter(
-                db.or_(Permission.allusers.is_(True), Permission.user == self)
-            )
-            .order_by(Permission.name)
-            .all()
-        )
-
     def clients_with_team_access(self):
         """
         Return a list of clients with access to the user's organizations' teams.
         """
         return [
-            token.client
+            token.auth_client
             for token in self.authtokens
             if {'*', 'teams', 'teams/*'}.intersection(token.effective_scope)
         ]
@@ -500,7 +470,7 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         require_one_of(username=username, buid=buid)
 
         if username is not None:
-            query = cls.query.join(Name).filter(Name.name == username)
+            query = cls.query.join(AccountName).filter(AccountName.name == username)
         else:
             query = cls.query.filter_by(buid=buid)
         if defercols:
@@ -525,13 +495,13 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         if userids and not buids:
             buids = userids
         if buids and usernames:
-            query = cls.query.join(Name).filter(
-                or_(cls.buid.in_(buids), Name.name.in_(usernames))
+            query = cls.query.join(AccountName).filter(
+                or_(cls.buid.in_(buids), AccountName.name.in_(usernames))
             )
         elif buids:
             query = cls.query.filter(cls.buid.in_(buids))
         elif usernames:
-            query = cls.query.join(Name).filter(Name.name.in_(usernames))
+            query = cls.query.join(AccountName).filter(AccountName.name.in_(usernames))
         else:
             raise Exception
 
@@ -567,13 +537,13 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         if not query:
             return []
         users = (
-            cls.query.join(Name)
+            cls.query.join(AccountName)
             .filter(
                 cls.status == USER_STATUS.ACTIVE,
                 or_(  # Match against buid (exact value only), fullname or username, case insensitive
                     cls.buid == query[:-1],
                     db.func.lower(cls.fullname).like(db.func.lower(query)),
-                    db.func.lower(Name.name).like(db.func.lower(query)),
+                    db.func.lower(AccountName.name).like(db.func.lower(query)),
                 ),
             )
             .options(*cls._defercols)
@@ -623,9 +593,13 @@ class User(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
             )
         return users
 
+    @classmethod
+    def active_user_count(cls):
+        return cls.query.filter_by(status=USER_STATUS.ACTIVE).count()
+
 
 class UserOldId(UuidMixin, BaseMixin, db.Model):
-    __tablename__ = 'useroldid'
+    __tablename__ = 'user_oldid'
     __uuid_primary_key__ = True
 
     #: Old user account, if still present
@@ -658,24 +632,17 @@ class UserOldId(UuidMixin, BaseMixin, db.Model):
 team_membership = db.Table(
     'team_membership',
     db.Model.metadata,
-    *(
-        make_timestamp_columns()
-        + (
-            db.Column(
-                'user_id',
-                None,
-                db.ForeignKey('user.id'),
-                nullable=False,
-                primary_key=True,
-            ),
-            db.Column(
-                'team_id',
-                None,
-                db.ForeignKey('team.id'),
-                nullable=False,
-                primary_key=True,
-            ),
-        )
+    db.Column(
+        'user_id', None, db.ForeignKey('user.id'), nullable=False, primary_key=True
+    ),
+    db.Column(
+        'team_id', None, db.ForeignKey('team.id'), nullable=False, primary_key=True
+    ),
+    db.Column(
+        'created_at',
+        db.TIMESTAMP(timezone=True),
+        nullable=False,
+        default=db.func.utcnow(),
     ),
 )
 
@@ -698,32 +665,9 @@ class Organization(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         cascade='all',
         post_update=True,
     )  # No delete-orphan cascade here
-    members_id = db.Column(
-        None,
-        db.ForeignKey('team.id', use_alter=True, name='organization_members_id_fkey'),
-        nullable=True,
-    )
-    members = db.relationship(
-        'Team',
-        primaryjoin='Organization.members_id == Team.id',
-        uselist=False,
-        cascade='all',
-        post_update=True,
-    )  # No delete-orphan cascade here
     title = db.Column(db.Unicode(__title_length__), default='', nullable=False)
     #: Deprecated, but column preserved for existing data until migration
     description = deferred(db.Column(db.UnicodeText, default='', nullable=False))
-
-    #: Client id that created this account
-    client_id = db.Column(
-        None,
-        db.ForeignKey('client.id', use_alter=True, name='organization_client_id_fkey'),
-        nullable=True,
-    )
-    #: If this org was created by a client app via the API, record it here
-    client = db.relationship(
-        'Client', foreign_keys=[client_id]
-    )  # No backref or cascade
 
     _defercols = [defer('created_at'), defer('updated_at')]
 
@@ -744,17 +688,19 @@ class Organization(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
             if self._name is not None:
                 self._name.name = value
             else:
-                self._name = Name(name=value, owner=self, id=self.uuid)
+                self._name = AccountName(name=value, owner=self, id=self.uuid)
 
     @name.expression
     def name(cls):  # NOQA: N805
-        return db.select([Name.name]).where(Name.org_id == cls.id).label('name')
+        return (
+            db.select([AccountName.name])
+            .where(AccountName.organization_id == cls.id)
+            .label('name')
+        )
 
     def make_teams(self):
         if self.owners is None:
-            self.owners = Team(title=_("Owners"), org=self)
-        if self.members is None:
-            self.members = Team(title=_("Members"), org=self)
+            self.owners = Team(title=_("Owners"), organization=self)
 
     def __repr__(self):
         return '<Organization {name} "{title}">'.format(
@@ -767,18 +713,6 @@ class Organization(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
             return '{title} (@{name})'.format(title=self.title, name=self.name)
         else:
             return self.title
-
-    def clients_with_team_access(self):
-        """
-        Return a list of clients with access to the organization's teams.
-        """
-        from lastuser_core.models.client import CLIENT_TEAM_ACCESS
-
-        return [
-            cta.client
-            for cta in self.client_team_access
-            if cta.access_level == CLIENT_TEAM_ACCESS.ALL
-        ]
 
     def permissions(self, user, inherited=None):
         perms = super(Organization, self).permissions(user, inherited)
@@ -797,21 +731,6 @@ class Organization(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
                 perms.remove('delete')
         return perms
 
-    def available_permissions(self):
-        """
-        Return all permission objects available to this organization
-        (either owned by this organization or available to all users).
-        """
-        from .client import Permission
-
-        return (
-            Permission.query.filter(
-                db.or_(Permission.allusers.is_(True), Permission.org == self)
-            )
-            .order_by(Permission.name)
-            .all()
-        )
-
     @classmethod
     def get(cls, name=None, buid=None, defercols=False):
         """
@@ -824,7 +743,7 @@ class Organization(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
         require_one_of(name=name, buid=buid)
 
         if name is not None:
-            query = cls.query.join(Name).filter(Name.name == name)
+            query = cls.query.join(AccountName).filter(AccountName.name == name)
         else:
             query = cls.query.filter_by(buid=buid)
         if defercols:
@@ -840,7 +759,7 @@ class Organization(SharedNameMixin, UuidMixin, BaseMixin, db.Model):
                 query = query.options(*cls._defercols)
             orgs.extend(query.all())
         if names:
-            query = cls.query.join(Name).filter(Name.name.in_(names))
+            query = cls.query.join(AccountName).filter(AccountName.name.in_(names))
             if defercols:
                 query = query.options(*cls._defercols)
             orgs.extend(query.all())
@@ -853,30 +772,19 @@ class Team(UuidMixin, BaseMixin, db.Model):
     #: Displayed name
     title = db.Column(db.Unicode(__title_length__), nullable=False)
     #: Organization
-    org_id = db.Column(None, db.ForeignKey('organization.id'), nullable=False)
-    org = db.relationship(
+    organization_id = db.Column(None, db.ForeignKey('organization.id'), nullable=False)
+    organization = db.relationship(
         Organization,
-        primaryjoin=org_id == Organization.id,
+        primaryjoin=organization_id == Organization.id,
         backref=db.backref('teams', order_by=title, cascade='all, delete-orphan'),
     )
     users = db.relationship(
         User, secondary='team_membership', lazy='dynamic', backref='teams'
     )  # No cascades here! Cascades will delete users
 
-    #: Client id that created this team
-    client_id = db.Column(
-        None,
-        db.ForeignKey('client.id', use_alter=True, name='team_client_id_fkey'),
-        nullable=True,
-    )
-    #: If this team was created by a client app via the API, record it here
-    client = db.relationship(
-        'Client', foreign_keys=[client_id]
-    )  # No backref or cascade
-
     def __repr__(self):
-        return '<Team {team} of {org}>'.format(
-            team=self.title.encode('utf-8'), org=repr(self.org)[1:-1]
+        return '<Team {team} of {organization}>'.format(
+            team=self.title.encode('utf-8'), organization=repr(self.organization)[1:-1]
         )
 
     @property
@@ -885,7 +793,7 @@ class Team(UuidMixin, BaseMixin, db.Model):
 
     def permissions(self, user, inherited=None):
         perms = super(Team, self).permissions(user, inherited)
-        if user and user in self.org.owners.users:
+        if user and user in self.organization.owners.users:
             perms.add('edit')
             perms.add('delete')
         return perms
@@ -905,7 +813,7 @@ class Team(UuidMixin, BaseMixin, db.Model):
         :param str buid: Buid of the team
         """
         if with_parent:
-            query = cls.query.options(db.joinedload(cls.org))
+            query = cls.query.options(db.joinedload(cls.organization))
         else:
             query = cls.query
         return query.filter_by(buid=buid).one_or_none()
@@ -915,7 +823,7 @@ class Team(UuidMixin, BaseMixin, db.Model):
 
 
 class UserEmail(BaseMixin, db.Model):
-    __tablename__ = 'useremail'
+    __tablename__ = 'user_email'
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(
         User,
@@ -931,7 +839,7 @@ class UserEmail(BaseMixin, db.Model):
 
     __table_args__ = (
         db.Index(
-            'ix_useremail_email_lower',
+            'ix_user_email_email_lower',
             db.func.lower(_email).label('email_lower'),
             unique=True,
             postgresql_ops={'email_lower': 'varchar_pattern_ops'},
@@ -988,9 +896,25 @@ class UserEmail(BaseMixin, db.Model):
         else:
             return cls.query.filter_by(md5sum=md5sum).one_or_none()
 
+    @classmethod
+    def get_for(cls, user, email=None, md5sum=None):
+        """
+        Return a UserEmail with matching md5sum if it belongs to the given user
+
+        :param User user: User to lookup for
+        :param str md5sum: md5sum of email address
+        """
+        require_one_of(email=email, md5sum=md5sum)
+        if email:
+            return cls.query.filter(
+                cls.user == user, cls.email.in_([email, email.lower()])
+            ).one_or_none()
+        else:
+            return cls.query.filter_by(user=user, md5sum=md5sum).one_or_none()
+
 
 class UserEmailClaim(BaseMixin, db.Model):
-    __tablename__ = 'useremailclaim'
+    __tablename__ = 'user_email_claim'
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(
         User,
@@ -1036,18 +960,29 @@ class UserEmailClaim(BaseMixin, db.Model):
         return perms
 
     @classmethod
-    def get(cls, email, user):
+    def get_for(cls, user, email=None, md5sum=None):
         """
         Return a UserEmailClaim with matching email address for the given user.
 
-        :param str email: Email address to lookup
         :param User user: User who claimed this email address
+        :param str email: Email address to lookup
+        :param str md5sum: md5sum of email address to lookup
         """
-        return (
-            cls.query.filter(UserEmailClaim.email.in_([email, email.lower()]))
-            .filter_by(user=user)
-            .one_or_none()
-        )
+        require_one_of(email=email, md5sum=md5sum)
+        if email:
+            return (
+                cls.query.filter(UserEmailClaim.email.in_([email, email.lower()]))
+                .filter_by(user=user)
+                .one_or_none()
+            )
+        else:
+            return cls.query.filter_by(md5sum=md5sum, user=user).one_or_none()
+
+    @classmethod
+    def get_by(cls, md5sum, verification_code):
+        return cls.query.filter_by(
+            md5sum=md5sum, verification_code=verification_code
+        ).one_or_none()
 
     @classmethod  # NOQA: A003
     def all(cls, email):
@@ -1056,15 +991,11 @@ class UserEmailClaim(BaseMixin, db.Model):
 
         :param str email: Email address to lookup
         """
-        return (
-            cls.query.filter(UserEmailClaim.email.in_([email, email.lower()]))
-            .order_by(cls.user_id)
-            .all()
-        )
+        return cls.query.filter(UserEmailClaim.email.in_([email, email.lower()]))
 
 
 class UserPhone(BaseMixin, db.Model):
-    __tablename__ = 'userphone'
+    __tablename__ = 'user_phone'
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(
         User,
@@ -1124,9 +1055,19 @@ class UserPhone(BaseMixin, db.Model):
         """
         return cls.query.filter_by(phone=phone).one_or_none()
 
+    @classmethod
+    def get_for(cls, user, phone):
+        """
+        Return a UserPhone with matching phone number if it belongs to the given user
+
+        :param User user: User to check against
+        :param str phone: Phone number to lookup (must be an exact match)
+        """
+        return cls.query.filter_by(user=user, phone=phone).one_or_none()
+
 
 class UserPhoneClaim(BaseMixin, db.Model):
-    __tablename__ = 'userphoneclaim'
+    __tablename__ = 'user_phone_claim'
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(
         User,
@@ -1181,7 +1122,7 @@ class UserPhoneClaim(BaseMixin, db.Model):
         return perms
 
     @classmethod
-    def get(cls, phone, user):
+    def get_for(cls, user, phone):
         """
         Return a UserPhoneClaim with matching phone number for the given user.
 
@@ -1199,20 +1140,37 @@ class UserPhoneClaim(BaseMixin, db.Model):
         """
         return cls.query.filter_by(phone=phone).all()
 
+    @classmethod
+    def delete_expired(cls):
+        """Delete expired phone claims"""
+        # Delete if:
+        # 1. The claim is > 1 hour old
+        # 2. Too many unsuccessful verification attempts
+        cls.query.filter(
+            db.or_(
+                cls.updated_at < (utcnow() - timedelta(hours=1)),
+                cls.verification_expired,
+            )
+        ).delete(synchronize_session=False)
 
-class PasswordResetRequest(BaseMixin, db.Model):
-    __tablename__ = 'passwordresetrequest'
-    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship(User, primaryjoin=user_id == User.id)
+
+class AuthPasswordResetRequest(BaseMixin, db.Model):
+    __tablename__ = 'auth_password_reset_request'
+    user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False, index=True)
+    user = db.relationship(User)
     reset_code = db.Column(db.String(44), nullable=False, default=newsecret)
 
     def __init__(self, **kwargs):
-        super(PasswordResetRequest, self).__init__(**kwargs)
+        super(AuthPasswordResetRequest, self).__init__(**kwargs)
         self.reset_code = newsecret()
+
+    @classmethod
+    def get(cls, user, reset_code):
+        return cls.query.filter_by(user=user, reset_code=reset_code).first()
 
 
 class UserExternalId(BaseMixin, db.Model):
-    __tablename__ = 'userexternalid'
+    __tablename__ = 'user_externalid'
     __at_username_services__ = []
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(
@@ -1234,7 +1192,7 @@ class UserExternalId(BaseMixin, db.Model):
     __table_args__ = (
         db.UniqueConstraint('service', 'userid'),
         db.Index(
-            'ix_userexternalid_username_lower',
+            'ix_user_externalid_username_lower',
             db.func.lower(username).label('username_lower'),
             postgresql_ops={'username_lower': 'varchar_pattern_ops'},
         ),

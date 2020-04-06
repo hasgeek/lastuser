@@ -1,14 +1,15 @@
 {% extends "layout.html.jinja2" %}
-{% block title %}Dashboard{% endblock %}
+
+{% block title %}{% trans %}Dashboard{% endtrans %}{% endblock %}
 
 {% block pageheaders %}
   <link href="//cdnjs.cloudflare.com/ajax/libs/c3/0.4.9/c3.min.css" rel="stylesheet"/>
 {% endblock %}
 
 {% block content %}
-  <h2>{{ mau }} monthly active users</h2>
+  <h2>{% trans active=mau %}{{ active }} monthly active users{% endtrans %}</h2>
   <div id="monthly-users"></div>
-  <h2>{{ user_count }} total users</h2>
+  <h2>{% trans count=user_count %}{{ count }} total users{% endtrans %}</h2>
   <div id="total-users"></div>
 {% endblock %}
 

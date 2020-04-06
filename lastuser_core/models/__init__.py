@@ -8,7 +8,7 @@ from coaster.sqlalchemy import BaseMixin, BaseScopedNameMixin, TimestampMixin, U
 TimestampMixin.__with_timezone__ = True
 
 from .user import *  # isort:skip
-from .session import *  # isort:skip
-from .client import *  # isort:skip
+from .user_session import *  # isort:skip
+from .auth_client import *  # isort:skip
 from .notification import *  # isort:skip
 from .helpers import *  # isort:skip

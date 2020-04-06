@@ -1,26 +1,26 @@
 {% extends "layout.html.jinja2" %}
-{% block title %}Redirecting you back to {{ client.title }}…{% endblock %}
+{% block title %}{% trans title=auth_client.title %}Redirecting you back to {{ title }}…{% endtrans %}{% endblock %}
+
 {% block pageheaders %}
   <meta http-equiv="refresh" content="0; {{ redirect_to }}"/>
 {% endblock %}
 
 {% block content %}
-<p>
-  <a id="continue" class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ redirect_to }}">Continue</a>
-</p>
+  <p><a id="continue" class="mui-btn mui-btn--small mui-btn--raised mui-btn--primary" href="{{ redirect_to }}">{% trans %}Continue{% endtrans %}</a></p>
 {% endblock %}
+
 {% block footerscripts %}
   <script type="text/javascript">
     $(function() {
       // Scripts can't close the page, so redirect to website
       $("#continue").click(function() {
         setTimeout(function() {
-          window.location = {{ client.website|tojson }};
+          window.location = {{ auth_client.website|tojson }};
         }, 100);
       });
       // Redirect anyway after 5 seconds (assuming meta refresh worked)
       setTimeout(function() {
-        window.location = {{ client.website|tojson }};
+        window.location = {{ auth_client.website|tojson }};
       }, 5000)
     });
   </script>

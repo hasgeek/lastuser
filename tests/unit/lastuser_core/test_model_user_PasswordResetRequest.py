@@ -16,6 +16,6 @@ class TestPasswordResetRequest(TestDatabaseFixture):
         """
         Test for checking PasswordResetRequest's instance creation
         """
-        result = models.PasswordResetRequest()
-        self.assertIsInstance(result, models.PasswordResetRequest)
+        result = models.AuthPasswordResetRequest()
+        self.assertIsInstance(result, models.AuthPasswordResetRequest)
         self.assertTrue(hasattr(result, 'reset_code'))

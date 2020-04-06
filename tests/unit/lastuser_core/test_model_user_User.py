@@ -118,44 +118,28 @@ class TestUser(TestDatabaseFixture):
         Test for verifying organizations a user is a member of or owner
         """
         oakley = self.fixtures.oakley
-        batdog = self.fixtures.batdog
-        specialdachs = self.fixtures.specialdachs
         result = oakley.organizations()
         self.assertIsInstance(result, list)
-        self.assertCountEqual(result, [batdog, specialdachs])
+        self.assertCountEqual(result, [self.fixtures.specialdachs])
 
     def test_user_organizations_memberof(self):
         """
         Test for verifying list of organizations this user is member of
         """
         oakley = self.fixtures.oakley
-        batdog = self.fixtures.batdog
         result = oakley.organizations_memberof()
         self.assertIsInstance(result, list)
-        self.assertCountEqual(result, [batdog])
+        self.assertCountEqual(result, [self.fixtures.specialdachs])
 
     def test_user_organizations_memberof_ids(self):
         """
         Test for verifying ids of organizations where a user is a *only* a member
         """
         oakley = self.fixtures.oakley
-        batdog = self.fixtures.batdog
+        self.fixtures.batdog
         result = oakley.organizations_memberof_ids()
         self.assertIsInstance(result, list)
-        self.assertCountEqual(result, [batdog.id])
-
-    def test_user_available_permissions(self):
-        """
-        Test for verifying all permission objects available to a user
-        (either owned by the user or available to all users)
-        """
-        crusoe = self.fixtures.crusoe
-        bdfl = self.fixtures.bdfl
-        result = crusoe.available_permissions()
-        self.assertIsInstance(result, list)
-        self.assertCountEqual(result, [bdfl])
-        self.assertEqual(result[0].owner, crusoe)
-        self.assertEqual(result[0].title, bdfl.title)
+        self.assertCountEqual(result, [self.fixtures.specialdachs.id])
 
     def test_user_username(self):
         """
@@ -278,27 +262,24 @@ class TestUser(TestDatabaseFixture):
         marcus = models.User(username='marcus')
         volturi = models.Organization(name='volturi', title='The Volturi')
         volturi.owners.users.append(aro)
-        volturi.members.users.append(marcus)
-        volturi.members.users.append(jane)
-        volturi.make_teams()
-        volterra = models.Client(
+        volterra = models.AuthClient(
             title='Volterra, Tuscany',
-            org=volturi,
+            organization=volturi,
             confidential=True,
             website='volterra.co.it',
         )
-        enforcers = models.Client(
+        enforcers = models.AuthClient(
             title='Volturi\'s thugs',
-            org=volturi,
+            organization=volturi,
             confidential=True,
             website='volturi.co.it',
         )
         volterra_auth_token = models.AuthToken(
-            client=volterra, user=aro, scope='teams', validity=0
+            auth_client=volterra, user=aro, scope='teams', validity=0
         )
         volterra_auth_token
         enforcers_auth_token = models.AuthToken(
-            client=enforcers, user=marcus, scope='teams', validity=0
+            auth_client=enforcers, user=marcus, scope='teams', validity=0
         )
         enforcers_auth_token
         self.assertCountEqual(aro.clients_with_team_access(), [volterra])
@@ -349,7 +330,7 @@ class TestUser(TestDatabaseFixture):
         crusoe = self.fixtures.crusoe
         oakley = self.fixtures.oakley
         piglet = self.fixtures.piglet
-        # lena = models.User.query.filter_by(username=u'lena').one_or_none()
+        # lena = models.User.get(username=u'lena')
         # FIXME # scenario 1: when empty query passed
         # result1 = models.User.autocomplete(u'*')
         # self.assertEqual(result1 or lena)
@@ -400,7 +381,7 @@ class TestUser(TestDatabaseFixture):
         piglet = self.fixtures.piglet
         # scenario 2: if buid is passed
         lookup_by_buid = models.User.get(buid=crusoe.buid)
-        self.assertIsInstance(lookup_by_buid, models.client.User)
+        self.assertIsInstance(lookup_by_buid, models.User)
         self.assertEqual(lookup_by_buid.buid, crusoe.buid)
         # scenario 3: if username is passed
         lookup_by_username = models.User.get(username="crusoe")

@@ -9,8 +9,7 @@
 		<link itemprop="url" href="{{ request.url_root }}"/>
 	</div>
 </div>
-<p>Hello {{ user.fullname }},</p>
-<p>You or someone claiming to be you asked for your password to be reset.</p>
-<p><a href="{{ url_for('.reset_email', _external=True, buid=user.buid, secret=secret) }}">Click here to reset your password</a></p>
-<p>If you did not ask for your password to be reset, you may safely ignore this
-email.</p>
+<p>{% trans name=user.fullname %}Hello {{ name }},{% endtrans %}</p>
+<p>{% trans %}You or someone claiming to be you asked for your password to be reset.{% endtrans %}</p>
+<p><a href="{{ url_for('.reset_email', _external=True, buid=user.buid, secret=secret) }}">{% trans %}Click here to reset your password{% endtrans %}</a></p>
+<p>{% trans %}If you did not ask for your password to be reset, you may safely ignore this email.{% endtrans %}</p>

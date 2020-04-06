@@ -1,18 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from lastuser_core.models import (
-    CLIENT_TEAM_ACCESS,
-    Client,
-    ClientTeamAccess,
+    AuthClient,
+    AuthClientTeamPermissions,
+    AuthClientUserPermissions,
     Organization,
-    Permission,
-    Resource,
-    ResourceAction,
     SMSMessage,
     Team,
-    TeamClientPermissions,
     User,
-    UserClientPermissions,
     UserEmail,
     UserPhone,
 )
@@ -47,64 +42,43 @@ class Fixtures(object):
 
         batdog = Organization(name='batdog', title='Batdog')
         batdog.owners.users.append(crusoe)
-        batdog.members.users.append(oakley)
         db.session.add(batdog)
         self.batdog = batdog
 
         specialdachs = Organization(name="specialdachs", title="Special Dachshunds")
         specialdachs.owners.users.append(oakley)
-        specialdachs.members.users.append(piglet)
         db.session.add(specialdachs)
         self.specialdachs = specialdachs
 
-        client = Client(
+        auth_client = AuthClient(
             title="Batdog Adventures",
-            org=batdog,
+            organization=batdog,
             confidential=True,
             namespace='fun.batdogadventures.com',
             website="http://batdogadventures.com",
         )
-        db.session.add(client)
-        self.client = client
+        db.session.add(auth_client)
+        self.auth_client = auth_client
 
-        dachshunds = Team(title="Dachshunds", org=batdog)
+        dachshunds = Team(title="Dachshunds", organization=batdog)
         db.session.add(dachshunds)
         self.dachshunds = dachshunds
 
-        team_client_permission = TeamClientPermissions(
-            team=dachshunds, client=client, access_permissions="admin"
+        auth_client_team_permissions = AuthClientTeamPermissions(
+            team=dachshunds, auth_client=auth_client, access_permissions="admin"
         )
-        self.team_client_permission = team_client_permission
-        db.session.add(team_client_permission)
+        self.auth_client_team_permissions = auth_client_team_permissions
+        db.session.add(auth_client_team_permissions)
 
-        client_team_access = ClientTeamAccess(
-            org=batdog, client=client, access_level=CLIENT_TEAM_ACCESS.ALL
+        auth_client_user_permissions = AuthClientUserPermissions(
+            user=crusoe, auth_client=auth_client
         )
-        db.session.add(client_team_access)
-
-        bdfl = Permission(name="bdfl", title="BDFL", user=crusoe)
-        db.session.add(bdfl)
-        self.bdfl = bdfl
-
-        user_client_permissions = UserClientPermissions(user=crusoe, client=client)
-        db.session.add(user_client_permissions)
-        self.user_client_permissions = user_client_permissions
-
-        resource = Resource(name="test_resource", title="Test Resource", client=client)
-        db.session.add(resource)
-        self.resource = resource
-
-        resource_action = ResourceAction(name='Fun', resource=resource, title='fun')
-        db.session.add(resource_action)
-        self.resource_action = resource_action
-
-        action = ResourceAction(name="read", title="Read", resource=resource)
-        db.session.add(action)
-        self.action = action
+        db.session.add(auth_client_user_permissions)
+        self.auth_client_user_permissions = auth_client_user_permissions
 
         message = SMSMessage(
             phone_number=crusoe_phone.phone,
-            transaction_id="Ruff" * 5,
+            transactionid="Ruff" * 5,
             message="Wuff Wuff",
         )
         db.session.add(message)

@@ -9,7 +9,7 @@
         // User is logged into Lastuser. Log them into client app too
         // Send user back to the page they came from. document.referrer is our saviour!
         // Tip from http://www.nczonline.net/blog/2013/04/16/getting-the-url-of-an-iframes-parent/
-      {%- if client.trusted %}
+      {%- if auth_client.trusted %}
         window.top.location.href = {{ login_url|tojson }} + '?next=' + encodeURIComponent(document.referrer) + '&metarefresh=1';
       {%- else %}
         // getJSON code from https://mathiasbynens.be/notes/xhr-responsetype-json
@@ -35,7 +35,7 @@
           xhr.send();
         };
 
-        getJSON({{ url_for('.login_beacon_json', client_id=client.key)|tojson }}, function(data) {
+        getJSON({{ url_for('.login_beacon_json', client_id=auth_client.buid)|tojson }}, function(data) {
           if (data.hastoken) {
             window.top.location.href = {{ login_url|tojson }} + '?next=' + encodeURIComponent(document.referrer);
           } // Else: no user, don't do anything

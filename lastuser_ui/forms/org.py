@@ -4,7 +4,7 @@ from flask import Markup, current_app, url_for
 
 from baseframe import _, __
 from coaster.auth import current_auth
-from lastuser_core.models import Name, Organization, Team, User
+from lastuser_core.models import AccountName, Organization, Team, User
 import baseframe.forms as forms
 
 __all__ = ['OrganizationForm', 'TeamForm']
@@ -22,7 +22,7 @@ class OrganizationForm(forms.Form):
         __("Username"),
         validators=[
             forms.validators.DataRequired(),
-            forms.validators.Length(max=Name.__name_length__),
+            forms.validators.Length(max=AccountName.__name_length__),
         ],
         prefix="https://hasgeek.com/",
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'},
@@ -36,9 +36,9 @@ class OrganizationForm(forms.Form):
         if self.edit_obj:
             reason = self.edit_obj.validate_name_candidate(field.data)
         else:
-            reason = Name.validate_name_candidate(field.data)
+            reason = AccountName.validate_name_candidate(field.data)
         if not reason:
-            return  # Name is available
+            return  # AccountName is available
         if reason == 'invalid':
             raise forms.ValidationError(
                 _(

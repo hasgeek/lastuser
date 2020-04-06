@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from lastuser_core.models import Client, Organization, Permission, User  # isort:skip
+from lastuser_core.models import AuthClient, Organization, User  # isort:skip
 from lastuserapp import app, db
 
 # incase data exists from previously run tests
@@ -20,20 +20,17 @@ gustav = User(
 oakley = User(username="oakley", fullname="Oakley 'huh' Dachshund")
 dachsunited = Organization(name="dachsunited", title="Dachs United")
 dachsunited.owners.users.append(gustav)
-dachsunited.members.users.append(oakley)
-dachshundworld = Client(
+dachshundworld = AuthClient(
     title="Dachshund World",
     org=dachsunited,
     confidential=True,
     website="http://gustavsdachshundworld.com",
 )
-partyanimal = Permission(name="partyanimal", title="Party Animal", org=dachsunited)
 
 db.session.add(gustav)
 db.session.add(oakley)
 db.session.add(dachsunited)
 db.session.add(dachshundworld)
-db.session.add(partyanimal)
 db.session.commit()
 
 app.run('0.0.0.0')

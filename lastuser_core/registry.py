@@ -68,17 +68,11 @@ class ResourceRegistry(OrderedDict):
                         return resource_auth_error(
                             _("A Bearer token is required in the Authorization header")
                         )
-                    if 'access_token' in args:
-                        return resource_auth_error(
-                            _("Access token specified in both header and body")
-                        )
                 else:
-                    token = args.get('access_token')
-                    if not token:
-                        # No token provided in Authorization header or in request parameters
-                        return resource_auth_error(
-                            _("An access token is required to access this resource")
-                        )
+                    # No token provided in Authorization header
+                    return resource_auth_error(
+                        _("An access token is required to access this resource")
+                    )
                 authtoken = AuthToken.get(token=token)
                 if not authtoken:
                     return resource_auth_error(_("Unknown access token"))
@@ -89,7 +83,7 @@ class ResourceRegistry(OrderedDict):
                     authtoken.effective_scope
                 )  # Read once to avoid reparsing below
                 wildcardscope = usescope.split('/', 1)[0] + '/*'
-                if not (authtoken.client.trusted and '*' in tokenscope):
+                if not (authtoken.auth_client.trusted and '*' in tokenscope):
                     # If a trusted client has '*' in token scope, all good, else check further
                     if (usescope not in tokenscope) and (
                         wildcardscope not in tokenscope
@@ -98,7 +92,7 @@ class ResourceRegistry(OrderedDict):
                         return resource_auth_error(
                             _("Token does not provide access to this resource")
                         )
-                if trusted and not authtoken.client.trusted:
+                if trusted and not authtoken.auth_client.trusted:
                     return resource_auth_error(
                         _("This resource can only be accessed by trusted clients")
                     )

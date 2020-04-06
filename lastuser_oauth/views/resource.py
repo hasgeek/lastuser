@@ -11,14 +11,12 @@ from coaster.utils import getbool
 from coaster.views import jsonp, requestargs
 from lastuser_core import resource_registry
 from lastuser_core.models import (
+    AuthClientCredential,
+    AuthClientTeamPermissions,
+    AuthClientUserPermissions,
     AuthToken,
-    ClientCredential,
     Organization,
-    Resource,
-    ResourceAction,
-    TeamClientPermissions,
     User,
-    UserClientPermissions,
     UserSession,
     db,
     getuser,
@@ -32,7 +30,7 @@ from .helpers import (
 )
 
 
-def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
+def get_userinfo(user, auth_client, scope=[], user_session=None, get_permissions=True):
 
     teams = {}
 
@@ -51,8 +49,8 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
     else:
         userinfo = {}
 
-    if session:
-        userinfo['sessionid'] = session.buid
+    if user_session:
+        userinfo['sessionid'] = user_session.buid
 
     if '*' in scope or 'email' in scope or 'email/*' in scope:
         userinfo['email'] = str(user.email)
@@ -105,10 +103,9 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                 'buid': team.buid,
                 'uuid': team.uuid,
                 'title': team.title,
-                'org': team.org.buid,
-                'org_uuid': team.org.uuid,
-                'owners': team == team.org.owners,
-                'members': team == team.org.members,
+                'org': team.organization.buid,
+                'org_uuid': team.organization.uuid,
+                'owners': team == team.organization.owners,
                 'member': True,
             }
 
@@ -121,10 +118,9 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
                         'buid': team.buid,
                         'uuid': team.uuid,
                         'title': team.title,
-                        'org': team.org.buid,
-                        'org_uuid': team.org.uuid,
-                        'owners': team == team.org.owners,
-                        'members': team == team.org.members,
+                        'org': team.organization.buid,
+                        'org_uuid': team.organization.uuid,
+                        'owners': team == team.organization.owners,
                         'member': False,
                     }
 
@@ -132,24 +128,16 @@ def get_userinfo(user, client, scope=[], session=None, get_permissions=True):
         userinfo['teams'] = list(teams.values())
 
     if get_permissions:
-        if client.user:
-            perms = UserClientPermissions.query.filter_by(
-                user=user, client=client
-            ).first()
+        if auth_client.user:
+            perms = AuthClientUserPermissions.get(auth_client=auth_client, user=user)
             if perms:
                 userinfo['permissions'] = perms.access_permissions.split(' ')
         else:
             permsset = set()
             if user.teams:
-                perms = (
-                    TeamClientPermissions.query.filter_by(client=client)
-                    .filter(
-                        TeamClientPermissions.team_id.in_(
-                            [team.id for team in user.teams]
-                        )
-                    )
-                    .all()
-                )
+                perms = AuthClientTeamPermissions.all_for(
+                    auth_client=auth_client, user=user
+                ).all()
                 for permob in perms:
                     permsset.update(permob.access_permissions.split(' '))
             userinfo['permissions'] = sorted(permsset)
@@ -192,7 +180,11 @@ def api_result(status, _jsonp=False, **params):
 
 # --- Client access endpoints -------------------------------------------------
 
-
+# Client A has obtained a token from user U for access to the user's resources held
+# in client B. It then presents this token to B and asks for the resource. B has not
+# seen this token before, so it calls token/verify to validate it. Lastuser confirms
+# the token is indeed valid for the resource being requested. However, with the
+# removal of client resources, the only valid resource now is the '*' wildcard.
 @lastuser_oauth.route('/api/1/token/verify', methods=['POST'])
 @requires_client_login
 def token_verify():
@@ -201,11 +193,14 @@ def token_verify():
     if not client_resource:
         # No resource specified by caller
         return resource_error('no_resource')
+    if client_resource != '*':
+        # Client resources are no longer supported; only the '*' resource is
+        return resource_error('unknown_resource')
     if not token:
         # No token specified by caller
         return resource_error('no_token')
 
-    if not current_auth.client.namespace:
+    if not current_auth.auth_client.namespace:
         # This client has not defined any resources
         return api_result('error', error='client_no_resources')
 
@@ -214,30 +209,11 @@ def token_verify():
         # No such auth token
         return api_result('error', error='no_token')
     if (
-        current_auth.client.namespace + ':' + client_resource
+        current_auth.auth_client.namespace + ':' + client_resource
         not in authtoken.effective_scope
-    ) and (current_auth.client.namespace + ':*' not in authtoken.effective_scope):
+    ) and (current_auth.auth_client.namespace + ':*' not in authtoken.effective_scope):
         # Token does not grant access to this resource
         return api_result('error', error='access_denied')
-    if '/' in client_resource:
-        parts = client_resource.split('/')
-        if len(parts) != 2:
-            return api_result('error', error='invalid_scope')
-        resource_name, action_name = parts
-    else:
-        resource_name = client_resource
-        action_name = None
-    if resource_name != '*':
-        resource = Resource.get(resource_name, client=current_auth.client)
-        if not resource:
-            # Resource does not exist or does not belong to this client
-            return api_result('error', error='access_denied')
-        if action_name and action_name != '*':
-            action = ResourceAction.query.filter_by(
-                name=action_name, resource=resource
-            ).first()
-            if not action:
-                return api_result('error', error='access_denied')
 
     # All validations passed. Token is valid for this client and scope. Return with information on the token
     # TODO: Don't return validity. Set the HTTP cache headers instead.
@@ -246,17 +222,17 @@ def token_verify():
     }  # Period (in seconds) for which this assertion may be cached.
     if authtoken.user:
         params['userinfo'] = get_userinfo(
-            authtoken.user, current_auth.client, scope=authtoken.effective_scope
+            authtoken.user, current_auth.auth_client, scope=authtoken.effective_scope
         )
     params['clientinfo'] = {
-        'title': authtoken.client.title,
-        'userid': authtoken.client.owner.buid,
-        'buid': authtoken.client.owner.buid,
-        'uuid': authtoken.client.owner.uuid,
-        'owner_title': authtoken.client.owner.pickername,
-        'website': authtoken.client.website,
-        'key': authtoken.client.key,
-        'trusted': authtoken.client.trusted,
+        'title': authtoken.auth_client.title,
+        'userid': authtoken.auth_client.owner.buid,
+        'buid': authtoken.auth_client.owner.buid,
+        'uuid': authtoken.auth_client.owner.uuid,
+        'owner_title': authtoken.auth_client.owner.pickername,
+        'website': authtoken.auth_client.website,
+        'key': authtoken.auth_client.buid,
+        'trusted': authtoken.auth_client.trusted,
     }
     return api_result('ok', **params)
 
@@ -269,7 +245,7 @@ def token_get_scope():
         # No token specified by caller
         return resource_error('no_token')
 
-    if not current_auth.client.namespace:
+    if not current_auth.auth_client.namespace:
         # This client has not defined any resources
         return api_result('error', error='client_no_resources')
 
@@ -279,7 +255,7 @@ def token_get_scope():
         return api_result('error', error='no_token')
 
     client_resources = []
-    nsprefix = current_auth.client.namespace + ':'
+    nsprefix = current_auth.auth_client.namespace + ':'
     for item in authtoken.effective_scope:
         if item.startswith(nsprefix):
             client_resources.append(item[len(nsprefix) :])
@@ -294,119 +270,20 @@ def token_get_scope():
     }  # Period (in seconds) for which this assertion may be cached.
     if authtoken.user:
         params['userinfo'] = get_userinfo(
-            authtoken.user, current_auth.client, scope=authtoken.effective_scope
+            authtoken.user, current_auth.auth_client, scope=authtoken.effective_scope
         )
     params['clientinfo'] = {
-        'title': authtoken.client.title,
-        'userid': authtoken.client.owner.buid,
-        'buid': authtoken.client.owner.buid,
-        'uuid': authtoken.client.owner.uuid,
-        'owner_title': authtoken.client.owner.pickername,
-        'website': authtoken.client.website,
-        'key': authtoken.client.key,
-        'trusted': authtoken.client.trusted,
+        'title': authtoken.auth_client.title,
+        'userid': authtoken.auth_client.owner.buid,
+        'buid': authtoken.auth_client.owner.buid,
+        'uuid': authtoken.auth_client.owner.uuid,
+        'owner_title': authtoken.auth_client.owner.pickername,
+        'website': authtoken.auth_client.website,
+        'key': authtoken.auth_client.buid,
+        'trusted': authtoken.auth_client.trusted,
         'scope': client_resources,
     }
     return api_result('ok', **params)
-
-
-@lastuser_oauth.route('/api/1/resource/sync', methods=['POST'])
-@requires_client_login
-def sync_resources():
-    resources = request.get_json().get('resources', [])
-    actions_list = {}
-    results = {}
-
-    for name in resources:
-        if '/' in name:
-            parts = name.split('/')
-            if len(parts) != 2:
-                results[name] = {
-                    'status': 'error',
-                    'error': _("Invalid resource name {name}").format(name=name),
-                }
-                continue
-            resource_name, action_name = parts
-        else:
-            resource_name = name
-            action_name = None
-        description = resources[name].get('description')
-        siteresource = getbool(resources[name].get('siteresource'))
-        restricted = getbool(resources[name].get('restricted'))
-        actions_list.setdefault(resource_name, [])
-        resource = Resource.get(name=resource_name, client=current_auth.client)
-        if resource:
-            results[resource.name] = {'status': 'exists', 'actions': {}}
-            if not action_name and resource.description != description:
-                resource.description = description
-                results[resource.name]['status'] = 'updated'
-            if not action_name and resource.siteresource != siteresource:
-                resource.siteresource = siteresource
-                results[resource.name]['status'] = 'updated'
-            if not action_name and resource.restricted != restricted:
-                resource.restricted = restricted
-                results[resource.name]['status'] = 'updated'
-        else:
-            resource = Resource(
-                client=current_auth.client,
-                name=resource_name,
-                title=resources.get(resource_name, {}).get('title')
-                or resource_name.title(),
-                description=resources.get(resource_name, {}).get('description') or '',
-            )
-            db.session.add(resource)
-            results[resource.name] = {'status': 'added', 'actions': {}}
-
-        if action_name:
-            if action_name not in actions_list[resource_name]:
-                actions_list[resource_name].append(action_name)
-            action = resource.get_action(name=action_name)
-            if action:
-                if description != action.description:
-                    action.description = description
-                    results[resource.name]['actions'][action.name] = {
-                        'status': 'updated'
-                    }
-                else:
-                    results[resource.name]['actions'][action.name] = {
-                        'status': 'exists'
-                    }
-            else:
-                # FIXME: What is "title" here? This assignment doesn't seem right
-                action = ResourceAction(
-                    resource=resource,
-                    name=action_name,
-                    title=resources[name].get('title')
-                    or action_name.title() + " " + resource.title,
-                    description=description,
-                )
-                db.session.add(action)
-                results[resource.name]['actions'][action.name] = {'status': 'added'}
-
-    # Deleting resources & actions not defined in client application.
-    for resource_name in actions_list:
-        resource = Resource.get(name=resource_name, client=current_auth.client)
-        actions = ResourceAction.query.filter(
-            ~ResourceAction.name.in_(actions_list[resource_name]),
-            ResourceAction.resource == resource,
-        )
-        for action in actions.all():
-            results[resource_name]['actions'][action.name] = {'status': 'deleted'}
-        actions.delete(synchronize_session='fetch')
-    del_resources = Resource.query.filter(
-        ~Resource.name.in_(list(actions_list.keys())),
-        Resource.client == current_auth.client,
-    )
-    for resource in del_resources.all():
-        ResourceAction.query.filter_by(resource=resource).delete(
-            synchronize_session='fetch'
-        )
-        results[resource.name] = {'status': 'deleted'}
-    del_resources.delete(synchronize_session='fetch')
-
-    db.session.commit()
-
-    return api_result('ok', results=results)
 
 
 @lastuser_oauth.route('/api/1/user/get_by_userid', methods=['GET', 'POST'])
@@ -585,59 +462,22 @@ def user_autocomplete():
     return api_result('ok', users=result, _jsonp=True)
 
 
-# This is org/* instead of organizations/* because it's a client resource. TODO: Reconsider
-# DEPRECATED, to be removed soon
-@lastuser_oauth.route('/api/1/org/get_teams', methods=['GET', 'POST'])
-@requires_client_login
-def org_team_get():
-    """
-    Returns a list of teams in the given organization.
-    """
-    if not current_auth.client.team_access:
-        return api_result('error', error='no_team_access')
-    org_buids = request.values.getlist('org')
-    if not org_buids:
-        return api_result('error', error='no_org_provided')
-    organizations = Organization.all(buids=org_buids)
-    if not organizations:
-        return api_result('error', error='no_such_organization')
-    orgteams = {}
-    for org in organizations:
-        # If client has access to team information, make a list of teams.
-        # XXX: Should trusted clients have access anyway? Will this be an abuse
-        # of the trusted flag? It was originally meant to only bypass user authorization
-        # on login to HasGeek websites as that would have been very confusing to users.
-        # XXX: Return user list here?
-        if current_auth.client in org.clients_with_team_access():
-            orgteams[org.buid] = [
-                {
-                    'userid': team.buid,
-                    'buid': team.buid,
-                    'uuid': team.uuid,
-                    'org': org.buid,
-                    'org_uuid': org.uuid,
-                    'title': team.title,
-                    'owners': team == org.owners,
-                }
-                for team in org.teams
-            ]
-    return api_result('ok', org_teams=orgteams)
-
-
 # --- Public endpoints --------------------------------------------------------
 
 
 @lastuser_oauth.route('/api/1/login/beacon.html')
 @requestargs('client_id', 'login_url')
 def login_beacon_iframe(client_id, login_url):
-    cred = ClientCredential.get(client_id)
-    client = cred.client if cred else None
-    if client is None:
+    cred = AuthClientCredential.get(client_id)
+    auth_client = cred.auth_client if cred else None
+    if auth_client is None:
         abort(404)
-    if not client.host_matches(login_url):
+    if not auth_client.host_matches(login_url):
         abort(400)
     return (
-        render_template('login_beacon.html.jinja2', client=client, login_url=login_url),
+        render_template(
+            'login_beacon.html.jinja2', auth_client=auth_client, login_url=login_url
+        ),
         200,
         {
             'Expires': 'Fri, 01 Jan 1990 00:00:00 GMT',
@@ -649,12 +489,12 @@ def login_beacon_iframe(client_id, login_url):
 @lastuser_oauth.route('/api/1/login/beacon.json')
 @requestargs('client_id')
 def login_beacon_json(client_id):
-    cred = ClientCredential.get(client_id)
-    client = cred.client if cred else None
-    if client is None:
+    cred = AuthClientCredential.get(client_id)
+    auth_client = cred.auth_client if cred else None
+    if auth_client is None:
         abort(404)
     if current_auth.is_authenticated:
-        token = client.authtoken_for(current_auth.user)
+        token = auth_client.authtoken_for(current_auth.user)
     else:
         token = None
     response = jsonify({'hastoken': True if token else False})
@@ -675,13 +515,13 @@ def resource_id(authtoken, args, files=None):
     if 'all' in args and getbool(args['all']):
         return get_userinfo(
             authtoken.user,
-            authtoken.client,
+            authtoken.auth_client,
             scope=authtoken.effective_scope,
             get_permissions=True,
         )
     else:
         return get_userinfo(
-            authtoken.user, authtoken.client, scope=['id'], get_permissions=False
+            authtoken.user, authtoken.auth_client, scope=['id'], get_permissions=False
         )
 
 
@@ -691,7 +531,7 @@ def session_verify(authtoken, args, files=None):
     sessionid = args['sessionid']
     session = UserSession.authenticate(buid=sessionid)
     if session and session.user == authtoken.user:
-        session.access(client=authtoken.client)
+        session.access(auth_client=authtoken.auth_client)
         db.session.commit()
         return {
             'active': True,
@@ -737,16 +577,6 @@ def resource_email(authtoken, args, files=None):
         return {'email': str(authtoken.user.email)}
 
 
-@lastuser_oauth.route('/api/1/email/add', methods=['POST'])
-@resource_registry.resource('email/add', __("Add an email address to your profile"))
-def resource_email_add(authtoken, args, files=None):
-    """
-    TODO: Add an email address to the user's profile.
-    """
-    email = args['email']
-    return {'email': email}  # TODO
-
-
 @lastuser_oauth.route('/api/1/phone')
 @resource_registry.resource('phone', __("Read your phone number"))
 def resource_phone(authtoken, args, files=None):
@@ -786,13 +616,6 @@ def resource_login_providers(authtoken, args, files=None):
     return response
 
 
-@lastuser_oauth.route('/api/1/user/new', methods=['POST'])
-@resource_registry.resource('user/new', __("Create a new user account"), trusted=True)
-def resource_user_new(authtoken, args, files=None):
-    # Set User.client to authtoken.client and User.referrer to authtoken.user
-    pass
-
-
 @lastuser_oauth.route('/api/1/organizations')
 @resource_registry.resource(
     'organizations', __("Read the organizations you are a member of")
@@ -802,7 +625,10 @@ def resource_organizations(authtoken, args, files=None):
     Return user's organizations and teams that they are a member of.
     """
     return get_userinfo(
-        authtoken.user, authtoken.client, scope=['organizations'], get_permissions=False
+        authtoken.user,
+        authtoken.auth_client,
+        scope=['organizations'],
+        get_permissions=False,
     )
 
 
@@ -829,7 +655,7 @@ def resource_teams(authtoken, args, files=None):
     Return user's organizations' teams.
     """
     return get_userinfo(
-        authtoken.user, authtoken.client, scope=['teams'], get_permissions=False
+        authtoken.user, authtoken.auth_client, scope=['teams'], get_permissions=False
     )
 
 

@@ -8,15 +8,11 @@ from coaster.sqlalchemy import failsafe_add
 from coaster.utils import newsecret
 from lastuser_core import resource_registry
 from lastuser_core.models import (
+    AuthClient,
+    AuthClientCredential,
     AuthCode,
     AuthToken,
-    Client,
-    ClientCredential,
-    Resource,
-    TeamClientPermissions,
     User,
-    UserClientPermissions,
-    UserFlashMessage,
     db,
     getuser,
 )
@@ -32,23 +28,22 @@ class ScopeException(Exception):
     pass
 
 
-def verifyscope(scope, client):
+def verifyscope(scope, auth_client):
     """
     Verify if requested scope is valid for this client. Scope must be a list.
     """
     internal_resources = []  # Names of internal resources
-    external_resources = {}  # resource_object: [action_object, ...]
     full_client_access = []  # Clients linked to namespace:* scope
 
     for item in scope:
         if item == '*':
             # The '*' resource (full access) is only available to trusted clients
-            if not client.trusted:
+            if not auth_client.trusted:
                 raise ScopeException(
                     _("Full access is only available to trusted clients")
                 )
         elif item in resource_registry:
-            if resource_registry[item]['trusted'] and not client.trusted:
+            if resource_registry[item]['trusted'] and not auth_client.trusted:
                 raise ScopeException(
                     _(
                         "The resource {scope} is only available to trusted clients"
@@ -63,7 +58,10 @@ def verifyscope(scope, client):
                 wildcard_base = item[:-2]
                 for key in resource_registry:
                     if key == wildcard_base or key.startswith(wildcard_base + '/'):
-                        if resource_registry[key]['trusted'] and not client.trusted:
+                        if (
+                            resource_registry[key]['trusted']
+                            and not auth_client.trusted
+                        ):
                             # Skip over trusted resources if the client is not trusted
                             continue
                         internal_resources.append(key)
@@ -100,15 +98,16 @@ def verifyscope(scope, client):
                 resource_name = subitem
                 action_name = None
             if resource_name == '*' and not action_name:
-                resource_client = Client.get(namespace=namespace)
+                resource_client = AuthClient.get(namespace=namespace)
                 if resource_client:
-                    if resource_client.owner == client.owner:
+                    if resource_client.owner == auth_client.owner:
                         full_client_access.append(resource_client)
                     else:
                         raise ScopeException(
                             _(
-                                "This application does not have access to all resources of app ‘{client}’"
-                            ).format(client=resource_client.title)
+                                "This application does not have access to all "
+                                "resources of app ‘{title}’"
+                            ).format(title=resource_client.title)
                         )
                 else:
                     raise ScopeException(
@@ -116,42 +115,9 @@ def verifyscope(scope, client):
                             namespace=namespace
                         )
                     )
-            else:
-                resource = Resource.get(name=resource_name, namespace=namespace)
-
-                # Validation 2: Resource exists and client has access to it
-                if not resource:
-                    raise ScopeException(
-                        _(
-                            "Unknown resource ‘{resource}’ under namespace ‘{namespace}’ in scope"
-                        ).format(resource=resource_name, namespace=namespace)
-                    )
-                if resource.restricted and resource.client.owner != client.owner:
-                    raise ScopeException(
-                        _(
-                            "This application does not have access to resource ‘{resource}’ in scope"
-                        ).format(resource=resource_name)
-                    )
-
-                # Validation 3: Action is valid
-                if action_name:
-                    action = resource.get_action(action_name)
-                    if not action:
-                        raise ScopeException(
-                            _(
-                                "Unknown action ‘{action}’ on resource ‘{resource}’ under namespace ‘{namespace}’"
-                            ).format(
-                                action=action_name,
-                                resource=resource_name,
-                                namespace=namespace,
-                            )
-                        )
-                    external_resources.setdefault(resource, []).append(action)
-                else:
-                    external_resources.setdefault(resource, [])
 
     internal_resources.sort()
-    return internal_resources, external_resources, full_client_access
+    return internal_resources, full_client_access
 
 
 def oauth_auth_403(reason):
@@ -161,15 +127,15 @@ def oauth_auth_403(reason):
     return render_template('oauth403.html.jinja2', reason=reason), 403
 
 
-def oauth_make_auth_code(client, scope, redirect_uri):
+def oauth_make_auth_code(auth_client, scope, redirect_uri):
     """
     Make an auth code for a given client. Caller must commit
     the database session for this to work.
     """
     authcode = AuthCode(
         user=current_auth.user,
-        session=current_auth.session,
-        client=client,
+        user_session=current_auth.session,
+        auth_client=auth_client,
         scope=scope,
         redirect_uri=redirect_uri[:1024],
     )
@@ -187,30 +153,13 @@ def clear_flashed_messages():
     list(get_flashed_messages())
 
 
-def save_flashed_messages():
-    """
-    Save flashed messages so they can be relayed back to trusted clients.
-    """
-    for index, (category, message) in enumerate(
-        get_flashed_messages(with_categories=True)
-    ):
-        db.session.add(
-            UserFlashMessage(
-                user=current_auth.user, seq=index, category=category, message=message
-            )
-        )
-
-
-def oauth_auth_success(client, redirect_uri, state, code, token=None):
+def oauth_auth_success(auth_client, redirect_uri, state, code, token=None):
     """
     Commit session and redirect to OAuth redirect URI
     """
-    if client.trusted:
-        save_flashed_messages()
-    else:
-        clear_flashed_messages()
+    clear_flashed_messages()
     db.session.commit()
-    if client.confidential:
+    if auth_client.confidential:
         use_fragment = False
     else:
         use_fragment = True
@@ -230,7 +179,9 @@ def oauth_auth_success(client, redirect_uri, state, code, token=None):
         )
     if use_fragment:
         return render_template(
-            'oauth_public_redirect.html.jinja2', client=client, redirect_to=redirect_to
+            'oauth_public_redirect.html.jinja2',
+            auth_client=auth_client,
+            redirect_to=redirect_to,
         )
     else:
         response = redirect(redirect_to, code=303)
@@ -278,55 +229,40 @@ def oauth_authorize():
     # Validation 1.1: Client_id present
     if not client_id:
         return oauth_auth_403(_("Missing client_id"))
-    # Validation 1.2: Client exists
+    # Validation 1.2: AuthClient exists
 
-    credential = ClientCredential.get(client_id)
+    credential = AuthClientCredential.get(client_id)
     if credential:
-        client = credential.client
+        auth_client = credential.auth_client
     else:
         return oauth_auth_403(_("Unknown client_id"))
 
     # Validation 1.2.1: Is the client active?
-    if not client.active:
-        return oauth_auth_error(client.redirect_uri, state, 'unauthorized_client')
+    if not auth_client.active:
+        return oauth_auth_error(auth_client.redirect_uri, state, 'unauthorized_client')
 
     # Validation 1.3: Cross-check redirect_uri
     if not redirect_uri:
-        redirect_uri = client.redirect_uri
+        redirect_uri = auth_client.redirect_uri
         if not redirect_uri:  # Validation 1.3.1: No redirect_uri specified
             return oauth_auth_403(_("No redirect URI specified"))
-    elif redirect_uri not in client.redirect_uris:
-        if not client.host_matches(redirect_uri):
+    elif redirect_uri not in auth_client.redirect_uris:
+        if not auth_client.host_matches(redirect_uri):
             return oauth_auth_error(
-                client.redirect_uri,
+                auth_client.redirect_uri,
                 state,
                 'invalid_request',
                 _("Redirect URI hostname doesn't match"),
             )
 
-    # Validation 1.4: Client allows login for this user
-    if not client.allow_any_login:
-        if client.user:
-            perms = UserClientPermissions.query.filter_by(
-                user=current_auth.user, client=client
-            ).first()
-        else:
-            perms = (
-                TeamClientPermissions.query.filter_by(client=client)
-                .filter(
-                    TeamClientPermissions.team_id.in_(
-                        [team.id for team in current_auth.user.teams]
-                    )
-                )
-                .first()
-            )
-        if not perms:
-            return oauth_auth_error(
-                client.redirect_uri,
-                state,
-                'invalid_scope',
-                _("You do not have access to this application"),
-            )
+    # Validation 1.4: AuthClient allows login for this user
+    if not auth_client.allow_login_for(current_auth.user):
+        return oauth_auth_error(
+            auth_client.redirect_uri,
+            state,
+            'invalid_scope',
+            _("You do not have access to this application"),
+        )
 
     # Validation 2.1: Is response_type present?
     if not response_type:
@@ -345,63 +281,54 @@ def oauth_authorize():
 
     # Validation 3.2: Is scope valid?
     try:
-        internal_resources, external_resources, full_client_access = verifyscope(
-            scope, client
-        )
+        internal_resources, full_client_access = verifyscope(scope, auth_client)
     except ScopeException as scopeex:
         return oauth_auth_error(redirect_uri, state, 'invalid_scope', str(scopeex))
 
     # Validations complete. Now ask user for permission
     # If the client is trusted (Lastuser feature, not in OAuth2 spec), don't ask user.
     # The client does not get access to any data here -- they still have to authenticate to /token.
-    if request.method == 'GET' and client.trusted:
+    if request.method == 'GET' and auth_client.trusted:
         # Return auth token. No need for user confirmation
         if response_type == 'code':
             return oauth_auth_success(
-                client,
+                auth_client,
                 redirect_uri,
                 state,
-                oauth_make_auth_code(client, scope, redirect_uri),
+                oauth_make_auth_code(auth_client, scope, redirect_uri),
             )
         else:
             return oauth_auth_success(
-                client,
+                auth_client,
                 redirect_uri,
                 state,
                 code=None,
                 token=oauth_make_token(
-                    current_auth.user, client, scope, current_auth.session
+                    current_auth.user, auth_client, scope, current_auth.session
                 ),
             )
 
     # If there is an existing auth token with the same or greater scope, don't ask user again; authorise silently
-    if client.confidential:
-        existing_token = AuthToken.query.filter_by(
-            user=current_auth.user, client=client
-        ).first()
-    else:
-        existing_token = AuthToken.query.filter_by(
-            user_session=current_auth.session, client=client
-        ).first()
+    existing_token = auth_client.authtoken_for(current_auth.user, current_auth.session)
     if existing_token and (
         '*' in existing_token.effective_scope
         or set(scope).issubset(set(existing_token.effective_scope))
     ):
         if response_type == 'code':
             return oauth_auth_success(
-                client,
+                auth_client,
                 redirect_uri,
                 state,
-                oauth_make_auth_code(client, scope, redirect_uri),
+                oauth_make_auth_code(auth_client, scope, redirect_uri),
             )
         else:
             return oauth_auth_success(
-                client,
+                auth_client,
                 redirect_uri,
                 state,
                 code=None,
                 token=oauth_make_token(
-                    current_auth.user, client, scope, current_auth.session
+                    current_auth.user, auth_client, scope, current_auth.session
                 ),
             )
 
@@ -411,19 +338,19 @@ def oauth_authorize():
             # User said yes. Return an auth code to the client
             if response_type == 'code':
                 return oauth_auth_success(
-                    client,
+                    auth_client,
                     redirect_uri,
                     state,
-                    oauth_make_auth_code(client, scope, redirect_uri),
+                    oauth_make_auth_code(auth_client, scope, redirect_uri),
                 )
             else:
                 return oauth_auth_success(
-                    client,
+                    auth_client,
                     redirect_uri,
                     state,
                     code=None,
                     token=oauth_make_token(
-                        current_auth.user, client, scope, current_auth.session
+                        current_auth.user, auth_client, scope, current_auth.session
                     ),
                 )
         elif 'deny' in request.form:
@@ -437,10 +364,9 @@ def oauth_authorize():
         render_template(
             'authorize.html.jinja2',
             form=form,
-            client=client,
+            auth_client=auth_client,
             redirect_uri=redirect_uri,
             internal_resources=internal_resources,
-            external_resources=external_resources,
             full_client_access=full_client_access,
             resource_registry=resource_registry,
         ),
@@ -462,39 +388,32 @@ def oauth_token_error(error, error_description=None, error_uri=None):
     return response
 
 
-def oauth_make_token(user, client, scope, user_session=None):
+def oauth_make_token(user, auth_client, scope, user_session=None):
     # Look for an existing token
-    if client.confidential:
-        token = AuthToken.query.filter_by(user=user, client=client).first()
-    elif user_session:
-        token = AuthToken.query.filter_by(
-            user_session=user_session, client=client
-        ).first()
-    else:
-        raise ValueError("user_session not provided")
+    token = auth_client.authtoken_for(user, user_session)
 
     # If token exists, add to the existing scope
     if token:
         token.add_scope(scope)
     else:
         # If there's no existing token, create one
-        if client.confidential:
+        if auth_client.confidential:
             token = AuthToken(
-                user=user, client=client, scope=scope, token_type='bearer'
+                user=user, auth_client=auth_client, scope=scope, token_type='bearer'
             )
-            token = failsafe_add(db.session, token, user=user, client=client)
+            token = failsafe_add(db.session, token, user=user, auth_client=auth_client)
         elif user_session:
             token = AuthToken(
                 user_session=user_session,
-                client=client,
+                auth_client=auth_client,
                 scope=scope,
                 token_type='bearer',
             )
             token = failsafe_add(
-                db.session, token, user_session=user_session, client=client
+                db.session, token, user_session=user_session, auth_client=auth_client
             )
-    # TODO: Look up Resources for items in scope; look up their providing clients apps,
-    # and notify each client app of this token
+        else:
+            raise ValueError("user_session not provided")
     return token
 
 
@@ -502,13 +421,6 @@ def oauth_token_success(token, **params):
     params['access_token'] = token.token
     params['token_type'] = token.token_type
     params['scope'] = ' '.join(token.effective_scope)
-    if token.client.trusted:
-        # Trusted client. Send back waiting user messages.
-        for ufm in list(UserFlashMessage.query.filter_by(user=token.user).all()):
-            params.setdefault('messages', []).append(
-                {'category': ufm.category, 'message': ufm.message}
-            )
-            db.session.delete(ufm)
     # TODO: Understand how refresh_token works.
     if token.validity:
         params['expires_in'] = token.validity
@@ -530,7 +442,7 @@ def oauth_token():
     """
     # Always required parameters
     grant_type = request.form.get('grant_type')
-    client = current_auth.client  # Provided by @requires_client_login
+    auth_client = current_auth.auth_client  # Provided by @requires_client_login
     scope = request.form.get('scope', '').split(' ')
     # if grant_type == 'authorization_code' (POST)
     code = request.form.get('code')
@@ -552,39 +464,43 @@ def oauth_token():
 
     # Validations 2: client scope
     if grant_type == 'client_credentials':
-        # Client data; user isn't part of it OR trusted client and automatic scope
+        # AuthClient data; user isn't part of it OR trusted client and automatic scope
         try:
             # Confirm the client has access to the scope it wants
-            verifyscope(scope, client)
+            verifyscope(scope, auth_client)
         except ScopeException as scopeex:
             return oauth_token_error('invalid_scope', str(scopeex))
 
         if buid:
-            if client.trusted:
+            if auth_client.trusted:
                 user = User.get(buid=buid)
                 if user:
                     # This client is trusted and can receive a user access token.
                     # However, don't grant it the scope it wants as the user's
                     # permission was not obtained. Instead, the client's
                     # pre-approved scope will be used for the token's effective scope.
-                    token = oauth_make_token(user=user, client=client, scope=[])
+                    token = oauth_make_token(
+                        user=user, auth_client=auth_client, scope=[]
+                    )
                     return oauth_token_success(
                         token,
                         userinfo=get_userinfo(
-                            user=token.user, client=client, scope=token.effective_scope
+                            user=token.user,
+                            auth_client=auth_client,
+                            scope=token.effective_scope,
                         ),
                     )
                 else:
                     return oauth_token_error('invalid_grant', _("Unknown user"))
             else:
-                return oauth_token_error('invalid_grant', _("Untrusted client"))
+                return oauth_token_error('invalid_grant', _("Untrusted client app"))
         else:
-            token = oauth_make_token(user=None, client=client, scope=scope)
+            token = oauth_make_token(user=None, auth_client=auth_client, scope=scope)
         return oauth_token_success(token)
 
     # Validations 3: auth code
     elif grant_type == 'authorization_code':
-        authcode = AuthCode.query.filter_by(code=code, client=client).first()
+        authcode = AuthCode.get_for_client(auth_client=auth_client, code=code)
         if not authcode:
             return oauth_token_error('invalid_grant', _("Unknown auth code"))
         if not authcode.is_valid():
@@ -602,25 +518,27 @@ def oauth_token():
         if redirect_uri != authcode.redirect_uri:
             return oauth_token_error('invalid_client', _("redirect_uri does not match"))
 
-        token = oauth_make_token(user=authcode.user, client=client, scope=scope)
+        token = oauth_make_token(
+            user=authcode.user, auth_client=auth_client, scope=scope
+        )
         db.session.delete(authcode)
         return oauth_token_success(
             token,
             userinfo=get_userinfo(
                 user=authcode.user,
-                client=client,
+                auth_client=auth_client,
                 scope=token.effective_scope,
-                session=authcode.session,
+                user_session=authcode.user_session,
             ),
         )
 
     elif grant_type == 'password':
         # Validations 4.1: password grant_type is only for trusted clients
-        if not client.trusted:
+        if not auth_client.trusted:
             # Refuse to untrusted clients
             return oauth_token_error(
                 'unauthorized_client',
-                _("Client is not trusted for password grant_type"),
+                _("AuthClient is not trusted for password grant_type"),
             )
         # Validations 4.2: Are username and password provided and correct?
         if not username or not password:
@@ -636,11 +554,12 @@ def oauth_token():
             return oauth_token_error('invalid_client', _("Password mismatch"))
         # Validations 4.3: verify scope
         try:
-            verifyscope(scope, client)
+            verifyscope(scope, auth_client)
         except ScopeException as scopeex:
             return oauth_token_error('invalid_scope', str(scopeex))
         # All good. Grant access
-        token = oauth_make_token(user=user, client=client, scope=scope)
+        token = oauth_make_token(user=user, auth_client=auth_client, scope=scope)
         return oauth_token_success(
-            token, userinfo=get_userinfo(user=user, client=client, scope=scope)
+            token,
+            userinfo=get_userinfo(user=user, auth_client=auth_client, scope=scope),
         )

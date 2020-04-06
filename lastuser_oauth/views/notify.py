@@ -27,10 +27,10 @@ user_changes_to_notify = {
 
 @session_revoked.connect
 def notify_session_revoked(session):
-    for client in session.clients:
-        if client.notification_uri:
+    for auth_client in session.auth_clients:
+        if auth_client.notification_uri:
             send_notice.queue(
-                client.notification_uri,
+                auth_client.notification_uri,
                 data={
                     'userid': session.user.buid,  # XXX: Deprecated parameter
                     'buid': session.user.buid,
@@ -51,7 +51,7 @@ def notify_user_data_changed(user, changes):
     if user_changes_to_notify & set(changes):
         # We have changes that apps need to hear about
         for token in user.authtokens:
-            if token.is_valid() and token.client.notification_uri:
+            if token.is_valid() and token.auth_client.notification_uri:
                 tokenscope = token.effective_scope
                 notify_changes = []
                 for change in changes:
@@ -83,7 +83,7 @@ def notify_user_data_changed(user, changes):
                             notify_changes.append(change)
                 if notify_changes:
                     send_notice.queue(
-                        token.client.notification_uri,
+                        token.auth_client.notification_uri,
                         data={
                             'userid': user.buid,  # XXX: Deprecated parameter
                             'buid': user.buid,
@@ -100,32 +100,23 @@ def notify_org_data_changed(org, user, changes, team=None):
     all other owners of this org to find apps that need to be notified.
     """
     client_users = {}
-    if team is not None:
-        team_access = set(org.clients_with_team_access()) | (
-            set(user.clients_with_team_access()) if user else set()
-        )
-    else:
-        team_access = []
     for token in AuthToken.all(users=org.owners.users):
         if (
             {'*', 'organizations', 'organizations/*'}.intersection(
                 token.effective_scope
             )
-            and token.client.notification_uri
+            and token.auth_client.notification_uri
             and token.is_valid()
         ):
-            if team is not None:
-                if token.client not in team_access:
-                    continue
-            client_users.setdefault(token.client, []).append(token.user)
+            client_users.setdefault(token.auth_client, []).append(token.user)
     # Now we have a list of clients to notify and a list of users to notify them with
-    for client, users in client_users.items():
+    for auth_client, users in client_users.items():
         if user is not None and user in users:
             notify_user = user
         else:
             notify_user = users[0]  # First user available
         send_notice.queue(
-            client.notification_uri,
+            auth_client.notification_uri,
             data={
                 'userid': notify_user.buid,  # XXX: Deprecated parameter
                 'buid': notify_user.buid,
@@ -143,7 +134,7 @@ def notify_team_data_changed(team, user, changes):
     Pass-through function that calls :func:`notify_org_data_changed`.
     """
     notify_org_data_changed(
-        team.org, user=user, changes=['team-' + c for c in changes], team=team
+        team.organization, user=user, changes=['team-' + c for c in changes], team=team
     )
 
 

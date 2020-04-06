@@ -7,52 +7,57 @@ from werkzeug.utils import cached_property
 
 from ua_parser import user_agent_parser
 
-from coaster.sqlalchemy import make_timestamp_columns
 from coaster.utils import buid as make_buid
 from coaster.utils import utcnow
 
 from ..signals import session_revoked
-from . import BaseMixin, db
+from . import BaseMixin, UuidMixin, db
 from .user import User
 
 __all__ = ['UserSession']
 
 
-session_client = db.Table(
-    'session_client',
+auth_client_user_session = db.Table(
+    'auth_client_user_session',
     db.Model.metadata,
-    *(
-        make_timestamp_columns()
-        + (
-            db.Column(
-                'user_session_id',
-                None,
-                db.ForeignKey('user_session.id'),
-                nullable=False,
-                primary_key=True,
-            ),
-            db.Column(
-                'client_id',
-                None,
-                db.ForeignKey('client.id'),
-                nullable=False,
-                primary_key=True,
-            ),
-        )
+    db.Column(
+        'auth_client_id',
+        None,
+        db.ForeignKey('auth_client.id'),
+        nullable=False,
+        primary_key=True,
+    ),
+    db.Column(
+        'user_session_id',
+        None,
+        db.ForeignKey('user_session.id'),
+        nullable=False,
+        primary_key=True,
+    ),
+    db.Column(
+        'created_at',
+        db.TIMESTAMP(timezone=True),
+        nullable=False,
+        default=db.func.utcnow(),
+    ),
+    db.Column(
+        'accessed_at',
+        db.TIMESTAMP(timezone=True),
+        nullable=False,
+        default=db.func.utcnow(),
     ),
 )
 
 
-class UserSession(BaseMixin, db.Model):
+class UserSession(UuidMixin, BaseMixin, db.Model):
     __tablename__ = 'user_session'
-
-    buid = db.Column(db.Unicode(22), nullable=False, unique=True, default=make_buid)
-    sessionid = db.synonym('buid')
 
     user_id = db.Column(None, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship(
         User,
-        backref=db.backref('sessions', cascade='all, delete-orphan', lazy='dynamic'),
+        backref=db.backref(
+            'all_sessions', cascade='all, delete-orphan', lazy='dynamic'
+        ),
     )
 
     ipaddr = db.Column(db.String(45), nullable=False)
@@ -69,29 +74,31 @@ class UserSession(BaseMixin, db.Model):
         if not self.buid:
             self.buid = make_buid()
 
-    def access(self, client=None):
+    def access(self, auth_client=None):
         """
         Mark a session as currently active.
 
-        :param client: For API calls from clients, save the client instead of IP address and User-Agent
+        :param auth_client: For API calls from clients, save the client instead of IP address and User-Agent
         """
         # `accessed_at` will be different from the automatic `updated_at` in one
         # crucial context: when the session was revoked remotely. `accessed_at` won't
         # be updated at that time.
         self.accessed_at = db.func.utcnow()
         with db.session.no_autoflush:
-            if client:
+            if auth_client:
                 if (
-                    client not in self.clients
-                ):  # self.clients is defined via Client.sessions
-                    self.clients.append(client)
+                    auth_client not in self.auth_clients
+                ):  # self.auth_clients is defined via Client.user_sessions
+                    self.auth_clients.append(auth_client)
                 else:
                     # If we've seen this client in this session before, only update the timestamp
                     db.session.execute(
-                        session_client.update()
-                        .where(session_client.c.user_session_id == self.id)
-                        .where(session_client.c.client_id == client.id)
-                        .values(updated_at=db.func.utcnow())
+                        auth_client_user_session.update()
+                        .where(auth_client_user_session.c.user_session_id == self.id)
+                        .where(
+                            auth_client_user_session.c.auth_client_id == auth_client.id
+                        )
+                        .values(accessed_at=db.func.utcnow())
                     )
             else:
                 self.ipaddr = request.remote_addr or ''
@@ -134,7 +141,8 @@ User.active_sessions = db.relationship(
     lazy='dynamic',
     primaryjoin=db.and_(
         UserSession.user_id == User.id,
-        UserSession.accessed_at > db.func.utcnow() - timedelta(days=14),
+        UserSession.accessed_at > db.func.utcnow() - timedelta(days=365),  # See ^
         UserSession.revoked_at.is_(None),
     ),
+    order_by=UserSession.accessed_at.desc(),
 )
