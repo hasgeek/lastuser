@@ -16,7 +16,8 @@ __all__ = ['LinkedInProvider']
 class LinkedInProvider(LoginProvider):
     auth_url = 'https://www.linkedin.com/uas/oauth2/authorization?response_type=code&client_id={client_id}&scope={scope}&redirect_uri={redirect_uri}&state={state}'
     token_url = 'https://www.linkedin.com/uas/oauth2/accessToken'
-    user_info = 'https://api.linkedin.com/v1/people/~:(id,formatted-name,email-address,picture-url,public-profile-url)?secure-urls=true'
+    user_info = 'https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName)'
+    user_email = 'https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))'
 
     def __init__(
         self, name, title, key, secret, at_login=True, priority=False, icon=None
@@ -98,12 +99,31 @@ class LinkedInProvider(LoginProvider):
                 _("Unable to retrieve user details from LinkedIn. Please try again")
             )
 
+        try:
+            email_info = requests.get(
+                self.user_email,
+                params={'oauth2_access_token': response['access_token']},
+                headers={'x-li-format': 'json'},
+            ).json()
+        except requests.exceptions.RequestException as e:
+            raise LoginCallbackError(
+                _(
+                    "Unable to fetch email from LinkedIn. Internal details: {error}"
+                ).format(error=e)
+            )
+
+        email_address = ''
+        if 'elements' in email_info and email_info['elements']:
+            email_address = email_info['elements'][0]['handle~']['emailAddress']
+
         return {
-            'email': info.get('emailAddress'),
+            'email': email_address,
             'userid': info.get('id'),
-            'username': info.get('publicProfileUrl'),
-            'fullname': info.get('formattedName'),
-            'avatar_url': info.get('pictureUrl'),
+            'username': info.get('id'),
+            'fullname': (
+                info.get('localizedFirstName') + ' ' + info.get('localizedLastName')
+            ),
+            'avatar_url': '',
             'oauth_token': response['access_token'],
             'oauth_token_secret': None,  # OAuth 2 doesn't need token secrets
             'oauth_token_type': None,
