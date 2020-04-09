@@ -93,7 +93,7 @@ class ProfileForm(forms.Form):
             forms.validators.Optional(),
             forms.validators.Length(max=AccountName.__name_length__),
         ],
-        filters=[forms.filters.none_if_empty()],
+        filters=[forms.filters.none_if_empty(), forms.filters.lower()],
         prefix="https://hasgeek.com/",
         widget_attrs={'autocorrect': 'none', 'autocapitalize': 'none'},
     )
