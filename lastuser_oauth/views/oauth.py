@@ -213,6 +213,7 @@ def oauth_auth_error(
 
 
 @lastuser_oauth.route('/auth', methods=['GET', 'POST'])
+@lastuser_oauth.route('/api/1/auth', methods=['GET', 'POST'])
 @requires_login_no_message
 def oauth_authorize():
     """
@@ -435,6 +436,7 @@ def oauth_token_success(token, **params):
 
 
 @lastuser_oauth.route('/token', methods=['POST'])
+@lastuser_oauth.route('/api/1/token', methods=['POST'])
 @requires_client_login
 def oauth_token():
     """
