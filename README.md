@@ -1,6 +1,10 @@
 Lastuser
 ========
 
+**Lastuser has been merged into [Funnel](https://github.com/hasgeek/funnel) is no longer maintained a standalone app. This repository is archived.** Historical notes follow:
+
+----------------------
+
 [![Build status](https://secure.travis-ci.org/hasgeek/lastuser.svg?branch=master)](https://travis-ci.org/hasgeek/lastuser) [![Coverage status](https://coveralls.io/repos/hasgeek/lastuser/badge.svg)](https://coveralls.io/r/hasgeek/lastuser)
 
 User management is a pain. Apps shouldn't have their own user management code if it can be centrally managed. Lastuser does it for HasGeek. This open source code release is intended to help you examine our code, work with our APIs, and lend a helping hand where needed.
